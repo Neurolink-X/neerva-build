@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { BasketLink } from "@/components/material-basket";
 
 export function SiteHeader() {
-  return <><div className="topline"><span>Materials, planning and dealer quotes in one place</span><span>India · INR</span></div><header className="site-header"><Link className="brand" href="/" aria-label="NEERVA BUILD home"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link><nav className="desktop-nav" aria-label="Main navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/quotes">Get a quote</Link><Link href="/design-studio">Home studio</Link><Link href="/calculators">Calculators</Link><Link href="/blog">Guides</Link></nav><Link className="button button-dark button-small header-quote" href="/quotes">Start a quote</Link></header></>;
+  return <><div className="topline"><span>Materials, planning and dealer quotes in one place</span><span>India · INR</span></div><header className="site-header"><Link className="brand" href="/" aria-label="NEERVA BUILD home"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link><nav className="desktop-nav" aria-label="Main navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/quotes">Get a quote</Link><Link href="/design-studio">Home studio</Link><Link href="/calculators">Calculators</Link><Link href="/blog">Guides</Link></nav><div className="header-market-actions"><BasketLink /><Link className="button button-dark button-small header-quote" href="/quotes">Start a quote</Link></div></header></>;
 }
 
 export function SiteFooter() {

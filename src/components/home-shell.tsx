@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { BasketLink } from "@/components/material-basket";
 import type { CatalogCategory } from "@/modules/catalog/catalog";
 import { searchCategories } from "@/modules/catalog/catalog";
 import { convertSquareFeet, squareFeetFromDimensions } from "@/modules/calculator/units";
@@ -35,7 +36,7 @@ export function HomeShell({ categories }: { categories: CatalogCategory[] }) {
       <header className="site-header">
         <a className="brand" href="#top" aria-label="NEERVA BUILD home"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></a>
         <nav className="desktop-nav" aria-label="Main navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/quotes">Bulk quotes</Link><Link href="/design-studio">Home studio</Link><Link href="/calculators">Calculators</Link><Link href="/blog">Guides</Link></nav>
-        <div className="header-actions"><label className="city-select"><span aria-hidden="true">⌖</span><select value={city} onChange={(event) => setCity(event.target.value)} aria-label="Choose city"><option>Kanpur</option><option>Noida</option><option>Other city</option></select></label><Link className="sign-in" href="/account">Sign in</Link><a className="button button-dark button-small" href="#quotes">Get a quote</a></div>
+        <div className="header-actions"><label className="city-select"><span aria-hidden="true">⌖</span><select value={city} onChange={(event) => setCity(event.target.value)} aria-label="Choose city"><option>Kanpur</option><option>Noida</option><option>Other city</option></select></label><BasketLink /><Link className="sign-in" href="/account">Sign in</Link><a className="button button-dark button-small" href="#quotes">Get a quote</a></div>
       </header>
 
       <section className="hero" id="top">
