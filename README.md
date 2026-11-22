@@ -8,6 +8,7 @@ India-first construction materials marketplace, dealer SaaS and home planning pl
 - Product requirements, acceptance criteria, architecture, tenant/data model, roadmap and release gates are in [`docs/`](docs/).
 - Public catalog discovery and area conversion are implemented without inventing live prices or dealer verification.
 - Quote-only material categories are designed to omit public amount fields at the API boundary.
+- The Knowledge Hub has a bilingual, source-linked first buying guide with per-article metadata and sitemap entries.
 - A Supabase migration establishes tenant-aware marketplace tables and row-level policies. No live backend is connected until separate Neerva credentials are configured.
 
 ## Stack
@@ -28,7 +29,7 @@ The public catalog and calculator can render without credentials. RFQ submission
 - `npm run dev` — local development
 - `npm run lint` — ESLint
 - `npm run typecheck` — strict TypeScript check
-- `npm test` — domain unit tests
+- `npm test` — domain and content unit tests
 - `npm run build` — production build
 
 ## Repository documents
@@ -51,4 +52,4 @@ The public catalog and calculator can render without credentials. RFQ submission
 
 ## Deployment status
 
-This foundation is not production-ready yet. Configure a dedicated Supabase project, apply the migration, connect Vercel to this repository, add secrets through the host's secret store, set up separate analytics/error monitoring, and pass all CI gates before a public launch.
+This foundation and public Knowledge Hub are not the full revenue MVP. Configure a dedicated Supabase project, apply and verify migrations, connect Vercel to this repository, add secrets through the host's secret store, complete authentication/catalog/pricing/order journeys, set up separate analytics/error monitoring, and pass all CI gates before a public commerce launch.
