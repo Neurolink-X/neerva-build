@@ -23,3 +23,9 @@ test("invalid pincode and unexpected fields are rejected", () => {
   assert.equal(rfqSchema.safeParse({ ...validRequest, pincode: "123" }).success, false);
   assert.equal(rfqSchema.safeParse({ ...validRequest, dealerQuote: 100 }).success, false);
 });
+
+test("RFQ category and quantity unit must be supported together", () => {
+  assert.equal(rfqSchema.safeParse({ ...validRequest, categorySlug: "not-a-category" }).success, false);
+  assert.equal(rfqSchema.safeParse({ ...validRequest, categorySlug: "cement", unit: "truck" }).success, false);
+  assert.equal(rfqSchema.safeParse({ ...validRequest, categorySlug: "cement", unit: "bag" }).success, true);
+});
