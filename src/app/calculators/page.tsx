@@ -1,0 +1,7 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ConversionCalculator } from "@/components/conversion-calculator";
+import { SiteFooter, SiteHeader } from "@/components/site-chrome";
+
+export const metadata: Metadata = { title: "Construction Calculators", description: "Convert plot dimensions accurately and learn what each estimate does and does not include.", alternates: { canonical: "/calculators" } };
+export default function CalculatorsPage() { return <main className="catalog-page"><SiteHeader /><section className="page-hero page-hero-compact"><span className="eyebrow">CONSTRUCTION CALCULATORS</span><h1>Estimate the basics.<br /><em>Keep assumptions visible.</em></h1><p>Start with a reliable plot-area conversion. Material quantity and budget estimates will require product-specific assumptions and verified local rates.</p></section><section className="section calculator-page-content"><ConversionCalculator /><aside className="category-guidance"><h2>About estimates</h2><p>Area conversion is arithmetic, but permissible construction area depends on local setbacks, bylaws and plot conditions. Material estimates are not engineering instructions. Ask a qualified professional to review project-specific quantities.</p><p>Construction estimates and current local material rates are not available in this preview.</p></aside><Link className="button button-outline" href="/design-studio">Use these dimensions in Home Studio →</Link></section><SiteFooter /></main>; }
