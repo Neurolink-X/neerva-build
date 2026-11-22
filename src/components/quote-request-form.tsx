@@ -18,9 +18,10 @@ const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 export function QuoteRequestForm({ defaultCity }: { defaultCity: string }) {
   const captchaElement = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
+  const idempotencyKey = useRef<string | null>(null);
   const [scriptReady, setScriptReady] = useState(false);
   const [token, setToken] = useState("");
-  const [status, setStatus] = useState<{ kind: "success" | "error"; message: string } | null>(null);
+  const [status, setStatus] = useState<{ kind: "success" | "error"; message: string; reference?: string; details?: string[] } | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -47,26 +48,33 @@ export function QuoteRequestForm({ defaultCity }: { defaultCity: string }) {
     setStatus(null);
     const formElement = event.currentTarget;
     const form = new FormData(event.currentTarget);
+    const requestedDate = String(form.get("requestedDate") ?? "");
+    idempotencyKey.current ??= crypto.randomUUID();
     const payload = {
-      idempotencyKey: crypto.randomUUID(),
+      idempotencyKey: idempotencyKey.current,
       categorySlug: String(form.get("categorySlug")),
       materialDescription: String(form.get("materialDescription")),
       quantity: Number(form.get("quantity")),
       unit: String(form.get("unit")),
       city: String(form.get("city")),
       pincode: String(form.get("pincode")),
+      ...(requestedDate ? { requestedDate } : {}),
       contactName: String(form.get("contactName")),
       phone: String(form.get("phone")),
       turnstileToken: token,
     };
     try {
       const response = await fetch("/api/rfqs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const result = await response.json() as { requestId?: string; error?: string };
-      if (!response.ok) throw new Error(result.error ?? "Could not submit your request.");
-      setStatus({ kind: "success", message: `Request received. Reference: ${result.requestId}` });
+      const result = await response.json().catch(() => null) as { requestId?: string; error?: string; reference?: string; fields?: { field: string; message: string }[] } | null;
+      if (!response.ok) {
+        setStatus({ kind: "error", message: result?.error ?? "We couldn’t send this request. Your details are still here—please retry shortly.", reference: result?.reference, details: result?.fields?.map((field) => field.message) });
+        return;
+      }
+      setStatus({ kind: "success", message: "Your quote request was received. Keep this reference if you contact support.", reference: result?.requestId });
       formElement.reset();
-    } catch (error) {
-      setStatus({ kind: "error", message: error instanceof Error ? error.message : "Could not submit your request." });
+      idempotencyKey.current = null;
+    } catch {
+      setStatus({ kind: "error", message: "We couldn’t reach the quote service. Your details are still here—check your connection and retry." });
     } finally {
       setBusy(false);
       setToken("");
@@ -85,12 +93,13 @@ export function QuoteRequestForm({ defaultCity }: { defaultCity: string }) {
         <label>Unit<select name="unit" defaultValue="truck"><option value="truck">Truck</option><option value="tonne">Tonne</option><option value="cubic_metre">Cubic metre</option><option value="bag">Bag</option><option value="piece">Piece</option><option value="bundle">Bundle</option><option value="kg">Kilogram</option><option value="quintal">Quintal</option></select></label>
         <label>City<input name="city" required minLength={2} maxLength={80} defaultValue={defaultCity} placeholder="Your delivery city" /></label>
         <label>Pincode<input name="pincode" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} placeholder="6-digit pincode" /></label>
+        <label>Preferred delivery date (optional)<input name="requestedDate" type="date" min={new Date().toLocaleDateString("en-CA")} /></label>
         <label>Your name<input name="contactName" required minLength={2} maxLength={100} autoComplete="name" placeholder="Name" /></label>
         <label>Mobile number<input name="phone" required type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} autoComplete="tel-national" placeholder="10-digit mobile number" /></label>
       </div>
       {siteKey ? <div ref={captchaElement} className="turnstile-wrap" /> : <p className="rfq-unavailable">Secure enquiries are not configured yet. No request will be sent or stored.</p>}
-      {status && <p className={`rfq-status ${status.kind}`} role={status.kind === "error" ? "alert" : "status"}>{status.message}</p>}
-      <button className="button button-dark rfq-submit" type="submit" disabled={!siteKey || busy}>{busy ? "Sending securely…" : "Request dealer quotes →"}</button>
+      {status && <div className={`rfq-status ${status.kind}`} role={status.kind === "error" ? "alert" : "status"}><p>{status.message}</p>{status.details && status.details.length > 0 && <ul>{status.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>}{status.reference && <small>Reference: {status.reference}{status.kind === "error" ? ". Share it with support if this continues." : ""}</small>}</div>}
+      <button className="button button-dark rfq-submit" type="submit" disabled={!siteKey || busy}>{busy ? "Sending securely…" : status?.kind === "error" ? "Try again →" : "Request dealer quotes →"}</button>
       <small className="rfq-privacy">Your contact details are used only to respond to this request. Do not enter payment details here.</small>
     </form>
   );
