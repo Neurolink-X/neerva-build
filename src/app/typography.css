@@ -1,27 +1,77 @@
-/* Legibility floor across phones, tablets, and desktop */
-body{font-size:15px;-webkit-text-size-adjust:100%;text-size-adjust:100%}
-p,li{font-size:clamp(13px,.95vw,15px);line-height:1.7}
-small{font-size:clamp(11px,.78vw,12px)}
-button,input,select,textarea{font-size:clamp(12px,.85vw,14px)}
-.topline{font-size:11px}.desktop-nav{font-size:12px}.city-select,.sign-in{font-size:12px}
-.eyebrow{font-size:10px}.text-link,.header-quote,.button{font-size:12px}
-.category-card h3{font-size:clamp(18px,1.6vw,22px)}.category-card p{font-size:13px;line-height:1.55}.category-bottom{font-size:11px}
-.hero-meta{font-size:11px}.trust-strip small{font-size:11px}.trust-strip strong{font-size:13px}
-.quote-steps div{font-size:11px}.quote-steps div span{font-size:10px}
-.input-row label,.rfq-form-grid label{font-size:12px}.input-row input,.input-row select,.rfq-form-grid input,.rfq-form-grid select{font-size:13px}.calculator-foot,.rfq-privacy,.rfq-unavailable,.rfq-status{font-size:11px}
-footer nav,.site-footer nav{font-size:11px}footer small,.site-footer small{font-size:10px}
-.blog-card-meta,.blog-card-bottom,.article-toc a,.article-toc strong{font-size:11px}.blog-card-content>p{font-size:13px}.blog-card-content h3{font-size:23px}
-.article-section p,.article-sources>p{font-size:14px}.article-section li,.article-sources li{font-size:13px}.article-toc{gap:13px}.article-next p{font-size:13px}
-.catalog-toolbar label{font-size:12px}.catalog-demo-note,.professional-note{font-size:12px}.product-card-copy p{font-size:13px;min-height:0}.product-card-foot{font-size:11px}.product-brand{font-size:10px}.product-card-copy h2{font-size:23px}.brand-directory-card strong{font-size:14px}.brand-directory-card small{font-size:11px}.quote-page-copy p,.quote-page-copy li,.calculator-page-card p{font-size:14px}
-.studio-small,.layout-choice small,.layout-choice span,.preset-button,.floor-switch button,.plan-legend,.selected-room-info,.room-resize-tools button,.zoom-tools span,.studio-save-label{font-size:11px}.layout-choice strong{font-size:12px}.studio-feature-list span{font-size:10px}.plan-room-label{font-size:3px}.plan-room-dim{font-size:2.4px}.plan-dimension{font-size:2.6px}
-.visualizer-heading p,.elevation-choice strong,.surface-option strong,.surface-check,.color-input-label,.hex-value,.texture-select,.elevation-stage-label,.elevation-stage-footer,.visualizer-notice{font-size:12px}.elevation-choice small,.surface-option small{font-size:10px}.visualizer-topbar{font-size:11px}
-@media(max-width:900px){.desktop-nav{font-size:11px}.section-head .text-link{font-size:12px}.article-section p,.article-sources>p{font-size:14px}}
-@media(max-width:680px){
-  body{font-size:15px}.topline{font-size:10px}.hero-meta{font-size:10px}.category-card p{font-size:12px}.category-bottom{font-size:10px}.trust-strip strong{font-size:13px}.trust-strip small{font-size:11px}
-  .section-head p,.quote-copy>p,.calculator-intro>p,.studio-copy>p,.city-card p{font-size:13px}.quote-steps div{font-size:10px}.input-row label,.rfq-form-grid label{font-size:11px}.input-row input,.input-row select,.rfq-form-grid input,.rfq-form-grid select{font-size:13px}.calculator-foot{font-size:10px}
-  .blog-card-meta,.blog-card-bottom,.article-toc a{font-size:11px}.blog-card-content>p{font-size:13px}.article-section p,.article-sources>p{font-size:14px}.article-section li,.article-sources li{font-size:13px}.article-next p{font-size:12px}
-  .page-hero>p,.catalog-demo-note,.product-card-copy p,.quote-page-copy p,.quote-page-copy li,.calculator-page-card p{font-size:13px}.catalog-toolbar label{font-size:11px}.product-card-foot{font-size:11px}.brand-directory-card small{font-size:10px}
-  .studio-small,.layout-choice small,.studio-disclaimer,.visualizer-notice{font-size:11px}.layout-choice strong{font-size:11px}.layout-choice span{font-size:10px}.studio-feature-list span{font-size:9px}.plan-room-label{font-size:3.4px}.plan-room-dim{font-size:2.6px}.plan-dimension{font-size:2.9px}.plan-legend{font-size:10px}.selected-room-info,.room-resize-tools button,.zoom-tools span{font-size:10px}
-  .visualizer-heading p,.visualizer-topbar,.elevation-stage-label,.elevation-stage-footer{font-size:10px}.elevation-choice strong{font-size:9px}.elevation-choice small,.surface-option small{font-size:8px}.surface-option strong,.color-input-label,.texture-select{font-size:11px}.surface-check{font-size:9px}
+/* Responsive type scale with a readable floor on small screens. */
+:root {
+  --type-caption: clamp(0.75rem, 0.72rem + 0.12vw, 0.8125rem);
+  --type-small: clamp(0.8125rem, 0.78rem + 0.16vw, 0.9375rem);
+  --type-body: clamp(0.9375rem, 0.9rem + 0.18vw, 1rem);
+  --type-control: clamp(0.875rem, 0.84rem + 0.16vw, 1rem);
 }
-@media(max-width:380px){.hero h1{font-size:50px}.hero-search .button{padding-inline:9px}.category-grid{gap:6px}.category-card{padding:12px}.category-card h3{font-size:17px}.category-card p{font-size:11px}.plan-editor-actions{gap:5px}.plan-editor-actions .button{padding-inline:8px}.layout-choice-list{gap:4px}.elevation-presets{gap:4px}}
+
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { font-size: var(--type-body); }
+p, li { font-size: var(--type-body); line-height: 1.7; }
+small { font-size: var(--type-caption); }
+button, input, select, textarea { font-size: var(--type-control); }
+
+/* Navigation, labels and supporting copy should stay readable on phones. */
+.topline, .desktop-nav, .city-select, .sign-in, .button, .text-link,
+.header-quote, .hero-meta, .eyebrow, .category-bottom, .trust-strip small,
+.trust-strip strong, .quote-steps div, .quote-steps div span,
+.input-row label, .rfq-form-grid label, .calculator-foot, .rfq-privacy,
+.rfq-unavailable, .rfq-status, .site-footer nav, .site-footer small,
+.blog-card-meta, .blog-card-bottom, .article-toc a, .article-toc strong,
+.article-next p, .catalog-toolbar label, .catalog-demo-note,
+.professional-note, .product-card-foot, .product-brand,
+.brand-directory-card strong, .brand-directory-card small,
+.studio-small, .layout-choice small, .layout-choice span, .preset-button,
+.floor-switch button, .plan-legend, .selected-room-info,
+.room-resize-tools button, .zoom-tools span, .studio-save-label,
+.studio-feature-list span, .visualizer-heading p, .visualizer-topbar,
+.elevation-choice strong, .elevation-choice small, .surface-option strong,
+.surface-option small, .surface-check, .color-input-label, .hex-value,
+.texture-select, .elevation-stage-label, .elevation-stage-footer,
+.visualizer-notice, .home-visualizer-link {
+  font-size: var(--type-small);
+}
+
+.hero-copy > p, .section-head p, .studio-copy > p, .city-card p,
+.category-card p, .quote-copy > p, .calculator-intro > p,
+.page-hero > p, .product-card-copy p, .quote-page-copy p,
+.quote-page-copy li, .calculator-page-card p, .article-section p,
+.article-sources > p, .article-section li, .article-sources li,
+.blog-card-content > p, .selected-room-info { font-size: var(--type-body); }
+
+.category-card h3 { font-size: clamp(1.125rem, 1.02rem + 0.45vw, 1.5rem); }
+.product-card-copy h2, .blog-card-content h3 { font-size: clamp(1.25rem, 1.12rem + 0.55vw, 1.625rem); }
+.page-hero h1, .product-detail-copy h1 { text-wrap: balance; }
+
+@media (max-width: 680px) {
+  .topline, .desktop-nav, .city-select, .sign-in, .button, .text-link,
+  .header-quote, .hero-meta, .eyebrow, .category-bottom,
+  .trust-strip small, .trust-strip strong, .quote-steps div,
+  .quote-steps div span, .input-row label, .rfq-form-grid label,
+  .calculator-foot, .rfq-privacy, .rfq-unavailable, .rfq-status,
+  .site-footer nav, .site-footer small, .blog-card-meta, .blog-card-bottom,
+  .article-toc a, .article-toc strong, .article-next p,
+  .catalog-toolbar label, .catalog-demo-note, .professional-note,
+  .product-card-foot, .product-brand, .brand-directory-card strong,
+  .brand-directory-card small, .studio-small, .layout-choice small,
+  .layout-choice span, .preset-button, .floor-switch button, .plan-legend,
+  .selected-room-info, .room-resize-tools button, .zoom-tools span,
+  .studio-save-label, .studio-feature-list span, .visualizer-heading p,
+  .visualizer-topbar, .elevation-choice strong, .elevation-choice small,
+  .surface-option strong, .surface-option small, .surface-check,
+  .color-input-label, .hex-value, .texture-select, .elevation-stage-label,
+  .elevation-stage-footer, .visualizer-notice, .home-visualizer-link {
+    font-size: var(--type-small);
+  }
+
+  .hero-copy > p, .section-head p, .studio-copy > p, .city-card p,
+  .category-card p, .quote-copy > p, .calculator-intro > p,
+  .page-hero > p, .product-card-copy p, .quote-page-copy p,
+  .quote-page-copy li, .calculator-page-card p, .article-section p,
+  .article-sources > p, .article-section li, .article-sources li,
+  .blog-card-content > p { font-size: var(--type-body); }
+
+  .preset-button, .layout-choice, .plan-editor-actions button { min-height: 40px; }
+  .visualizer-controls input, .visualizer-controls select { min-height: 42px; }
+}
