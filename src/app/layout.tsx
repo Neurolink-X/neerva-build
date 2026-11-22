@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const isIndexable = process.env.NEXT_PUBLIC_SITE_INDEXABLE === "true";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -18,7 +19,9 @@ export const metadata: Metadata = {
     url: "/",
   },
   twitter: { card: "summary_large_image", title: "NEERVA BUILD — Build better. Buy smarter.", description: "Construction materials, dealer quotations and home planning in one place." },
-  robots: { index: process.env.NODE_ENV === "production" && Boolean(process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://")), follow: true },
+  // Keep pre-launch builds out of search until catalog, pricing and enquiry
+  // operations are backed by verified production data.
+  robots: { index: process.env.NODE_ENV === "production" && isIndexable && siteUrl.startsWith("https://"), follow: true },
 };
 
 export const viewport: Viewport = { themeColor: "#f5f4ef", width: "device-width", initialScale: 1 };
