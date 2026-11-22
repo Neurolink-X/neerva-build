@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import type { CatalogCategory } from "@/modules/catalog/catalog";
 import { searchCategories } from "@/modules/catalog/catalog";
 import { convertSquareFeet, squareFeetFromDimensions } from "@/modules/calculator/units";
@@ -33,7 +34,7 @@ export function HomeShell({ categories }: { categories: CatalogCategory[] }) {
       <div className="topline"><span>Materials, planning and dealer quotes in one place</span><span>English <b>·</b> हिन्दी coming soon</span></div>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="NEERVA BUILD home"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></a>
-        <nav className="desktop-nav" aria-label="Main navigation"><a href="#materials">Materials</a><a href="#quotes">Bulk quotes</a><a href="#studio">Home studio</a><a href="#calculator">Calculators</a></nav>
+        <nav className="desktop-nav" aria-label="Main navigation"><a href="#materials">Materials</a><a href="#quotes">Bulk quotes</a><a href="#studio">Home studio</a><a href="#calculator">Calculators</a><Link href="/blog">Guides</Link></nav>
         <div className="header-actions"><label className="city-select"><span aria-hidden="true">⌖</span><select value={city} onChange={(event) => setCity(event.target.value)} aria-label="Choose city"><option>Kanpur</option><option>Noida</option><option>Other city</option></select></label><a className="sign-in" href="#account">Sign in</a><a className="button button-dark button-small" href="#quotes">Get a quote</a></div>
       </header>
 
@@ -76,7 +77,7 @@ export function HomeShell({ categories }: { categories: CatalogCategory[] }) {
       <section className="section city-section"><div className="city-card"><div><div className="eyebrow">START LOCAL, STAY OPEN</div><h2>Building in {city === "Other city" ? "another city" : city}?</h2><p>City selection helps route enquiries. A delivery promise appears only when an approved dealer confirms stock, location and capacity.</p></div><div className="city-options"><button className={city === "Kanpur" ? "city-option selected" : "city-option"} onClick={() => setCity("Kanpur")}><span>Kanpur</span><small>Initial market</small></button><button className={city === "Noida" ? "city-option selected" : "city-option"} onClick={() => setCity("Noida")}><span>Noida</span><small>Next focus</small></button><button className={city === "Other city" ? "city-option selected" : "city-option"} onClick={() => setCity("Other city")}><span>Other city</span><small>Availability checked per request</small></button></div></div></section>
 
       <section className="footer-cta"><div><div className="eyebrow eyebrow-light">BUILDING SHOULD FEEL LESS UNCERTAIN</div><h2>Start with the full picture.</h2><p>Compare the material, delivery and site requirements before placing an order.</p></div><a href="#materials" className="button button-orange">Explore materials <span>→</span></a></section>
-      <footer id="guides"><a className="brand brand-footer" href="#top"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></a><span>Build better. Buy smarter.</span><nav><a href="#materials">Materials</a><a href="#quotes">Quotes</a><a href="#studio">Home Studio</a><a href="#calculator">Calculator</a></nav><small>© 2026 NEERVA BUILD · Prices and coverage appear only from verified current data.</small></footer>
+      <footer id="guides"><a className="brand brand-footer" href="#top"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></a><span>Build better. Buy smarter.</span><nav><a href="#materials">Materials</a><a href="#quotes">Quotes</a><a href="#studio">Home Studio</a><a href="#calculator">Calculator</a><Link href="/blog">Guides</Link></nav><small>© 2026 NEERVA BUILD · Prices and coverage appear only from verified current data.</small></footer>
     </main>
   );
 }
