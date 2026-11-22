@@ -11,7 +11,7 @@
 
 ## Initial migration entities
 
-The first migration establishes the security-critical spine: profiles and platform roles, tenants/domains/memberships, categories/brands/products/variants, merchant branches, inventory, published price records/history, RFQs and private offers, audit records and an incident stub. Commerce, payment, subscriptions and design tables are added in later reviewed migrations with their own state and RLS rules.
+The initial migrations establish the security-critical spine: profiles and platform roles, tenants/domains/memberships, categories/brands/products/variants, merchant branches, inventory, published price records/history, RFQs and private offers, audit records and sanitized incident records. Migration 0002 also enforces that a dealer pricing row cannot point at another tenant's branch, and binds quote-offer authorship to the signed-in user. Commerce, payment, subscriptions and design tables are still required in later reviewed migrations with their own state and RLS rules.
 
 | Concern | Constraints and indexes |
 |---|---|
@@ -36,6 +36,8 @@ The first migration establishes the security-critical spine: profiles and platfo
 - Dealers see only their merchant/branch inventory, their own offers and assigned orders.
 - Platform-admin operations use server-side permission checks plus audited, narrowly scoped service-role access; no service key reaches the browser.
 - Storage policies mirror row ownership and tenant scope. Public assets use explicit published paths only.
+- Pricing rules with a branch must carry that branch's actual tenant ID using a composite foreign key; client-supplied tenant/branch pairs are not trusted.
+- Incident collection accepts only fixed event codes and safe text. The service-role RPC is not executable by anonymous or authenticated clients; incident reads require platform-admin RLS plus the admin API role check.
 
 ## Transactions and state machines
 

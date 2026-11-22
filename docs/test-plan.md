@@ -15,11 +15,11 @@
 
 ## Current foundation tests
 
-The first code milestone should prove: `1 square gaj = 9 square feet`; square units do not convert as linear units; quote-only price serialization omits all amounts; published price serializes paise only for public listings; malformed and oversized quote payloads are rejected.
+The current unit suite covers square-gaj conversion, 20×40 ft area, invalid dimensions, quote-only amount omission, public paise serialization, RFQ schema boundaries, and safe/deterministic incident catalog fingerprints. These are domain tests only; no DB/RLS, API integration, browser E2E, accessibility, load, or payment tests have run yet. CI uses `npm ci`, lint, strict TypeScript, unit tests and production build. SQL migrations are not currently applied or parsed in CI.
 
 ## CI gates
 
-Every pull request runs formatting, ESLint, strict TypeScript, unit/integration tests, migration checks, production build, basic dependency/security scan, accessibility checks and browser console/E2E smoke tests. A failed required check blocks merge/deploy. Store the run URL/commit SHA as release evidence; do not report tests passed without a run.
+Current pull requests run ESLint, strict TypeScript, unit tests and production build. Formatting, API/database integration, migration validation, dependency/security scanning, accessibility checks, browser console checks and E2E are pending CI additions. A failed configured required check blocks merge/deploy; branch protection must be enabled in repository settings. Store the run URL/commit SHA as release evidence; do not report tests passed without a run.
 
 ## Launch release gate
 
