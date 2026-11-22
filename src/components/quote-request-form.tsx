@@ -15,7 +15,7 @@ declare global {
 
 const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-export function QuoteRequestForm({ defaultCity }: { defaultCity: string }) {
+export function QuoteRequestForm({ defaultCity, defaultCategory = "aggregates", defaultMaterial = "" }: { defaultCity: string; defaultCategory?: string; defaultMaterial?: string }) {
   const captchaElement = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const idempotencyKey = useRef<string | null>(null);
@@ -87,8 +87,8 @@ export function QuoteRequestForm({ defaultCity }: { defaultCity: string }) {
       {siteKey && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onLoad={() => setScriptReady(true)} />}
       <div className="rfq-form-title"><span>QUOTE REQUEST</span><small>Prices are shared privately by eligible dealers.</small></div>
       <div className="rfq-form-grid">
-        <label>Material category<select name="categorySlug" defaultValue="aggregates"><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical / hardware</option></select></label>
-        <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} placeholder="Type, grade, size or other details" /></label>
+        <label>Material category<select name="categorySlug" defaultValue={defaultCategory}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical / hardware</option></select></label>
+        <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} defaultValue={defaultMaterial} placeholder="Type, grade, size or other details" /></label>
         <label>Quantity<input name="quantity" required type="number" min="0.001" step="0.001" max="1000000" placeholder="e.g. 1" /></label>
         <label>Unit<select name="unit" defaultValue="truck"><option value="truck">Truck</option><option value="tonne">Tonne</option><option value="cubic_metre">Cubic metre</option><option value="bag">Bag</option><option value="piece">Piece</option><option value="bundle">Bundle</option><option value="kg">Kilogram</option><option value="quintal">Quintal</option></select></label>
         <label>City<input name="city" required minLength={2} maxLength={80} defaultValue={defaultCity} placeholder="Your delivery city" /></label>
