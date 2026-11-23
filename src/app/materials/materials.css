@@ -73,3 +73,13 @@
 .product-card-copy h2{overflow-wrap:anywhere}
 @media(max-width:680px){.catalog-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-toolbar .catalog-search{grid-column:1/-1}.catalog-results-meta{align-items:flex-start}}
 @media(max-width:390px){.catalog-toolbar{grid-template-columns:1fr}.catalog-toolbar .catalog-search{grid-column:1/-1}.catalog-spec-chips span{font-size:11px}}
+
+
+/* Grid children must be shrinkable; Chrome at 768px previously overflowed by 171px. */
+.catalog-page .catalog-toolbar{grid-template-columns:repeat(4,minmax(0,1fr));max-width:100%;min-width:0}
+.catalog-page .catalog-toolbar label{min-width:0;max-width:100%;overflow-wrap:anywhere}
+.catalog-page .catalog-toolbar input,.catalog-page .catalog-toolbar select{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.catalog-page .catalog-content,.catalog-page .catalog-discovery,.catalog-page .product-grid,.catalog-page .product-card{min-width:0;max-width:100%}
+.catalog-page .product-card-foot{min-width:0;flex-wrap:wrap;overflow-wrap:anywhere}
+@media(max-width:1020px){.catalog-page .catalog-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-page .catalog-search{grid-column:1/-1}}
+@media(max-width:390px){.catalog-page .catalog-toolbar{grid-template-columns:minmax(0,1fr)}}
