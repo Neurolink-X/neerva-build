@@ -9,7 +9,7 @@ export function StudioPlotFitFinder(){
  const [brief,setBrief]=useState<PlotBrief>(initial),[unit,setUnit]=useState<PlotUnit>("ft"),[width,setWidth]=useState("20"),[depth,setDepth]=useState("40"),[lang,setLang]=useState<"en"|"hi">("en"),[showAll,setShowAll]=useState(false);
  const update=<K extends keyof PlotBrief>(field:K,value:PlotBrief[K])=>{setBrief(p=>({...p,[field]:value}));setShowAll(false)};
  function updateDimension(field:"widthFt"|"depthFt",raw:string){field==="widthFt"?setWidth(raw):setDepth(raw);const n=Number(raw);update(field,raw.trim()===""?NaN:toFeet(n,unit));}
- function changeUnit(next:PlotUnit){setUnit(next);const factor=next==="m"?.3048:1/.3048;const w=Number.isFinite(brief.widthFt)?brief.widthFt*(next==="m"?.3048:1):NaN;const d=Number.isFinite(brief.depthFt)?brief.depthFt*(next==="m"?.3048:1):NaN;void factor;setWidth(Number.isFinite(w)?String(Number(w.toFixed(2))):"");setDepth(Number.isFinite(d)?String(Number(d.toFixed(2))):"");}
+ function changeUnit(next:PlotUnit){setUnit(next);const w=Number.isFinite(brief.widthFt)?brief.widthFt*(next==="m"?.3048:1):NaN;const d=Number.isFinite(brief.depthFt)?brief.depthFt*(next==="m"?.3048:1):NaN;setWidth(Number.isFinite(w)?String(Number(w.toFixed(2))):"");setDepth(Number.isFinite(d)?String(Number(d.toFixed(2))):"");}
  const errors=useMemo(()=>validatePlotBrief(brief),[brief]);
  const ranked=useMemo(()=>errors.length?[]:rankStudioDesigns(studioDesigns,brief),[brief,errors.length]);
  const candidates=showAll?ranked:ranked.slice(0,6);

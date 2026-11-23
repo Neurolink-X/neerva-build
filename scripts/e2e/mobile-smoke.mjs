@@ -5,7 +5,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/design-studio","/design-studio/library","/design-studio/visualizer","/design-studio/workbench","/materials","/basket","/quotes"];
+const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/materials","/basket","/quotes"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
