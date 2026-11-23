@@ -21,7 +21,7 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - name: Install temporary browser test driver
-        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.2
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.2 @axe-core/playwright@4.10.2
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - run: npm run release:verify
