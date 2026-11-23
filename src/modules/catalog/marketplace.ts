@@ -1,4 +1,4 @@
-import { catalogCategories } from "@/modules/catalog/catalog";
+import { catalogCategories } from "./catalog.ts";
 
 export type DemoProduct = {
   /** Photos only when uploaded and approved by an authorized dealer/admin. */
