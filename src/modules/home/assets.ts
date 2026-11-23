@@ -15,7 +15,7 @@ export const homeVisuals={
  pipes:PUBLIC_CATEGORY_IMAGES.plumbing,
  electrical:PUBLIC_CATEGORY_IMAGES.electrical,
  aggregates:PUBLIC_CATEGORY_IMAGES.aggregates,
- paint:null,
- tiles:null,
- hardware:null
+ paint:PUBLIC_CATEGORY_IMAGES.paint,
+ tiles:PUBLIC_CATEGORY_IMAGES.tiles,
+ hardware:PUBLIC_CATEGORY_IMAGES.hardware
 } as const;

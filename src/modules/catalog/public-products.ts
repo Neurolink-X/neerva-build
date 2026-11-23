@@ -6,6 +6,9 @@ export const PUBLIC_CATEGORY_IMAGES={
   plumbing:"/images/catalog/pvc-pipe.webp",
   electrical:"/images/catalog/electrical-wiring.webp",
   aggregates:"/images/catalog/aggregates-samples.webp",
+  paint:"/images/catalog/paint-bucket.svg",
+  tiles:"/images/catalog/tiles-stack.svg",
+  hardware:"/images/catalog/hardware-kit.svg",
 } as const;
 export function categoryImage(category:string):string|null{
   return Object.prototype.hasOwnProperty.call(PUBLIC_CATEGORY_IMAGES,category)

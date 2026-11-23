@@ -5,6 +5,7 @@ import Link from "next/link";
 import {generateRoadPlans} from "@/modules/studio/road-generator";
 import {planMetrics,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
+import {oppositeRoadSide} from "@/modules/studio/plan-coordinate";
 import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 const Building3D=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{
@@ -41,13 +42,18 @@ export function RoadPlanWorkbench(){
   </header>
   <div className="nroad-main">
    <aside className="nroad-controls">
-    <div className="nroad-head"><h2>{str("Your plot","आपका प्लॉट")}</h2><span>18 × 50 ft benchmark</span></div>
+    <div className="nroad-head"><h2>{str("Your plot","आपका प्लॉट")}</h2><span>{brief.widthFt} × {brief.depthFt} ft · live geometry</span></div>
     <form onSubmit={e=>e.preventDefault()} className="nroad-form">
      <label>{str("Frontage / width (ft)","चौड़ाई (फीट)")}<input type="number" min="10" max="200" step=".5" value={brief.widthFt} onChange={e=>update("widthFt",Number(e.target.value))}/></label>
      <label>{str("Plot depth (ft)","लंबाई (फीट)")}<input type="number" min="15" max="250" step=".5" value={brief.depthFt} onChange={e=>update("depthFt",Number(e.target.value))}/></label>
      <label>{str("Road along which edge?","सड़क किस दिशा में है?")}<select value={brief.roadSide} onChange={e=>update("roadSide",e.target.value as RoadSide)}>
       {(["N","E","S","W"] as const).map(side=><option key={side} value={side}>{({N:"North",E:"East",S:"South",W:"West"} as const)[side]}</option>)}
      </select></label>
+     <div className="nroad-road-help" role="status">
+       <strong>{str("Road on "+({N:"North",S:"South",E:"East",W:"West"} as const)[brief.roadSide]+" edge","सड़क "+({N:"उत्तर",S:"दक्षिण",E:"पूर्व",W:"पश्चिम"} as const)[brief.roadSide]+" दिशा में है")}</strong>
+       <p>{str("Car gate and house entry face the selected road edge. Changing sides rotates the whole 2D plan and 3D house; it never places parking at the back of a front-road plot.","मुख्य गेट और पार्किंग चुनी गई सड़क की तरफ हैं। दिशा बदलने पर 2D नक्शा और 3D घर दोनों घूमते हैं।")}</p>
+       <button type="button" onClick={()=>update("roadSide",oppositeRoadSide(brief.roadSide))}>{str("Road actually on opposite side? Switch","सड़क दूसरी तरफ है? दिशा बदलें")}</button>
+     </div>
      <label>{str("Levels","मंज़िलें")}<select value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2)}>
       <option value={1}>G · Ground</option><option value={2}>G+1 · Two levels</option></select></label>
      <label>{str("Total bedrooms","कुल बेडरूम")}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>

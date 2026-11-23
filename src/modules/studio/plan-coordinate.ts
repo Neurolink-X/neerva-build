@@ -5,6 +5,11 @@ import type {RoadSide,Rect} from "./plan-model.ts";
  * N = upper, E = right, S = bottom, W = left.
  */
 export type Pt={x:number;y:number};
+/** Opposite street edge reverses the compass access edge, never the house rooms alone. */
+export function oppositeRoadSide(side:RoadSide):RoadSide{
+ return ({N:"S",S:"N",E:"W",W:"E"} as const)[side];
+}
+
 export function siteDimensions(w:number,d:number,side:RoadSide){
  if(!Number.isFinite(w)||!Number.isFinite(d)||w<=0||d<=0)throw new RangeError("Invalid plot dimensions");
  return side==="E"||side==="W"?{w:d,d:w}:{w,d};

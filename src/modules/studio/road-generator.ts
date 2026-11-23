@@ -108,7 +108,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right"):PlanModel{
  const gateParking=rooms.find(r=>r.kind==="parking")!;
  const parkingGate={side:"front" as const,xFt:round(gateParking.x+.25),widthFt:Math.min(8,round(gateParking.w-.5))};
  const p:PlanModel={
-  version:1,id:"18x50-"+b.roadSide+"-"+b.floors+"-"+b.bedrooms+"-"+variant,
+  version:1,id:b.widthFt+"x"+b.depthFt+"-"+b.roadSide+"-"+b.floors+"-"+b.bedrooms+"-"+variant,
   variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide},
   setbacks:{...sb,verified:false},walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},
   floors:b.floors,rooms,openings,gate:parkingGate,

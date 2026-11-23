@@ -18,12 +18,12 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{
  const exact=proof?.actualPhoto&&product?.images?.find(isApprovedSkuPhoto);
  const src=exact||categoryImage(category);
  return <div className={compact?"catalog-material-image compact":"catalog-material-image"}>
-  {src?<Image src={src} alt={exact?`Verified photograph of ${name}`:`Representative ${category.replaceAll("-"," ")} material photo; not the exact ${name} branded SKU`}
+  {src?<Image src={src} alt={exact?`Verified photograph of ${name}`:`Representative ${category.replaceAll("-"," ")} ${src?.endsWith(".svg")?"illustration":"material photo"}; not the exact ${name} branded SKU`}
     fill sizes="(max-width:680px) 100vw, (max-width:1100px) 50vw, 33vw"
     quality={76} loading="lazy"/>:
    <div className="catalog-image-awaiting" role="img" aria-label={`Actual ${name} product photograph awaiting manufacturer or dealer verification`}>
     <span>Verified product photo pending</span><small>Confirm SKU and packaging with the dealer</small>
    </div>}
-  <span className="catalog-image-note">{exact?"Exact SKU photo · reviewed":src?"Material category photo · not exact SKU":"Image pending review"}</span>
+  <span className="catalog-image-note">{exact?"Exact SKU photo · reviewed":src?src.endsWith(".svg")?"Illustrative sample · not exact SKU":"Material category photo · not exact SKU":"Image pending review"}</span>
  </div>;
 }

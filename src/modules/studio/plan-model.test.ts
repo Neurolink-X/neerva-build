@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {generateRoadPlans,pickDiverse,planSignature} from "./road-generator.ts";
+import {oppositeRoadSide,roadSegment,siteDimensions} from "./plan-coordinate.ts";
 import {validatePlan,overlapArea,planMetrics,wallBoxes,recolorMasked,sharedEdge,type PlanBrief} from "./plan-model.ts";
 const brief=(changes:Partial<PlanBrief>={}):PlanBrief=>({
  widthFt:18,depthFt:50,roadSide:"N",floors:1,bedrooms:1,parking:true,
@@ -106,4 +107,36 @@ test("unusable long and narrow rooms, undersized stairs and excessive corridors 
  const corridor=manyCorridors.rooms.find(r=>r.kind==="corridor")!;
  corridor.w=15;corridor.d=20;
  assert.ok(validatePlan(manyCorridors).some(e=>e.includes("Circulation share")));
+});
+
+test("opposite road swaps all cardinal access edges without changing plot width, depth or disconnected gates",()=>{
+ for(const side of ["N","E","S","W"] as const){
+  const opposite=oppositeRoadSide(side);
+  assert.notEqual(opposite,side);
+  assert.equal(oppositeRoadSide(opposite),side);
+  const before=generateRoadPlans(brief({roadSide:side})).plans;
+  const after=generateRoadPlans(brief({roadSide:opposite})).plans;
+  assert.equal(before.length,2);assert.equal(after.length,2);
+  const dims=siteDimensions(18,50,side);
+  const start=roadSegment(18,50,side);
+  const next=roadSegment(18,50,opposite);
+  if(side==="N"||side==="S")assert.equal(Math.abs(start.start.y-next.start.y),dims.d);
+  else assert.equal(Math.abs(start.start.x-next.start.x),dims.w);
+  for(const plan of after){
+   assert.deepEqual(validatePlan(plan),[]);
+   assert.equal(plan.plot.roadSide,opposite);
+   assert.equal(plan.gate.side,"front");
+   assert.equal(plan.rooms.find(r=>r.kind==="parking")?.y,0);
+  }
+ }
+});
+test("plot changes update model identity and actual enclosed footprints, not just image labels",()=>{
+ const small=generateRoadPlans(brief({widthFt:18,depthFt:50})).plans[0];
+ const large=generateRoadPlans(brief({widthFt:24,depthFt:52})).plans[0];
+ assert.ok(small&&large,"both examples must be feasible");
+ assert.notEqual(small.id,large.id);
+ assert.equal(small.plot.widthFt,18);assert.equal(large.plot.widthFt,24);
+ assert.equal(small.plot.depthFt,50);assert.equal(large.plot.depthFt,52);
+ assert.notEqual(planMetrics(small).roomFloorSqFt,planMetrics(large).roomFloorSqFt);
+ assert.deepEqual(validatePlan(large),[]);
 });
