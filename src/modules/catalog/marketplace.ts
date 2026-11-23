@@ -1,6 +1,7 @@
 import { catalogCategories } from "@/modules/catalog/catalog";
 
 export type DemoProduct = {
+  images?: string[];
   slug: string;
   category: string;
   name: string;
