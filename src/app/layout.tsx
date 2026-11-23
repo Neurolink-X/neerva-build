@@ -10,7 +10,7 @@ const isIndexable = publicIndexingEnabled(process.env);
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: "NEERVA BUILD — Construction Materials & Home Planning", template: "%s | NEERVA BUILD" },
-  description: "Compare construction material specifications, request private dealer quotations and plan your home with NEERVA BUILD. Starting in Kanpur, open to other cities.",
+  description: "Plan your dream home and explore Indian construction materials with NEERVA BUILD. Compare specifications and prepare honest quote drafts; real dealer supply is confirmed locally.",
   applicationName: "NEERVA BUILD",
   manifest: "/manifest.webmanifest",
   openGraph: {

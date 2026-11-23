@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import {SiteFooter} from "@/components/site-chrome";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
 import {planMetrics,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
@@ -146,5 +147,5 @@ export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
     </>}
    </div>
   </div>
- </main>;
+ <SiteFooter/></main>;
 }

@@ -1,0 +1,37 @@
+.nstudio-landing{color:#203b2e;background:#f6f5f0;overflow-x:clip}
+.nstudio-landing *{box-sizing:border-box}
+.nstudio-hero,.nstudio-start,.nstudio-choices,.nstudio-reality{max-width:1440px;margin:auto}
+.nstudio-hero{padding:clamp(28px,4vw,60px) clamp(16px,5vw,68px);display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:clamp(22px,5vw,70px);align-items:center}
+.nstudio-intro,.nstudio-photo{min-width:0}
+.nstudio-intro h1{font:400 clamp(37px,5.4vw,74px)/1.02 Georgia,serif;letter-spacing:-.04em;margin:17px 0 21px}
+.nstudio-intro h1 em{font-style:normal;color:#b35737}
+.nstudio-intro>p:not(.eyebrow){max-width:55ch;font-size:clamp(14px,1.4vw,18px);line-height:1.75;color:#566959}
+.nstudio-hero-features{display:flex;flex-wrap:wrap;gap:9px;margin-top:22px}
+.nstudio-hero-features span{border:1px solid #c4d7c4;border-radius:50px;background:#e7eee3;padding:9px 12px;font-size:12px;font-weight:750}
+.nstudio-photo{position:relative;aspect-ratio:1.2;overflow:hidden;border-radius:20px;background:#b8c3bb;box-shadow:0 20px 65px #243c2d20}
+.nstudio-photo img{object-fit:cover}
+.nstudio-photo span{position:absolute;left:12px;right:12px;bottom:12px;color:white;background:#163126d9;font-size:11px;line-height:1.4;border-radius:9px;padding:10px 12px}
+.nstudio-start{padding:clamp(18px,4vw,54px) clamp(16px,5vw,68px);display:grid;grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr);gap:clamp(20px,4vw,54px);align-items:start;border-top:1px solid #dce2d7}
+.nstudio-start h2,.nstudio-choices h2{font:400 clamp(30px,3.6vw,46px)/1.1 Georgia,serif;letter-spacing:-.03em}
+.nstudio-start>div>p:not(.eyebrow){font-size:15px;color:#536555;line-height:1.7;max-width:48ch}
+.nstudio-start-form{min-width:0;padding:clamp(17px,3vw,30px);background:#fff;border-radius:18px;border:1px solid #d5e1d7;box-shadow:0 12px 35px #243b2d0b}
+.nstudio-start-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.nstudio-start-grid label{min-width:0;display:grid;gap:7px;font-size:13px;font-weight:750;color:#304b38}
+.nstudio-start-grid input,.nstudio-start-grid select{min-width:0;width:100%;min-height:49px;border:1px solid #abc0af;background:white;border-radius:10px;padding:10px 12px;font-size:16px;color:#1f3b2d}
+.nstudio-start-form>button{width:100%;min-height:51px;border:0;border-radius:10px;margin:18px 0 10px;background:#254c37;color:#fff;padding:11px 16px;font-size:15px;font-weight:800;cursor:pointer}
+.nstudio-start-form>small{display:block;font-size:12px;line-height:1.65;color:#687566}
+.nstudio-error{color:#8c351d;background:#ffefe8;padding:10px;border-radius:8px;font-size:13px}
+.nstudio-choices{padding:clamp(35px,5vw,75px) clamp(16px,5vw,68px)}
+.nstudio-choice-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.nstudio-choice-grid article{border:1px solid #d8e3d8;background:#fffdfa;padding:clamp(19px,2.3vw,27px);border-radius:16px;display:flex;flex-direction:column;gap:11px;min-width:0}
+.nstudio-choice-grid article>span{font-size:13px;color:#ba6040;font-weight:800}
+.nstudio-choice-grid h3{font:400 clamp(21px,2.1vw,28px)/1.22 Georgia,serif;margin:0}
+.nstudio-choice-grid p{font-size:13px;line-height:1.65;color:#52695a;flex:1;margin:0}
+.nstudio-choice-grid a{display:inline-flex;align-items:center;min-height:44px;font-size:13px;font-weight:800;color:#23523a;text-decoration:underline;text-underline-offset:4px}
+.nstudio-reality{margin:0 auto clamp(30px,5vw,65px);padding:clamp(20px,3vw,34px) clamp(22px,4vw,48px);background:#e5ece4;border-radius:16px;max-width:calc(1440px - 120px)}
+.nstudio-reality strong{font-size:15px}
+.nstudio-reality p{font-size:13px;line-height:1.7;color:#496450}
+.nstudio-reality a{display:inline-flex;min-height:44px;align-items:center;font-size:13px;font-weight:750;color:#254d38}
+.nstudio-landing :is(input,select,button,a):focus-visible{outline:3px solid #b75f3a;outline-offset:3px}
+@media(max-width:920px){.nstudio-hero,.nstudio-start{grid-template-columns:1fr}.nstudio-photo{aspect-ratio:1.6;max-height:420px}.nstudio-choice-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.nstudio-hero{padding:30px 16px 19px}.nstudio-start{padding:27px 16px}.nstudio-choices{padding:28px 16px}.nstudio-choice-grid{grid-template-columns:1fr}.nstudio-start-grid{grid-template-columns:1fr}.nstudio-intro h1{font-size:clamp(35px,10vw,52px)}.nstudio-photo{aspect-ratio:1.26}.nstudio-reality{border-radius:0;margin-bottom:0;padding:24px 18px}.nstudio-start-form{padding:17px}}

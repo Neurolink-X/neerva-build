@@ -11,8 +11,8 @@ import {rankStudioDesigns,type PlotBrief} from "@/modules/studio/fit";
 type Language="en"|"hi";
 const copy={
  en:{
- eyebrow:"MATERIALS · BRANDS · KANPUR FIRST",
- title1:"Construction materials.",title2:"Clear specs. Better decisions.",subhead:"Discover cement, TMT, bricks, sand and pipes by brand and grade. Prepare an itemised material request; pricing and inventory need verification.",
+ eyebrow:"BUILT FOR INDIA · BUILT FOR EVERY DREAM",
+ title1:"Build your dream home.",title2:"Build a stronger India.",subhead:"Every great India begins with strong foundations. Explore materials, plan your plot and compare clear specifications—without hidden cost surprises or false stock promises.",
  design:"Plan my home",designDesc:"Floor plans and colours",visual:"Browse material brands",visualDesc:"Compare grades, sizes and packs",quote:"Prepare material quote",quoteDesc:"Final offer needs verification",
  search:"Search construction materials",searchHint:"Cement, TMT, bricks or pipes",searchGo:"Search",
  trust1:"Clear material specifications",trust2:"Dealer status shown honestly",trust3:"Review charges before accepting",
@@ -32,8 +32,8 @@ const copy={
  langButton:"हिन्दी",location:"Service city",custom:"Enter your city",cityConfirm:"Set city",cityCancel:"Cancel",cityInfo:"Coverage will be confirmed before an order.",categories:"Popular categories",emptyCity:"Enter a city name to continue",
  },
  hi:{
- eyebrow:"निर्माण सामग्री · कानपुर से शुरुआत",
- title1:"निर्माण सामग्री खोजें।",title2:"ब्रांड व कीमत समझें।",subhead:"सीमेंट, सरिया, ईंट, पाइप और अन्य सामग्री का सही ग्रेड व नाप देखें। ऑर्डर से पहले सप्लायर और कीमत की पुष्टि आवश्यक है।",
+ eyebrow:"मेरा घर · विकसित भारत का सपना",
+ title1:"हर घर मजबूत बने।",title2:"भारत का कल बेहतर बने।",subhead:"अपने सपनों के घर के लिए सही नक्शा, सरिया, सीमेंट और अन्य सामग्री समझें। सभी शुल्क और सप्लायर की पुष्टि के बाद ही आगे बढ़ें।",
  design:"घर का प्लान बनाएं",designDesc:"प्लान और रंग की जानकारी",visual:"सामग्री और ब्रांड देखें",visualDesc:"ग्रेड, नाप और पैक",quote:"कोटेशन तैयार करें",quoteDesc:"ऑर्डर से पहले पुष्टि",
  search:"निर्माण सामग्री खोजें",searchHint:"सीमेंट, सरिया, ईंट या पाइप",searchGo:"खोजें",
  trust1:"सामग्री की पूरी जानकारी",trust2:"डीलर की स्थिति स्पष्ट",trust3:"स्वीकार करने से पहले सभी शुल्क देखें",
@@ -88,8 +88,6 @@ const popular=[["cement","/materials/cement"],["TMT","/materials/steel"],["brick
 
 export function PremiumHome(){
  const [lang,setLang]=useState<Language>("en");
- const [city,setCity]=useState("Kanpur");
- const [cityCustom,setCityCustom]=useState(false),[cityInput,setCityInput]=useState("");
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
  const [plot,setPlot]=useState("all"),[designStyle,setDesignStyle]=useState("all");
  const [customWidth,setCustomWidth]=useState(""),[customDepth,setCustomDepth]=useState("");
@@ -113,21 +111,17 @@ export function PremiumHome(){
  useEffect(()=>{const id=window.setTimeout(()=>{try{const l=localStorage.getItem("neerva-home-lang");if(l==="en"||l==="hi")setLang(l);const r=JSON.parse(localStorage.getItem("neerva-home-search-v1")||"[]");if(Array.isArray(r))setRecent(r.filter((x):x is string=>typeof x==="string"&&x.length<65).slice(0,4));}catch{/* Private browsing: state remains in memory. */}},0);return()=>clearTimeout(id)},[]);
  function language(){const next=lang==="en"?"hi":"en";setLang(next);try{localStorage.setItem("neerva-home-lang",next)}catch{/* Language still changes for this session */}}
  function submitSearch(event:FormEvent<HTMLFormElement>){const trimmed=query.trim();if(!trimmed){event.preventDefault();return;}const next=[trimmed,...recent.filter(x=>x.toLowerCase()!==trimmed.toLowerCase())].slice(0,4);setRecent(next);try{localStorage.setItem("neerva-home-search-v1",JSON.stringify(next))}catch{/* Optional search history */}}
- function pickCity(value:string){if(value==="custom"){setCityCustom(true);return;}setCityCustom(false);setCity(value);}
- function setOtherCity(event:FormEvent<HTMLFormElement>){event.preventDefault();const cleaned=cityInput.trim().replace(/\s+/g," ").slice(0,60);if(cleaned.length>=2){setCity(cleaned);setCityCustom(false)}}
  return <main className="nbh" id="top">
-  <div className="nbh-ribbon"><span>NEERVA BUILD / INDIA</span><span>{t.cityNote}</span></div>
+  <div className="nbh-ribbon"><span>{lang==="hi"?"हर घर मजबूत · विकसित भारत का सपना":"ONE DREAM. MANY HOMES. STRONGER INDIA."}</span><span>{lang==="hi"?"देशभर के बिल्डर्स के लिए":"Made for India’s builders"}</span></div>
   <header className="nbh-header">
    <Link className="nbh-logo" href="/" aria-label="NEERVA BUILD home"><span className="nbh-logomark">N</span><span>NEERVA <i>BUILD</i></span></Link>
-   <nav className="nbh-nav" aria-label="Primary navigation"><Link href="/materials">{t.navMaterials}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/blog">{t.navGuides}</Link></nav>
+   <nav className="nbh-nav" aria-label="Primary navigation"><Link href="/materials">{t.navMaterials}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/blog">{t.navGuides}</Link></nav><details className="nbh-mobile-menu"><summary aria-label={lang==="hi"?"नेविगेशन मेन्यू":"Open navigation menu"}>{lang==="hi"?"मेन्यू":"Menu"}</summary><nav aria-label="Mobile navigation"><Link href="/materials">{t.navMaterials}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/brands">Brands</Link><Link href="/install">Install app</Link><Link href="/account">Account</Link><Link href="/basket">Material list</Link><Link href="/blog">{t.navGuides}</Link></nav></details>
    <div className="nbh-header-actions">
-    <label className="nbh-city"><Icon name="location"/><span className="nbh-sr">{t.location}</span><select aria-label={t.location} value={["Kanpur","Noida"].includes(city)?city:"custom"} onChange={e=>pickCity(e.target.value)}><option value="Kanpur">Kanpur</option><option value="Noida">Noida</option><option value="custom">{["Kanpur","Noida"].includes(city)?"Other city":city}</option></select></label>
     <Link className="nbh-install-header" href="/install" aria-label={lang==="hi"?"ऐप इंस्टॉल कैसे करें":"How to install the NEERVA BUILD app"}>{lang==="hi"?"ऐप":"Install"}</Link><Link className="nbh-icon-link" href="/account" aria-label={lang==="hi"?"अकाउंट":"Account"}><Icon name="home"/></Link>
     <Link className="nbh-icon-link" href="/basket" aria-label={lang==="hi"?"सामग्री सूची":"Material list"}><Icon name="cart"/></Link>
     <button className="nbh-language" type="button" onClick={language}>{t.langButton}</button>
    </div>
   </header>
-  {cityCustom&&<form className="nbh-city-form" onSubmit={setOtherCity}><label>{t.custom}<input autoFocus required minLength={2} maxLength={60} value={cityInput} onChange={e=>setCityInput(e.target.value)} placeholder="Lucknow" /></label><div><button type="submit">{t.cityConfirm}</button><button type="button" onClick={()=>setCityCustom(false)}>{t.cityCancel}</button></div><small>{t.cityInfo}</small></form>}
   <section className="nbh-hero" aria-labelledby="nbh-h1">
    <div className="nbh-hero-copy">
     <p className="nbh-eyebrow"><span className="nbh-dot"/> {t.eyebrow}</p>
@@ -135,7 +129,7 @@ export function PremiumHome(){
     <p className="nbh-sub">{t.subhead}</p>
     <div className="nbh-journeys">
      <Link className="nbh-journey nbh-primary" href="/materials"><span className="nbh-jicon"><Icon name="cart"/></span><span><strong>{t.visual}</strong><small>{t.visualDesc}</small></span><Icon name="arrow"/></Link>
-     <Link className="nbh-journey" href="/design-studio/fit"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
+     <Link className="nbh-journey" href="/design-studio"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
      <Link className="nbh-journey" href="/quotes"><span className="nbh-jicon"><Icon name="file"/></span><span><strong>{t.quote}</strong><small>{t.quoteDesc}</small></span><Icon name="arrow"/></Link>
     </div>
     <form className="nbh-search" action="/materials" method="get" onSubmit={submitSearch} role="search"><Icon name="search"/><input aria-label={t.search} name="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.searchHint} maxLength={80}/><button type="submit">{t.searchGo}</button></form>
@@ -145,7 +139,7 @@ export function PremiumHome(){
   <label>{lang==="hi"?"सामग्री":"Material"}<input required minLength={3} maxLength={180} name="material" placeholder="e.g. UltraTech PPC 50 kg"/></label>
   <label>{lang==="hi"?"मात्रा":"Quantity"}<input required type="number" min=".001" max="1000000" step=".001" defaultValue="10" name="quantity"/></label>
   <label>{lang==="hi"?"पिनकोड":"Pincode"}<input required name="pincode" inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} placeholder="208001"/></label>
-  <input type="hidden" name="city" value={city}/><button type="submit">{lang==="hi"?"ड्राफ्ट तैयार करें →":"Prepare request →"}</button>
+  <label>{lang==="hi"?"डिलीवरी शहर":"Delivery city"}<input required minLength={2} maxLength={80} name="city" placeholder={lang==="hi"?"जैसे लखनऊ":"e.g. Lucknow"} autoComplete="address-level2"/></label><button type="submit">{lang==="hi"?"ड्राफ्ट तैयार करें →":"Prepare request →"}</button>
  </div>
  <small>Draft only. No stock, price, order or delivery is confirmed.</small>
 </form>
@@ -194,7 +188,7 @@ export function PremiumHome(){
    </div>
   </section>
   <section className="nbh-section nbh-work"><div className="nbh-section-head"><div><p className="nbh-eyebrow">04 / A CLEARER JOURNEY</p><h2>{t.works}</h2><p>{t.worksDesc}</p></div></div><div className="nbh-steps">{([[t.step1,t.step1Desc],[t.step2,t.step2Desc],[t.step3,t.step3Desc],[t.step4,t.step4Desc]] as const).map(([title,description],i)=><div key={title}><span>{String(i+1).padStart(2,"0")}</span><h3>{title}</h3><p>{description}</p></div>)}</div></section>
-  <section className="nbh-section nbh-offers"><div className="nbh-section-head"><div><p className="nbh-eyebrow">05 / TRANSPARENT PRICING</p><h2>{t.offers}</h2><p>{t.offerEmpty}</p></div></div><Link className="nbh-section-link" href="/materials">{t.navMaterials} <Icon name="arrow"/></Link></section>
+  <section className="nbh-section nbh-offers"><div className="nbh-section-head"><div><p className="nbh-eyebrow">05 / BUY SMARTER</p><h2>{lang==="hi"?"केवल बैग का रेट नहीं, पूरा खर्च देखें":"The cheapest bag isn't always the cheapest delivery."}</h2><p>{lang==="hi"?"डीलर से GST, फ्रेट, उतारने का खर्च, डिलीवरी और वैधता अलग-अलग पूछें।":"Check the total—not just the unit price. Compare GST, freight, unloading, delivery date and the offer's real validity."}</p></div><Link href="/quotes" className="nbh-section-link">{lang==="hi"?"पूरा कोटेशन बनाएं":"Prepare an itemised request"} <Icon name="arrow"/></Link></div><div className="nbh-cost-trust"><span>✓ {lang==="hi"?"सही ग्रेड व मात्रा":"Grade & quantity"}</span><span>✓ GST + freight + unloading</span><span>✓ {lang==="hi"?"डिलीवरी का समय":"Delivery commitment"}</span><span>✓ {lang==="hi"?"लिखित ऑफर वैधता":"Written offer validity"}</span></div><p className="nbh-fineprint">{t.offerEmpty} {lang==="hi"?"बिना सत्यापित ऑफर के नकली छूट या टाइमर नहीं दिखाते।":"No fake discount timer or invented limited-stock claim."}</p></section>
   <section className="nbh-section nbh-pros"><div className="nbh-section-head"><div><p className="nbh-eyebrow">06 / PROFESSIONALS</p><h2>{t.pros}</h2></div></div><div className="nbh-pro-grid"><div><Icon name="building"/><h3>{t.dealer}</h3><p>{t.dealerDesc}</p><Link href="/account">{t.learn} <Icon name="arrow"/></Link></div><div><Icon name="list"/><h3>{t.contractor}</h3><p>{t.contractorDesc}</p><Link href="/quotes">{t.prepare} <Icon name="arrow"/></Link></div></div></section>
   <section className="nbh-section nbh-faq"><h2>{t.faq}</h2>{([[t.faq1,t.ans1],[t.faq2,t.ans2],[t.faq3,t.ans3],[t.faq4,t.ans4],[t.faq5,t.ans5],[t.faq6,t.ans6],[t.faq7,t.ans7]] as const).map(([q,a])=><details key={q}><summary>{q}</summary><p>{a}</p></details>)}</section>
   <footer className="nbh-footer nbh-footer-expanded"><div className="nbh-footer-brand"><Link className="nbh-logo" href="/"><span className="nbh-logomark">N</span><span>NEERVA <i>BUILD</i></span></Link><p>Plan confidently. Compare materials. Build with clarity.</p><p className="nbh-fineprint">{t.foot}</p></div><nav aria-label="Footer design and planning"><strong>Plan a home</strong><Link href="/design-studio/fit">Custom plot fit</Link><Link href="/design-studio/library">Browse concepts</Link><Link href="/design-studio/workbench">Concept workbench</Link><Link href="/design-studio/visualizer">Exterior colour studio</Link></nav><nav aria-label="Footer marketplace"><strong>Materials & services</strong><Link href="/materials">Construction materials</Link><Link href="/basket">Material list</Link><Link href="/quotes">Prepare a quote</Link><Link href="/account">Dealer / professional access</Link></nav><nav aria-label="Footer resources"><strong>Resources</strong><Link href="/blog">Building guides</Link><Link href="/install">Install the app</Link><Link href="/privacy">Privacy policy</Link><Link href="/terms">Terms & limitations</Link><Link href="/returns">Returns & refunds</Link><Link href="/account">Account and help</Link><Link href="/design-studio/visualizer">Paint my own photo</Link></nav><div className="nbh-footer-bottom"><small>© 2026 NEERVA BUILD · Made for builders in India</small><small>Concept plans require local engineering review and approvals. Stock and offers subject to dealer confirmation.</small></div></footer>

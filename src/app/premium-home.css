@@ -134,3 +134,17 @@
 .nbh-brand-links>a:focus-visible{outline:3px solid #be7855;outline-offset:3px}
 @media(max-width:720px){.nbh-brands-strip{grid-template-columns:minmax(0,1fr);gap:14px;padding:20px 16px}.nbh-brand-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.nbh-brand-links>a{justify-content:center}.nbh-brand-links .nb-brand-mark,.nbh-brand-links .nb-brand-name{width:100%;min-width:0;max-width:100%;font-size:10px}}
 @media(max-width:360px){.nbh-brand-links{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* Neerva India's national-home initiative · no location control in header. */
+.nbh-mobile-menu{display:none}
+.nbh-cost-trust{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:17px 0}
+.nbh-cost-trust span{display:flex;align-items:center;justify-content:center;text-align:center;background:#e9f0e7;border:1px solid #cddfce;min-height:53px;padding:12px;border-radius:11px;color:#244a33;font-weight:750;font-size:13px}
+.nbh-quick-fields{grid-template-columns:repeat(3,minmax(0,1fr))}
+.nbh-quick-fields label{min-width:0}
+.nbh-quick-fields :is(input,select){width:100%;max-width:100%;min-width:0;min-height:46px;font-size:16px}
+.nbh-ribbon{min-width:0}
+.nbh-ribbon span{overflow-wrap:anywhere}
+@media(max-width:960px){.nbh-nav{display:none}.nbh-mobile-menu{display:block;order:2;flex:none}.nbh-header{gap:12px}.nbh-mobile-menu summary{display:flex;align-items:center;justify-content:center;min-height:44px;padding:9px 13px;cursor:pointer;border:1px solid #cadacb;border-radius:10px;background:#fff;color:#244b37;font-size:13px;font-weight:850;list-style:none}.nbh-mobile-menu summary::-webkit-details-marker{display:none}.nbh-mobile-menu nav{position:absolute;right:10px;top:calc(100% - 1px);z-index:50;width:min(90vw,340px);max-height:75vh;overflow:auto;background:#fffefa;box-shadow:0 18px 42px #16342437;border:1px solid #cadbcc;border-radius:15px;padding:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.nbh-mobile-menu nav a{display:flex;align-items:center;min-height:46px;min-width:0;white-space:normal;padding:10px;font-size:13px;font-weight:750;border-radius:7px;background:#f7f9f5}.nbh-cost-trust{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.nbh-header{justify-content:space-between;gap:7px}.nbh-logo{margin-right:auto}.nbh-mobile-menu{order:2}.nbh-header-actions{order:1;flex:none}.nbh-header-actions>a[aria-label="Material list"]{display:none}.nbh-mobile-menu summary{padding:9px 10px;font-size:12px}.nbh-quick-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.nbh-quick-fields label:first-child{grid-column:auto}}
+@media(max-width:390px){.nbh-header{padding-inline:9px}.nbh-logo{font-size:10px}.nbh-header-actions .nbh-icon-link{min-width:33px}.nbh-header-actions{gap:0}.nbh-mobile-menu summary{font-size:11px;padding:8px}.nbh-cost-trust{grid-template-columns:1fr 1fr;gap:6px}.nbh-cost-trust span{font-size:11px;padding:9px;min-height:56px}.nbh-quick-fields{grid-template-columns:1fr}.nbh-quick-fields label:first-child{grid-column:1/-1}}
