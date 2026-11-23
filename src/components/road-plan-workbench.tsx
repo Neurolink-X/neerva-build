@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {generateRoadPlans} from "@/modules/studio/road-generator";
 import {planMetrics,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
@@ -21,6 +22,20 @@ export function RoadPlanWorkbench(){
  const [brief,setBrief]=useState<PlanBrief>(initial),[chosen,setChosen]=useState(0);
  const [floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
  const [threeReady,setThreeReady]=useState(false);
+ const [saving,setSaving]=useState(false),[saveInfo,setSaveInfo]=useState("");
+ async function saveDraft(){
+  if(!draft||saving)return;
+  const client=createNeervaBrowserClient();
+  if(!client){setSaveInfo("Account service is not configured. Your concept is not saved.");return;}
+  const session=await client.auth.getSession();
+  const token=session.data.session?.access_token;
+  if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
+  setSaving(true);setSaveInfo("");
+  try{const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant}),cache:"no-store"});
+   const body=await response.json() as {project?:{id?:string};error?:string};
+   setSaveInfo(response.ok&&body.project?.id?"Private concept saved. Not a construction-approved plan.":(body.error??"Project was not saved."));
+  }catch{setSaveInfo("Network issue. Your concept was not confirmed saved.");}finally{setSaving(false)}
+ }
  useEffect(()=>{const frame=window.requestAnimationFrame(()=>setThreeReady(true));return()=>window.cancelAnimationFrame(frame)},[]);
  const result=useMemo(()=>generateRoadPlans(brief),[brief]);
  const draft=result.plans[chosen]??result.plans[0]??null;
@@ -80,6 +95,7 @@ export function RoadPlanWorkbench(){
        onClick={()=>{setChosen(i);setFloor(0)}}><strong>{i+1}. {v.variant==="parking-left"?"Parking left":"Parking right"}</strong>
        <span>{v.score.toFixed(0)}/90 concept score</span></button>)}</div>
      {result.plans.length<3&&<p className="nroad-small" role="status">These {result.plans.length} options are mirror arrangements, not independently different architectural topologies. A third unverified layout is not shown.</p>}
+     <div className="nroad-save"><button type="button" disabled={saving} onClick={()=>void saveDraft()}>{saving?"Saving…":str("Save this plot-specific concept privately","अपना नक्शा सुरक्षित सेव करें")}</button>{saveInfo&&<p role="status">{saveInfo} {saveInfo.startsWith("Sign in")&&<Link href="/account">Sign in →</Link>}</p>}</div>
      <div className="nroad-head"><h2>{str("Plan & room dimensions","प्लान और कमरों का नाप")}</h2><span>Road · {plan.plot.roadSide}</span></div>
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{i===0?"Ground floor":"First floor"}</button>)}
