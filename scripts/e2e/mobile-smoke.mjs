@@ -31,6 +31,34 @@ async function main(){
     if(v.w===360||v.w===430)await page.screenshot({path:path.join("test-results/mobile",v.w+"-"+(route.replaceAll("/","-")||"home")+".png"),fullPage:true,animations:"disabled"});
    }
    if(v.w===390){
+    // PWA is installable without storing private pages or fabricating offline orders.
+    const manifest=await page.request.get(base+"/manifest.webmanifest");
+    assert.equal(manifest.status(),200,"manifest route");
+    const appManifest=await manifest.json();
+    assert.equal(appManifest.name?.includes("NEERVA BUILD"),true,"PWA name");
+    assert.ok(appManifest.icons?.some(icon=>icon.purpose?.includes("maskable")),"PWA maskable icon");
+    for(const asset of ["/icon","/apple-icon"]){
+      const response=await page.request.get(base+asset);
+      assert.equal(response.status(),200,asset+" PNG route");
+      assert.match(response.headers()["content-type"]??"",/image\/png/,asset+" must be real PNG");
+    }
+    const worker=await page.request.get(base+"/sw.js");
+    assert.equal(worker.status(),200,"SW registration file");
+    assert.match(await worker.text(),/api\|account\|admin\|dealer/,"private navigation is excluded from offline caching");
+    const offline=await page.request.get(base+"/offline.html");
+    assert.equal(offline.status(),200,"safe offline page");
+    assert.match(await offline.text(),/No order or payment has been submitted offline/);
+    const account=await page.goto(base+"/account",{waitUntil:"networkidle"});
+    assert.equal(account?.status(),200,"authenticated account route");
+    assert.equal(await page.getByRole("heading",{name:/Access your projects and requests/}).count(),1,"account page must not show prelaunch placeholder");
+    assert.equal(await page.getByRole("button",{name:"Sign in"}).count(),1,"account sign-in UI exists");
+    const unauth=await page.request.post(base+"/api/rfqs",{data:{idempotencyKey:"f1d3068d-3f5f-4e5c-a14e-2546fb9902ed"}});
+    assert.equal(unauth.status(),401,"anonymous RFQ POST must fail before validation");
+    await page.goto(base+"/",{waitUntil:"networkidle"});
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"do not show install prompt on first paint");
+    // No real install API, so no fake installation success is emitted by smoke tests.
+   }
+   if(v.w===390){
     // Business-flow smoke: category -> product -> local planning list -> quote.
     const cat=await page.goto(base+"/materials/steel",{waitUntil:"networkidle"});
     assert.equal(cat?.status(),200,"steel category route");
@@ -98,6 +126,6 @@ async function main(){
   await req.close();
  }finally{await browser.close()}
  if(failures.length){console.error("Mobile regression failed:\n"+failures.join("\n"));process.exitCode=1}
- else console.log("Mobile browser smoke: five viewports, material-to-quote navigation, editable colour preview, custom 18×50/20×45 plot massing, construction reveal, no browser errors, protected API denials.");
+ else console.log("Mobile browser smoke: five viewports, private RFQ API denial and privacy-first PWA, material-to-quote navigation, editable colour preview, custom 18×50/20×45 plot massing, construction reveal, no browser errors, protected API denials.");
 }
 main().catch(error=>{console.error(error);process.exitCode=1});
