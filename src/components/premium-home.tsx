@@ -10,9 +10,9 @@ import {rankStudioDesigns,type PlotBrief} from "@/modules/studio/fit";
 type Language="en"|"hi";
 const copy={
  en:{
- eyebrow:"PLAN · VISUALISE · SOURCE",
- title1:"From your plot.",title2:"To a home worth building.",subhead:"Explore home plans, visualise construction and prepare a clear material list.",
- design:"Design my home",designDesc:"Find concepts that fit your plot",visual:"Shape my house plan",visualDesc:"Explore rooms and building layout",quote:"Get material quote",quoteDesc:"Prepare an itemised request",
+ eyebrow:"MATERIALS · BRANDS · KANPUR FIRST",
+ title1:"Construction materials.",title2:"Clear specs. Better decisions.",subhead:"Discover cement, TMT, bricks, sand and pipes by brand and grade. Prepare an itemised material request; pricing and inventory need verification.",
+ design:"Plan my home",designDesc:"Floor plans and colours",visual:"Browse material brands",visualDesc:"Compare grades, sizes and packs",quote:"Prepare material quote",quoteDesc:"Final offer needs verification",
  search:"Search construction materials",searchHint:"Cement, TMT, bricks or pipes",searchGo:"Search",
  trust1:"Clear material specifications",trust2:"Dealer status shown honestly",trust3:"Review charges before accepting",
  category:"Explore materials",catDesc:"Choose a category to compare specifications. Dealer stock and prices appear only after verification.",options:"See options",paintLabel:"Explore finishes",
@@ -31,9 +31,9 @@ const copy={
  langButton:"हिन्दी",location:"Service city",custom:"Enter your city",cityConfirm:"Set city",cityCancel:"Cancel",cityInfo:"Coverage will be confirmed before an order.",categories:"Popular categories",emptyCity:"Enter a city name to continue",
  },
  hi:{
- eyebrow:"प्लान · रंग · निर्माण सामग्री",
- title1:"अपने प्लॉट से शुरुआत।",title2:"सपनों का घर बनाइए।",subhead:"प्लान देखें, घर का निर्माण समझें और सामग्री की सूची तैयार करें।",
- design:"घर का डिज़ाइन बनाएं",designDesc:"अपने प्लॉट के लिए प्लान देखें",visual:"घर का लेआउट बनाएं",visualDesc:"कमरों और आकार के विकल्प देखें",quote:"सामग्री का कोटेशन",quoteDesc:"सामग्री की सूची तैयार करें",
+ eyebrow:"निर्माण सामग्री · कानपुर से शुरुआत",
+ title1:"निर्माण सामग्री खोजें।",title2:"ब्रांड व कीमत समझें।",subhead:"सीमेंट, सरिया, ईंट, पाइप और अन्य सामग्री का सही ग्रेड व नाप देखें। ऑर्डर से पहले सप्लायर और कीमत की पुष्टि आवश्यक है।",
+ design:"घर का प्लान बनाएं",designDesc:"प्लान और रंग की जानकारी",visual:"सामग्री और ब्रांड देखें",visualDesc:"ग्रेड, नाप और पैक",quote:"कोटेशन तैयार करें",quoteDesc:"ऑर्डर से पहले पुष्टि",
  search:"निर्माण सामग्री खोजें",searchHint:"सीमेंट, सरिया, ईंट या पाइप",searchGo:"खोजें",
  trust1:"सामग्री की पूरी जानकारी",trust2:"डीलर की स्थिति स्पष्ट",trust3:"स्वीकार करने से पहले सभी शुल्क देखें",
  category:"निर्माण सामग्री देखें",catDesc:"सामग्री की जानकारी और विकल्प देखें। सत्यापित स्टॉक या रेट उपलब्ध होने पर ही दिखेंगे।",options:"विकल्प देखें",paintLabel:"रंग चुनें",
@@ -77,8 +77,11 @@ const items=[
  {id:"cement",en:"Cement",hi:"सीमेंट",description:"Type, brand and bag size",descriptionHi:"प्रकार, ब्रांड और बैग",image:homeVisuals.cement,href:"/materials/cement"},
  {id:"bricks",en:"Bricks & blocks",hi:"ईंट और ब्लॉक",description:"Clay, fly ash and AAC",descriptionHi:"मिट्टी, फ्लाई ऐश, AAC",image:homeVisuals.bricks,href:"/materials/bricks-blocks"},
  {id:"pipes",en:"Pipes",hi:"पाइप",description:"Plumbing sizes and fittings",descriptionHi:"आकार और फिटिंग",image:homeVisuals.pipes,href:"/materials/plumbing"},
- {id:"paint",en:"Paint & finishes",hi:"पेंट और फिनिश",description:"Explore shades in the studio",descriptionHi:"रंग स्टूडियो में देखें",image:homeVisuals.paint,href:"/design-studio/visualizer"},
- {id:"electrical",en:"Electrical",hi:"इलेक्ट्रिकल",description:"Conduits and fittings",descriptionHi:"पाइप और फिटिंग",image:homeVisuals.electrical,href:"/materials/electrical"},
+ {id:"paint",en:"Paint & waterproofing",hi:"पेंट व वॉटरप्रूफिंग",description:"Coatings and finish systems",descriptionHi:"पेंट, प्राइमर और कोटिंग",image:homeVisuals.paint,href:"/materials/paint"},
+ {id:"electrical",en:"Electrical",hi:"इलेक्ट्रिकल",description:"Wiring, conduit and fittings",descriptionHi:"वायर और फिटिंग",image:homeVisuals.electrical,href:"/materials/electrical"},
+ {id:"aggregates",en:"Sand & aggregates",hi:"बालू, मौरंग व गिट्टी",description:"Location-based bulk quotation",descriptionHi:"लोकेशन के अनुसार कोटेशन",image:homeVisuals.aggregates,href:"/materials/aggregates"},
+ {id:"tiles",en:"Tiles & flooring",hi:"टाइल्स व फ्लोरिंग",description:"Size, finish and pack",descriptionHi:"नाप, फिनिश और पैक",image:homeVisuals.tiles,href:"/materials/tiles"},
+ {id:"hardware",en:"Hardware & adhesives",hi:"हार्डवेयर व एडहेसिव",description:"Fittings and fixings",descriptionHi:"फिटिंग और सामान",image:homeVisuals.hardware,href:"/materials/hardware"},
 ] as const;
 const popular=[["cement","/materials/cement"],["TMT","/materials/steel"],["bricks","/materials/bricks-blocks"],["pipes","/materials/plumbing"]] as const;
 
@@ -116,7 +119,7 @@ export function PremiumHome(){
   <div className="nbh-ribbon"><span>NEERVA BUILD / INDIA</span><span>{t.cityNote}</span></div>
   <header className="nbh-header">
    <Link className="nbh-logo" href="/" aria-label="NEERVA BUILD home"><span className="nbh-logomark">N</span><span>NEERVA <i>BUILD</i></span></Link>
-   <nav className="nbh-nav" aria-label="Primary navigation"><Link href="/design-studio">{t.navDesign}</Link><Link href="/materials">{t.navMaterials}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/blog">{t.navGuides}</Link></nav>
+   <nav className="nbh-nav" aria-label="Primary navigation"><Link href="/materials">{t.navMaterials}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/blog">{t.navGuides}</Link></nav>
    <div className="nbh-header-actions">
     <label className="nbh-city"><Icon name="location"/><span className="nbh-sr">{t.location}</span><select aria-label={t.location} value={["Kanpur","Noida"].includes(city)?city:"custom"} onChange={e=>pickCity(e.target.value)}><option value="Kanpur">Kanpur</option><option value="Noida">Noida</option><option value="custom">{["Kanpur","Noida"].includes(city)?"Other city":city}</option></select></label>
     <Link className="nbh-icon-link" href="/materials" aria-label={t.navMaterials}><Icon name="search"/></Link>
@@ -131,12 +134,22 @@ export function PremiumHome(){
     <h1 id="nbh-h1">{t.title1}<span>{t.title2}</span></h1>
     <p className="nbh-sub">{t.subhead}</p>
     <div className="nbh-journeys">
-     <Link className="nbh-journey nbh-primary" href="/design-studio/fit"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
-     <Link className="nbh-journey" href="/design-studio/workbench"><span className="nbh-jicon"><Icon name="building"/></span><span><strong>{t.visual}</strong><small>{t.visualDesc}</small></span><Icon name="arrow"/></Link>
+     <Link className="nbh-journey nbh-primary" href="/materials"><span className="nbh-jicon"><Icon name="cart"/></span><span><strong>{t.visual}</strong><small>{t.visualDesc}</small></span><Icon name="arrow"/></Link>
+     <Link className="nbh-journey" href="/design-studio/fit"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
      <Link className="nbh-journey" href="/quotes"><span className="nbh-jicon"><Icon name="file"/></span><span><strong>{t.quote}</strong><small>{t.quoteDesc}</small></span><Icon name="arrow"/></Link>
     </div>
     <form className="nbh-search" action="/materials" method="get" onSubmit={submitSearch} role="search"><Icon name="search"/><input aria-label={t.search} name="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.searchHint} maxLength={80}/><button type="submit">{t.searchGo}</button></form>
-    {suggestions.length>0?<div className="nbh-suggestions" aria-label="Search suggestions">{suggestions.map(item=><Link key={item.id} href={item.href}>{lang==="hi"?item.hi:item.en}<Icon name="arrow"/></Link>)}</div>:null}
+    <form className="nbh-quick-quote" action="/quotes" method="get">
+ <strong>{lang==="hi"?"जल्दी कोटेशन ड्राफ्ट तैयार करें":"Prepare a material enquiry in under one minute"}</strong>
+ <div className="nbh-quick-fields">
+  <label>{lang==="hi"?"सामग्री":"Material"}<input required minLength={3} maxLength={180} name="material" placeholder="e.g. UltraTech PPC 50 kg"/></label>
+  <label>{lang==="hi"?"मात्रा":"Quantity"}<input required type="number" min=".001" max="1000000" step=".001" defaultValue="10" name="quantity"/></label>
+  <label>{lang==="hi"?"पिनकोड":"Pincode"}<input required name="pincode" inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} placeholder="208001"/></label>
+  <input type="hidden" name="city" value={city}/><button type="submit">{lang==="hi"?"ड्राफ्ट तैयार करें →":"Prepare request →"}</button>
+ </div>
+ <small>Draft only. No stock, price, order or delivery is confirmed.</small>
+</form>
+{suggestions.length>0?<div className="nbh-suggestions" aria-label="Search suggestions">{suggestions.map(item=><Link key={item.id} href={item.href}>{lang==="hi"?item.hi:item.en}<Icon name="arrow"/></Link>)}</div>:null}
     <div className="nbh-chip-line"><span>{t.categories}</span>{popular.map(([name,href])=><Link key={name} href={href}>{name}</Link>)}</div>
     {recent.length>0&&<div className="nbh-recent"><small>{t.recent}</small>{recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>)}</div>}
    </div>
@@ -152,7 +165,7 @@ export function PremiumHome(){
   </section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
   <section className="nbh-section nbh-materials" id="materials"><div className="nbh-section-head"><div><p className="nbh-eyebrow">01 / MATERIALS</p><h2>{t.category}</h2><p>{t.catDesc}</p></div><Link href="/materials" className="nbh-section-link">{t.navMaterials} <Icon name="arrow"/></Link></div>
-   <div className="nbh-category-grid">{items.map(item=><Link href={item.href} className="nbh-material-card" key={item.id}><div className="nbh-material-image"><Image src={item.image} fill sizes="(max-width:600px) 48vw, (max-width:1000px) 30vw, 16vw" alt={"Illustrative construction and design photography for "+item.en} loading="lazy"/></div><div className="nbh-material-info"><h3>{lang==="hi"?item.hi:item.en}</h3><p>{lang==="hi"?item.descriptionHi:item.description}</p><span>{item.id==="paint"?t.paintLabel:t.options} <Icon name="arrow"/></span></div></Link>)}</div>
+   <div className="nbh-category-grid">{items.map(item=><Link href={item.href} className="nbh-material-card" key={item.id}><div className="nbh-material-image">{item.image?<Image src={item.image} fill sizes="(max-width:600px) 48vw, (max-width:1000px) 30vw, 16vw" alt={"Representative "+item.en+" category material photo, not verified branded SKU"} loading="lazy"/>:<div className="nbh-photo-pending" role="img" aria-label={item.en+" image pending"}>SKU photo pending review</div>}</div><div className="nbh-material-info"><h3>{lang==="hi"?item.hi:item.en}</h3><p>{lang==="hi"?item.descriptionHi:item.description}</p><span>{item.id==="paint"?t.paintLabel:t.options} <Icon name="arrow"/></span></div></Link>)}</div>
    <p className="nbh-fineprint">{t.disclaimer}</p>
   </section>
   <section className="nbh-section nbh-featured" id="designs"><div className="nbh-section-head"><div><p className="nbh-eyebrow">02 / HOME STUDIO</p><h2>{t.designs}</h2><p>{t.galleryDesc}</p></div><Link href="/design-studio/library" className="nbh-section-link">{t.gallery} <Icon name="arrow"/></Link></div>
