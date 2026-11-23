@@ -1,5 +1,5 @@
 "use client";
-import {useMemo,useState} from "react";
+import {useEffect,useMemo,useState} from "react";
 import Link from "next/link";
 import {studioDesigns,formatLevels} from "@/modules/studio/library";
 import {DESIGN_CITIES,designCityStatus,rankStudioDesigns,sqFtToGaj,toFeet,type PlotBrief,type PlotUnit,type Facing,validatePlotBrief} from "@/modules/studio/fit";
@@ -7,6 +7,15 @@ const dirs:Facing[]=["North","East","South","West"];
 const initial:PlotBrief={widthFt:20,depthFt:40,city:"Kanpur",facing:"North",roadSide:"North",bedrooms:2,floors:1,parking:true};
 export function StudioPlotFitFinder(){
  const [brief,setBrief]=useState<PlotBrief>(initial),[unit,setUnit]=useState<PlotUnit>("ft"),[width,setWidth]=useState("20"),[depth,setDepth]=useState("40"),[lang,setLang]=useState<"en"|"hi">("en"),[showAll,setShowAll]=useState(false);
+ useEffect(()=>{
+  // Home's custom plot inputs are transferred locally via the URL; never assume an exact plan exists.
+  const params=new URLSearchParams(window.location.search);
+  const w=Number(params.get("width")),d=Number(params.get("depth"));
+  if(!params.has("width")||!params.has("depth")||!Number.isFinite(w)||!Number.isFinite(d)||w<10||w>200||d<15||d>250)return;
+  setWidth(String(w));setDepth(String(d));
+  setBrief(current=>({...current,widthFt:w,depthFt:d}));
+ },[]);
+
  const update=<K extends keyof PlotBrief>(field:K,value:PlotBrief[K])=>{setBrief(p=>({...p,[field]:value}));setShowAll(false)};
  function updateDimension(field:"widthFt"|"depthFt",raw:string){field==="widthFt"?setWidth(raw):setDepth(raw);const n=Number(raw);update(field,raw.trim()===""?NaN:toFeet(n,unit));}
  function changeUnit(next:PlotUnit){setUnit(next);const w=Number.isFinite(brief.widthFt)?brief.widthFt*(next==="m"?.3048:1):NaN;const d=Number.isFinite(brief.depthFt)?brief.depthFt*(next==="m"?.3048:1):NaN;setWidth(Number.isFinite(w)?String(Number(w.toFixed(2))):"");setDepth(Number.isFinite(d)?String(Number(d.toFixed(2))):"");}
