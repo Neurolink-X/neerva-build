@@ -5,7 +5,8 @@ import Link from "next/link";
 import {generateRoadPlans} from "@/modules/studio/road-generator";
 import {planMetrics,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
-import {RoadPlanDiagram,RoadElevation} from "./road-plan-diagram";
+import {RoadElevation} from "./road-plan-diagram";
+import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 const Building3D=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{
  ssr:false,loading:()=> <p role="status" className="nroad-loading">Loading plan-matched 3D viewer… The 2D plan is available immediately.</p>
 });
@@ -77,7 +78,7 @@ export function RoadPlanWorkbench(){
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{i===0?"Ground floor":"First floor"}</button>)}
      </div>
-     <RoadPlanDiagram plan={plan} floor={floor}/>
+     <OrientedPlanDrawing plan={plan} floor={floor}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Touch orbit · concept-only</span></div>
      {design&&(threeReady?<Building3D key={plan.id} design={design} colour={shade.main} planModel={plan}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The legacy viewer simplifies wall thickness and stair construction; it is not verified CAD/BIM.</p>
