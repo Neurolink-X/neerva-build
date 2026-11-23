@@ -3,43 +3,23 @@ import {useState} from "react";
 import Image from "next/image";
 import type {DemoProduct} from "@/modules/catalog/marketplace";
 import {categoryImage} from "@/modules/catalog/public-products";
-import {productEvidence} from "@/modules/catalog/discovery";
-import {brandMediaFor} from "@/modules/catalog/brand-media";
-
-/** Exact manufacturer-image display is allowed only for reviewed LOCAL SKU media.
- * If a verified local photo, press reference or CDN sample is inaccessible, use
- * the next factual source or an explicit unavailable message; never substitute
- * the wrong packaging and never imply official partnership.
- */
+import {catalogPhotos} from "@/modules/catalog/catalog-photos";
+/** Card image: one factual badge, local first. No fake SKU imagery or unnecessary overlays. */
 export function isApprovedSkuPhoto(path:string):boolean{
- return /^\/images\/catalog\/sku\/[a-z0-9][a-z0-9/_-]{3,160}\.(?:webp|avif|png|jpe?g)$/i.test(path)
-  && !path.includes("..");
+ return /^\/images\/catalog\/sku\/[a-z0-9][a-z0-9/_-]{3,160}\.(?:webp|avif|png|jpe?g)$/i.test(path)&&!path.includes("..");
 }
-export function CatalogMaterialImage({category,name,compact=false,product}:{
- category:string;name:string;compact?:boolean;product?:DemoProduct
-}){
+export function CatalogMaterialImage({category,name,compact=false,product}:{category:string;name:string;compact?:boolean;product?:DemoProduct}){
  const [failed,setFailed]=useState<string[]>([]);
- const proof=product?productEvidence(product):null;
- const exact=proof?.actualPhoto&&product?.images?.find(isApprovedSkuPhoto);
- const media=product?brandMediaFor(product.brand):null;
- const referencePhoto=category==="cement"&&media&&"pressPhoto" in media?media.pressPhoto:null;
- const categoryPhoto=categoryImage(category);
- const sources=[exact||null,product?.referenceImage,referencePhoto,categoryPhoto].filter((src):src is string=>Boolean(src));
- const src=[...new Set(sources)].find(value=>!failed.includes(value))??null;
- const exactSelected=Boolean(src&&src===exact);
- const pressSelected=Boolean(src&&src===referencePhoto&&!exactSelected);
- const listingSelected=Boolean(src&&src===product?.referenceImage);
- const alt=listingSelected?`Product listing image for ${name}`:exactSelected? `Verified photo of ${name}`:
-  pressSelected?`Manufacturer media-kit cement packaging reference for ${product?.brand}; not the exact ${name} SKU`:
-  `Representative ${category.replaceAll("-"," ")} material photo; not the exact ${name} branded product`;
- return <div className={`catalog-material-image${compact?" compact":""}${listingSelected||pressSelected?" pack-photo":""}`}>
-  {src?<Image src={src} alt={compact?"":alt}
-    fill sizes="(max-width:680px) 100vw, (max-width:1100px) 50vw, 33vw"
-    quality={75} loading="lazy"
-    onError={()=>setFailed(old=>old.includes(src)?old:[...old,src])}/>:
-   <div className="catalog-image-awaiting" role="img" aria-label={`Photograph of ${name} unavailable`}>
-    <span>Material photo temporarily unavailable</span><small>Confirm exact product packaging and SKU with the dealer</small>
+ const media=product?catalogPhotos(product):[];
+ const sources=media.length?media:[{src:categoryImage(category),label:"Category photograph · not exact SKU",alt:"Representative "+category+" material photo",kind:"category" as const}];
+ const current=sources.find(x=>x.src&&!failed.includes(x.src));
+ const src=current?.src;
+ return <div className={"catalog-material-image"+(compact?" compact":"")+(current?.kind==="sku"||current?.kind==="listing"?" pack-photo":"")}>
+  {src?<Image src={src} alt={compact?"":current.alt} fill sizes="(max-width:680px) 100vw, (max-width:1100px) 50vw, 33vw"
+   quality={75} loading="lazy" onError={()=>setFailed(previous=>previous.includes(src)?previous:[...previous,src])}/>:
+   <div className="catalog-image-awaiting" role="img" aria-label={"Product photo for "+name+" unavailable"}>
+    <strong>Image awaiting verification</strong><small>Brand/grade can be checked with the supplying dealer</small>
    </div>}
-  <span className="catalog-image-note">{listingSelected?(product?.referenceSource?"Product listing image":"Manufacturer range image"):exactSelected?"Exact SKU photo · reviewed":pressSelected?"Manufacturer press reference · not exact SKU":src?"Representative material photo · not exact SKU":"Verified product photo unavailable"}</span>
+  {!compact&&<span className="catalog-image-note">{current?.label??"Photo currently unavailable"}</span>}
  </div>;
 }

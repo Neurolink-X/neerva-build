@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 export function SiteHeader(){
- return <><div className="topline"><span>Build your dream home. Build a stronger India.</span><span>Planning across India · Delivery only where verified</span></div>
+ return <><div className="topline" aria-label="Delivery disclaimer"><span>Made for India’s builders</span><span>Availability checked at quotation · no automatic location selection</span></div>
  <header className="site-header"><Link className="brand" href="/" aria-label="NEERVA BUILD home"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link>
   <nav className="desktop-nav" aria-label="Main navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/design-studio">Plan my home</Link><Link href="/quotes">Get a quote</Link><Link href="/blog">Guides</Link></nav>
   <details className="site-mobile-menu"><summary>Menu</summary><nav aria-label="Mobile navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/design-studio">Plan my home</Link><Link href="/quotes">Prepare quote</Link><Link href="/install">Install app</Link><Link href="/account">Account</Link><Link href="/basket">Material list</Link><Link href="/blog">Guides</Link></nav></details>

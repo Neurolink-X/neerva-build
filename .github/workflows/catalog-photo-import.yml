@@ -1,0 +1,39 @@
+name: Import licensed catalog editorial photos
+on:
+  push:
+    branches:
+      - fix/pr30-catalog-media-gallery-variants-header-20261124
+    paths:
+      - .github/workflows/catalog-photo-import.yml
+      - scripts/import-catalog-photos.mjs
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: pr30-catalog-photo-import
+  cancel-in-progress: false
+jobs:
+  download-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Download licensed editorial materials and validate JPEG bytes
+        run: node scripts/import-catalog-photos.mjs
+      - name: Commit verified local photos to this PR branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/images/catalog/editorial src/modules/catalog/curated-photo-paths.ts docs/pr30-editorial-image-provenance.md
+          if git diff --cached --quiet; then
+            echo "No new files to commit"
+          else
+            git commit -m "assets(catalog): cache and verify distinct licensed editorial photos"
+            git push origin HEAD:fix/pr30-catalog-media-gallery-variants-header-20261124
+          fi

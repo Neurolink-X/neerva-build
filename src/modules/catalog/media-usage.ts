@@ -9,7 +9,8 @@ export function groupCatalogByPhoto(products:readonly DemoProduct[]):PhotoFamily
  for(const product of products){
   const shared=product.verification==="reference"&&product.referenceImage
    &&product.referenceImage.startsWith("/images/catalog/reference/");
-  const key=shared?product.category+"|"+product.brand.toLowerCase()+"|"+product.referenceImage:"product|"+product.category+"|"+product.slug;
+  const key=product.familyKey?product.category+"|"+product.brand.toLowerCase()+"|"+product.familyKey:
+   shared?product.category+"|"+product.brand.toLowerCase()+"|"+product.referenceImage:"product|"+product.category+"|"+product.slug;
   const index=indexes.get(key);
   if(index===undefined){indexes.set(key,groups.length);groups.push({primary:product,variants:[product]});}
   else groups[index].variants.push(product);
