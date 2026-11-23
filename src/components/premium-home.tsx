@@ -141,7 +141,7 @@ export function PremiumHome(){
     <form className="nbh-search" action="/materials" method="get" onSubmit={submitSearch} role="search"><Icon name="search"/><input aria-label={t.search} name="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.searchHint} maxLength={80}/><button type="submit">{t.searchGo}</button></form>
     <form className="nbh-quick-quote" action="/quotes" method="get">
  <strong>{lang==="hi"?"जल्दी कोटेशन ड्राफ्ट तैयार करें":"Prepare a material enquiry in under one minute"}</strong>
- <div className="nbh-quick-fields">
+ <div className="nbh-quick-fields"><label className="nbh-quick-category">{lang==="hi"?"श्रेणी":"Category"}<select name="category" defaultValue="cement"><option value="cement">Cement</option><option value="steel">TMT / Steel</option><option value="bricks-blocks">Bricks / AAC</option><option value="plumbing">Pipes</option><option value="electrical">Electrical</option><option value="aggregates">Sand / aggregates</option><option value="paint">Paint</option><option value="tiles">Tiles</option><option value="hardware">Hardware</option></select></label>
   <label>{lang==="hi"?"सामग्री":"Material"}<input required minLength={3} maxLength={180} name="material" placeholder="e.g. UltraTech PPC 50 kg"/></label>
   <label>{lang==="hi"?"मात्रा":"Quantity"}<input required type="number" min=".001" max="1000000" step=".001" defaultValue="10" name="quantity"/></label>
   <label>{lang==="hi"?"पिनकोड":"Pincode"}<input required name="pincode" inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} placeholder="208001"/></label>

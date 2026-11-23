@@ -6,7 +6,7 @@ import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 const supabase=createNeervaBrowserClient();
 const intakeEnabled=process.env.NEXT_PUBLIC_RFQ_INTAKE_ENABLED==="true";
 type Message={kind:"success"|"error";text:string;reference?:string;details?:string[]};
-export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defaultMaterial=""}:{defaultCity:string;defaultCategory?:string;defaultMaterial?:string}){
+export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defaultMaterial="",defaultPincode="",defaultQuantity=""}:{defaultCity:string;defaultCategory?:string;defaultMaterial?:string;defaultPincode?:string;defaultQuantity?:string}){
  const requestKey=useRef<string|null>(null);
  const [verified,setVerified]=useState(false),[ready,setReady]=useState(false),[busy,setBusy]=useState(false);
  const [message,setMessage]=useState<Message|null>(null);
@@ -55,12 +55,12 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
  return <form className="rfq-form" onSubmit={submit}>
   <div className="rfq-form-title"><span>PRIVATE MATERIAL REQUEST</span><small>Only verified accounts can submit. Dealers are not yet onboarded.</small></div>
   <div className="rfq-form-grid">
-   <label>Material category<select name="categorySlug" defaultValue={defaultCategory}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical / hardware</option></select></label>
+   <label>Material category<select name="categorySlug" defaultValue={defaultCategory}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical</option><option value="paint">Paint & coatings</option><option value="tiles">Tiles & flooring</option><option value="hardware">Hardware & adhesive</option></select></label>
    <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} defaultValue={defaultMaterial} placeholder="Type, grade, size or exact item"/></label>
-   <label>Quantity<input name="quantity" required type="number" min="0.001" step="0.001" max="1000000" placeholder="Quantity"/></label>
+   <label>Quantity<input name="quantity" required type="number" min="0.001" step="0.001" max="1000000" defaultValue={defaultQuantity} placeholder="Quantity"/></label>
    <label>Unit<select name="unit" defaultValue="truck"><option value="truck">Truck</option><option value="tonne">Tonne</option><option value="cubic_metre">Cubic metre</option><option value="bag">Bag</option><option value="piece">Piece</option><option value="bundle">Bundle</option><option value="kg">Kilogram</option><option value="quintal">Quintal</option></select></label>
    <label>Delivery city<input name="city" required minLength={2} maxLength={80} defaultValue={defaultCity}/></label>
-   <label>Delivery pincode<input name="pincode" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6}/></label>
+   <label>Delivery pincode<input name="pincode" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} defaultValue={defaultPincode}/></label>
    <label>Preferred delivery date (optional)<input name="requestedDate" type="date"/></label>
    <label>Contact name<input name="contactName" required minLength={2} maxLength={100} autoComplete="name"/></label>
    <label>Contact mobile<input name="phone" required type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} autoComplete="tel-national"/></label>
