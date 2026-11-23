@@ -1,4 +1,5 @@
 import {sourcedProducts} from "./sourced-products.ts";
+import {technicalOptions} from "./technical-options.ts";
 import { catalogCategories } from "./catalog.ts";
 
 export type DemoProduct = {
@@ -6,6 +7,8 @@ export type DemoProduct = {
   images?: string[];
   imageVerified?: boolean;
   referenceImage?:string;
+  /** Reference sizes grouped as a visible family; each retains its own route and spec. */
+  familyKey?:string;
   referenceSource?:string;
   manufacturerReference?: string;
   manufacturerSku?: string | null;
@@ -24,6 +27,7 @@ export type DemoProduct = {
 // authorization, live inventory, certification, or a current selling price.
 export const demoProducts: DemoProduct[] = [
   ...sourcedProducts,
+  ...technicalOptions,
   { verification: "reference", slug: "fe-500d-tmt-12mm", category: "steel", name: "TMT bar · Fe 500D · 12 mm", description: "Illustrative product profile. Confirm the exact manufacturer range and test documents with the supplying dealer.", brand: "Tata Tiscon", specifications: [{ label: "Grade", value: "Fe 500D (verify SKU)" }, { label: "Diameter", value: "12 mm" }, { label: "Typical unit", value: "kg / quintal / tonne" }, { label: "Supply note", value: "Actual weight and bundle details must be confirmed" }] },
   { verification: "reference", slug: "fe-500d-tmt-10mm", category: "steel", name: "TMT bar · Fe 500D · 10 mm", description: "Compare the same grade and diameter across dealer offers before acceptance.", brand: "JSW Neosteel", specifications: [{ label: "Grade", value: "Fe 500D (verify SKU)" }, { label: "Diameter", value: "10 mm" }, { label: "Typical unit", value: "kg / quintal / tonne" }, { label: "Supply note", value: "Theoretical weight is not actual weighed supply" }] },
   { verification: "reference", slug: "opc-cement-53-grade", category: "cement", name: "OPC cement · 53 grade", description: "A discovery example only; confirm the actual brand SKU, suitability and documents.", brand: "ACC", specifications: [{ label: "Type", value: "OPC (verify product range)" }, { label: "Grade", value: "53 grade (verify SKU)" }, { label: "Typical unit", value: "50 kg bag, where applicable" }, { label: "Selection", value: "Use product documents and professional advice" }] },

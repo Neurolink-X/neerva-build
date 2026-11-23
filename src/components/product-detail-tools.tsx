@@ -4,21 +4,31 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {PLANNING_STORAGE_KEY,appendPlanningLine,isPlanningUnit,safePlanningList} from "@/modules/catalog/planning-list";
-import { CatalogMaterialImage, isApprovedSkuPhoto } from "@/components/catalog-material-image";
+import {catalogPhotos} from "@/modules/catalog/catalog-photos";
 import type { DemoProduct } from "@/modules/catalog/marketplace";
 import {categoryUnits,quantityUnitLabels} from "@/modules/catalog/category-units";
 
 export function ProductGallery({product}:{product:DemoProduct}){
- const [selected,setSelected]=useState(0);
- const photos=product.imageVerified&&product.verification==="merchant_verified"?(product.images??[]).filter(isApprovedSkuPhoto):[];
- const shown=photos[selected];
- return <figure className="product-gallery">
+ const [selected,setSelected]=useState<string|null>(null);
+ const [failed,setFailed]=useState<string[]>([]);
+ const photos=catalogPhotos(product).filter(media=>!failed.includes(media.src));
+ const current=photos.find(media=>media.src===selected)??photos[0];
+ return <figure className="product-gallery" aria-label={"Photos of "+product.name}>
   <div className="product-gallery-stage">
-   {shown?<Image src={shown} alt={product.name} fill sizes="(max-width:850px) 94vw, 48vw" className="catalog-real-image"/>:
-    <CatalogMaterialImage product={product} category={product.category} name={product.name}/>}
+   {current?<Image key={current.src} src={current.src} alt={current.alt} fill sizes="(max-width:850px) 94vw, 48vw"
+     quality={82} className="catalog-real-image" onError={()=>setFailed(old=>old.includes(current.src)?old:[...old,current.src])}/>:
+    <div className="catalog-image-awaiting" role="img" aria-label="Material photograph unavailable"><strong>Awaiting accurate product photos</strong><small>We will not substitute another brand's packaging.</small></div>}
   </div>
-  {photos.length>1&&<div className="product-gallery-thumbs">{photos.map((src,i)=><button type="button" key={src} aria-pressed={selected===i} onClick={()=>setSelected(i)}>Photo {i+1}</button>)}</div>}
-  {product.referenceSource&&<figcaption><a href={product.referenceSource} target="_blank" rel="noreferrer">View reference listing ↗</a></figcaption>}
+  <figcaption className="product-gallery-caption"><strong>{current?.label??"Photograph not verified"}</strong>
+    <span>{current?.kind==="sku"?"Uploaded and reviewed seller image.":"Photo is a reference, not proof of the quoted manufacturer SKU, size or availability."}</span></figcaption>
+  {photos.length>1&&<div className="product-gallery-thumbs" role="group" aria-label="Choose material photographs">
+   {photos.slice(0,5).map((media,i)=><button type="button" key={media.src} aria-label={"Show photo "+(i+1)+": "+media.label}
+     aria-pressed={current?.src===media.src} onClick={()=>setSelected(media.src)}>
+     <span className="product-gallery-thumb-image"><Image src={media.src} alt="" fill sizes="90px" quality={60} onError={()=>setFailed(old=>old.includes(media.src)?old:[...old,media.src])}/></span>
+     <span>{media.kind==="sku"?"Seller photo":media.kind==="listing"?"Product listing":media.kind==="editorial"?"Material photo":media.kind==="manufacturer"?"Media kit":"Category view"}</span>
+    </button>)}
+  </div>}
+  {product.referenceSource&&<p className="product-gallery-source"><a href={product.referenceSource} target="_blank" rel="noreferrer">Original product listing reference ↗</a></p>}
  </figure>;
 }
 export function ProductDetailTools({ product }: { product: DemoProduct }) {
