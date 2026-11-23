@@ -121,7 +121,10 @@ async function main(){
     const pack=page.locator(".product-gallery-stage img");
     assert.ok(await pack.evaluate(img=>img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin),"pack photo must load locally");
     await page.goto(base+"/design-studio/fit",{waitUntil:"networkidle"});
-    await page.getByLabel("Floors",{exact:true}).selectOption("1");
+    const floorsSelect=page.locator("#nfit-floors");
+    assert.equal(await floorsSelect.count(),1,"plot-fit page must render a labelled floors selector");
+    await floorsSelect.selectOption("1");
+    assert.equal(await floorsSelect.inputValue(),"1","ground-floor selection must update the plot brief");
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
     assert.equal(await page.locator(".nroad-diagram svg").getByText("BEDROOM 2",{exact:true}).count(),1);
     const cat=await page.goto(base+"/materials/steel",{waitUntil:"networkidle"});
