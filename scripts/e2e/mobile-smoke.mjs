@@ -51,7 +51,11 @@ async function main(){
     const account=await page.goto(base+"/account",{waitUntil:"networkidle"});
     assert.equal(account?.status(),200,"authenticated account route");
     assert.equal(await page.getByRole("heading",{name:/Access your projects and requests/}).count(),1,"account page must not show prelaunch placeholder");
-    assert.equal(await page.getByRole("button",{name:"Sign in"}).count(),1,"account sign-in UI exists");
+    if(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY){
+      assert.equal(await page.getByRole("button",{name:"Sign in"}).count(),1,"account form requires configured Supabase credentials");
+    }else{
+      assert.equal(await page.getByText("Waiting for backend setup").count(),1,"unconfigured account must not collect passwords");
+    }
     const unauth=await page.request.post(base+"/api/rfqs",{data:{idempotencyKey:"f1d3068d-3f5f-4e5c-a14e-2546fb9902ed"}});
     assert.equal(unauth.status(),401,"anonymous RFQ POST must fail before validation");
     await page.goto(base+"/",{waitUntil:"networkidle"});
