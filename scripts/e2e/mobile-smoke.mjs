@@ -110,7 +110,7 @@ async function main(){
     await page.goto(base+"/design-studio/road-planner",{waitUntil:"networkidle"});
     const roadPlan=page.getByRole("img",{name:/Road at top: N side/});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
-    assert.equal(await page.getByText("Only 2 distinct candidates").count(),1,"do not invent a third design");
+    assert.equal(await page.getByText("These 2 options are mirror arrangements").count(),1,"do not invent a third design");
     await page.getByRole("button",{name:/Parking right/}).click();
     assert.equal(await page.getByRole("button",{name:/Parking right/}).getAttribute("aria-pressed"),"true");
     const floorToggle=page.getByRole("button",{name:"First floor"});

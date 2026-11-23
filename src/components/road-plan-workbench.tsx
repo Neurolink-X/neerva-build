@@ -68,11 +68,11 @@ export function RoadPlanWorkbench(){
      <p>{str("Try G+1, fewer bedrooms, or review parking and setbacks. We do not shrink rooms below minimums to fabricate a fit.",
        "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>
     </section>:<>
-     <div className="nroad-head nroad-choices"><h2>{str("Validated concept options","जाँचे गए कॉन्सेप्ट")}</h2><span>{result.plans.length} genuinely different</span></div>
+     <div className="nroad-head nroad-choices"><h2>{str("Validated concept options","जाँचे गए कॉन्सेप्ट")}</h2><span>{result.plans.length} mirrored entry arrangements</span></div>
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=><button key={v.id} type="button" aria-pressed={v.id===plan.id}
        onClick={()=>{setChosen(i);setFloor(0)}}><strong>{i+1}. {v.variant==="parking-left"?"Parking left":"Parking right"}</strong>
        <span>{v.score.toFixed(0)}/90 concept score</span></button>)}</div>
-     {result.plans.length<3&&<p className="nroad-small" role="status">Only {result.plans.length} distinct candidates pass these checks. A third unsafe layout is not shown.</p>}
+     {result.plans.length<3&&<p className="nroad-small" role="status">These {result.plans.length} options are mirror arrangements, not independently different architectural topologies. A third unverified layout is not shown.</p>}
      <div className="nroad-head"><h2>{str("Plan & room dimensions","प्लान और कमरों का नाप")}</h2><span>Road · {plan.plot.roadSide}</span></div>
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{i===0?"Ground floor":"First floor"}</button>)}

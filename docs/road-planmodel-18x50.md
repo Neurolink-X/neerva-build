@@ -26,7 +26,7 @@ The conservative benchmark is usable frontage ≥17.5 ft and depth ≥47 ft for 
 5. Rear transverse hall to private bedroom and utility/wash.
 6. G+1 adds a true street balcony, upper bedrooms and landing.
 
-Two distinct mirrored alternatives pass; a fake third is NOT produced. This is not a full residential constraint solver. Important missing verification: local setbacks/FAR, stair tread/rise/headroom, structural safety, fire rules, car turning and bathroom exhaust.
+Two **mirrored** parking/entry alternatives pass; this does NOT constitute three independently different plan topologies. A fake third is NOT produced. This is not a full residential constraint solver. Important missing verification: local setbacks/FAR, stair tread/rise/headroom, structural safety, fire rules, car turning and bathroom exhaust.
 
 No parking / 2BHK-G narrow single-floor / 15×30 3BHK+parking requests are deliberately rejected until a sound alternative family passes.
 
