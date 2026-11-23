@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import {PLANNING_STORAGE_KEY,appendPlanningLine,isPlanningUnit,safePlanningList} from "@/modules/catalog/planning-list";
 import { ProductArtwork } from "@/components/product-artwork";
-import { CatalogMaterialImage } from "@/components/catalog-material-image";
+import { CatalogMaterialImage, isApprovedSkuPhoto } from "@/components/catalog-material-image";
 import type { DemoProduct } from "@/modules/catalog/marketplace";
 import {categoryUnits,quantityUnitLabels} from "@/modules/catalog/category-units";
 
@@ -21,25 +21,36 @@ const specsByCategory: Record<string, string[]> = {
   hardware: ["Tile adhesive", "Door hardware", "Fasteners", "Fittings", "Sealant", "Other hardware"]
 };
 
+/** Never repeat the same generic pipe/pack image as four claimed camera angles. */
 export function ProductGallery({ product }: { product: DemoProduct }) {
-  const [active, setActive] = useState(0);
-  const scenes = ["catalog", "detail", "alternate", "use"] as const;
-  const labels = ["Product profile", "Specification view", "Alternate view", "Material context"];
-  return (
-    <div className="product-gallery">
-      <div className="product-gallery-stage">
-        {product.images?.[active] ? <Image className="catalog-real-image" src={product.images[active]} alt={`${product.name} product image ${active + 1}`} fill sizes="(max-width: 680px) 100vw, 50vw" unoptimized /> : active === 0 ? <CatalogMaterialImage category={product.category} name={product.name} /> : <ProductArtwork category={product.category} scene={scenes[active]} />}
-        <span className="gallery-disclaimer">Illustrative profile / actual product packaging may vary</span>
-      </div>
-      <div className="product-gallery-thumbs" aria-label="Product illustration views">
-        {scenes.map((scene, index) => (
-          <button type="button" className={active === index ? "active" : ""} aria-label={labels[index]} aria-pressed={active === index} key={scene} onClick={() => setActive(index)}>
-            {product.images?.[index] ? <Image className="catalog-real-image" src={product.images[index]} alt="" fill sizes="120px" unoptimized /> : index === 0 ? <CatalogMaterialImage category={product.category} name={product.name} /> : <ProductArtwork category={product.category} scene={scene} />}<span>{labels[index]}</span>
-          </button>
-        ))}
-      </div>
+  const [active,setActive]=useState(0);
+  const actual=(product.verification==="merchant_verified"&&product.imageVerified===true)
+    ? [...new Set((product.images??[]).filter(isApprovedSkuPhoto))] : [];
+  const hasDiagram=["steel","cement","bricks-blocks","plumbing","electrical","aggregates"].includes(product.category);
+  type View={kind:"verified";source:string;label:string}|{kind:"sample"|"diagram";label:string};
+  const views:View[]=actual.length
+    ? actual.map((source,index)=>({kind:"verified" as const,source,label:index===0?"Approved product photo":`Approved view ${index+1}`}))
+    : [{kind:"sample",label:"Representative material"},...(hasDiagram?[{kind:"diagram" as const,label:"Technical illustration"}]:[])];
+  const selected=Math.min(active,views.length-1);
+  const view=views[selected];
+  function display(item:View,thumb=false){
+    if(item.kind==="verified")return <Image className="catalog-real-image" src={item.source}
+      alt={thumb?"":`Reviewed photo of ${product.name}`} fill sizes={thumb?"130px":"(max-width:680px) 100vw, 50vw"} unoptimized/>;
+    if(item.kind==="sample")return <CatalogMaterialImage category={product.category} name={product.name} compact={thumb}/>;
+    return <ProductArtwork category={product.category} scene="detail"/>;
+  }
+  return <div className="product-gallery">
+    <div className="product-gallery-stage">{display(view)}
+      <span className="gallery-disclaimer">{view.kind==="verified"?"Approved local SKU photograph · confirm batch with dealer":"Illustrative material view, not an actual branded product photo"}</span>
     </div>
-  );
+    {views.length>1&&<div className="product-gallery-thumbs" aria-label="Distinct product views">
+      {views.map((item,index)=><button key={item.kind==="verified"?item.source:item.kind} type="button" className={selected===index?"active":""}
+        aria-pressed={selected===index} aria-label={item.label} onClick={()=>setActive(index)}>
+         {display(item,true)}<span>{item.label}</span>
+        </button>)}
+    </div>}
+    {!actual.length&&<p className="option-confirmation-note">Additional front, side and package photos will appear only after an authorized seller submits and verifies those exact product images.</p>}
+   </div>;
 }
 
 export function ProductDetailTools({ product }: { product: DemoProduct }) {

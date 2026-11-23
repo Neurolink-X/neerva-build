@@ -19,7 +19,7 @@ export function studioDesignFromPlan(p:PlanModel):StudioDesign{
   }))
  }));
  return {
-  id:p.id,slug:p.id,title:"Road-first 18×50 concept",titleHi:"सड़क की तरफ सही प्रवेश वाला प्लान",
+  id:p.id,slug:p.id,title:`Road-first ${p.plot.widthFt} × ${p.plot.depthFt} concept`,titleHi:"सड़क की तरफ सही प्रवेश वाला प्लान",
   style:"warm-modern",plot:{widthFt:p.plot.widthFt,depthFt:p.plot.depthFt,areaSqFt:p.plot.widthFt*p.plot.depthFt},
   facing:facing[p.plot.roadSide],floors:p.floors,
   bedrooms:p.rooms.filter(r=>r.kind==="bedroom").length,

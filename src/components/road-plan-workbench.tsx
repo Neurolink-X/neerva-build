@@ -2,9 +2,11 @@
 import {useEffect,useMemo,useState} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {generateRoadPlans} from "@/modules/studio/road-generator";
 import {planMetrics,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
+import {oppositeRoadSide} from "@/modules/studio/plan-coordinate";
 import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 const Building3D=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{
@@ -20,6 +22,20 @@ export function RoadPlanWorkbench(){
  const [brief,setBrief]=useState<PlanBrief>(initial),[chosen,setChosen]=useState(0);
  const [floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
  const [threeReady,setThreeReady]=useState(false);
+ const [saving,setSaving]=useState(false),[saveInfo,setSaveInfo]=useState("");
+ async function saveDraft(){
+  if(!draft||saving)return;
+  const client=createNeervaBrowserClient();
+  if(!client){setSaveInfo("Account service is not configured. Your concept is not saved.");return;}
+  const session=await client.auth.getSession();
+  const token=session.data.session?.access_token;
+  if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
+  setSaving(true);setSaveInfo("");
+  try{const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant}),cache:"no-store"});
+   const body=await response.json() as {project?:{id?:string};error?:string};
+   setSaveInfo(response.ok&&body.project?.id?"Private concept saved. Not a construction-approved plan.":(body.error??"Project was not saved."));
+  }catch{setSaveInfo("Network issue. Your concept was not confirmed saved.");}finally{setSaving(false)}
+ }
  useEffect(()=>{const frame=window.requestAnimationFrame(()=>setThreeReady(true));return()=>window.cancelAnimationFrame(frame)},[]);
  const result=useMemo(()=>generateRoadPlans(brief),[brief]);
  const draft=result.plans[chosen]??result.plans[0]??null;
@@ -41,13 +57,18 @@ export function RoadPlanWorkbench(){
   </header>
   <div className="nroad-main">
    <aside className="nroad-controls">
-    <div className="nroad-head"><h2>{str("Your plot","आपका प्लॉट")}</h2><span>18 × 50 ft benchmark</span></div>
+    <div className="nroad-head"><h2>{str("Your plot","आपका प्लॉट")}</h2><span>{brief.widthFt} × {brief.depthFt} ft · live geometry</span></div>
     <form onSubmit={e=>e.preventDefault()} className="nroad-form">
      <label>{str("Frontage / width (ft)","चौड़ाई (फीट)")}<input type="number" min="10" max="200" step=".5" value={brief.widthFt} onChange={e=>update("widthFt",Number(e.target.value))}/></label>
      <label>{str("Plot depth (ft)","लंबाई (फीट)")}<input type="number" min="15" max="250" step=".5" value={brief.depthFt} onChange={e=>update("depthFt",Number(e.target.value))}/></label>
      <label>{str("Road along which edge?","सड़क किस दिशा में है?")}<select value={brief.roadSide} onChange={e=>update("roadSide",e.target.value as RoadSide)}>
       {(["N","E","S","W"] as const).map(side=><option key={side} value={side}>{({N:"North",E:"East",S:"South",W:"West"} as const)[side]}</option>)}
      </select></label>
+     <div className="nroad-road-help" role="status">
+       <strong>{str("Road on "+({N:"North",S:"South",E:"East",W:"West"} as const)[brief.roadSide]+" edge","सड़क "+({N:"उत्तर",S:"दक्षिण",E:"पूर्व",W:"पश्चिम"} as const)[brief.roadSide]+" दिशा में है")}</strong>
+       <p>{str("Car gate and house entry face the selected road edge. Changing sides rotates the whole 2D plan and 3D house; it never places parking at the back of a front-road plot.","मुख्य गेट और पार्किंग चुनी गई सड़क की तरफ हैं। दिशा बदलने पर 2D नक्शा और 3D घर दोनों घूमते हैं।")}</p>
+       <button type="button" onClick={()=>update("roadSide",oppositeRoadSide(brief.roadSide))}>{str("Road actually on opposite side? Switch","सड़क दूसरी तरफ है? दिशा बदलें")}</button>
+     </div>
      <label>{str("Levels","मंज़िलें")}<select value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2)}>
       <option value={1}>G · Ground</option><option value={2}>G+1 · Two levels</option></select></label>
      <label>{str("Total bedrooms","कुल बेडरूम")}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>
@@ -74,6 +95,7 @@ export function RoadPlanWorkbench(){
        onClick={()=>{setChosen(i);setFloor(0)}}><strong>{i+1}. {v.variant==="parking-left"?"Parking left":"Parking right"}</strong>
        <span>{v.score.toFixed(0)}/90 concept score</span></button>)}</div>
      {result.plans.length<3&&<p className="nroad-small" role="status">These {result.plans.length} options are mirror arrangements, not independently different architectural topologies. A third unverified layout is not shown.</p>}
+     <div className="nroad-save"><button type="button" disabled={saving} onClick={()=>void saveDraft()}>{saving?"Saving…":str("Save this plot-specific concept privately","अपना नक्शा सुरक्षित सेव करें")}</button>{saveInfo&&<p role="status">{saveInfo} {saveInfo.startsWith("Sign in")&&<Link href="/account">Sign in →</Link>}</p>}</div>
      <div className="nroad-head"><h2>{str("Plan & room dimensions","प्लान और कमरों का नाप")}</h2><span>Road · {plan.plot.roadSide}</span></div>
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{i===0?"Ground floor":"First floor"}</button>)}

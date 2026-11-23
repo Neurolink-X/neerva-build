@@ -76,3 +76,11 @@
 .nbh-build-actions>a:last-child{font-size:14px;font-weight:800;color:#884d36;text-decoration:underline}
 @media(max-width:760px){.nbh-build-visual{min-height:250px;margin:auto}.nbh-build-replay{top:48px;right:8px;font-size:11px}.nbh-house-chip{max-width:70%}}
 @media(prefers-reduced-motion:reduce){.nbh-build-finished{animation:none;clip-path:inset(0 0 0 0)}.nbh-house-tone{will-change:auto}}
+
+
+/* One obvious install route; page-level header must remain accessible on narrow phones. */
+.nbh-install-header{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:8px 12px;border:1px solid #b9cdbb;border-radius:10px;color:#245037;background:#f5faf3;font-size:12px;font-weight:850;white-space:nowrap}
+.nbh-install-header:focus-visible{outline:3px solid #b65b3b;outline-offset:2px}
+.nbh-footer-expanded nav a{overflow-wrap:anywhere}
+@media(max-width:700px){.nbh-footer-expanded{grid-template-columns:minmax(0,1fr)!important;gap:18px;padding:30px 19px}.nbh-footer-brand,.nbh-footer-bottom{grid-column:1/-1}.nbh-footer-expanded nav{padding-top:16px;border-top:1px solid #ffffff23;gap:12px}.nbh-footer-expanded nav strong{margin-bottom:3px}.nbh-footer-bottom{display:grid;grid-template-columns:1fr}.nbh-install-header{font-size:11px;min-height:42px;padding:8px 9px}}
+@media(max-width:390px){.nbh-install-header{font-size:10px;padding:7px 6px}.nbh-header-actions .nbh-icon-link:first-of-type{min-width:34px}.nbh-city select{max-width:57px}}

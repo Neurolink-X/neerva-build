@@ -8,7 +8,7 @@ const Planner=dynamic(()=>import("./road-plan-workbench").then(m=>m.RoadPlanWork
  ssr:false,
  loading:()=> <main className="nroad" role="status" aria-label="Loading road-first home planning tool">
   <div className="nroad-hero"><span className="nroad-kicker">NEERVA BUILD · PLANMODEL</span>
-   <h1>Plan your 18 × 50 ft home.</h1><p>Loading the road-first concept planner and verified geometry controls…</p></div>
+   <h1>Plan a house that fits your plot.</h1><p>Loading the road-first concept planner and verified geometry controls…</p></div>
   <div className="nroad-loading" style={{margin:"15px",minHeight:420}}>Preparing 2D rooms and 3D previews…</div>
  </main>
 });
