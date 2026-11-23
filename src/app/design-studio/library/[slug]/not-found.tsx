@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function NotFound(){return <main style={{margin:"5rem auto",padding:"2rem",maxWidth:800}}><h1>This home concept is unavailable.</h1><p>Explore a different plot or style from the original design library.</p><Link href="/design-studio/library">View all designs →</Link></main>}
