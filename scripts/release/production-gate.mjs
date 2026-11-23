@@ -32,7 +32,9 @@ if (!existsSync(attestation)) {
 let data;
 try { data = JSON.parse(readFileSync(attestation, "utf8")); } catch { process.exit(0); }
 const sha = process.env.VERCEL_GIT_COMMIT_SHA;
-if (!sha || data.approvedCommitSha !== sha || data.productionSourceId !== "dpl_GBZpLhjcXvCdihSX7Lfd2YqBwnZF") {
+// Release approval lives in Vercel configuration, not inside a self-referential Git commit.
+const approvedSha = process.env.NEERVA_RELEASE_APPROVED_SHA;
+if (!sha || !approvedSha || approvedSha !== sha || data.productionSourceId !== "dpl_GBZpLhjcXvCdihSX7Lfd2YqBwnZF") {
  console.error("NEERVA production deploy blocked: release attestation does not match this commit.");
  process.exit(0);
 }
