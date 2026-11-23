@@ -1,4 +1,4 @@
-export type IndexingEnv={VERCEL_ENV?:string;NEXT_PUBLIC_SITE_INDEXABLE?:string;NEXT_PUBLIC_SITE_URL?:string};
+export type IndexingEnv=NodeJS.ProcessEnv|{VERCEL_ENV?:string;NEXT_PUBLIC_SITE_INDEXABLE?:string;NEXT_PUBLIC_SITE_URL?:string};
 export function publicIndexingEnabled(env:IndexingEnv):boolean{
  if(env.VERCEL_ENV!=="production"||env.NEXT_PUBLIC_SITE_INDEXABLE!=="true")return false;
  try{const url=new URL(env.NEXT_PUBLIC_SITE_URL??"");
