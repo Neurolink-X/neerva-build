@@ -88,3 +88,6 @@
 .product-gallery{margin:0}.product-gallery figcaption{padding:.5rem 0;font-size:.85rem}
 .catalog-material-image.pack-photo img,.product-gallery-stage .catalog-real-image{object-fit:contain;background:white;padding:.5rem}
 .product-gallery-stage{height:clamp(180px,38vw,370px);min-height:0}.product-gallery-stage .catalog-image-note{background:white;color:#385041}
+
+/* Shared manufacturer range photos appear once per family, with all actual dimensions listed. */
+.catalog-variant-links{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.catalog-variant-links a{display:inline-flex;align-items:center;justify-content:center;padding:8px 11px;min-width:50px;min-height:40px;border:1px solid #b6c9bb;background:#f0f7f1;color:#1f5036;border-radius:8px;font-size:12px;font-weight:750;text-decoration:none}.catalog-variant-links a:hover,.catalog-variant-links a:focus-visible{background:#dcefe1;outline-offset:2px}.catalog-range-note{font-size:11px!important;color:#566d5b!important;line-height:1.5}
