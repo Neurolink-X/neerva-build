@@ -185,7 +185,7 @@ export function PremiumHome(){
      <span className="nbh-house-chip">ILLUSTRATIVE CONSTRUCTION · NOT A REAL TIMELAPSE <Icon name="spark"/></span>
      <span className="nbh-image-tag nbh-tag-before" style={{left:Math.min(90,Math.max(9,split-15))+"%"}}>UNDER CONSTRUCTION</span><span className="nbh-image-tag nbh-tag-after">FINISHED HOME</span>
      <label className="nbh-slider-label"><span>Construction stage <strong>← Drag to compare →</strong> Finished concept</span>
-  <input ref={inputRef} type="range" min={5} max={95} step={1} defaultValue={split} onInput={e=>{if(constructionRef.current)constructionRef.current.style.clipPath="inset(0 "+(100-Number(e.currentTarget.value))+"% 0 0)"}} onChange={e=>{setManual(true);setSplit(Number(e.target.value))}} aria-label="Construction to finished house concept slider"/></label>
+  <input ref={inputRef} type="range" min={5} max={95} step={1} defaultValue={split} onInput={e=>{if(constructionRef.current)constructionRef.current.style.clipPath="inset(0 "+(100-Number(e.currentTarget.value))+"% 0 0)"}} onChange={e=>{setManual(true);setSplit(Number(e.target.value))}} aria-label="Compare illustrative construction-stage and completed homes"/></label>
  <button className="nbh-build-replay" type="button" onClick={()=>{setSplit(95);setManual(false);if(constructionRef.current)constructionRef.current.style.clipPath="inset(0 5% 0 0)";if(inputRef.current)inputRef.current.value="95"}}>{manual?"Replay illustration ↻":"Playing illustration · Replay"}</button>
     </div>
     <p className="nbh-image-note">Original matched architectural concept drawings, not photos or a completed NEERVA project. <Link href="/design-studio/fit">Find designs for your plot →</Link></p>
