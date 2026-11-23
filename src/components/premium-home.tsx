@@ -1,6 +1,6 @@
 "use client";
 
-import {useEffect,useMemo,useState,type FormEvent} from "react";
+import {useEffect,useMemo,useRef,useState,type FormEvent} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {homeVisuals} from "@/modules/home/assets";
@@ -90,8 +90,8 @@ export function PremiumHome(){
  const [city,setCity]=useState("Kanpur");
  const [cityCustom,setCityCustom]=useState(false),[cityInput,setCityInput]=useState("");
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
- const [split,setSplit]=useState(56),[manual,setManual]=useState(false);
- const [shade,setShade]=useState("#c3ac94");
+ const [split,setSplit]=useState(95),[manual,setManual]=useState(false);
+ const comparisonRef=useRef<HTMLDivElement|null>(null),constructionRef=useRef<HTMLSpanElement|null>(null),inputRef=useRef<HTMLInputElement|null>(null);
  const [plot,setPlot]=useState("all"),[designStyle,setDesignStyle]=useState("all");
  const [customWidth,setCustomWidth]=useState(""),[customDepth,setCustomDepth]=useState("");
  const customPlotActive=customWidth.trim()!==""||customDepth.trim()!=="";
@@ -110,7 +110,33 @@ export function PremiumHome(){
  },[plot,designStyle,customPlotActive,customPlotValid,w,d]);
  const suggestions=useMemo(()=>query.trim()?items.filter(item=>(item.en+" "+item.hi+" "+item.description).toLowerCase().includes(query.toLowerCase())).slice(0,4):[],[query]);
  useEffect(()=>{const id=window.setTimeout(()=>{try{const l=localStorage.getItem("neerva-home-lang");if(l==="en"||l==="hi")setLang(l);const r=JSON.parse(localStorage.getItem("neerva-home-search-v1")||"[]");if(Array.isArray(r))setRecent(r.filter((x):x is string=>typeof x==="string"&&x.length<65).slice(0,4));}catch{/* Private browsing: state remains in memory. */}},0);return()=>clearTimeout(id)},[]);
- useEffect(()=>{if(manual)return;const m=window.matchMedia("(prefers-reduced-motion: reduce)");if(m.matches)return;const timer=window.setInterval(()=>setSplit(s=>s>60?38:68),4000);return()=>window.clearInterval(timer)},[manual]);
+ useEffect(()=>{
+  const el=comparisonRef.current,mask=constructionRef.current,input=inputRef.current;
+  if(!el||!mask||!input||manual||window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  let raf=0,intersecting=false,visible=true,start=0;
+  const frame=(time:number)=>{
+   if(!intersecting||!visible)return;
+   if(!start)start=time;
+   const cycle=(time-start)%7000;
+   const remaining=cycle<500?95:cycle<4900?95-(cycle-500)/4400*90:cycle<5850?5:5+(cycle-5850)/1150*90;
+   // One compositor style update per frame, no React rerender during time-lapse.
+   mask.style.clipPath=`inset(0 ${100-remaining}% 0 0)`;
+   input.value=String(Math.round(remaining));
+   raf=window.requestAnimationFrame(frame);
+  };
+  const observer=new IntersectionObserver(([item])=>{
+   intersecting=Boolean(item?.isIntersecting);
+   window.cancelAnimationFrame(raf);
+   if(intersecting&&visible){start=0;raf=window.requestAnimationFrame(frame);}
+  },{threshold:.15});
+  const onVisible=()=>{
+   visible=!document.hidden;
+   window.cancelAnimationFrame(raf);
+   if(visible&&intersecting){start=0;raf=window.requestAnimationFrame(frame);}
+  };
+  observer.observe(el);document.addEventListener("visibilitychange",onVisible);
+  return()=>{intersecting=false;observer.disconnect();window.cancelAnimationFrame(raf);document.removeEventListener("visibilitychange",onVisible);}
+ },[manual]);
  function language(){const next=lang==="en"?"hi":"en";setLang(next);try{localStorage.setItem("neerva-home-lang",next)}catch{/* Language still changes for this session */}}
  function submitSearch(event:FormEvent<HTMLFormElement>){const trimmed=query.trim();if(!trimmed){event.preventDefault();return;}const next=[trimmed,...recent.filter(x=>x.toLowerCase()!==trimmed.toLowerCase())].slice(0,4);setRecent(next);try{localStorage.setItem("neerva-home-search-v1",JSON.stringify(next))}catch{/* Optional search history */}}
  function pickCity(value:string){if(value==="custom"){setCityCustom(true);return;}setCityCustom(false);setCity(value);}
@@ -154,11 +180,13 @@ export function PremiumHome(){
     {recent.length>0&&<div className="nbh-recent"><small>{t.recent}</small>{recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>)}</div>}
    </div>
    <div className="nbh-hero-visual">
-    <div className="nbh-house-frame">
-     <div className="nbh-house-link" aria-label="Illustrative construction site and completed home comparison"><Image src={homeVisuals.hero} fill priority sizes="(max-width: 720px) 100vw, 48vw" alt="Original NEERVA concept illustration showing a completed two-storey house" className="nbh-house-photo"/><span className="nbh-house-tone" style={{clipPath:"inset(0 "+(100-split)+"% 0 0)"}}><Image src={homeVisuals.construction} fill sizes="(max-width: 720px) 100vw, 48vw" alt="" aria-hidden="true" className="nbh-house-photo"/></span></div>
-     <span className="nbh-house-chip">FROM CONSTRUCTION TO YOUR DREAM HOME <Icon name="spark"/></span>
+    <div className="nbh-house-frame" ref={comparisonRef}>
+     <div className="nbh-house-link" aria-label="Illustrative construction site and completed home comparison"><Image src={homeVisuals.hero} fill priority sizes="(max-width: 720px) 100vw, 48vw" alt="Original NEERVA concept illustration showing a completed two-storey house" className="nbh-house-photo"/><span ref={constructionRef} className="nbh-house-tone" style={{clipPath:"inset(0 "+(100-split)+"% 0 0)"}}><Image src={homeVisuals.construction} fill sizes="(max-width: 720px) 100vw, 48vw" alt="" aria-hidden="true" className="nbh-house-photo"/></span></div>
+     <span className="nbh-house-chip">ILLUSTRATIVE CONSTRUCTION · NOT A REAL TIMELAPSE <Icon name="spark"/></span>
      <span className="nbh-image-tag nbh-tag-before" style={{left:Math.min(90,Math.max(9,split-15))+"%"}}>UNDER CONSTRUCTION</span><span className="nbh-image-tag nbh-tag-after">FINISHED HOME</span>
-     <label className="nbh-slider-label"><span>Construction stage <strong>← Drag to explore →</strong> Finished home</span><input type="range" min={5} max={95} step={1} value={split} onChange={e=>{setManual(true);setSplit(Number(e.target.value))}} aria-label="Compare illustrative construction-stage and completed homes"/></label>
+     <label className="nbh-slider-label"><span>Construction stage <strong>← Drag to compare →</strong> Finished concept</span>
+  <input ref={inputRef} type="range" min={5} max={95} step={1} defaultValue={split} onInput={e=>{if(constructionRef.current)constructionRef.current.style.clipPath="inset(0 "+(100-Number(e.currentTarget.value))+"% 0 0)"}} onChange={e=>{setManual(true);setSplit(Number(e.target.value))}} aria-label="Construction to finished house concept slider"/></label>
+ <button className="nbh-build-replay" type="button" onClick={()=>{setSplit(95);setManual(false);if(constructionRef.current)constructionRef.current.style.clipPath="inset(0 5% 0 0)";if(inputRef.current)inputRef.current.value="95"}}>{manual?"Replay illustration ↻":"Playing illustration · Replay"}</button>
     </div>
     <p className="nbh-image-note">Original matched architectural concept drawings, not photos or a completed NEERVA project. <Link href="/design-studio/fit">Find designs for your plot →</Link></p>
    </div>
@@ -174,7 +202,21 @@ export function PremiumHome(){
    {designs.length===0?<div className="nbh-empty"><p>{customPlotActive?"No existing concept fits the entered dimensions. Do not stretch a fixed plan and call it a custom design.":"No concept matches this filter."}</p><Link href={fitLink}>Review your custom plot →</Link><button onClick={()=>{setPlot("all");setDesignStyle("all");setCustomWidth("");setCustomDepth("")}}>Show all designs</button></div>:<div className="nbh-design-scroll">{designs.map((d,i)=><Link className="nbh-design-card" href={"/design-studio/library/"+d.slug} key={d.slug}><div className="nbh-design-image"><Image src={[homeVisuals.warm,homeVisuals.slate,homeVisuals.nature,homeVisuals.hero][i%4]} fill sizes="(max-width: 600px) 80vw, 350px" loading="lazy" alt={"Illustrative modern home exterior inspiration, not the rendered "+d.title+" plan"}/><span>{d.plot.widthFt} × {d.plot.depthFt} FT</span></div><div className="nbh-design-text"><h3>{lang==="hi"?d.titleHi:d.title}</h3><p>{d.bedrooms} BHK · {d.floors===1?"Ground":"G+1"} · {d.facing}</p><span>{t.plan} <Icon name="arrow"/></span></div></Link>)}</div>}
    <p className="nbh-fineprint">{t.concept}. {t.disclaimer}</p>
   </section>
-  <section className="nbh-colour" id="colour"><div className="nbh-colour-preview"><div className="nbh-facade" style={{background:shade}}><span className="nbh-slab"/><span className="nbh-window"/><span className="nbh-wood"/><span className="nbh-gate"/></div><div className="nbh-swatches" aria-label="Try colour preview">{["#c3ac94","#d9ded7","#9daea3","#c07f61","#748484"].map(c=><button type="button" key={c} aria-label={"Preview shade "+c} aria-pressed={shade===c} onClick={()=>setShade(c)} style={{backgroundColor:c}}/>)}</div></div><div className="nbh-colour-copy"><p className="nbh-eyebrow">03 / COLOUR STUDIO</p><h2>{t.colour}</h2><p>{t.colourDesc}</p><p className="nbh-fineprint">{t.colourDisclaimer}</p><Link className="nbh-outline-link" href="/design-studio/visualizer">{t.colourLink} <Icon name="arrow"/></Link></div></section>
+  <section className="nbh-colour nbh-build-section" id="construction">
+   <div className="nbh-build-visual" role="img" aria-label="Original two-stage illustration, a home under construction becoming a completed concept">
+    <Image src={homeVisuals.construction} fill sizes="(max-width:760px) 100vw, 44vw" alt="" aria-hidden="true" loading="lazy"/>
+    <span className="nbh-build-finished"><Image src={homeVisuals.hero} fill sizes="(max-width:760px) 100vw, 44vw" alt="" aria-hidden="true" loading="lazy"/></span>
+    <span className="nbh-build-caption">Illustrative stages, not actual construction footage</span>
+   </div>
+   <div className="nbh-colour-copy">
+    <p className="nbh-eyebrow">03 / FROM FOUNDATION TO FINISH</p>
+    <h2>{lang==="hi"?"सामग्री से बनता घर":"See your construction stages"}</h2>
+    <p>{lang==="hi"?"स्टील और सीमेंट से शुरुआत, फिर ईंट, पाइप और फिनिशिंग। हर चरण की सामग्री और नाप चुनें। अंतिम स्टॉक, कीमत और डिलीवरी की पुष्टि जरूरी है।":"From steel and cement to bricks, pipes and finishes: choose the right materials for each construction stage, then get a verified supplier quotation."}</p>
+    <div className="nbh-build-steps"><span>01 · Structure</span><span>02 · Plumbing & masonry</span><span>03 · Finishes</span></div>
+    <p className="nbh-fineprint">Concept only. Verify with a licensed architect/engineer and local authority approval. Illustrations do not represent a Neerva-built project.</p>
+    <div className="nbh-build-actions"><Link className="nbh-outline-link" href="/materials">Explore construction materials <Icon name="arrow"/></Link><Link href="/design-studio/visualizer">{t.colourLink} →</Link></div>
+   </div>
+  </section>
   <section className="nbh-section nbh-work"><div className="nbh-section-head"><div><p className="nbh-eyebrow">04 / A CLEARER JOURNEY</p><h2>{t.works}</h2><p>{t.worksDesc}</p></div></div><div className="nbh-steps">{([[t.step1,t.step1Desc],[t.step2,t.step2Desc],[t.step3,t.step3Desc],[t.step4,t.step4Desc]] as const).map(([title,description],i)=><div key={title}><span>{String(i+1).padStart(2,"0")}</span><h3>{title}</h3><p>{description}</p></div>)}</div></section>
   <section className="nbh-section nbh-offers"><div className="nbh-section-head"><div><p className="nbh-eyebrow">05 / TRANSPARENT PRICING</p><h2>{t.offers}</h2><p>{t.offerEmpty}</p></div></div><Link className="nbh-section-link" href="/materials">{t.navMaterials} <Icon name="arrow"/></Link></section>
   <section className="nbh-section nbh-pros"><div className="nbh-section-head"><div><p className="nbh-eyebrow">06 / PROFESSIONALS</p><h2>{t.pros}</h2></div></div><div className="nbh-pro-grid"><div><Icon name="building"/><h3>{t.dealer}</h3><p>{t.dealerDesc}</p><Link href="/account">{t.learn} <Icon name="arrow"/></Link></div><div><Icon name="list"/><h3>{t.contractor}</h3><p>{t.contractorDesc}</p><Link href="/quotes">{t.prepare} <Icon name="arrow"/></Link></div></div></section>

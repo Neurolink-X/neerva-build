@@ -57,3 +57,22 @@
 
 .nbh-quick-category{grid-column:1/-1}
 .nbh-quick-category select{min-height:44px;font-size:16px;border-radius:9px;background:white;border:1px solid #b1c4b5;padding:9px}
+
+
+/* A native responsive range, zero clip-path easing while the thumb moves. */
+.nbh-house-tone{transition:none!important;pointer-events:none;will-change:clip-path}
+.nbh-house-link,.nbh-house-photo{pointer-events:none}
+.nbh-slider-label{z-index:5;isolation:isolate}
+.nbh-slider-label input[type="range"]{width:100%;min-height:44px;cursor:ew-resize;accent-color:#bf694a;touch-action:pan-y;position:relative;z-index:6}
+.nbh-build-replay{position:absolute;top:50px;right:12px;z-index:6;min-height:44px;padding:9px 12px;font-size:12px;font-weight:750;background:#fffdf2f5;color:#284838;border:1px solid #d5e1d4;border-radius:10px}
+.nbh-build-visual{position:relative;aspect-ratio:16/10;min-height:260px;max-width:650px;width:100%;border-radius:20px;overflow:hidden;box-shadow:0 20px 55px #172f2523;background:#d4e1d6}
+.nbh-build-visual>img,.nbh-build-finished img{object-fit:cover}
+.nbh-build-finished{position:absolute;inset:0;display:block;clip-path:inset(100% 0 0 0);animation:neerva-home-completion 7s ease-in-out infinite}
+.nbh-build-caption{position:absolute;left:12px;right:12px;bottom:12px;z-index:1;text-align:center;border-radius:9px;background:#172e26e8;color:#f9f8ee;padding:10px;font-size:12px;font-weight:650}
+@keyframes neerva-home-completion{0%,10%{clip-path:inset(100% 0 0 0)}65%,85%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(100% 0 0 0)}}
+.nbh-build-steps{display:flex;flex-wrap:wrap;gap:8px;margin:17px 0}
+.nbh-build-steps span{font-size:12px;line-height:1.5;padding:9px 11px;background:#fffefa;border:1px solid #ccdace;border-radius:9px;font-weight:750}
+.nbh-build-actions{display:flex;align-items:center;flex-wrap:wrap;gap:15px}
+.nbh-build-actions>a:last-child{font-size:14px;font-weight:800;color:#884d36;text-decoration:underline}
+@media(max-width:760px){.nbh-build-visual{min-height:250px;margin:auto}.nbh-build-replay{top:48px;right:8px;font-size:11px}.nbh-house-chip{max-width:70%}}
+@media(prefers-reduced-motion:reduce){.nbh-build-finished{animation:none;clip-path:inset(0 0 0 0)}.nbh-house-tone{will-change:auto}}
