@@ -1,5 +1,6 @@
 import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type RoomKind,
  type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
+import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;
@@ -11,8 +12,11 @@ export function explainImpossible(b:PlanBrief):string[]{
  if(!["N","E","S","W"].includes(b.roadSide))x.push("Select a valid road side.");
  if(![b.setbacks.frontFt,b.setbacks.rearFt,b.setbacks.leftFt,b.setbacks.rightFt].every(valid))x.push("Setbacks must be nonnegative.");
  if(![1,2].includes(b.floors)||!Number.isInteger(b.bedrooms)||b.bedrooms<1||b.bedrooms>3)x.push("This audited prototype supports 1–3 bedrooms across G or G+1.");
- const W=b.widthFt-b.setbacks.leftFt-b.setbacks.rightFt;
- const D=b.depthFt-b.setbacks.frontFt-b.setbacks.rearFt;
+ const shape=b.siteShape??{kind:"rectangle"} as const;
+ x.push(...shapeErrors(b.widthFt,b.depthFt,shape));
+ const safe=conservativeEnvelope(b.widthFt,b.depthFt,shape,b.setbacks);
+ const W=b.widthFt-safe.leftFt-safe.rightFt;
+ const D=b.depthFt-safe.frontFt-safe.rearFt;
  if(b.parking&&W<17.5)x.push("Parking + pedestrian entry + stairs needs at least 17.5 ft clear frontage in this layout family.");
  if(W<17.5||D<47)x.push("This road-front layout family needs at least 17.5 × 47 ft usable area; try G+1 without parking, or architect-designed alternatives.");
  if(!b.parking)x.push("Parking-free compact layout family has not yet passed circulation validation; no plan will be invented.");
@@ -55,34 +59,42 @@ function addWindow(p:Pick<PlanModel,"rooms"|"openings"|"plot"|"setbacks">){
    widthFt:width,sillFt:3,heightFt:4,kind:"window"});
  }
 }
-function build(b:PlanBrief,variant:"parking-left"|"parking-right"):PlanModel{
- const sb=b.setbacks,U={x:sb.leftFt,y:sb.frontFt,w:b.widthFt-sb.leftFt-sb.rightFt,d:b.depthFt-sb.frontFt-sb.rearFt};
- const W=U.w,D=U.d,parkW=Math.max(8.5,Math.min(10,round(W*.46)));
- const stairW=5.5,kitchenW=8.5,bathW=5;
- const rearBedW=Math.max(11,Math.min(12.5,W-6));
+export type SpatialProgramme="wash"|"family-gallery"|"rear-courtyard"|"rear-baranda";
+type SpatialRecipe={parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
+ rearBedWidthFt?:number;upperBedRatio?:number;rearProgramme?:SpatialProgramme;frontProgramme?:"dining"|"family-hall"|"family-lounge";familyLabel?:string;};
+function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:SpatialRecipe={}):PlanModel{
+ const sb=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks),
+ U={x:sb.leftFt,y:sb.frontFt,w:b.widthFt-sb.leftFt-sb.rightFt,d:b.depthFt-sb.frontFt-sb.rearFt};
+ const W=U.w,D=U.d,parkW=recipe.parkWidthFt??Math.max(8.5,Math.min(10,round(W*.46)));
+ const stairW=recipe.stairWidthFt??5.5,kitchenW=recipe.kitchenWidthFt??8.5,bathW=5;
+ const rearBedW=recipe.rearBedWidthFt??Math.max(11,Math.min(12.5,W-6));
+ const entryDepth=recipe.entryDepthFt??5;
+ const rearProgramme=recipe.rearProgramme??"wash";
+ const rearKind:RoomKind=rearProgramme==="family-gallery"?"lounge":rearProgramme==="rear-courtyard"?"terrace":rearProgramme==="rear-baranda"?"verandah":"utility";
+ const rearLabel=rearProgramme==="family-gallery"?"Covered gallery / family seating":rearProgramme==="rear-courtyard"?"Open rear courtyard":rearProgramme==="rear-baranda"?"Rear covered baranda":"Rear utility / wash";
  if(W-kitchenW-bathW<3.75||W-parkW<8)return (null as never);
  const rooms:Room[]=[];
  const put=(id:string,label:string,kind:RoomKind,floor:number,x:number,y:number,w:number,d:number)=>
   rooms.push(room(id,label,kind,floor,U.x+x,U.y+y,w,d));
  put("parking","Car parking","parking",0,0,0,parkW,16);
- put("verandah","Entry verandah","verandah",0,parkW,0,W-parkW,5);
- put("living","Living / drawing","living",0,parkW,5,W-parkW,11);
+ put("verandah","Front verandah / baranda","verandah",0,parkW,0,W-parkW,entryDepth);
+ put("living","Living / drawing","living",0,parkW,entryDepth,W-parkW,16-entryDepth);
  put("stairs-g","Stairs","stairs",0,0,16,stairW,10);
- put("dining","Dining","dining",0,stairW,16,W-stairW,10);
+ put("dining",recipe.frontProgramme==="family-hall"?"Family hall / meeting space":recipe.frontProgramme==="family-lounge"?"Family lounge / drawing":"Dining / family hall",recipe.frontProgramme==="family-hall"?"living":recipe.frontProgramme==="family-lounge"?"lounge":"dining",0,stairW,16,W-stairW,10);
  put("kitchen","Kitchen","kitchen",0,0,26,kitchenW,8);
  put("bath-g","Bath / WC","bath",0,kitchenW,26,bathW,8);
  put("corridor-g","Passage","corridor",0,kitchenW+bathW,26,W-kitchenW-bathW,8);
  put("hall-g","Rear access hall","corridor",0,0,34,W,3);
  put("bed-g","Bedroom 1","bedroom",0,0,37,rearBedW,D-37);
- put("utility-g","Rear utility / wash","utility",0,rearBedW,37,W-rearBedW,D-37);
+ put("utility-g",rearLabel,rearKind,0,rearBedW,37,W-rearBedW,D-37);
  if(b.floors===2){
   const upper=b.bedrooms-1;
   put("balcony-1","Street balcony","balcony",1,0,0,W,4);
   if(upper===1){
    put("bed-1a","Bedroom 2","bedroom",1,0,4,W,12);
   }else{
-   put("bed-1a","Bedroom 2","bedroom",1,0,4,W/2,12);
-   put("bed-1b","Bedroom 3","bedroom",1,W/2,4,W-W/2,12);
+   put("bed-1a","Bedroom 2","bedroom",1,0,4,round(W*(recipe.upperBedRatio??.5)),12);
+   put("bed-1b","Bedroom 3","bedroom",1,round(W*(recipe.upperBedRatio??.5)),4,W-round(W*(recipe.upperBedRatio??.5)),12);
   }
   put("stairs-1","Stairs / landing","stairs",1,0,16,stairW,10);
   put("lounge-1","Family lounge","lounge",1,stairW,16,W-stairW,10);
@@ -95,7 +107,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right"):PlanModel{
  const openings:Opening[]=[];
  const joins=[
   ["verandah","living"],["living","dining"],["dining","stairs-g"],
-  ["dining","kitchen"],["dining","corridor-g"],["kitchen","bath-g"],
+  ["dining","kitchen"],["dining","corridor-g"],[recipe.familyLabel?"dining":"kitchen","bath-g"],
   ["corridor-g","hall-g"],["hall-g","bed-g"],["hall-g","utility-g"]
  ];
  if(b.floors===2){
@@ -108,8 +120,8 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right"):PlanModel{
  const gateParking=rooms.find(r=>r.kind==="parking")!;
  const parkingGate={side:"front" as const,xFt:round(gateParking.x+.25),widthFt:Math.min(8,round(gateParking.w-.5))};
  const p:PlanModel={
-  version:1,id:b.widthFt+"x"+b.depthFt+"-"+b.roadSide+"-"+b.floors+"-"+b.bedrooms+"-"+variant,
-  variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide},
+  version:1,id:b.widthFt+"x"+b.depthFt+"-"+b.roadSide+"-"+b.floors+"-"+b.bedrooms+"-"+variant+(b.siteShape&&b.siteShape.kind!=="rectangle"?"-"+b.siteShape.kind+"-"+b.siteShape.notchWidthFt+"x"+b.siteShape.notchDepthFt:"")+(recipe.familyLabel?"-"+recipe.familyLabel:""),
+  variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},
   setbacks:{...sb,verified:false},walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},
   floors:b.floors,rooms,openings,gate:parkingGate,
   pedestrianGate:{side:"front",xFt:round(entry.x+(entry.w-3)/2),widthFt:3},
@@ -119,6 +131,8 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right"):PlanModel{
   balcony:b.floors===2?{roomId:"balcony-1"}:null,
   facade:{kit:"simple-parapet",massing:"box",main:variant==="parking-left"?"#e9e2d4":"#e7e6df",accent:"#8e755b"},
   score:0,notes:[
+   ...(recipe.familyLabel?["Spatial programme: "+recipe.familyLabel+" · "+rearLabel+" · "+(recipe.frontProgramme==="family-hall"?"family hall":recipe.frontProgramme==="family-lounge"?"lounge / drawing":"dining")]:[]),
+   ...(b.siteShape&&b.siteShape.kind!=="rectangle"?["L-plot rear corner omitted. Entire adjacent strip is kept unbuilt as a conservative construction envelope; a cadastral site survey and licensed architect must verify the actual boundary."]:[]),
    "City rules, setbacks, FAR, actual stair rise/tread/headroom, vehicle turning and parking permissions are unverified.",
    "Concept only; engage a licensed architect/engineer and obtain local authority approval before construction.",
    "Bathrooms require a licensed professional to check exhaust/ventilation shafts, drainage falls and plumbing."
@@ -154,4 +168,55 @@ export function generateRoadPlans(brief:PlanBrief):PlanningResult{
  }
  const plans=pickDiverse(candidates,3);
  return {plans,blockers:plans.length?[]:blockers.length?blockers:["No circulation-safe candidate fits; revise requested programme."]};
+}
+
+/** Deterministic portfolio for a single EXACT plot/road/floor brief.
+ * Each returned draft changes partition boundaries, circulation adjacency and/or
+ * actual room use. All candidates pass the same walkability/window/parking and
+ * 2D/3D PlanModel validator; never stretch static image cards into a fake fit.
+ *
+ * Smaller or awkward plots may return fewer than 24; no fake room or local-law
+ * compliance is manufactured to hit a marketing number.
+ */
+export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResult{
+ const blockers=explainImpossible(brief);
+ if(blockers.length)return {plans:[],blockers};
+ const envelope=conservativeEnvelope(brief.widthFt,brief.depthFt,brief.siteShape??{kind:"rectangle"},brief.setbacks);
+ const W=brief.widthFt-envelope.leftFt-envelope.rightFt;
+ const baseParking=Math.max(8.5,Math.min(10,round(W*.46)));
+ const plans:PlanModel[]=[],seen=new Set<string>();
+ const normalized=Math.max(1,Math.min(24,Math.floor(limit)));
+ for(const variant of ["parking-left","parking-right"] as const){
+  const perSide=normalized===24?12:Math.ceil(normalized/2);
+  let sideCount=0;
+  for(let i=0;i<100&&sideCount<perSide;i++){
+   const prog=(["wash","family-gallery","rear-courtyard","rear-baranda"] as SpatialProgramme[])[i%4];
+   const family=(["dining","family-hall","family-lounge"] as const)[Math.floor(i/4)%3];
+   const park=Math.min(Math.max(8.5,baseParking+(Math.floor(i/4)%3)*.25),W-8.8);
+   const entryDepth=4.5+(Math.floor(i/18)%3)*.25;
+   const stair=5.25+(Math.floor(i/3)%2)*.25;
+   const kitchen=8.5+(Math.floor(i/9)%3)*.25;
+   const bedWidth=Math.min(W-4.5,Math.max(10.5,Math.min(12.5,W-6)+(Math.floor(i/12)%3-1)*.5));
+   const ratio=(Math.floor(i/5)%3===0?.48:Math.floor(i/5)%3===1?.5:.52);
+   const recipe:SpatialRecipe={parkWidthFt:park,entryDepthFt:entryDepth,stairWidthFt:stair,
+    kitchenWidthFt:kitchen,rearBedWidthFt:bedWidth,upperBedRatio:ratio,rearProgramme:prog,
+    frontProgramme:family,familyLabel:"spatial-"+i+"-"+prog+"-"+family};
+   try{
+    const p=build(brief,variant,recipe),errors=validatePlan(p);
+    if(errors.length)continue;
+    const geometry=p.rooms.map(r=>[r.floor,r.kind,r.x,r.y,r.w,r.d].join(":")).sort().join("|");
+    if(seen.has(geometry))continue;
+    seen.add(geometry);
+    plans.push(p);sideCount++;
+   }catch{/* Invalid spatial combinations are discarded, not shown to customers. */}
+  }
+ }
+ // Interleave parking-side alternatives rather than showing 12 identical-looking gates in a row.
+ const left=plans.filter(p=>p.variant==="parking-left"),right=plans.filter(p=>p.variant==="parking-right");
+ const ordered:PlanModel[]=[];
+ for(let i=0;i<Math.max(left.length,right.length);i++){
+  if(left[i])ordered.push(left[i]);if(right[i])ordered.push(right[i]);
+ }
+ return {plans:ordered.slice(0,normalized),
+  blockers:ordered.length?[]:["No validated distinct spatial layout fits these dimensions, rooms, parking and setbacks."]};
 }

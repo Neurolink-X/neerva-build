@@ -1,9 +1,10 @@
 "use client";
 
-import {useEffect,useMemo,useRef,useState,type FormEvent} from "react";
+import {useEffect,useMemo,useState,type FormEvent} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {homeVisuals} from "@/modules/home/assets";
+import {homeVisuals,homeReferencePhotos} from "@/modules/home/assets";
+import {BrandMark} from "@/components/brand-mark";
 import {studioDesigns} from "@/modules/studio/library";
 import {rankStudioDesigns,type PlotBrief} from "@/modules/studio/fit";
 
@@ -16,7 +17,7 @@ const copy={
  search:"Search construction materials",searchHint:"Cement, TMT, bricks or pipes",searchGo:"Search",
  trust1:"Clear material specifications",trust2:"Dealer status shown honestly",trust3:"Review charges before accepting",
  category:"Explore materials",catDesc:"Choose a category to compare specifications. Dealer stock and prices appear only after verification.",options:"See options",paintLabel:"Explore finishes",
- designs:"A design for every plot",galleryDesc:"Explore 24 draft inspiration concepts. None are approved for building until geometry and city rules are verified.",gallery:"Browse 24 draft inspirations",plan:"View concept plan",concept:"Concept, not construction drawings",
+ designs:"A design for every plot",galleryDesc:"Generate up to 24 spatially different room layouts for your exact rectangular plot. Each matches the 2D and 3D model; all require professional approval.",gallery:"Create 24 plans for my plot",plan:"View concept plan",concept:"Concept, not construction drawings",
  colour:"Make the exterior yours",colourDesc:"Experiment with shades and see how walls, gates and finishes could look.",colourLink:"Open colour studio",colourDisclaimer:"On-screen shade is approximate. Verify a physical sample.",
  works:"From your plot to materials",worksDesc:"One connected route, with clear limits wherever a service is not yet active.",
  step1:"Design",step1Desc:"Enter plot and room needs",step2:"Visualise",step2Desc:"Explore plans and colour ideas",step3:"Quote",step3Desc:"Prepare material requirements",step4:"Track",step4Desc:"Order tracking after service activation",
@@ -26,7 +27,7 @@ const copy={
  foot:"Concept designs only. No orders or dealer prices are presented as active until verified.",cityNote:"Coverage and delivery require dealer confirmation.",
  navDesign:"Home studio",navMaterials:"Materials",navQuote:"Quotes",navGuides:"Guides",
  recent:"Recent searches",noMatch:"No suggestions — see all materials",
- disclaimer:"Illustrative images, including original concept artwork and licensed photography. Not built NEERVA projects or exact selected floor plans.",
+ disclaimer:"Licensed real photographs are inspiration only. They are not NEERVA projects, the selected floor plan, or exact construction proposals.",
  compact:"Illustrative colour mood only — for wall-specific editing, open the colour studio.",
  langButton:"हिन्दी",location:"Service city",custom:"Enter your city",cityConfirm:"Set city",cityCancel:"Cancel",cityInfo:"Coverage will be confirmed before an order.",categories:"Popular categories",emptyCity:"Enter a city name to continue",
  },
@@ -37,7 +38,7 @@ const copy={
  search:"निर्माण सामग्री खोजें",searchHint:"सीमेंट, सरिया, ईंट या पाइप",searchGo:"खोजें",
  trust1:"सामग्री की पूरी जानकारी",trust2:"डीलर की स्थिति स्पष्ट",trust3:"स्वीकार करने से पहले सभी शुल्क देखें",
  category:"निर्माण सामग्री देखें",catDesc:"सामग्री की जानकारी और विकल्प देखें। सत्यापित स्टॉक या रेट उपलब्ध होने पर ही दिखेंगे।",options:"विकल्प देखें",paintLabel:"रंग चुनें",
- designs:"हर प्लॉट के लिए डिज़ाइन",galleryDesc:"मौलिक कॉन्सेप्ट चुनें। तस्वीरें प्रेरणा के लिए हैं, उसी प्लान का रेंडर नहीं।",gallery:"24 ड्राफ्ट कॉन्सेप्ट देखें",plan:"प्लान देखें",concept:"कॉन्सेप्ट, निर्माण ड्रॉइंग नहीं",
+ designs:"हर प्लॉट के लिए डिज़ाइन",galleryDesc:"अपने प्लॉट पर 24 तक अलग-अलग कमरों के नक्शे बनाएं। 2D और 3D एक ही डिज़ाइन के हैं। निर्माण से पहले विशेषज्ञ जाँच ज़रूरी है।",gallery:"मेरे प्लॉट पर 24 प्लान बनाएं",plan:"प्लान देखें",concept:"कॉन्सेप्ट, निर्माण ड्रॉइंग नहीं",
  colour:"अपने घर के रंग चुनें",colourDesc:"दीवार, गेट और दूसरी सतहों पर अलग रंग आज़माएं।",colourLink:"कलर स्टूडियो खोलें",colourDisclaimer:"स्क्रीन पर रंग अनुमानित हैं। असली सैंपल जांचें।",
  works:"प्लॉट से सामग्री तक",worksDesc:"हर चरण स्पष्ट है; सेवा उपलब्ध न होने पर सही सूचना दी जाएगी।",
  step1:"प्लान",step1Desc:"प्लॉट और कमरों की जरूरत",step2:"रंग देखें",step2Desc:"प्लान और रंग चुनें",step3:"कोटेशन",step3Desc:"सामग्री की जरूरत बताएं",step4:"ट्रैक",step4Desc:"सेवा शुरू होने पर ऑर्डर ट्रैक करें",
@@ -90,14 +91,14 @@ export function PremiumHome(){
  const [city,setCity]=useState("Kanpur");
  const [cityCustom,setCityCustom]=useState(false),[cityInput,setCityInput]=useState("");
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
- const [split,setSplit]=useState(95),[manual,setManual]=useState(false);
- const comparisonRef=useRef<HTMLDivElement|null>(null),constructionRef=useRef<HTMLSpanElement|null>(null),inputRef=useRef<HTMLInputElement|null>(null);
  const [plot,setPlot]=useState("all"),[designStyle,setDesignStyle]=useState("all");
  const [customWidth,setCustomWidth]=useState(""),[customDepth,setCustomDepth]=useState("");
  const customPlotActive=customWidth.trim()!==""||customDepth.trim()!=="";
  const w=Number(customWidth),d=Number(customDepth);
  const customPlotValid=customWidth.trim()!==""&&customDepth.trim()!==""&&Number.isFinite(w)&&Number.isFinite(d)&&w>=10&&w<=200&&d>=15&&d<=250;
  const fitLink=customPlotValid?`/design-studio/fit?width=${encodeURIComponent(customWidth)}&depth=${encodeURIComponent(customDepth)}`:"/design-studio/fit";
+ const portfolioDimensions=customPlotValid?{width:w,depth:d}:plot==="all"?{width:18,depth:50}:(()=>{const [width,depth]=plot.split("x").map(Number);return {width,depth};})();
+ const portfolioHref=`/design-studio/portfolio?width=${encodeURIComponent(String(portfolioDimensions.width))}&depth=${encodeURIComponent(String(portfolioDimensions.depth))}`;
  const t=copy[lang];
  const designs=useMemo(()=>{
   const styled=studioDesigns.filter(design=>designStyle==="all"||designStyle===design.style);
@@ -110,33 +111,6 @@ export function PremiumHome(){
  },[plot,designStyle,customPlotActive,customPlotValid,w,d]);
  const suggestions=useMemo(()=>query.trim()?items.filter(item=>(item.en+" "+item.hi+" "+item.description).toLowerCase().includes(query.toLowerCase())).slice(0,4):[],[query]);
  useEffect(()=>{const id=window.setTimeout(()=>{try{const l=localStorage.getItem("neerva-home-lang");if(l==="en"||l==="hi")setLang(l);const r=JSON.parse(localStorage.getItem("neerva-home-search-v1")||"[]");if(Array.isArray(r))setRecent(r.filter((x):x is string=>typeof x==="string"&&x.length<65).slice(0,4));}catch{/* Private browsing: state remains in memory. */}},0);return()=>clearTimeout(id)},[]);
- useEffect(()=>{
-  const el=comparisonRef.current,mask=constructionRef.current,input=inputRef.current;
-  if(!el||!mask||!input||manual||window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-  let raf=0,intersecting=false,visible=true,start=0;
-  const frame=(time:number)=>{
-   if(!intersecting||!visible)return;
-   if(!start)start=time;
-   const cycle=(time-start)%7000;
-   const remaining=cycle<500?95:cycle<4900?95-(cycle-500)/4400*90:cycle<5850?5:5+(cycle-5850)/1150*90;
-   // One compositor style update per frame, no React rerender during time-lapse.
-   mask.style.clipPath=`inset(0 ${100-remaining}% 0 0)`;
-   input.value=String(Math.round(remaining));
-   raf=window.requestAnimationFrame(frame);
-  };
-  const observer=new IntersectionObserver(([item])=>{
-   intersecting=Boolean(item?.isIntersecting);
-   window.cancelAnimationFrame(raf);
-   if(intersecting&&visible){start=0;raf=window.requestAnimationFrame(frame);}
-  },{threshold:.15});
-  const onVisible=()=>{
-   visible=!document.hidden;
-   window.cancelAnimationFrame(raf);
-   if(visible&&intersecting){start=0;raf=window.requestAnimationFrame(frame);}
-  };
-  observer.observe(el);document.addEventListener("visibilitychange",onVisible);
-  return()=>{intersecting=false;observer.disconnect();window.cancelAnimationFrame(raf);document.removeEventListener("visibilitychange",onVisible);}
- },[manual]);
  function language(){const next=lang==="en"?"hi":"en";setLang(next);try{localStorage.setItem("neerva-home-lang",next)}catch{/* Language still changes for this session */}}
  function submitSearch(event:FormEvent<HTMLFormElement>){const trimmed=query.trim();if(!trimmed){event.preventDefault();return;}const next=[trimmed,...recent.filter(x=>x.toLowerCase()!==trimmed.toLowerCase())].slice(0,4);setRecent(next);try{localStorage.setItem("neerva-home-search-v1",JSON.stringify(next))}catch{/* Optional search history */}}
  function pickCity(value:string){if(value==="custom"){setCityCustom(true);return;}setCityCustom(false);setCity(value);}
@@ -180,40 +154,42 @@ export function PremiumHome(){
     {recent.length>0&&<div className="nbh-recent"><small>{t.recent}</small>{recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>)}</div>}
    </div>
    <div className="nbh-hero-visual">
-    <div className="nbh-house-frame" ref={comparisonRef}>
-     <div className="nbh-house-link" aria-label="Illustrative construction site and completed home comparison"><Image src={homeVisuals.hero} fill priority sizes="(max-width: 720px) 100vw, 48vw" alt="Original NEERVA concept illustration showing a completed two-storey house" className="nbh-house-photo"/><span ref={constructionRef} className="nbh-house-tone" style={{clipPath:"inset(0 "+(100-split)+"% 0 0)"}}><Image src={homeVisuals.construction} fill sizes="(max-width: 720px) 100vw, 48vw" alt="" aria-hidden="true" className="nbh-house-photo"/></span></div>
-     <span className="nbh-house-chip">ILLUSTRATIVE CONSTRUCTION · NOT A REAL TIMELAPSE <Icon name="spark"/></span>
-     <span className="nbh-image-tag nbh-tag-before" style={{left:Math.min(90,Math.max(9,split-15))+"%"}}>UNDER CONSTRUCTION</span><span className="nbh-image-tag nbh-tag-after">FINISHED HOME</span>
-     <label className="nbh-slider-label"><span>Construction stage <strong>← Drag to compare →</strong> Finished concept</span>
-  <input ref={inputRef} type="range" min={5} max={95} step={1} defaultValue={split} onInput={e=>{if(constructionRef.current)constructionRef.current.style.clipPath="inset(0 "+(100-Number(e.currentTarget.value))+"% 0 0)"}} onChange={e=>{setManual(true);setSplit(Number(e.target.value))}} aria-label="Compare illustrative construction-stage and completed homes"/></label>
- <button className="nbh-build-replay" type="button" onClick={()=>{setSplit(95);setManual(false);if(constructionRef.current)constructionRef.current.style.clipPath="inset(0 5% 0 0)";if(inputRef.current)inputRef.current.value="95"}}>{manual?"Replay illustration ↻":"Playing illustration · Replay"}</button>
+    <div className="nbh-house-frame nbh-photo-hero">
+     <Image src={homeVisuals.hero} fill priority sizes="(max-width:720px) 100vw, 48vw" alt="Real photograph of a premium contemporary residence, used as style inspiration, not a NEERVA-generated house or an exact plan render" className="nbh-house-photo"/>
+     <span className="nbh-photo-veil" aria-hidden="true"/>
+     <div className="nbh-photo-credit"><span className="nbh-photo-pill">REAL HOUSE PHOTOGRAPHY</span><strong>Contemporary homes. Build a plan for your own site.</strong><small>Exterior style inspiration · exact rooms, doors and gates appear in the matched 2D/3D studio</small></div>
     </div>
-    <p className="nbh-image-note">Original matched architectural concept drawings, not photos or a completed NEERVA project. <Link href="/design-studio/fit">Find designs for your plot →</Link></p>
+    <p className="nbh-image-note">Licensed residential photograph, not a NEERVA-built home or a visualisation of a selected floor plan. <Link href="/design-studio/fit">Find designs for your plot →</Link></p>
    </div>
   </section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
+  <section className="nbh-brands-strip" aria-label="Construction manufacturer reference directory">
+   <div><strong>{lang==="hi"?"निर्माण सामग्री के ब्रांड":"Explore established material brands"}</strong><p>{lang==="hi"?"ब्रांड लोगो केवल पहचान के लिए हैं। स्टॉक और अधिकृत डीलर की पुष्टि अलग जरूरी है।":"Original brand marks where source-verified; names are references, not authorised dealership or product stock."}</p></div>
+   <div className="nbh-brand-links">{(["ACC","UltraTech","Ambuja","Astral","Supreme","Polycab"] as const).map(name=><Link href="/brands" key={name} aria-label={name+" construction materials brand directory"}><BrandMark name={name} small/></Link>)}</div>
+  </section>
   <section className="nbh-section nbh-materials" id="materials"><div className="nbh-section-head"><div><p className="nbh-eyebrow">01 / MATERIALS</p><h2>{t.category}</h2><p>{t.catDesc}</p></div><Link href="/materials" className="nbh-section-link">{t.navMaterials} <Icon name="arrow"/></Link></div>
    <div className="nbh-category-grid">{items.map(item=><Link href={item.href} className="nbh-material-card" key={item.id}><div className="nbh-material-image">{item.image?<Image src={item.image} fill sizes="(max-width:600px) 48vw, (max-width:1000px) 30vw, 16vw" alt={"Representative "+item.en+" category "+(item.image.endsWith(".svg")?"illustration":"material photo")+", not verified branded SKU"} loading="lazy"/>:<div className="nbh-photo-pending" role="img" aria-label="Representative category illustration pending">SKU photo pending review</div>}</div><div className="nbh-material-info"><h3>{lang==="hi"?item.hi:item.en}</h3><p>{lang==="hi"?item.descriptionHi:item.description}</p><span>{item.id==="paint"?t.paintLabel:t.options} <Icon name="arrow"/></span></div></Link>)}</div>
    <p className="nbh-fineprint">{t.disclaimer}</p>
   </section>
-  <section className="nbh-section nbh-featured" id="designs"><div className="nbh-section-head"><div><p className="nbh-eyebrow">02 / HOME STUDIO</p><h2>{t.designs}</h2><p>{t.galleryDesc}</p></div><Link href="/design-studio/library" className="nbh-section-link">{t.gallery} <Icon name="arrow"/></Link></div>
+  <section className="nbh-section nbh-featured" id="designs"><div className="nbh-section-head"><div><p className="nbh-eyebrow">02 / HOME STUDIO</p><h2>{t.designs}</h2><p>{t.galleryDesc}</p></div><Link href={portfolioHref} className="nbh-section-link">{t.gallery} <Icon name="arrow"/></Link></div>
    <div className="nbh-filter-row"><label>Preset <select value={plot} onChange={e=>{setPlot(e.target.value);setCustomWidth("");setCustomDepth("")}}><option value="all">All sizes</option>{["15x30","20x40","25x40","30x40","30x50","40x60"].map(v=><option key={v} value={v}>{v.replace("x"," × ")} ft</option>)}</select></label><label>Or your width (ft)<input type="number" inputMode="decimal" min="10" max="200" step="0.5" placeholder="e.g. 18" value={customWidth} onChange={e=>setCustomWidth(e.target.value)}/></label><label>Depth (ft)<input type="number" inputMode="decimal" min="15" max="250" step="0.5" placeholder="e.g. 50" value={customDepth} onChange={e=>setCustomDepth(e.target.value)}/></label><label>Style <select value={designStyle} onChange={e=>setDesignStyle(e.target.value)}><option value="all">All styles</option>{["warm-modern","sandstone-calm","urban-slate","terracotta-ivory"].map(s=><option key={s} value={s}>{s.replaceAll("-"," ")}</option>)}</select></label></div>
+   <p className="nbh-spatial-promo"><strong>{lang==="hi"?"अलग-अलग कमरों वाले 24 नक्शे":"24 actual room arrangements for one plot"}</strong> <span>{portfolioDimensions.width} × {portfolioDimensions.depth} ft · road-facing parking · shared 2D/3D geometry</span><Link href={portfolioHref}> {lang==="hi"?"नक्शे बनाएं →":"Generate my 24 spatial plans →"}</Link></p>
    {customPlotActive&&<p className="nbh-custom-fit" role="status">{customPlotValid?`Your ${w} × ${d} ft plot: showing concepts whose existing footprint fits the dimensions (not a custom-generated floor plan).`:"Enter both valid plot dimensions (width 10–200 ft; depth 15–250 ft)."} <Link href={fitLink}>Open detailed plot fit and room requirements →</Link></p>}
-   {designs.length===0?<div className="nbh-empty"><p>{customPlotActive?"No existing concept fits the entered dimensions. Do not stretch a fixed plan and call it a custom design.":"No concept matches this filter."}</p><Link href={fitLink}>Review your custom plot →</Link><button onClick={()=>{setPlot("all");setDesignStyle("all");setCustomWidth("");setCustomDepth("")}}>Show all designs</button></div>:<div className="nbh-design-scroll">{designs.map((d,i)=><Link className="nbh-design-card" href={"/design-studio/library/"+d.slug} key={d.slug}><div className="nbh-design-image"><Image src={[homeVisuals.warm,homeVisuals.slate,homeVisuals.nature,homeVisuals.hero][i%4]} fill sizes="(max-width: 600px) 80vw, 350px" loading="lazy" alt={"Illustrative modern home exterior inspiration, not the rendered "+d.title+" plan"}/><span>{d.plot.widthFt} × {d.plot.depthFt} FT</span></div><div className="nbh-design-text"><h3>{lang==="hi"?d.titleHi:d.title}</h3><p>{d.bedrooms} BHK · {d.floors===1?"Ground":"G+1"} · {d.facing}</p><span>{t.plan} <Icon name="arrow"/></span></div></Link>)}</div>}
+   {designs.length===0?<div className="nbh-empty"><p>{customPlotActive?"No existing concept fits the entered dimensions. Do not stretch a fixed plan and call it a custom design.":"No concept matches this filter."}</p><Link href={fitLink}>Review your custom plot →</Link><button onClick={()=>{setPlot("all");setDesignStyle("all");setCustomWidth("");setCustomDepth("")}}>Show all designs</button></div>:<div className="nbh-design-scroll">{designs.map((d,i)=><Link className="nbh-design-card" href={"/design-studio/library/"+d.slug} key={d.slug}><div className="nbh-design-image"><Image src={homeReferencePhotos[i%homeReferencePhotos.length].src} fill sizes="(max-width: 600px) 80vw, 350px" loading="lazy" alt={"Licensed architectural photograph for style reference only, not the exact 3D render of "+d.title}/><span>{d.plot.widthFt} × {d.plot.depthFt} FT</span><small className="nbh-photo-plan-note">REAL PHOTO · STYLE REFERENCE</small></div><div className="nbh-design-text"><h3>{lang==="hi"?d.titleHi:d.title}</h3><p>{d.bedrooms} BHK · {d.floors===1?"Ground":"G+1"} · {d.facing}</p><span>{t.plan} <Icon name="arrow"/></span></div></Link>)}</div>}
    <p className="nbh-fineprint">{t.concept}. {t.disclaimer}</p>
   </section>
   <section className="nbh-colour nbh-build-section" id="construction">
-   <div className="nbh-build-visual" role="img" aria-label="Original two-stage illustration, a home under construction becoming a completed concept">
-    <Image src={homeVisuals.construction} fill sizes="(max-width:760px) 100vw, 44vw" alt="" aria-hidden="true" loading="lazy"/>
-    <span className="nbh-build-finished"><Image src={homeVisuals.hero} fill sizes="(max-width:760px) 100vw, 44vw" alt="" aria-hidden="true" loading="lazy"/></span>
-    <span className="nbh-build-caption">Illustrative stages, not actual construction footage</span>
+   <div className="nbh-build-visual nbh-construction-pair" aria-label="Two real photographs from different projects: construction work and a completed modern home">
+    <div className="nbh-real-construction"><Image src={homeVisuals.construction} fill sizes="(max-width:760px) 100vw, 22vw" loading="lazy" alt="Real photograph of structural construction and building activity, an unrelated editorial reference"/><span>01 · STRUCTURE / WORK SITE</span></div>
+    <div className="nbh-real-construction"><Image src={homeVisuals.hero} fill sizes="(max-width:760px) 100vw, 22vw" loading="lazy" alt="Real photograph of a completed contemporary home, a separate editorial reference"/><span>02 · COMPLETED HOME STYLE</span></div>
+    <p className="nbh-photo-disclaimer">Real reference photos of different properties · not a time-lapse, not a before/after claim</p>
    </div>
    <div className="nbh-colour-copy">
     <p className="nbh-eyebrow">03 / FROM FOUNDATION TO FINISH</p>
     <h2>{lang==="hi"?"सामग्री से बनता घर":"See your construction stages"}</h2>
     <p>{lang==="hi"?"स्टील और सीमेंट से शुरुआत, फिर ईंट, पाइप और फिनिशिंग। हर चरण की सामग्री और नाप चुनें। अंतिम स्टॉक, कीमत और डिलीवरी की पुष्टि जरूरी है।":"From steel and cement to bricks, pipes and finishes: choose the right materials for each construction stage, then get a verified supplier quotation."}</p>
     <div className="nbh-build-steps"><span>01 · Structure</span><span>02 · Plumbing & masonry</span><span>03 · Finishes</span></div>
-    <p className="nbh-fineprint">Concept only. Verify with a licensed architect/engineer and local authority approval. Illustrations do not represent a Neerva-built project.</p>
+    <p className="nbh-fineprint">Concept only. Verify with a licensed architect/engineer and local authority approval. Editorial photographs show different properties, not a single Neerva construction project.</p>
     <div className="nbh-build-actions"><Link className="nbh-outline-link" href="/materials">Explore construction materials <Icon name="arrow"/></Link><Link href="/design-studio/visualizer">{t.colourLink} →</Link></div>
    </div>
   </section>

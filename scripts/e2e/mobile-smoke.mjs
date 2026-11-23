@@ -6,7 +6,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/materials","/basket","/quotes","/account","/terms","/returns"];
+const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/account","/terms","/returns"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -113,9 +113,9 @@ async function main(){
     await page.goto(base+"/design-studio/road-planner",{waitUntil:"networkidle"});
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
-    assert.equal(await page.getByText("These 2 options are mirror arrangements").count(),1,"do not invent a third design");
-    await page.getByRole("button",{name:/Parking right/}).click();
-    assert.equal(await page.getByRole("button",{name:/Parking right/}).getAttribute("aria-pressed"),"true");
+    assert.equal(await page.locator(".nroad-variants button").count(),24,"supported exact-plot 24 checked architectural variations");
+    await page.getByRole("button",{name:/Car at right/}).first().click();
+    assert.equal(await page.getByRole("button",{name:/Car at right/}).first().getAttribute("aria-pressed"),"true");
     const floorToggle=page.getByRole("button",{name:"First floor"});
     await floorToggle.click();
     assert.equal(await floorToggle.getAttribute("aria-pressed"),"true","G+1 levels must switch");
@@ -135,6 +135,8 @@ async function main(){
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"networkidle"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
+     assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
+     assert.equal(await page.locator(".nbh-real-construction img").count(),2,"construction and completed home use separate editorial photos");
     assert.equal(await page.getByRole("button",{name:/Replay illustration/}).count(),0,"do not fabricate manual state before dragging");
     assert.equal(await page.locator(".nbh-build-visual").count(),1,"construction stages replace static colour mood");
     const quick=page.locator(".nbh-quick-quote");
@@ -149,11 +151,11 @@ async function main(){
     assert.match(resultHtml,/TMT 12 mm/,"draft material preserved");
     const newCatalog=await page.request.get(base+"/materials/paint");
     assert.equal(newCatalog.status(),200,"new paint category exists");
-    const reveal=page.getByRole("slider",{name:"Compare illustrative construction-stage and completed homes"});
-    assert.equal(await reveal.count(),1,"construction comparison needs a keyboard-accessible range slider");
-    await reveal.fill("74");
-    assert.equal(await reveal.inputValue(),"74","range input should move construction reveal");
-    assert.equal(await page.getByText("FINISHED HOME",{exact:true}).count(),1,"finished stage must be visibly labeled");
+    assert.equal(await page.getByRole("slider",{name:/construction-stage/}).count(),0,"real-photo panels must not pretend to be a single building before/after slider");
+    assert.equal(await page.locator(".nbh-real-construction img").count(),2,"show actual editorial construction and completed home photos");
+    assert.equal(await page.getByText(/STRUCTURE \/ WORK SITE/).count(),1,"construction photo must be labelled");
+    assert.equal(await page.getByText(/COMPLETED HOME STYLE/).count(),1,"completed home reference must be labelled");
+    assert.equal(await page.getByText(/different properties/).count()>0,true,"do not claim two unrelated photographs are the same project");
     const dimensions=page.locator(".nbh-filter-row input[type=number]");
     assert.equal(await dimensions.count(),2,"home must support arbitrary plot width and depth");
     for(const [w,d] of [["18","50"],["20","45"]]){

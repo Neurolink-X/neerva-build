@@ -5,7 +5,12 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
     formats: ["image/avif", "image/webp"],
-    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com", pathname: "/photo-**" }, { protocol: "https", hostname: "images.pexels.com", pathname: "/photos/**" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/photo-**" },
+      { protocol: "https", hostname: "images.pexels.com", pathname: "/photos/**" },
+      { protocol: "https", hostname: "upload.wikimedia.org", pathname: "/wikipedia/commons/**" },
+      { protocol: "https", hostname: "www.ultratechcement.com", pathname: "/content/dam/ultratechcementwebsite/media/ultratech_indi-27sno-1cement_hiresr1.jpg" },
+    ],
   },
   headers: async () => [
     {

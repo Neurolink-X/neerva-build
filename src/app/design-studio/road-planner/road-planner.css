@@ -55,3 +55,23 @@
 .nroad-road-help p{font-size:12px;line-height:1.5;margin:0;color:#526958}
 .nroad-road-help button{display:inline-flex;justify-content:center;align-items:center;min-height:44px;border:1px solid #31674b;background:#fff;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:800;color:#215139;text-align:center}
 @media(max-width:520px){.nroad-form{grid-template-columns:minmax(0,1fr)}.nroad-main,.nroad-results,.nroad-controls,.nroad-variants{min-width:0}.nroad-diagram{overflow-x:auto}.nroad-diagram svg{min-width:260px}.nroad-metrics>div{grid-template-columns:1fr}}
+
+
+/* Exact-site spatial portfolio: selectable accessible 24-floorplan cards. */
+.nroad-variants{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;max-height:500px;overflow:auto;scrollbar-gutter:stable;padding:3px 4px 4px 0}
+.nroad-variants button{min-width:0;flex:none;display:grid;align-content:center;gap:5px;min-height:94px;text-align:left;white-space:normal;padding:12px;border-radius:12px}
+.nroad-variants button strong{font-size:12px;line-height:1.35;text-wrap:balance}
+.nroad-variants button span,.nroad-variants button small{font-size:11px;line-height:1.4}
+.nroad-variants button[aria-pressed="true"]{outline:3px solid #2f7551;outline-offset:-3px;background:#e8f2e9}
+.nroad-save{margin:14px 0;padding:14px;border:1px solid #cbdcca;border-radius:12px;background:#f2f8ef;display:grid;gap:6px}
+.nroad-save button{font-weight:850;background:#28533c;color:#fff;border:0;border-radius:9px;min-height:46px;padding:9px 13px}
+.nroad-save button:disabled{opacity:.6}
+.nroad-save p{font-size:12px;line-height:1.5;margin:4px 0}
+@media(max-width:900px){.nroad-variants{grid-template-columns:repeat(2,minmax(0,1fr));max-height:470px}}
+@media(max-width:540px){.nroad-variants{grid-template-columns:repeat(2,minmax(0,1fr));max-height:400px;gap:7px}.nroad-variants button{padding:9px;min-height:93px}.nroad-head h2{overflow-wrap:anywhere}}
+@media(max-width:345px){.nroad-variants{grid-template-columns:minmax(0,1fr)}}
+
+
+.nroad-mini-plan{display:block;width:100%;height:105px;max-width:130px;overflow:visible;margin:0 auto 5px;border:1px solid #dee4d8;background:#f8f8f4;border-radius:7px;padding:5px;box-sizing:border-box}
+.nroad-variants button{min-height:210px;justify-items:stretch}
+@media(max-width:600px){.nroad-variants button{min-height:192px}.nroad-mini-plan{height:92px;max-width:110px}}

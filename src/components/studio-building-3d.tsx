@@ -33,7 +33,17 @@ export function StudioBuilding3D({design,colour,planModel}:{design:StudioDesign;
    const box=(x:number,y:number,z:number,sx:number,sy:number,sz:number,mat:THREE.MeshStandardMaterial,cast=true)=>{const mesh=new THREE.Mesh(shared,mat);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);mesh.castShadow=cast;mesh.receiveShadow=true;site.add(mesh);return mesh;};
    const xCoord=(v:number)=>(v-design.plot.widthFt/2)*FT;
    const zCoord=(v:number)=>(v-design.plot.depthFt/2)*FT;
-   box(0,-.13,0,width,.2,depth,foundation,false);
+   // Show the actual missing rear L-corner instead of visually claiming that land exists.
+   const shape=planModel?.plot.siteShape??{kind:"rectangle"} as const;
+   if(shape.kind==="rectangle")box(0,-.13,0,width,.2,depth,foundation,false);
+   else {
+    const W=design.plot.widthFt,D=design.plot.depthFt,w=shape.notchWidthFt,d=shape.notchDepthFt;
+    const groundPart=(x0:number,x1:number,y0:number,y1:number)=>
+     box(xCoord((x0+x1)/2),-.13,zCoord((y0+y1)/2),(x1-x0)*FT,.2,(y1-y0)*FT,foundation,false);
+    groundPart(0,W,0,D-d);
+    if(shape.kind==="rear-left-notch")groundPart(w,W,D-d,D);
+    else groundPart(0,W-w,D-d,D);
+   }
    const fp=structuralFootprint(design),W=(fp.maxX-fp.minX)*FT,D=(fp.maxZ-fp.minZ)*FT,cx=xCoord((fp.maxX+fp.minX)/2),cz=zCoord((fp.maxZ+fp.minZ)/2);
    if(planModel){
     // Phase 1 bridge: do not place a giant slab above the open parking bay or rear terrace.

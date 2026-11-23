@@ -6,6 +6,7 @@ import Link from "next/link";
 import {PLANNING_STORAGE_KEY,appendPlanningLine,isPlanningUnit,safePlanningList} from "@/modules/catalog/planning-list";
 import { ProductArtwork } from "@/components/product-artwork";
 import { CatalogMaterialImage, isApprovedSkuPhoto } from "@/components/catalog-material-image";
+import {brandMediaFor} from "@/modules/catalog/brand-media";
 import type { DemoProduct } from "@/modules/catalog/marketplace";
 import {categoryUnits,quantityUnitLabels} from "@/modules/catalog/category-units";
 
@@ -24,24 +25,32 @@ const specsByCategory: Record<string, string[]> = {
 /** Never repeat the same generic pipe/pack image as four claimed camera angles. */
 export function ProductGallery({ product }: { product: DemoProduct }) {
   const [active,setActive]=useState(0);
+  const [failedPhotos,setFailedPhotos]=useState<string[]>([]);
   const actual=(product.verification==="merchant_verified"&&product.imageVerified===true)
-    ? [...new Set((product.images??[]).filter(isApprovedSkuPhoto))] : [];
+    ? [...new Set((product.images??[]).filter(isApprovedSkuPhoto))].filter(source=>!failedPhotos.includes(source)) : [];
   const hasDiagram=["steel","cement","bricks-blocks","plumbing","electrical","aggregates"].includes(product.category);
-  type View={kind:"verified";source:string;label:string}|{kind:"sample"|"diagram";label:string};
+  const brand=brandMediaFor(product.brand);
+  const pressPhotoCandidate=product.category==="cement"&&brand&&"pressPhoto" in brand?brand.pressPhoto:null;
+  const pressPhoto=pressPhotoCandidate&&!failedPhotos.includes(pressPhotoCandidate)?pressPhotoCandidate:null;
+  const pressPhotoSource=product.category==="cement"&&brand&&"pressPhotoSource" in brand?brand.pressPhotoSource:null;
+  type View={kind:"verified"|"press";source:string;label:string}|{kind:"sample"|"diagram";label:string};
   const views:View[]=actual.length
     ? actual.map((source,index)=>({kind:"verified" as const,source,label:index===0?"Approved product photo":`Approved view ${index+1}`}))
-    : [{kind:"sample",label:"Representative material"},...(hasDiagram?[{kind:"diagram" as const,label:"Technical illustration"}]:[])];
+    : [...(pressPhoto?[{kind:"press" as const,source:pressPhoto,label:"Official manufacturer pack image"}]:[]),
+       {kind:"sample" as const,label:"Generic material reference"},
+       ...(hasDiagram?[{kind:"diagram" as const,label:"Technical illustration"}]:[])];
   const selected=Math.min(active,views.length-1);
   const view=views[selected];
   function display(item:View,thumb=false){
-    if(item.kind==="verified")return <Image className="catalog-real-image" src={item.source}
-      alt={thumb?"":`Reviewed photo of ${product.name}`} fill sizes={thumb?"130px":"(max-width:680px) 100vw, 50vw"} unoptimized/>;
+    if(item.kind==="verified"||item.kind==="press")return <Image className="catalog-real-image" src={item.source}
+      alt={thumb?"":item.kind==="press"?`Manufacturer press-kit cement bag image for ${product.brand}, not confirmed as exact ${product.name} SKU`:`Reviewed photo of ${product.name}`} fill sizes={thumb?"130px":"(max-width:680px) 100vw, 50vw"} unoptimized
+      onError={()=>setFailedPhotos(previous=>previous.includes(item.source)?previous:[...previous,item.source])}/>;
     if(item.kind==="sample")return <CatalogMaterialImage category={product.category} name={product.name} compact={thumb}/>;
     return <ProductArtwork category={product.category} scene="detail"/>;
   }
   return <div className="product-gallery">
     <div className="product-gallery-stage">{display(view)}
-      <span className="gallery-disclaimer">{view.kind==="verified"?"Approved local SKU photograph · confirm batch with dealer":"Illustrative material view, not an actual branded product photo"}</span>
+      <span className="gallery-disclaimer">{view.kind==="verified"?"Approved local SKU photograph · confirm batch with dealer":view.kind==="press"?"Official manufacturer media-kit bag reference · not the verified SKU or seller stock":"Illustrative material view, not an actual branded product photo"}</span>
     </div>
     {views.length>1&&<div className="product-gallery-thumbs" aria-label="Distinct product views">
       {views.map((item,index)=><button key={item.kind==="verified"?item.source:item.kind} type="button" className={selected===index?"active":""}
@@ -49,6 +58,7 @@ export function ProductGallery({ product }: { product: DemoProduct }) {
          {display(item,true)}<span>{item.label}</span>
         </button>)}
     </div>}
+    {pressPhoto&&!actual.length&&pressPhotoSource&&<p className="option-confirmation-note"><a href={pressPhotoSource} target="_blank" rel="noreferrer noopener">Official manufacturer press-kit source ↗</a> · Visual brand reference only. Exact SKU and dealership status need independent verification.</p>}
     {!actual.length&&<p className="option-confirmation-note">Additional front, side and package photos will appear only after an authorized seller submits and verifies those exact product images.</p>}
    </div>;
 }

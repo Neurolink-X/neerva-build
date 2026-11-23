@@ -2,6 +2,7 @@
 import Link from "next/link";
 import {useMemo,useState} from "react";
 import {CatalogMaterialImage} from "@/components/catalog-material-image";
+import {BrandMark} from "@/components/brand-mark";
 import type {DemoProduct} from "@/modules/catalog/marketplace";
 import type {CatalogCategory} from "@/modules/catalog/catalog";
 import {filterCatalog,productFacetValues} from "@/modules/catalog/discovery";
@@ -33,7 +34,7 @@ export function MaterialsBrowser({products,categories,initialQuery=""}:{
   {visible.length?<div className="product-grid">{visible.map(p=><article className="product-card" key={p.category+":"+p.slug}>
    <div className="product-card-art"><CatalogMaterialImage category={p.category} name={p.name} product={p}/></div>
    <div className="product-card-copy">
-    <span className="product-brand">{p.brand} · reference range</span>
+    <div className="product-brand-identity"><BrandMark name={p.brand} small/><small>Brand reference · no authorised dealer claim</small></div>
     <h2><Link href={`/materials/${p.category}/${p.slug}`}>{p.name}</Link></h2>
     <p>{p.description}</p>
     <div className="catalog-spec-chips">{p.specifications.slice(0,3).map(s=><span key={s.label}><b>{s.label}:</b> {s.value}</span>)}</div>

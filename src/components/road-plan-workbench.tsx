@@ -3,7 +3,7 @@ import {useEffect,useMemo,useState} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
-import {generateRoadPlans} from "@/modules/studio/road-generator";
+import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
 import {planMetrics,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
 import {oppositeRoadSide} from "@/modules/studio/plan-coordinate";
@@ -18,8 +18,8 @@ const colours=[
  {id:"sage",en:"Sage + sandstone",hi:"सेज + सैंडस्टोन",main:"#bec9b6",accent:"#a78f72"},
  {id:"slate",en:"Slate + cream",hi:"स्लेट + क्रीम",main:"#bdc5c4",accent:"#ddd5c4"}
 ] as const;
-export function RoadPlanWorkbench(){
- const [brief,setBrief]=useState<PlanBrief>(initial),[chosen,setChosen]=useState(0);
+export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
+ const [brief,setBrief]=useState<PlanBrief>(()=>initialBrief??initial),[chosen,setChosen]=useState(0);
  const [floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
  const [threeReady,setThreeReady]=useState(false);
  const [saving,setSaving]=useState(false),[saveInfo,setSaveInfo]=useState("");
@@ -31,13 +31,13 @@ export function RoadPlanWorkbench(){
   const token=session.data.session?.access_token;
   if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
   setSaving(true);setSaveInfo("");
-  try{const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant}),cache:"no-store"});
+  try{const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id}),cache:"no-store"});
    const body=await response.json() as {project?:{id?:string};error?:string};
    setSaveInfo(response.ok&&body.project?.id?"Private concept saved. Not a construction-approved plan.":(body.error??"Project was not saved."));
   }catch{setSaveInfo("Network issue. Your concept was not confirmed saved.");}finally{setSaving(false)}
  }
  useEffect(()=>{const frame=window.requestAnimationFrame(()=>setThreeReady(true));return()=>window.cancelAnimationFrame(frame)},[]);
- const result=useMemo(()=>generateRoadPlans(brief),[brief]);
+ const result=useMemo(()=>generateSpatialPortfolio(brief,24),[brief]);
  const draft=result.plans[chosen]??result.plans[0]??null;
  const shade=colours.find(c=>c.id===palette)??colours[0];
  const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,main:shade.main,accent:shade.accent}}:null,[draft,shade]);
@@ -69,6 +69,22 @@ export function RoadPlanWorkbench(){
        <p>{str("Car gate and house entry face the selected road edge. Changing sides rotates the whole 2D plan and 3D house; it never places parking at the back of a front-road plot.","मुख्य गेट और पार्किंग चुनी गई सड़क की तरफ हैं। दिशा बदलने पर 2D नक्शा और 3D घर दोनों घूमते हैं।")}</p>
        <button type="button" onClick={()=>update("roadSide",oppositeRoadSide(brief.roadSide))}>{str("Road actually on opposite side? Switch","सड़क दूसरी तरफ है? दिशा बदलें")}</button>
      </div>
+     <details className="nroad-advanced nroad-site-shape"><summary>{str("Plot shape: rectangle or L-shaped land","प्लॉट का आकार: चौकोर या L शेप")}</summary>
+      <p>{str("For an L-shaped plot, mark a missing rear corner. The model leaves an entire side strip unbuilt to avoid placing rooms outside your land. A surveyor must confirm boundaries.","L आकार के प्लॉट में पीछे का कटा हुआ कोना बताएं। नक्शा सुरक्षित जगह तक सीमित रहता है, जमीन की सही नाप सर्वेयर से जाँचें।")}</p>
+      <label>{str("Site outline","प्लॉट का आकार")}<select value={brief.siteShape?.kind??"rectangle"}
+       onChange={e=>update("siteShape",e.target.value==="rectangle"?{kind:"rectangle"}:{kind:e.target.value as "rear-left-notch"|"rear-right-notch",notchWidthFt:2,notchDepthFt:10})}>
+       <option value="rectangle">Rectangle · full frontage</option>
+       <option value="rear-left-notch">L shape · rear-left missing corner</option>
+       <option value="rear-right-notch">L shape · rear-right missing corner</option>
+      </select></label>
+      {brief.siteShape&&brief.siteShape.kind!=="rectangle"&&<>
+       <label>{str("Missing rear-corner width (ft)","पीछे कटे कोने की चौड़ाई")}<input type="number" min="1" max="60" step=".5" value={brief.siteShape.notchWidthFt}
+        onChange={e=>update("siteShape",{...brief.siteShape!,notchWidthFt:Number(e.target.value)} as PlanBrief["siteShape"])}/></label>
+       <label>{str("Missing rear-corner depth (ft)","पीछे कटे कोने की लंबाई")}<input type="number" min="1" max="100" step=".5" value={brief.siteShape.notchDepthFt}
+        onChange={e=>update("siteShape",{...brief.siteShape!,notchDepthFt:Number(e.target.value)} as PlanBrief["siteShape"])}/></label>
+      </>}
+      <p className="nroad-small">These are conservative concept constraints, not municipal setbacks, cadastral proof or licensed architecture.</p>
+     </details>
      <label>{str("Levels","मंज़िलें")}<select value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2)}>
       <option value={1}>G · Ground</option><option value={2}>G+1 · Two levels</option></select></label>
      <label>{str("Total bedrooms","कुल बेडरूम")}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>
@@ -90,11 +106,17 @@ export function RoadPlanWorkbench(){
      <p>{str("Try G+1, fewer bedrooms, or review parking and setbacks. We do not shrink rooms below minimums to fabricate a fit.",
        "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>
     </section>:<>
-     <div className="nroad-head nroad-choices"><h2>{str("Geometry-checked draft options","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} mirrored entry arrangements</span></div>
+     <div className="nroad-head nroad-choices"><h2>{str("Room-layout options checked for your plot","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} room-layout options, same plot</span></div>
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=><button key={v.id} type="button" aria-pressed={v.id===plan.id}
-       onClick={()=>{setChosen(i);setFloor(0)}}><strong>{i+1}. {v.variant==="parking-left"?"Parking left":"Parking right"}</strong>
-       <span>{v.score.toFixed(0)}/90 concept score</span></button>)}</div>
-     {result.plans.length<3&&<p className="nroad-small" role="status">These {result.plans.length} options are mirror arrangements, not independently different architectural topologies. A third unverified layout is not shown.</p>}
+       onClick={()=>{setChosen(i);setFloor(0)}}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${v.plot.widthFt+2} ${v.plot.depthFt+2}`} role="img" aria-label={`Ground layout preview ${i+1}: ${v.plot.widthFt} by ${v.plot.depthFt} feet, road ${v.plot.roadSide}`}>
+       <rect x="0" y="0" width={v.plot.widthFt} height={v.plot.depthFt} fill="#f7f5ec" stroke="#55765a" strokeWidth=".45"/>
+       {v.rooms.filter(r=>r.floor===0).map(r=><rect key={r.id} x={r.x} y={r.y} width={r.w} height={r.d}
+        fill={({parking:"#d4e6e0",verandah:"#fff3d9",living:"#e0ead9",dining:"#e8ebd7",kitchen:"#f0dfcc",bedroom:"#dce2f1",bath:"#c7e3f0",stairs:"#d4d4d4",corridor:"#f4efd9",utility:"#e5d5c4",lounge:"#d9e8cd",terrace:"#dce8df"} as Record<string,string>)[r.kind]??"#e7e4da"} stroke="#496452" strokeWidth=".18"/>)}
+       <line x1="0" x2={v.plot.widthFt} y1="0" y2="0" stroke="#be6740" strokeWidth="1.1"/>
+      </svg><strong>{i+1}. {v.notes[0]?.includes("family-gallery")?"Gallery / family seating":v.notes[0]?.includes("rear-courtyard")?"Open rear courtyard":v.notes[0]?.includes("rear-baranda")?"Rear baranda / veranda":"Utility & wash"}</strong>
+       <span>{v.variant==="parking-left"?"Car at left":"Car at right"} · {v.notes[0]?.includes("family hall")?"Family hall":v.notes[0]?.includes("lounge / drawing")?"Drawing lounge":"Dining + hall"}</span>
+       <small>{v.score.toFixed(0)}/90 preliminary layout score</small></button>)}</div>
+     {result.plans.length<3&&<p className="nroad-small" role="status">Only {result.plans.length} spatially valid options fit this brief. Narrow or irregular plots can have fewer than 24; no false layouts are added to reach a marketing count.</p>}
      <div className="nroad-save"><button type="button" disabled={saving} onClick={()=>void saveDraft()}>{saving?"Saving…":str("Save this plot-specific concept privately","अपना नक्शा सुरक्षित सेव करें")}</button>{saveInfo&&<p role="status">{saveInfo} {saveInfo.startsWith("Sign in")&&<Link href="/account">Sign in →</Link>}</p>}</div>
      <div className="nroad-head"><h2>{str("Plan & room dimensions","प्लान और कमरों का नाप")}</h2><span>Road · {plan.plot.roadSide}</span></div>
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">

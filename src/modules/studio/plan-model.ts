@@ -1,3 +1,4 @@
+import {type SiteShape,rectInsideShape,shapeErrors} from "./site-shape.ts";
 /**
  * PlanModel v1: the road is ALWAYS the y=0 edge in local site coordinates.
  * Compass orientation is metadata until a renderer transforms the whole site.
@@ -13,7 +14,7 @@ export type Room=Rect&{id:string;label:string;kind:RoomKind;floor:number;minClea
 export type Opening={id:string;roomId:string;side:Side;atFt:number;widthFt:number;sillFt:number;heightFt:number;kind:"door"|"window";connectsTo?:string};
 export type PlanModel={
  version:1;id:string;variant:"parking-left"|"parking-right";
- plot:{widthFt:number;depthFt:number;roadSide:RoadSide};
+ plot:{widthFt:number;depthFt:number;roadSide:RoadSide;siteShape?:SiteShape};
  setbacks:{frontFt:number;rearFt:number;leftFt:number;rightFt:number;verified:boolean};
  walls:{externalFt:number;internalFt:number;heightFt:number;parapetFt:number};
  floors:number;rooms:Room[];openings:Opening[];
@@ -26,7 +27,7 @@ export type PlanModel={
  score:number;notes:string[];conceptOnly:true;
 };
 export type PlanBrief={widthFt:number;depthFt:number;roadSide:RoadSide;floors:1|2;bedrooms:number;parking:boolean;
- setbacks:{frontFt:number;rearFt:number;leftFt:number;rightFt:number};};
+ setbacks:{frontFt:number;rearFt:number;leftFt:number;rightFt:number};siteShape?:SiteShape;};
 const EPS=1e-6;
 export const snap=(n:number)=>Math.round(n*2)/2;
 export const area=(r:Rect)=>r.w*r.d;
@@ -77,11 +78,14 @@ export function validatePlan(p:PlanModel):string[]{
  if(![w,d,sb.frontFt,sb.rearFt,sb.leftFt,sb.rightFt,p.walls.externalFt,p.walls.internalFt,p.walls.heightFt].every(Number.isFinite)||
   w<10||d<15||Object.values(sb).some(x=>typeof x==="number"&&x<0)||p.walls.externalFt<=0||p.walls.internalFt<=0)errors.push("Invalid plot, setbacks or wall thickness");
  const U={x:sb.leftFt,y:sb.frontFt,w:w-sb.leftFt-sb.rightFt,d:d-sb.frontFt-sb.rearFt};
+ const shape=p.plot.siteShape??{kind:"rectangle"} as const;
+ errors.push(...shapeErrors(w,d,shape));
  const ids=new Set<string>();
  for(const r of p.rooms){
   if(ids.has(r.id))errors.push("Duplicate room id "+r.id);ids.add(r.id);
   if(![r.x,r.y,r.w,r.d].every(Number.isFinite)||r.w<=0||r.d<=0||r.floor<0||r.floor>=p.floors||
-    r.x<U.x-EPS||r.y<U.y-EPS||r.x+r.w>U.x+U.w+EPS||r.y+r.d>U.y+U.d+EPS)errors.push("Room outside usable plot "+r.id);
+    r.x<U.x-EPS||r.y<U.y-EPS||r.x+r.w>U.x+U.w+EPS||r.y+r.d>U.y+U.d+EPS||
+    !rectInsideShape(r,w,d,shape))errors.push("Room outside usable plot "+r.id);
   const clear=Math.min(r.w,r.d);
   if(r.kind==="bedroom"&&(area(r)<95||clear<8))errors.push("Bedroom below advisory space minimum "+r.id);
   if(r.kind==="living"&&(area(r)<95||clear<8))errors.push("Living below advisory space minimum "+r.id);
