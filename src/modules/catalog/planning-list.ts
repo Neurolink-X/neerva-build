@@ -2,8 +2,9 @@
  * No price or order is stored here; server-side RFQs remain separate.
  */
 export const PLANNING_STORAGE_KEY = "neerva-planning-material-list-v1";
-export const planningUnits = ["bag","kg","tonne","piece","bundle","quintal","truck","cubic_metre","length","coil","metre"] as const;
-export type PlanningUnit = typeof planningUnits[number];
+import {allMaterialUnits} from "./category-units.ts";
+export const planningUnits = allMaterialUnits;
+export type PlanningUnit = (typeof planningUnits)[number];
 export type PlanningLine = { id: string; name: string; quantity: number; unit: PlanningUnit };
 export function isPlanningUnit(input: string): input is PlanningUnit {
   return (planningUnits as readonly string[]).includes(input);

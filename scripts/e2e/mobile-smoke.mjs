@@ -71,7 +71,10 @@ async function main(){
     const expectedUnauth=process.env.NEERVA_RFQ_INTAKE_ENABLED==="true"&&process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?401:503;
     assert.equal(unauth.status(),expectedUnauth,"RFQ must fail closed: 401 only when intake and auth are enabled, otherwise 503");
     await page.goto(base+"/",{waitUntil:"networkidle"});
-    assert.equal(await page.locator(".neerva-install-banner").count(),0,"do not show install prompt on first paint");
+    assert.equal(await page.locator(".neerva-install-banner").count(),1,"discoverable installation help is available on first visit without scroll");
+     assert.equal(await page.getByRole("button",{name:/How to install|Install app/}).count(),1,"browser-specific install help entry is usable");
+     await page.locator(".neerva-install-banner").getByRole("button",{name:"Not now"}).click();
+     assert.equal(await page.locator(".neerva-install-banner").count(),0,"install assistance dismisses cleanly");
     // Authenticated role isolation needs live fixture accounts and cannot be simulated by guest screenshots.
     for(const roleRoute of ["/account/quotes","/dealer/quotes","/admin/catalog"]){
       const response=await page.goto(base+roleRoute,{waitUntil:"networkidle"});

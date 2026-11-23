@@ -7,14 +7,18 @@ import {PLANNING_STORAGE_KEY,appendPlanningLine,isPlanningUnit,safePlanningList}
 import { ProductArtwork } from "@/components/product-artwork";
 import { CatalogMaterialImage } from "@/components/catalog-material-image";
 import type { DemoProduct } from "@/modules/catalog/marketplace";
+import {categoryUnits,quantityUnitLabels} from "@/modules/catalog/category-units";
 
-const optionsByCategory: Record<string, { specs: string[]; units: string[] }> = {
-  steel: { specs: ["8 mm", "10 mm", "12 mm", "16 mm", "20 mm", "25 mm", "Other diameter"], units: ["kg", "quintal", "tonne", "piece", "bundle"] },
-  cement: { specs: ["PPC / 50 kg bag", "OPC 43 / 50 kg bag", "OPC 53 / 50 kg bag", "PSC / confirm pack", "Other cement type"], units: ["bag", "tonne"] },
-  "bricks-blocks": { specs: ["Red clay brick", "Fly ash brick", "AAC block", "Concrete block", "Other format"], units: ["piece", "bundle", "truck"] },
-  plumbing: { specs: ["CPVC / 20 mm", "CPVC / 25 mm", "uPVC / 110 mm", "PVC / 75 mm", "HDPE / confirm size", "Other size"], units: ["length", "piece", "bundle"] },
-  electrical: { specs: ["FRLS wire / 1.5 sq mm", "FRLS wire / 2.5 sq mm", "Conduit / 20 mm", "Conduit / 25 mm", "Other specification"], units: ["coil", "metre", "piece", "bundle"] },
-  aggregates: { specs: ["River sand / balu", "M-sand", "Morang / coarse sand", "20 mm aggregate", "40 mm aggregate", "Other material"], units: ["truck", "cubic_metre", "tonne"] },
+const specsByCategory: Record<string, string[]> = {
+  steel: ["8 mm", "10 mm", "12 mm", "16 mm", "20 mm", "25 mm", "Other diameter"],
+  cement: ["PPC / 50 kg bag", "OPC 43 / 50 kg bag", "OPC 53 / 50 kg bag", "PSC / confirm pack", "Other cement type"],
+  "bricks-blocks": ["Red clay brick", "Fly ash brick", "AAC block", "Concrete block", "Other format"],
+  plumbing: ["CPVC / 20 mm", "CPVC / 25 mm", "uPVC / 110 mm", "PVC / 75 mm", "HDPE / confirm size", "Other size"],
+  electrical: ["FRLS wire / 1.5 sq mm", "FRLS wire / 2.5 sq mm", "Conduit / 20 mm", "Conduit / 25 mm", "Other specification"],
+  aggregates: ["River sand / balu", "M-sand", "Morang / coarse sand", "20 mm aggregate", "40 mm aggregate", "Other material"],
+  paint: ["Interior emulsion", "Exterior emulsion", "Primer", "Putty", "Waterproofing", "Other finish"],
+  tiles: ["600 × 600 mm", "300 × 600 mm", "600 × 1200 mm", "Ceramic", "Vitrified", "Other tile size"],
+  hardware: ["Tile adhesive", "Door hardware", "Fasteners", "Fittings", "Sealant", "Other hardware"]
 };
 
 export function ProductGallery({ product }: { product: DemoProduct }) {
@@ -39,11 +43,11 @@ export function ProductGallery({ product }: { product: DemoProduct }) {
 }
 
 export function ProductDetailTools({ product }: { product: DemoProduct }) {
-  const choices = optionsByCategory[product.category] ?? optionsByCategory.steel;
+  const choices = { specs: specsByCategory[product.category] ?? ["Specify item"], units: categoryUnits(product.category) };
   const initialSpec = product.specifications.find((item) => ["Diameter", "Type", "Format", "Nominal size", "Conductor size"].includes(item.label))?.value;
   const startingChoice = choices.specs.find((choice) => initialSpec && choice.toLowerCase().includes(initialSpec.toLowerCase())) ?? choices.specs[0];
   const [specification, setSpecification] = useState(startingChoice);
-  const [unit, setUnit] = useState(choices.units[0]);
+  const [unit, setUnit] = useState<string>(choices.units[0]??"piece");
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [notice, setNotice] = useState("");
@@ -66,7 +70,7 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
         </label>
         <label>Quantity unit
           <select value={unit} onChange={(event) => setUnit(event.target.value)}>
-            {choices.units.map((choice) => <option key={choice} value={choice}>{choice.replaceAll("_", " ")}</option>)}
+            {choices.units.map((choice) => <option key={choice} value={choice}>{quantityUnitLabels[choice]}</option>)}
           </select>
         </label>
         <label>Quantity

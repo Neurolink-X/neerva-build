@@ -2,6 +2,7 @@
 import Link from "next/link";
 import {useEffect,useRef,useState,type FormEvent} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
+import {categoryUnits,defaultCategoryUnit,categoryMaterialHints,quantityUnitLabels,isMaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
 
 const supabase=createNeervaBrowserClient();
 const intakeEnabled=process.env.NEXT_PUBLIC_RFQ_INTAKE_ENABLED==="true";
@@ -10,6 +11,10 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
  const requestKey=useRef<string|null>(null);
  const [verified,setVerified]=useState(false),[ready,setReady]=useState(false),[busy,setBusy]=useState(false);
  const [message,setMessage]=useState<Message|null>(null);
+ const [category,setCategory]=useState(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates");
+ const [unit,setUnit]=useState<MaterialQuantityUnit>(defaultCategoryUnit(defaultCategory));
+ const selectedUnits=categoryUnits(category);
+ function changeCategory(value:string){if(!isMaterialCategory(value))return;setCategory(value);setUnit(defaultCategoryUnit(value));setMessage(null);}
  useEffect(()=>{
   if(!supabase)return;
   let active=true;
@@ -19,7 +24,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   return()=>{active=false;listener.subscription.unsubscribe()};
  },[]);
  async function submit(event:FormEvent<HTMLFormElement>){
-  event.preventDefault();if(!supabase||busy||!verified||!intakeEnabled)return;
+  event.preventDefault();if(!supabase||busy||!verified||!intakeEnabled){setMessage({kind:"error",text:"Submission is not available yet. Check the notice below."});return;}
   const element=event.currentTarget,form=new FormData(element);
   const session=await supabase.auth.getSession();
   const token=session.data.session?.access_token;
@@ -47,7 +52,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
     setMessage({kind:"error",text:"Request status could not be confirmed. Keep the form and retry."});
    }else{
     setMessage({kind:"success",text:"Your material request was securely recorded. No dealer offer or delivery is guaranteed yet.",reference:result.requestId});
-    element.reset();requestKey.current=null;
+    element.reset();requestKey.current=null;setCategory("aggregates");setUnit(defaultCategoryUnit("aggregates"));
    }
   }catch{setMessage({kind:"error",text:"Network issue. Your details remain in the form; retry with the same request reference."})}
   finally{setBusy(false)}
@@ -55,10 +60,10 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
  return <form className="rfq-form" onSubmit={submit}>
   <div className="rfq-form-title"><span>PRIVATE MATERIAL REQUEST</span><small>Only verified accounts can submit. Dealers are not yet onboarded.</small></div>
   <div className="rfq-form-grid">
-   <label>Material category<select name="categorySlug" defaultValue={defaultCategory}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical</option><option value="paint">Paint & coatings</option><option value="tiles">Tiles & flooring</option><option value="hardware">Hardware & adhesive</option></select></label>
-   <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} defaultValue={defaultMaterial} placeholder="Type, grade, size or exact item"/></label>
+   <label>Material category<select name="categorySlug" value={category} onChange={event=>changeCategory(event.target.value)}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical</option><option value="paint">Paint & coatings</option><option value="tiles">Tiles & flooring</option><option value="hardware">Hardware & adhesive</option></select></label>
+   <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} defaultValue={defaultMaterial} placeholder={categoryMaterialHints[category]}/></label>
    <label>Quantity<input name="quantity" required type="number" min="0.001" step="0.001" max="1000000" defaultValue={defaultQuantity} placeholder="Quantity"/></label>
-   <label>Unit<select name="unit" defaultValue="truck"><option value="truck">Truck</option><option value="tonne">Tonne</option><option value="cubic_metre">Cubic metre</option><option value="bag">Bag</option><option value="piece">Piece</option><option value="bundle">Bundle</option><option value="kg">Kilogram</option><option value="quintal">Quintal</option></select></label>
+   <label>Unit<select name="unit" value={unit} onChange={event=>setUnit(event.target.value as MaterialQuantityUnit)}>{selectedUnits.map(option=><option value={option} key={option}>{quantityUnitLabels[option]}</option>)}</select><small>Units update automatically with the selected material category.</small></label>
    <label>Delivery city<input name="city" required minLength={2} maxLength={80} defaultValue={defaultCity}/></label>
    <label>Delivery pincode<input name="pincode" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} defaultValue={defaultPincode}/></label>
    <label>Preferred delivery date (optional)<input name="requestedDate" type="date"/></label>
@@ -66,7 +71,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
    <label>Contact mobile<input name="phone" required type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} autoComplete="tel-national"/></label>
   </div>
   <label className="rfq-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to submit my contact number and request details for private quotation handling. <Link href="/privacy">Read the privacy notice</Link>. No payment is requested.</span></label>
-  {!intakeEnabled&&<p className="rfq-unavailable" role="status">Quote intake is temporarily closed until verified dealers and support are available. This form will not transmit or store your details.</p>}
+  {!intakeEnabled&&<p className="rfq-unavailable" role="status">Quote intake is currently paused until verified dealer sourcing, support and privacy readiness are approved. You can prepare details, but clicking Submit cannot save a request yet. No payment is requested.</p>}
   {!ready?<p role="status">Checking your secure account session…</p>:!verified?<p className="rfq-unavailable" role="status">Sign in with a verified email before submitting. <Link href="/account">Open account access →</Link></p>:<p className="rfq-privacy">Your request is stored privately, with duplicate protection and submission limits. It is not an order or payment confirmation.</p>}
   {message&&<div className={`rfq-status ${message.kind}`} role={message.kind==="error"?"alert":"status"}><p>{message.text}</p>{message.details?.length?<ul>{message.details.map(item=><li key={item}>{item}</li>)}</ul>:null}{message.reference&&<small>Reference: {message.reference}</small>}</div>}
   <button className="button button-dark rfq-submit" type="submit" disabled={!intakeEnabled||!ready||!verified||busy}>{!intakeEnabled?"Requests not open yet":busy?"Sending securely…":"Submit private request →"}</button>
