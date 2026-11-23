@@ -1,11 +1,12 @@
 import type {StudioDesign,DesignRoom} from "./library.ts";
 import type {PlanModel,RoomKind} from "./plan-model.ts";
 import {planMetrics} from "./plan-model.ts";
-const kind=(k:RoomKind):DesignRoom["kind"]=>({
+const kindMap:Record<RoomKind,DesignRoom["kind"]>={
  parking:"parking",verandah:"open",living:"living",dining:"living",kitchen:"kitchen",
  bedroom:"bedroom",bath:"bath",stairs:"stairs",corridor:"open",utility:"utility",
  balcony:"open",lounge:"living",terrace:"open"
-})[k];
+};
+const kind=(k:RoomKind):DesignRoom["kind"]=>kindMap[k];
 const facing={N:"North",E:"East",S:"South",W:"West"} as const;
 /** Adapter, never an independent plan; 3D meshes are derived from exactly PlanModel rooms and openings. */
 export function studioDesignFromPlan(p:PlanModel):StudioDesign{
