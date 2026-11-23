@@ -1,0 +1,76 @@
+name: Recover Neerva Phase 1 source
+
+# Run manually only after adding the short-lived NEERVA_VERCEL_TOKEN repository secret.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: neerva-phase1-source-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    if: github.repository == 'Neurolink-X/neerva-build'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      VERCEL_TOKEN: ${{ secrets.NEERVA_VERCEL_TOKEN }}
+      VERCEL_TEAM_ID: team_jjcuOvfhQsFSt1A9xTbVlETm
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout guarded main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Check that Vercel access was explicitly granted
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$VERCEL_TOKEN" ]]; then
+            echo "::error::Add a short-lived NEERVA_VERCEL_TOKEN under GitHub Settings > Secrets and variables > Actions before running."
+            exit 1
+          fi
+      - name: Download exact live deployment source and verify SHA-1
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/release/recover-vercel-source.mjs \
+            --deployment dpl_GBZpLhjcXvCdihSX7Lfd2YqBwnZF \
+            --out "$RUNNER_TEMP/neerva-vercel-source"
+      - name: Fail closed on mismatched hashes or common hardcoded secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/release/scan-recovered.mjs "$RUNNER_TEMP/neerva-vercel-source"
+      - name: Stage missing files only; generate overlap conflict report
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/release/stage-missing-vercel-source.mjs "$RUNNER_TEMP/neerva-vercel-source"
+      - name: Open a draft review PR, never production deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="recovery/phase1-vercel-source-$GITHUB_RUN_ID"
+          git checkout -b "$branch"
+          git add --all
+          if git diff --cached --quiet; then
+            echo "No new files detected. Existing shared-file conflicts still require review."
+            exit 0
+          fi
+          git diff --cached --check
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit -m "restore: exact Vercel Phase 1 source files and conflict report"
+          git push origin "HEAD:refs/heads/$branch"
+          gh pr create --base main --head "$branch" --draft \
+            --title "Review exact Phase 1 production source recovery" \
+            --body "Source exported using an expiring Vercel token on GitHub Actions; each file checksum verified. Existing source files are NOT overwritten. Inspect docs/production-source-recovery-report.json and any security issues; reconcile with PR5/PR6/PR7, run full tests, and manually approve release parity before any production deployment."
