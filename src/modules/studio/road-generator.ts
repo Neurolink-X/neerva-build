@@ -1,5 +1,5 @@
 import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type RoomKind,
- type Rect,snap,sharedEdge,area,validatePlan,overlapArea} from "./plan-model.ts";
+ type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;

@@ -17,7 +17,7 @@ test("duplicate geometry cannot be disguised by changed surface colour",()=>{
 test("a real PlanModel geometry mismatch fails closed, and city rules must be approved",()=>{
  const p=generateRoadPlans({widthFt:18,depthFt:50,roadSide:"N",floors:2,bedrooms:3,parking:true,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}}).plans[0];assert.ok(p);
  const model=studioDesignFromPlan(p);
- let decision=assessPublication(model,{plan:p,reviewer:"Pre-review engineering QA"});
+ const decision=assessPublication(model,{plan:p,reviewer:"Pre-review engineering QA"});
  assert.equal(decision.status,"draft");
  assert.ok(decision.reasons.some(x=>x.includes("City rule approval")));
  const wrong={...model,layout:{...model.layout,rooms:model.layout.rooms.map(r=>({...r}))}};
