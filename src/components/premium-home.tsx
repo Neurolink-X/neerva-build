@@ -117,7 +117,7 @@ export function PremiumHome(){
     <h1 id="nbh-h1">{t.title1}<span>{t.title2}</span></h1>
     <p className="nbh-sub">{t.subhead}</p>
     <div className="nbh-journeys">
-     <Link className="nbh-journey nbh-primary" href="/design-studio"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
+     <Link className="nbh-journey nbh-primary" href="/design-studio/fit"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
      <Link className="nbh-journey" href="/design-studio/visualizer"><span className="nbh-jicon"><Icon name="palette"/></span><span><strong>{t.visual}</strong><small>{t.visualDesc}</small></span><Icon name="arrow"/></Link>
      <Link className="nbh-journey" href="/quotes"><span className="nbh-jicon"><Icon name="file"/></span><span><strong>{t.quote}</strong><small>{t.quoteDesc}</small></span><Icon name="arrow"/></Link>
     </div>

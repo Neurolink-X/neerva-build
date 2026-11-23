@@ -1,0 +1,7 @@
+import test from "node:test";import assert from "node:assert/strict";
+import {validateMediaManifest,canPublishRealism,type MediaManifest} from "./asset-manifest.ts";
+const good:MediaManifest={version:1,designSlug:"20x40-warm-modern",perspective:"front",imagePath:"/images/studio/reviewed/front.webp",imageSha256:"a".repeat(64),widthPx:2400,heightPx:1600,altText:"Front elevation concept of a warm modern home",license:"original",licenseEvidence:"artist-owned approved original master",status:"approved",approvedBy:"reviewer",approvedAt:"2026-11-23",masks:[{surface:"main",polygon:[{x:.2,y:.2},{x:.8,y:.2},{x:.8,y:.8},{x:.2,y:.8}],featherPx:3}]};
+test("original/licensed approved asset with bounded masks passes",()=>{assert.deepEqual(validateMediaManifest(good),[]);assert.equal(canPublishRealism(good),true)});
+test("unlicensed or sample content cannot become approved marketing imagery",()=>{assert.equal(canPublishRealism({...good,license:"sample"}),false);assert.equal(canPublishRealism({...good,licenseEvidence:null}),false);assert.equal(canPublishRealism({...good,approvedBy:null}),false)});
+test("invalid or cropped masks are rejected",()=>{assert.equal(canPublishRealism({...good,masks:[{surface:"main",polygon:[{x:1.2,y:0},{x:.8,y:.5},{x:.6,y:.5}],featherPx:2}]}),false)});
+test("cannot claim realism with missing image or insufficient size",()=>{assert.equal(canPublishRealism({...good,imagePath:"https://example.com/fake.jpg"}),false);assert.equal(canPublishRealism({...good,widthPx:900,heightPx:600}),false)});
