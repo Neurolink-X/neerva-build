@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { catalogCategories } from "../catalog/catalog.ts";
+import {allMaterialUnits,isAllowedCategoryUnit} from "../catalog/category-units.ts";
 
 const categorySlugs = catalogCategories.map((category) => category.slug) as [string, ...string[]];
 
@@ -8,7 +9,7 @@ const baseRfqSchema = z.object({
   categorySlug: z.enum(categorySlugs),
   materialDescription: z.string().trim().min(3).max(240),
   quantity: z.number().finite().positive().max(1_000_000),
-  unit: z.enum(["piece", "bag", "kg", "quintal", "tonne", "cubic_metre", "truck", "bundle"]),
+  unit: z.enum(allMaterialUnits as [string,...string[]]),
   city: z.string().trim().min(2).max(80),
   pincode: z.string().regex(/^[1-9][0-9]{5}$/),
   requestedDate: z.string().date().optional(),
@@ -17,17 +18,8 @@ const baseRfqSchema = z.object({
   privacyAccepted: z.literal(true),
 }).strict();
 
-const allowedUnits: Record<string, readonly string[]> = {
-  steel: ["kg", "quintal", "tonne", "piece", "bundle"],
-  cement: ["bag", "tonne"],
-  "bricks-blocks": ["piece", "bundle", "truck"],
-  plumbing: ["piece", "bundle"],
-  electrical: ["piece", "bundle", "kg"],
-  aggregates: ["cubic_metre", "truck", "tonne"],
-};
-
 export const rfqSchema = baseRfqSchema.superRefine((value, context) => {
-  if (!allowedUnits[value.categorySlug]?.includes(value.unit)) {
+  if (!isAllowedCategoryUnit(value.categorySlug,value.unit)) {
     context.addIssue({ code: "custom", path: ["unit"], message: "Choose a unit suitable for this material category." });
   }
 });

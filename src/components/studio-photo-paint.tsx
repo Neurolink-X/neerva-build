@@ -44,7 +44,7 @@ export function StudioPhotoPaint({colour}:{colour:string}){
    el.width=Math.max(1,Math.round(img.naturalWidth*scale));
    el.height=Math.max(1,Math.round(img.naturalHeight*scale));
    image.current=img;setReady(true);
-   setMessage("Tap four wall corners in order. Undo if a corner was misplaced.");
+   setMessage("Tap the top-left corner first, then top-right, bottom-right and bottom-left. Avoid windows or doors if possible.");
   };
   img.onerror=()=>{if(url.current!==next)return;image.current=null;setReady(false);setMessage("Image could not be opened. Try another photo.")};
   img.src=next;
@@ -64,19 +64,25 @@ export function StudioPhotoPaint({colour}:{colour:string}){
   },"image/png");
  }
  return <section className="nbd-photo" aria-label="Private wall colour preview">
-  <h2>Paint your own wall photograph</h2>
-  <p>Your photo stays in this browser. No upload or AI segmentation occurs.</p>
+  <h2>Preview colour on your own wall</h2>
+  <p>Your photograph stays on this device. This is a manual wall selection—not automatic AI detection.</p>
+  <ol aria-label="Three steps to preview your wall">
+   <li><strong>1. Choose a clear photo.</strong> A straight, well-lit picture makes selection easier.</li>
+   <li><strong>2. Tap the wall corners.</strong> Top-left → top-right → bottom-right → bottom-left. Four taps outline ONE wall; use Undo if needed.</li>
+   <li><strong>3. Pick a shade.</strong> Use the colour palette, compare with the original, then save the preview.</li>
+  </ol>
+  <p role="status"><strong>{!ready?"Step 1 of 3 — Choose a picture":!valid?"Step 2 of 3 — Select 4 corners ("+points.length+"/4)":"Step 3 of 3 — Change shade, compare and save"}</strong></p>
   <label>Choose a photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label>
   <p role="status">{points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
-  <canvas ref={canvas} role="img" aria-label="Local house photograph; tap four wall corners to recolour" onPointerDown={addPoint}
+  <canvas ref={canvas} role="img" aria-label="Photo of your wall. Tap its four corners clockwise, starting top-left, to choose a painting region" onPointerDown={addPoint}
     style={{display:ready?"block":"none",width:"100%",height:"auto",cursor:points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   {ready&&<div className="nbd-buttons" style={{flexWrap:"wrap"}}>
    <button type="button" disabled={!points.length} onClick={()=>setHistory(undoCorner)}>Undo corner</button>
    <button type="button" disabled={!history.redo.length} onClick={()=>setHistory(redoCorner)}>Redo corner</button>
    <button type="button" disabled={!valid} aria-pressed={showOriginal} onClick={()=>setShowOriginal(v=>!v)}>{showOriginal?"Show new colour":"View original"}</button>
-   <button type="button" onClick={()=>{setHistory(emptyMaskHistory());setShowOriginal(false)}}>Select wall again ({points.length}/4)</button>
+   <button type="button" onClick={()=>{setHistory(emptyMaskHistory());setShowOriginal(false)}}>Reset wall selection ({points.length}/4)</button>
    <button type="button" disabled={!valid||showOriginal} onClick={saveImage}>Save colour preview</button>
   </div>}
-  <p className="nbd-disclaimer">Manual polygon preview preserves much of the existing light and texture; edge accuracy and screen shades are approximate. Verify physical shade cards and measured wall area before buying.</p>
+  <p className="nbd-disclaimer">Tip: select a single flat wall rather than the whole house. Manual polygon preview preserves much of the existing light and texture; edge accuracy and screen shades are approximate. Verify physical shade cards and measured wall area before buying.</p>
  </section>;
 }
