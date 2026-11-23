@@ -9,7 +9,8 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number){
  ctx.beginPath();
  corners.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
  ctx.closePath();ctx.clip();
- ctx.globalCompositeOperation="multiply";ctx.fillStyle=wall.colour;ctx.globalAlpha=.8;
+ // Apply the chosen paint hue while retaining the photo’s original light and shadows.
+ ctx.globalCompositeOperation="color";ctx.fillStyle=wall.colour;ctx.globalAlpha=1;
  ctx.fillRect(0,0,w,h);
  if(wall.pattern!=="plain"){
   const [a,b,c,d]=corners;
