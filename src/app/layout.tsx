@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./typography.css";
+import {InstallExperience} from "@/components/install-experience";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 const isIndexable = process.env.NEXT_PUBLIC_SITE_INDEXABLE === "true";
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   title: { default: "NEERVA BUILD — Construction Materials & Home Planning", template: "%s | NEERVA BUILD" },
   description: "Compare construction material specifications, request private dealer quotations and plan your home with NEERVA BUILD. Starting in Kanpur, open to other cities.",
   applicationName: "NEERVA BUILD",
-  alternates: { canonical: "/" },
+  manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -28,5 +29,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#f5f4ef", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en-IN"><body>{children}</body></html>;
+  return <html lang="en-IN"><body>{children}<InstallExperience/></body></html>;
 }
