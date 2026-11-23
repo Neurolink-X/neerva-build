@@ -117,7 +117,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right"):PlanModel{
   stairs:{roomIds:b.floors===2?["stairs-g","stairs-1"]:["stairs-g"],
    note:"Staircase is a conceptual volume, NOT a checked tread/rise/headroom or fire escape."},
   balcony:b.floors===2?{roomId:"balcony-1"}:null,
-  facade:{kit:"simple-parapet",main:variant==="parking-left"?"#e9e2d4":"#e7e6df",accent:"#8e755b"},
+  facade:{kit:"simple-parapet",massing:"box",main:variant==="parking-left"?"#e9e2d4":"#e7e6df",accent:"#8e755b"},
   score:0,notes:[
    "City rules, setbacks, FAR, actual stair rise/tread/headroom, vehicle turning and parking permissions are unverified.",
    "Concept only; engage a licensed architect/engineer and obtain local authority approval before construction.",
@@ -135,7 +135,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right"):PlanModel{
  return p;
 }
 export function planSignature(p:PlanModel):string{
- return p.rooms.map(r=>[r.floor,r.id,r.kind,r.x,r.y,r.w,r.d].join(":")).sort().join("|")+"#"+p.facade.kit;
+ return p.rooms.map(r=>[r.floor,r.id,r.kind,r.x,r.y,r.w,r.d].join(":")).sort().join("|")+"#"+p.facade.kit+"#"+p.facade.massing;
 }
 export function pickDiverse(plans:readonly PlanModel[],limit=3):PlanModel[]{
  const unique=new Set<string>();return [...plans].sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id)).filter(p=>{

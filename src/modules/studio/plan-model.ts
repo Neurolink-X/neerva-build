@@ -4,6 +4,8 @@
  * Units are feet. Concepts only, never local-authority approved drawings.
  */
 export type RoadSide="N"|"E"|"S"|"W";
+export type FacadeKit="simple-parapet"|"stepped-band"|"jali-screen"|"cantilever"|"pergola"|"cladding-band";
+export type MassingType="box"|"stepped";
 export type Side="front"|"rear"|"left"|"right";
 export type RoomKind="parking"|"verandah"|"living"|"dining"|"kitchen"|"bedroom"|"bath"|"stairs"|"corridor"|"utility"|"balcony"|"lounge"|"terrace";
 export type Rect={x:number;y:number;w:number;d:number};
@@ -20,7 +22,7 @@ export type PlanModel={
  parking:{roomId:string;clearWidthFt:number;clearDepthFt:number}|null;
  stairs:{roomIds:string[];note:string};
  balcony:{roomId:string}|null;
- facade:{kit:"simple-parapet";main:string;accent:string};
+ facade:{kit:FacadeKit;massing:MassingType;main:string;accent:string};
  score:number;notes:string[];conceptOnly:true;
 };
 export type PlanBrief={widthFt:number;depthFt:number;roadSide:RoadSide;floors:1|2;bedrooms:number;parking:boolean;
