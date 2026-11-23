@@ -26,7 +26,7 @@ const copy={
  foot:"Concept designs only. No orders or dealer prices are presented as active until verified.",cityNote:"Coverage and delivery require dealer confirmation.",
  navDesign:"Home studio",navMaterials:"Materials",navQuote:"Quotes",navGuides:"Guides",
  recent:"Recent searches",noMatch:"No suggestions — see all materials",
- disclaimer:"Free-use illustrative photography. Not a built NEERVA project or a rendering of the selected plan.",
+ disclaimer:"Illustrative images, including original concept artwork and licensed photography. Not built NEERVA projects or exact selected floor plans.",
  compact:"Illustrative colour mood only — for wall-specific editing, open the colour studio.",
  langButton:"हिन्दी",location:"Service city",custom:"Enter your city",cityConfirm:"Set city",cityCancel:"Cancel",cityInfo:"Coverage will be confirmed before an order.",categories:"Popular categories",emptyCity:"Enter a city name to continue",
  },
@@ -142,12 +142,12 @@ export function PremiumHome(){
    </div>
    <div className="nbh-hero-visual">
     <div className="nbh-house-frame">
-     <div className="nbh-house-link" aria-label="Illustrative construction site and completed home comparison"><Image src={homeVisuals.hero} fill priority sizes="(max-width: 720px) 100vw, 48vw" alt="Illustrative finished residential home" className="nbh-house-photo"/><span className="nbh-house-tone" style={{clipPath:"inset(0 "+(100-split)+"% 0 0)"}}><Image src={homeVisuals.construction} fill sizes="(max-width: 720px) 100vw, 48vw" alt="" aria-hidden="true" className="nbh-house-photo"/></span></div>
+     <div className="nbh-house-link" aria-label="Illustrative construction site and completed home comparison"><Image src={homeVisuals.hero} fill priority sizes="(max-width: 720px) 100vw, 48vw" alt="Original NEERVA concept illustration showing a completed two-storey house" className="nbh-house-photo"/><span className="nbh-house-tone" style={{clipPath:"inset(0 "+(100-split)+"% 0 0)"}}><Image src={homeVisuals.construction} fill sizes="(max-width: 720px) 100vw, 48vw" alt="" aria-hidden="true" className="nbh-house-photo"/></span></div>
      <span className="nbh-house-chip">FROM CONSTRUCTION TO YOUR DREAM HOME <Icon name="spark"/></span>
      <span className="nbh-image-tag nbh-tag-before" style={{left:Math.min(90,Math.max(9,split-15))+"%"}}>UNDER CONSTRUCTION</span><span className="nbh-image-tag nbh-tag-after">FINISHED HOME</span>
      <label className="nbh-slider-label"><span>Construction stage <strong>← Drag to explore →</strong> Finished home</span><input type="range" min={5} max={95} step={1} value={split} onChange={e=>{setManual(true);setSplit(Number(e.target.value))}} aria-label="Compare illustrative construction-stage and completed homes"/></label>
     </div>
-    <p className="nbh-image-note">Illustrative photos of different properties — not the same real project or an actual reconstruction. <Link href="/design-studio/fit">Find designs for your plot →</Link></p>
+    <p className="nbh-image-note">Original matched architectural concept drawings, not photos or a completed NEERVA project. <Link href="/design-studio/fit">Find designs for your plot →</Link></p>
    </div>
   </section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>

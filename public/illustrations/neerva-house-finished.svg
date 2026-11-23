@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" role="img" aria-label="Original illustrative Neerva house planning concept">
+<defs>
+ <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#9ed0e6"/><stop offset="1" stop-color="#f6eedf"/></linearGradient>
+ <linearGradient id="earth" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#91a68b"/><stop offset="1" stop-color="#6b836a"/></linearGradient>
+ <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#faf5e9"/><stop offset="1" stop-color="#cfcac0"/></linearGradient>
+ <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ada8a0"/><stop offset="1" stop-color="#736e66"/></linearGradient>
+ <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#548199"/><stop offset=".48" stop-color="#1f4c64"/><stop offset="1" stop-color="#12364b"/></linearGradient>
+ <filter id="softShadow" x="-20%" y="-20%" width="140%" height="160%"><feGaussianBlur stdDeviation="26"/></filter>
+</defs>
+<rect width="1600" height="1100" fill="url(#sky)"/>
+<circle cx="1310" cy="160" r="85" fill="#fff4d7" opacity=".68"/>
+<path d="M0 670 Q300 606 610 674 T1600 650 V1100 H0Z" fill="url(#earth)"/>
+<path d="M0 858 L1600 770 V1100 H0Z" fill="#b5b2a8"/>
+<path d="M120 1100L660 790 1380 800 1600 1100Z" fill="#d2cdc1" opacity=".8"/>
+<ellipse cx="840" cy="837" rx="650" ry="112" fill="#1a241f" opacity=".27" filter="url(#softShadow)"/>
+
+<!-- Same two-storey illustrative house geometry, completed concept -->
+<path d="M270 362 L1050 298 1310 415 1310 820 287 885Z" fill="url(#stone)" stroke="#6b675d" stroke-width="5"/>
+<path d="M290 362 L1090 322 1218 393 1204 787 304 849Z" fill="url(#wall)" stroke="#c2beb3" stroke-width="8"/>
+<path d="M1090 322 L1218 393 1204 787 1094 747Z" fill="#b9b5ac" opacity=".75"/>
+<path d="M255 358 L1054 286 1332 385 1318 423 1075 346 261 409Z" fill="#354d48"/>
+<path d="M261 409 L1075 346 1318 423" fill="none" stroke="#172f2e" stroke-width="14"/>
+<!-- Low-rise first floor volume and strong canopy -->
+<path d="M303 598 L1207 551 1252 580 1250 627 300 670Z" fill="#4d5855"/>
+<path d="M295 630 L1237 589" stroke="#e5dfd1" stroke-width="8"/>
+<!-- Glazing first floor -->
+<path d="M383 421 L690 402 690 573 383 589Z" fill="url(#glass)" stroke="#2f3e3d" stroke-width="17"/>
+<path d="M545 409 L545 583" stroke="#d9dbd4" stroke-width="7"/>
+<path d="M757 388 L1058 371 1058 553 757 568Z" fill="url(#glass)" stroke="#324c46" stroke-width="17"/>
+<path d="M909 379L909 558" stroke="#e0e0db" stroke-width="7"/>
+<!-- Balcony glass railing -->
+<path d="M707 565 L1090 542 1090 624 707 642Z" fill="#8bb9bf" fill-opacity=".25" stroke="#bbcfc7" stroke-width="7"/>
+<path d="M785 560L785 636 M890 555L890 630 M990 549L990 624" stroke="#c9d8d0" stroke-width="5"/>
+<!-- Ground floor openings and front entrance -->
+<path d="M377 674 L682 657 682 826 377 845Z" fill="url(#glass)" stroke="#223d3c" stroke-width="17"/>
+<path d="M527 665 L527 836" stroke="#e0e4db" stroke-width="7"/>
+<path d="M793 654 L1016 642 1016 810 793 823Z" fill="#4a3329" stroke="#292a23" stroke-width="14"/>
+<path d="M850 674 L962 667 962 802 850 809Z" fill="#79513b"/>
+<circle cx="946" cy="746" r="6" fill="#e9d7a0"/>
+<path d="M1091 623 L1180 615 1180 787 1091 799Z" fill="#564c3d"/>
+<g stroke="#c69e73" stroke-width="9"><path d="M1107 632V798 M1137 627V794 M1165 620V788"/></g>
+<!-- Warm material accents -->
+<path d="M714 388L741 386 741 832 714 834Z" fill="#8b6546"/>
+<path d="M290 851L1243 790 1243 824 290 887Z" fill="#394f47"/>
+<!-- Groundscape -->
+<path d="M500 1100 L772 844 976 831 1120 1100Z" fill="#aaa89d"/>
+<g fill="#a5a299" opacity=".5"><path d="M674 954L1065 956 1087 984 644 985Z"/><path d="M592 1035L1107 1032 1134 1071 553 1071Z"/></g>
+<g fill="#375b3d"><ellipse cx="212" cy="854" rx="108" ry="41"/><ellipse cx="1360" cy="835" rx="103" ry="45"/><ellipse cx="1480" cy="852" rx="95" ry="43"/></g>
+<g fill="#5c8b52"><circle cx="194" cy="821" r="45"/><circle cx="250" cy="829" r="32"/><circle cx="1330" cy="800" r="44"/><circle cx="1462" cy="809" r="51"/></g>
+<path d="M274 873 L1315 809" stroke="#d6d2c6" stroke-width="8"/>
+</svg>
