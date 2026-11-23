@@ -6,7 +6,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/materials","/basket","/quotes","/account","/terms","/returns"];
+const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/materials","/basket","/quotes","/account","/terms","/returns"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -15,8 +15,8 @@ async function main(){
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:1,isMobile:v.w<=430,hasTouch:v.w<=430});
    const page=await ctx.newPage(),errors=[];
-   page.on("pageerror",error=>errors.push("uncaught: "+error.message));
-   page.on("console",message=>{if(message.type()==="error")errors.push("console: "+message.text().slice(0,180))});
+   page.on("pageerror",error=>errors.push("uncaught at "+new URL(page.url()).pathname+": "+error.message));
+   page.on("console",message=>{if(message.type()==="error")errors.push("console at "+new URL(page.url()).pathname+": "+message.text().slice(0,180))});
    for(const route of routes){
     const res=await page.goto(base+route,{waitUntil:"networkidle",timeout:40000});
     assert.equal(res?.status(),200,"HTTP "+route+" at "+v.w+"px");
@@ -106,6 +106,29 @@ async function main(){
     assert.equal(await exterior.getAttribute("aria-pressed"),"true","original concept remains available");
     await photo.click();
     assert.equal(await photo.getAttribute("aria-pressed"),"true","photo editor resumes without a reload");
+    // Tested road-correct 18x50 PlanModel: one source for geometry, 3D and paint quantities.
+    await page.goto(base+"/design-studio/road-planner",{waitUntil:"networkidle"});
+    const roadPlan=page.getByRole("img",{name:/Road at top: N side/});
+    assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
+    assert.equal(await page.getByText("These 2 options are mirror arrangements").count(),1,"do not invent a third design");
+    await page.getByRole("button",{name:/Parking right/}).click();
+    assert.equal(await page.getByRole("button",{name:/Parking right/}).getAttribute("aria-pressed"),"true");
+    const floorToggle=page.getByRole("button",{name:"First floor"});
+    await floorToggle.click();
+    assert.equal(await floorToggle.getAttribute("aria-pressed"),"true","G+1 levels must switch");
+    const roadSelector=page.getByLabel("Road along which edge?");
+    await roadSelector.selectOption("E");
+    assert.equal(await page.getByRole("img",{name:/Road at top: E side/}).count(),1,"east-side road is still the entry edge");
+    const plotInputs=page.locator(".nroad-controls input[type=number]");
+    await plotInputs.nth(0).fill("15");
+    await plotInputs.nth(1).fill("30");
+    assert.equal(await page.getByRole("alert").getByText(/No circulation-safe plan/).count(),1,
+      "15×30 3BHK parking request must not receive a fake plan");
+    await page.screenshot({path:path.join("test-results/mobile","390-road-planner-impossible-15x30.png"),fullPage:true,animations:"disabled"});
+    await plotInputs.nth(0).fill("18");
+    await plotInputs.nth(1).fill("50");
+    await page.getByRole("img",{name:/Road at top: E side/}).waitFor();
+    await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"networkidle"});
     const reveal=page.getByRole("slider",{name:"Compare illustrative construction-stage and completed homes"});

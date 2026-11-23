@@ -5,9 +5,10 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {type StudioDesign} from "@/modules/studio/library";
 import {buildingWallCells,structuralFootprint} from "@/modules/studio/geometry";
 import {DesignPlanArt} from "@/components/studio-design-gallery";
+import type {PlanModel} from "@/modules/studio/plan-model";
 const FT=.3048;
 type Mode="exterior"|"dollhouse"|"walkthrough";
-export function StudioBuilding3D({design,colour}:{design:StudioDesign;colour:string}){
+export function StudioBuilding3D({design,colour,planModel}:{design:StudioDesign;colour:string;planModel?:PlanModel}){
  const host=useRef<HTMLDivElement>(null),wallMat=useRef<THREE.MeshStandardMaterial|null>(null),refresh=useRef<(()=>void)|null>(null),colourRef=useRef(colour);
  const [mode,setMode]=useState<Mode>("exterior"),[fallback,setFallback]=useState(false);
  useEffect(()=>{colourRef.current=colour;if(wallMat.current){wallMat.current.color.set(colour);refresh.current?.()}},[colour]);
@@ -32,11 +33,20 @@ export function StudioBuilding3D({design,colour}:{design:StudioDesign;colour:str
    const zCoord=(v:number)=>(v-design.plot.depthFt/2)*FT;
    box(0,-.13,0,width,.2,depth,foundation,false);
    const fp=structuralFootprint(design),W=(fp.maxX-fp.minX)*FT,D=(fp.maxZ-fp.minZ)*FT,cx=xCoord((fp.maxX+fp.minX)/2),cz=zCoord((fp.maxZ+fp.minZ)/2);
-   for(let f=0;f<design.floors;f++)box(cx,f*height,cz,W,.14,D,concrete,false);
+   if(planModel){
+    // Phase 1 bridge: do not place a giant slab above the open parking bay or rear terrace.
+    for(const r of planModel.rooms.filter(r=>!["parking","verandah","balcony","terrace"].includes(r.kind))){
+     box(xCoord(r.x+r.w/2),r.floor*height,zCoord(r.y+r.d/2),r.w*FT,.14,r.d*FT,concrete,false);
+    }
+   }else for(let f=0;f<design.floors;f++)box(cx,f*height,cz,W,.14,D,concrete,false);
    const wallCells=buildingWallCells(design),instances=new THREE.InstancedMesh(shared,wall,wallCells.length),dummy=new THREE.Object3D();
    wallCells.forEach((cell,index)=>{const length=(cell.endFt-cell.startFt)*FT,mid=(cell.startFt+cell.endFt)/2;
     dummy.position.set(cell.axis==="x"?xCoord(cell.planeFt):xCoord(mid),cell.floorIndex*height+(cell.bottomFt+cell.topFt)/2*FT,cell.axis==="z"?zCoord(cell.planeFt):zCoord(mid));
-    dummy.scale.set(cell.axis==="x"?wallThickness:length,(cell.topFt-cell.bottomFt)*FT,cell.axis==="z"?wallThickness:length);dummy.updateMatrix();instances.setMatrixAt(index,dummy.matrix);
+    const external=planModel&&(cell.axis==="x"
+      ?Math.abs(cell.planeFt-planModel.setbacks.leftFt)<.02||Math.abs(cell.planeFt-(planModel.plot.widthFt-planModel.setbacks.rightFt))<.02
+      :Math.abs(cell.planeFt-planModel.setbacks.frontFt)<.02||Math.abs(cell.planeFt-(planModel.plot.depthFt-planModel.setbacks.rearFt))<.02);
+    const thickness=planModel?(external?planModel.walls.externalFt:planModel.walls.internalFt)*FT:wallThickness;
+    dummy.scale.set(cell.axis==="x"?thickness:length,(cell.topFt-cell.bottomFt)*FT,cell.axis==="z"?thickness:length);dummy.updateMatrix();instances.setMatrixAt(index,dummy.matrix);
    });instances.instanceMatrix.needsUpdate=true;instances.castShadow=true;instances.receiveShadow=true;scene.add(instances);
    const glass=material("#88b6c3",.18,.08);glass.transparent=true;glass.opacity=.68;const frameMat=material(design.elevation.surfaces.frame,.35,.3);
    for(const room of design.layout.rooms){if(room.kind==="open"||room.kind==="parking")continue;
@@ -58,17 +68,42 @@ export function StudioBuilding3D({design,colour}:{design:StudioDesign;colour:str
     const stepD=stair.dFt*FT/12;box(xCoord(stair.xFt+stair.wFt/2),(i+1)*height/12,zCoord(stair.yFt+(i+.5)*stair.dFt/12),stair.wFt*FT*.7,.12,stepD*.95,concrete);
    }}}
    const roofGroup=new THREE.Group();const roof=(x:number,y:number,z:number,sx:number,sy:number,sz:number)=>{const m=new THREE.Mesh(shared,roofMat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;roofGroup.add(m)};
-   const top=design.floors*height;roof(cx,top+.08,cz,W+.25,.18,D+.25);
-   const parapet=design.layout.parapetHeightFt*FT;roof(cx,top+parapet/2+.14,zCoord(fp.minZ),W+.25,parapet,.18);roof(cx,top+parapet/2+.14,zCoord(fp.maxZ),W+.25,parapet,.18);
-   roof(xCoord(fp.minX),top+parapet/2+.14,cz,.18,parapet,D+.25);roof(xCoord(fp.maxX),top+parapet/2+.14,cz,.18,parapet,D+.25);
+   const top=design.floors*height;
+   if(planModel){
+    for(const r of planModel.rooms.filter(r=>r.floor===design.floors-1&&!["parking","verandah","balcony","terrace"].includes(r.kind))){
+     roof(xCoord(r.x+r.w/2),top+.08,zCoord(r.y+r.d/2),r.w*FT+.04,.18,r.d*FT+.04);
+    }
+   }else roof(cx,top+.08,cz,W+.25,.18,D+.25);
+   if(!planModel){
+    const parapet=design.layout.parapetHeightFt*FT;
+    roof(cx,top+parapet/2+.14,zCoord(fp.minZ),W+.25,parapet,.18);roof(cx,top+parapet/2+.14,zCoord(fp.maxZ),W+.25,parapet,.18);
+    roof(xCoord(fp.minX),top+parapet/2+.14,cz,.18,parapet,D+.25);roof(xCoord(fp.maxX),top+parapet/2+.14,cz,.18,parapet,D+.25);
+   }
    roofGroup.visible=mode==="exterior";scene.add(roofGroup);
-   for(const r of design.layout.rooms.filter(r=>r.kind==="parking"))box(xCoord(r.xFt+r.wFt/2),.015,zCoord(r.yFt+r.dFt/2),r.wFt*FT,.03,r.dFt*FT,material("#aaa69a"),false);
+   for(const r of design.layout.rooms.filter(r=>r.kind==="parking")){
+    box(xCoord(r.xFt+r.wFt/2),.015,zCoord(r.yFt+r.dFt/2),r.wFt*FT,.03,r.dFt*FT,material("#aaa69a"),false);
+    if(planModel){const car=material("#75818b",.7,.1);
+      box(xCoord(r.xFt+r.wFt/2),.42,zCoord(r.yFt+r.dFt/2),Math.min(r.wFt*.7,6.5)*FT,.65,Math.min(r.dFt*.65,11)*FT,car,false);
+    }
+   }
    const fenceH=.85;box(-width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(0,-.13+fenceH/2,depth/2,width,fenceH,.12,concrete);
-   const gateWidth=Math.min(3,width*.65),side=(width-gateWidth)/2;
-   box(-gateWidth/2-side/2,fenceH/2,-depth/2,side,fenceH,.14,concrete);
-   box(gateWidth/2+side/2,fenceH/2,-depth/2,side,fenceH,.14,concrete);
-   box(0,fenceH*.47,-depth/2,gateWidth,fenceH*.94,.08,gateMat);
-   for(let i=0;i<7;i++)box(-gateWidth/2+gateWidth*(i+.5)/7,fenceH*.48,-depth/2-.06,.028,fenceH*.86,.04,railingMat);
+   const gates=planModel?[
+    {start:planModel.gate.xFt,width:planModel.gate.widthFt},
+    {start:planModel.pedestrianGate.xFt,width:planModel.pedestrianGate.widthFt}
+   ].sort((a,b)=>a.start-b.start):[{start:(design.plot.widthFt-Math.min(3,width*.65)/FT)/2,width:Math.min(3,width*.65)/FT}];
+   let fenceCursor=0;
+   for(const gate of gates){
+    if(gate.start>fenceCursor+.01){
+     const len=(gate.start-fenceCursor)*FT;
+     box(xCoord((fenceCursor+gate.start)/2),fenceH/2,-depth/2,len,fenceH,.14,concrete);
+    }
+    const gw=gate.width*FT,gx=xCoord(gate.start+gate.width/2);
+    box(gx,fenceH*.47,-depth/2,gw,fenceH*.94,.08,gateMat);
+    for(let k=0;k<7;k++)box(gx-gw/2+gw*(k+.5)/7,fenceH*.48,-depth/2-.06,.028,fenceH*.86,.04,railingMat);
+    fenceCursor=gate.start+gate.width;
+   }
+   if(fenceCursor<design.plot.widthFt-.01)
+    box(xCoord((fenceCursor+design.plot.widthFt)/2),fenceH/2,-depth/2,(design.plot.widthFt-fenceCursor)*FT,fenceH,.14,concrete);
    box(0,-.26,0,width*1.8,.05,depth*1.8,material("#b4c7ad"),false);
    scene.add(new THREE.HemisphereLight("#ffffff","#78816d",2.2));const sun=new THREE.DirectionalLight("#fff1d7",2.4);sun.position.set(width,top+8,depth*.7);sun.castShadow=renderer.shadowMap.enabled;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-width*1.8;sun.shadow.camera.right=width*1.8;sun.shadow.camera.top=depth*1.8;sun.shadow.camera.bottom=-depth*1.8;sun.shadow.bias=-.001;scene.add(sun);
    const camera=new THREE.PerspectiveCamera(46,1,.04,300);
@@ -82,6 +117,6 @@ export function StudioBuilding3D({design,colour}:{design:StudioDesign;colour:str
    observer=new ResizeObserver(resize);observer.observe(target);resize();
   }catch{failedTimer=window.setTimeout(()=>setFallback(true),0)}
   return()=>{window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();renderer?.dispose();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
- },[design,mode]);
- return <section className="nbd-building"><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>Concept geometry · touch orbit</span></div><div className="nbd-buttons">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Dollhouse":"Exterior"}</button>)}</div>{fallback?<div><p role="status">3D unavailable on this device. The 2D plan is still accessible.</p><DesignPlanArt design={design}/></div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}<p className="nbd-disclaimer">Parametric study only — not certified structural BIM. RCC roof/parapet and real openings are generated from the plan. HDRI, phototextures and photoreal renders are not yet bundled. Eye-level beta is not a measured walkthrough.</p></section>;
+ },[design,mode,planModel]);
+ return <section className="nbd-building"><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>Concept geometry · touch orbit</span></div><div className="nbd-buttons">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Dollhouse":"Exterior"}</button>)}</div>{fallback?<div><p role="status">3D unavailable on this device. The 2D plan is still accessible.</p><DesignPlanArt design={design}/></div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}<p className="nbd-disclaimer">Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Slabs and roofs are simplified; parapet details are not modeled for PlanModel mode. HDRI, phototextures and photoreal renders are not yet bundled. Eye-level beta is not a measured walkthrough.</p></section>;
 }
