@@ -131,6 +131,21 @@ async function main(){
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"networkidle"});
+    assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
+    assert.equal(await page.getByRole("button",{name:/Replay illustration/}).count(),0,"do not fabricate manual state before dragging");
+    assert.equal(await page.locator(".nbh-build-visual").count(),1,"construction stages replace static colour mood");
+    const quick=page.locator(".nbh-quick-quote");
+    await quick.locator("select[name=category]").selectOption("steel");
+    await quick.locator("input[name=material]").fill("TMT 12 mm");
+    await quick.locator("input[name=quantity]").fill("25");
+    await quick.locator("input[name=pincode]").fill("208001");
+    const quickHref=new URL(base+"/quotes?"+new URLSearchParams({category:"steel",material:"TMT 12 mm",quantity:"25",pincode:"208001",city:"Kanpur"}));
+    const prefill=await page.request.get(quickHref.href);
+    assert.equal(prefill.status(),200,"quote prefill is routed, never submitted as order");
+    const resultHtml=await prefill.text();
+    assert.match(resultHtml,/TMT 12 mm/,"draft material preserved");
+    const newCatalog=await page.request.get(base+"/materials/paint");
+    assert.equal(newCatalog.status(),200,"new paint category exists");
     const reveal=page.getByRole("slider",{name:"Compare illustrative construction-stage and completed homes"});
     assert.equal(await reveal.count(),1,"construction comparison needs a keyboard-accessible range slider");
     await reveal.fill("74");
@@ -153,11 +168,12 @@ async function main(){
 
    }
    await page.goto(base+"/",{waitUntil:"networkidle"});
-   const mainLink=page.getByRole("link",{name:/Design my home/i}).first();
+   const mainLink=page.locator(".nbh-journey.nbh-primary[href='/materials']").first();
    if(await mainLink.count()){
      const box=await mainLink.boundingBox();
-     if(box&&box.height<44)failures.push(v.w+"px: primary CTA smaller than 44px");
-   }else failures.push(v.w+"px: missing main design CTA");
+     if(box&&box.height<44)failures.push(v.w+"px: primary material CTA smaller than 44px");
+   }else failures.push(v.w+"px: primary materials CTA missing");
+   assert.equal(await page.locator(".nbh-material-card").count(),9,"home must show nine construction material categories");
    if(errors.length)failures.push(v.w+"px browser errors: "+errors.join(" | ").slice(0,1200));
    await ctx.close();
   }
