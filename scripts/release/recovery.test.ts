@@ -21,10 +21,45 @@ test("production release contract retains original source inventory and pins sen
 });
 
 
-test("preview builds stay allowed, production fails closed with missing/wrong Neerva DB credentials",()=>{
- const script="scripts/release/production-gate.mjs";
- const preview=spawnSync(process.execPath,[script],{env:{...process.env,VERCEL_ENV:"preview"},encoding:"utf8"});
- assert.equal(preview.status,1);
- const prod=spawnSync(process.execPath,[script],{env:{...process.env,VERCEL_ENV:"production",VERCEL_GIT_COMMIT_SHA:"a".repeat(40),NEERVA_RELEASE_APPROVED_SHA:"a".repeat(40)},encoding:"utf8"});
- assert.equal(prod.status,0);
+/** These tests must be stable on both GitHub CI and Vercel production,
+ * where real NEXT_PUBLIC_* values exist. Never inherit external release
+ * credentials into an intentionally invalid release-gate fixture.
+ */
+const fixtureEnv={
+ NODE_ENV:"test" as const,
+ PATH:process.env.PATH??"",
+ VERCEL_ENV:"preview",
+ VERCEL_GIT_COMMIT_REF:"feature-test",
+ VERCEL_GIT_COMMIT_SHA:"a".repeat(40),
+ NEXT_PUBLIC_SUPABASE_URL:"https://wrong-database.example.invalid",
+ NEXT_PUBLIC_SUPABASE_ANON_KEY:"intentionally-invalid-not-a-real-publishable-key",
+ NEERVA_RELEASE_APPROVED_SHA:"a".repeat(40)
+};
+function ignoredBuildStep(env:NodeJS.ProcessEnv,ci=false){
+ return spawnSync(process.execPath,["scripts/release/production-gate.mjs",...(ci?["--check"]:[])],{
+  env,encoding:"utf8",timeout:10000
+ });
+}
+test("preview ignored-build step permits previews despite wrong production credentials",()=>{
+ const result=ignoredBuildStep({...fixtureEnv,VERCEL_ENV:"preview"});
+ assert.equal(result.error,undefined);
+ assert.equal(result.status,1,result.stderr);
+});
+test("production ignored-build step SKIPS with wrong project URL, no secrets inherited",()=>{
+ const result=ignoredBuildStep({...fixtureEnv,VERCEL_ENV:"production",VERCEL_GIT_COMMIT_REF:"main"});
+ assert.equal(result.error,undefined);
+ assert.equal(result.status,0,result.stderr);
+ assert.match(result.stderr,/Production Supabase URL must point to the isolated Neerva project/);
+});
+test("production CI --check fails closed with wrong project URL",()=>{
+ const result=ignoredBuildStep({...fixtureEnv,VERCEL_ENV:"production",VERCEL_GIT_COMMIT_REF:"main"},true);
+ assert.equal(result.status,1,result.stderr);
+});
+test("production with syntactically valid dedicated Neerva public credentials permits BUILD; --check passes",()=>{
+ const env={...fixtureEnv,VERCEL_ENV:"production",VERCEL_GIT_COMMIT_REF:"main",
+  NEXT_PUBLIC_SUPABASE_URL:"https://djgghisbkucprqiezrcn.supabase.co",
+  NEXT_PUBLIC_SUPABASE_ANON_KEY:"sb_publishable_"+"0".repeat(52)
+ };
+ assert.equal(ignoredBuildStep(env).status,1,"Vercel build step: exit 1 means build");
+ assert.equal(ignoredBuildStep(env,true).status,0,"CI check: exit 0 means pass");
 });

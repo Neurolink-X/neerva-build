@@ -4,7 +4,7 @@ export type CatalogCategory = {
   titleHi: string;
   description: string;
   quoteOnly: boolean;
-  icon: "steel" | "cement" | "brick" | "pipe" | "electric" | "aggregate";
+  icon: "steel" | "cement" | "brick" | "pipe" | "electric" | "aggregate" | "paint" | "tile" | "hardware";
 };
 
 export const catalogCategories: CatalogCategory[] = [
@@ -13,7 +13,10 @@ export const catalogCategories: CatalogCategory[] = [
   { slug: "bricks-blocks", title: "Bricks & blocks", titleHi: "ईंट और ब्लॉक", description: "Clay, fly ash, AAC and concrete formats", quoteOnly: false, icon: "brick" },
   { slug: "plumbing", title: "Pipes & plumbing", titleHi: "पाइप और प्लंबिंग", description: "Pipe material, size, pressure class and fittings", quoteOnly: false, icon: "pipe" },
   { slug: "electrical", title: "Electrical & hardware", titleHi: "इलेक्ट्रिकल और हार्डवेयर", description: "Conduits, wires, fittings and site essentials", quoteOnly: false, icon: "electric" },
-  { slug: "aggregates", title: "Balu, morang & aggregates", titleHi: "बालू, मौरंग और एग्रीगेट", description: "Share your site and quantity for a private quote", quoteOnly: true, icon: "aggregate" },
+  { slug: "aggregates", title: "Balu, morang & aggregates", titleHi: "बालू, मौरंग और एग्रीगेट", description: "Specify grade, source, bulk quantity and vehicle/unloading access", quoteOnly: true, icon: "aggregate" },
+  { slug: "paint", title: "Paint & waterproofing", titleHi: "पेंट व वॉटरप्रूफिंग", description: "Primer, emulsion, putty, waterproofing and finish systems", quoteOnly: false, icon: "paint" },
+  { slug: "tiles", title: "Tiles & flooring", titleHi: "टाइल्स व फ्लोरिंग", description: "Material, finish, slip grade, size and box coverage", quoteOnly: false, icon: "tile" },
+  { slug: "hardware", title: "Adhesives & hardware", titleHi: "एडहेसिव व हार्डवेयर", description: "Tile adhesives, fittings, door hinges and fixings", quoteOnly: false, icon: "hardware" },
 ];
 
 export function searchCategories(query: string, source: CatalogCategory[] = catalogCategories): CatalogCategory[] {

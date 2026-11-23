@@ -8,7 +8,7 @@ import { convertSquareFeet, squareFeetFromDimensions } from "@/modules/calculato
 import { QuoteRequestForm } from "@/components/quote-request-form";
 
 const icons: Record<CatalogCategory["icon"], string> = {
-  steel: "▤", cement: "◈", brick: "▦", pipe: "◉", electric: "⌁", aggregate: "◌",
+  steel: "▤", cement: "◈", brick: "▦", pipe: "◉", electric: "⌁", aggregate: "◌", paint:"◍",tile:"▣",hardware:"⚙",
 };
 
 const steps = ["Share your material list", "Dealers send itemized offers", "Compare the full delivered cost"];

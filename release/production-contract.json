@@ -130,7 +130,7 @@
     "src/modules/identity/server-auth.ts": "de3afb321bdbb51fe51fe83a89523cc416e83674",
     "src/app/api/admin/catalog/route.ts": "a2592ec29b8d0da150425802451e7909d547c64e",
     "src/app/api/admin/pricing/route.ts": "e06c3bf4b1ac03aac78dae022178bc6673ab46c8",
-    "src/app/api/admin/rfqs/route.ts": "114511d29e48a7b644fd5d16722af0bab4284340",
+    "src/app/api/admin/rfqs/route.ts": "92b55489dc8df47df5eda180765144174461234d",
     "src/app/api/dealer/inventory/route.ts": "a3a15eb220d8a94e4363cf95930cbe40be329a9a",
     "src/app/api/dealer/quotes/route.ts": "fb5fe76a4ae5a4734832c2351e9ccf30437c50ab",
     "src/app/api/customer/quotes/route.ts": "aeced18facd09db13cb176873d63bc8563e6c2c5",
