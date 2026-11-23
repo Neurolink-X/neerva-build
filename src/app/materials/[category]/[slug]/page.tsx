@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { ProductGallery, ProductDetailTools } from "@/components/product-detail-tools";
+import {BrandMark} from "@/components/brand-mark";
 import { getCategory, getProduct } from "@/modules/catalog/marketplace";
 
 type Props = { params: Promise<{ category: string; slug: string }> };
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> { c
 export default async function MaterialDetailPage({ params }: Props) {
   const { category, slug } = await params; const product = getProduct(category, slug); if (!product) notFound(); const parent = getCategory(category); if (!parent) notFound();
   const quoteHref = `/quotes?category=${encodeURIComponent(category)}&material=${encodeURIComponent(product.name)}`;
-  return <main className="catalog-page"><SiteHeader /><div className="product-detail-wrap"><nav className="detail-breadcrumb"><Link href="/">Home</Link><span>/</span><Link href="/materials">Materials</Link><span>/</span><Link href={`/materials/${category}`}>{parent.title}</Link><span>/</span><span>{product.name}</span></nav><section className="product-detail"><ProductGallery product={product} /><div className="product-detail-copy"><span className="eyebrow">{parent.title} · {product.brand}</span><h1>{product.name}</h1><p>{product.description}</p><div className="quote-only-callout">
+  return <main className="catalog-page"><SiteHeader /><div className="product-detail-wrap"><nav className="detail-breadcrumb"><Link href="/">Home</Link><span>/</span><Link href="/materials">Materials</Link><span>/</span><Link href={`/materials/${category}`}>{parent.title}</Link><span>/</span><span>{product.name}</span></nav><section className="product-detail"><ProductGallery product={product} /><div className="product-detail-copy"><span className="eyebrow">{parent.title}</span><div className="product-brand-identity"><BrandMark name={product.brand}/><small>Independent brand reference, not official reseller</small></div><h1>{product.name}</h1><p>{product.description}</p><div className="quote-only-callout">
  <strong>{product.quoteOnly?"Private dealer quotation":"Explore details and prepare a quote"}</strong>
  <span>Review the grade, size and unit. Product images are illustrative unless explicitly verified. Stock, delivery and final rates require a dealer confirmation.</span>
 </div>

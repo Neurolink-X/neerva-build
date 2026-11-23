@@ -94,3 +94,15 @@
  .site-mobile-menu summary{padding:7px 6px;font-size:11px}
  .site-header .header-install{font-size:10px;padding:7px}
 }
+
+
+/* Real manufacturer marks only; no invented pseudo-logos, preserve natural aspect ratios. */
+.nb-brand-mark{display:inline-flex;align-items:center;justify-content:center;padding:6px 8px;min-height:42px;min-width:96px;max-width:160px;border-radius:8px;background:#fff;border:1px solid #dde4dd;vertical-align:middle}
+.nb-brand-mark-small{min-height:36px;min-width:84px;max-width:115px;padding:4px 6px}
+.nb-brand-mark img{display:block;max-height:55px;width:auto;max-width:100%}
+.nb-brand-mark-small img{max-height:34px}
+.nb-brand-name{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:7px 10px;font-weight:850;font-size:14px;color:#244d36;border:1px solid #d6e1d7;border-radius:8px;background:#f7faf7;overflow-wrap:anywhere;text-align:center}
+.nb-brand-name-small{min-height:36px;padding:5px 8px;font-size:12px}
+.product-brand-identity{display:flex;flex-wrap:wrap;align-items:center;gap:7px 10px;margin:8px 0 12px}
+.product-brand-identity small{font-size:11px;color:#52675b;line-height:1.4}
+.brand-directory-card .nb-brand-mark{margin:0 0 8px;max-width:100%}

@@ -1,7 +1,7 @@
 name: Neerva mobile browser regression
 on:
   pull_request:
-    branches: [main]
+    # Also run on stacked feature PRs before they reach main; no untested architecture can merge.
   push:
     branches: [main]
   workflow_dispatch:
