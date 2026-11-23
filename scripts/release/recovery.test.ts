@@ -9,14 +9,19 @@ test("source-recovery script never writes secrets to git and requires explicit t
  assert.match(s,/Output directory must be empty/);
  assert.match(s,/\.env/);
 });
-test("production release guard fails closed with source parity + attestation",()=>{
- const s=readFileSync("scripts/release/production-gate.mjs","utf8");
- assert.match(s,/src\/app\/api\/orders\/route\.tsx|src\/app\/api\/orders\/route\.ts/);
- assert.match(s,/production-parity-approved\.json/);
- assert.match(s,/approvedSha !== sha/);
+test("production release contract retains original source inventory and pins sensitive routes",()=>{
+ const gate=readFileSync("scripts/release/production-gate.mjs","utf8");
+ const contract=JSON.parse(readFileSync("release/production-contract.json","utf8"));
+ assert.match(gate,/validateProductionContract/);
+ assert.equal(contract.version,2);
+ assert.equal(contract.referenceDeployment,"dpl_GBZpLhjcXvCdihSX7Lfd2YqBwnZF");
+ assert.ok(contract.baselineFiles.length>=100);
+ assert.ok(contract.baselineFiles.includes("src/app/api/orders/route.ts"));
+ assert.match(contract.protectedGitBlobs["src/app/api/orders/route.ts"],/^[a-f0-9]{40}$/);
 });
 
-test("preview builds stay allowed, production fails closed even with a forged SHA",()=>{
+
+test("preview builds stay allowed, production fails closed with missing/wrong Neerva DB credentials",()=>{
  const script="scripts/release/production-gate.mjs";
  const preview=spawnSync(process.execPath,[script],{env:{...process.env,VERCEL_ENV:"preview"},encoding:"utf8"});
  assert.equal(preview.status,1);
