@@ -1,9 +1,9 @@
 /* Responsive type scale with a readable floor on small screens. */
 :root {
-  --type-caption: clamp(0.75rem, 0.72rem + 0.12vw, 0.8125rem);
-  --type-small: clamp(0.8125rem, 0.78rem + 0.16vw, 0.9375rem);
-  --type-body: clamp(0.9375rem, 0.9rem + 0.18vw, 1rem);
-  --type-control: clamp(0.875rem, 0.84rem + 0.16vw, 1rem);
+  --type-caption: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);
+  --type-small: clamp(0.875rem, 0.84rem + 0.16vw, 0.9375rem);
+  --type-body: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --type-control: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
 }
 
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -25,53 +25,4 @@ button, input, select, textarea { font-size: var(--type-control); }
 .studio-small, .layout-choice small, .layout-choice span, .preset-button,
 .floor-switch button, .plan-legend, .selected-room-info,
 .room-resize-tools button, .zoom-tools span, .studio-save-label,
-.studio-feature-list span, .visualizer-heading p, .visualizer-topbar,
-.elevation-choice strong, .elevation-choice small, .surface-option strong,
-.surface-option small, .surface-check, .color-input-label, .hex-value,
-.texture-select, .elevation-stage-label, .elevation-stage-footer,
-.visualizer-notice, .home-visualizer-link {
-  font-size: var(--type-small);
-}
-
-.hero-copy > p, .section-head p, .studio-copy > p, .city-card p,
-.category-card p, .quote-copy > p, .calculator-intro > p,
-.page-hero > p, .product-card-copy p, .quote-page-copy p,
-.quote-page-copy li, .calculator-page-card p, .article-section p,
-.article-sources > p, .article-section li, .article-sources li,
-.blog-card-content > p, .selected-room-info { font-size: var(--type-body); }
-
-.category-card h3 { font-size: clamp(1.125rem, 1.02rem + 0.45vw, 1.5rem); }
-.product-card-copy h2, .blog-card-content h3 { font-size: clamp(1.25rem, 1.12rem + 0.55vw, 1.625rem); }
-.page-hero h1, .product-detail-copy h1 { text-wrap: balance; }
-
-@media (max-width: 680px) {
-  .topline, .desktop-nav, .city-select, .sign-in, .button, .text-link,
-  .header-quote, .hero-meta, .eyebrow, .category-bottom,
-  .trust-strip small, .trust-strip strong, .quote-steps div,
-  .quote-steps div span, .input-row label, .rfq-form-grid label,
-  .calculator-foot, .rfq-privacy, .rfq-unavailable, .rfq-status,
-  .site-footer nav, .site-footer small, .blog-card-meta, .blog-card-bottom,
-  .article-toc a, .article-toc strong, .article-next p,
-  .catalog-toolbar label, .catalog-demo-note, .professional-note,
-  .product-card-foot, .product-brand, .brand-directory-card strong,
-  .brand-directory-card small, .studio-small, .layout-choice small,
-  .layout-choice span, .preset-button, .floor-switch button, .plan-legend,
-  .selected-room-info, .room-resize-tools button, .zoom-tools span,
-  .studio-save-label, .studio-feature-list span, .visualizer-heading p,
-  .visualizer-topbar, .elevation-choice strong, .elevation-choice small,
-  .surface-option strong, .surface-option small, .surface-check,
-  .color-input-label, .hex-value, .texture-select, .elevation-stage-label,
-  .elevation-stage-footer, .visualizer-notice, .home-visualizer-link {
-    font-size: var(--type-small);
-  }
-
-  .hero-copy > p, .section-head p, .studio-copy > p, .city-card p,
-  .category-card p, .quote-copy > p, .calculator-intro > p,
-  .page-hero > p, .product-card-copy p, .quote-page-copy p,
-  .quote-page-copy li, .calculator-page-card p, .article-section p,
-  .article-sources > p, .article-section li, .article-sources li,
-  .blog-card-content > p { font-size: var(--type-body); }
-
-  .preset-button, .layout-choice, .plan-editor-actions button { min-height: 40px; }
-  .visualizer-controls input, .visualizer-controls select { min-height: 42px; }
-}
+.studio-feature-list span, .visualizer-h¶»§q«^

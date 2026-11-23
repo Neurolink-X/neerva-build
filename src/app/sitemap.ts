@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: siteUrl, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${siteUrl}/materials`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${siteUrl}/design-studio`, changeFrequency: "monthly", priority: 0.8 },
     { url: `${siteUrl}/brands`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${siteUrl}/calculators`, changeFrequency: "monthly", priority: 0.6 },
     ...catalogCategories.map((category) => ({ url: `${siteUrl}/materials/${category.slug}`, changeFrequency: "weekly" as const, priority: 0.7 })),

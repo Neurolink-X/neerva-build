@@ -1,27 +1,51 @@
 "use client";
-
 import Link from "next/link";
-import { useState } from "react";
-import { FloorPlanEditor, type FloorRoom } from "@/components/floor-plan-editor";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  alternatives,
+  generate,
+  type Brief,
+  type Side,
+  type Rules,
+} from "@/modules/studio/layout";
+import { PlanPreview } from "./plan-preview";
+import { palette, type Shade } from "@/modules/studio/room";
+import { readDesign, type Design } from "@/modules/studio/share";
+import { useMaterialBasket } from "./material-basket";
 
-type Plan = { id: string; title: string; style: string; summary: string; rooms: FloorRoom[] };
-const r = (id:string,name:string,x:number,y:number,w:number,h:number,type:FloorRoom["type"]="room"):FloorRoom=>({id,name,x,y,w,h,type});
-const plans:Plan[]=[
-  {id:"family-2bhk",title:"Family 2BHK",style:"Balanced",summary:"2 bedrooms · 2 bathrooms · front car parking",rooms:[r("a-bed1","Bedroom 1",5,5,43,20),r("a-bath1","Bathroom",48,5,18,20,"service"),r("a-stairs","Stairs",66,5,29,25,"service"),r("a-living","Living + dining",5,25,58,30),r("a-kitchen","Kitchen",63,30,32,20),r("a-bed2","Bedroom 2",5,55,43,22),r("a-bath2","Bathroom 2",48,55,18,20,"service"),r("a-puja","Puja / store",66,55,29,20,"service"),r("a-porch","Entry porch",5,80,45,15,"open"),r("a-parking","Car parking",50,80,45,15,"parking")]},
-  {id:"compact-3bhk",title:"Compact 3BHK",style:"Space efficient",summary:"3 compact bedrooms · 2 bathrooms · shared living",rooms:[r("b-bed1","Bedroom 1",5,5,42,20),r("b-bed2","Bedroom 2",47,5,48,20),r("b-bath1","Bathroom",5,25,20,15,"service"),r("b-stairs","Stairs",25,25,25,20,"service"),r("b-living","Living",50,25,45,30),r("b-kitchen","Kitchen + dining",5,45,45,15),r("b-bed3","Bedroom 3",5,60,42,19),r("b-bath2","Bathroom 2",47,60,20,16,"service"),r("b-entry","Entry porch",5,79,62,15,"open"),r("b-parking","Car parking",67,76,28,18,"parking")]},
-  {id:"courtyard-2bhk",title:"Courtyard home",style:"Open to sky",summary:"2 bedrooms · lightwell · garden sit-out",rooms:[r("c-bed1","Bedroom 1",5,5,43,22),r("c-bath1","Bathroom",48,5,18,17,"service"),r("c-stairs","Stairs",66,5,29,23,"service"),r("c-living","Living",5,27,38,30),r("c-courtyard","Open courtyard",43,28,24,25,"open"),r("c-kitchen","Kitchen + dining",67,28,28,29),r("c-bed2","Bedroom 2",5,57,43,22),r("c-bath2","Bathroom 2",48,57,18,17,"service"),r("c-garden","Garden / sit-out",66,57,29,20,"open"),r("c-entry","Entry + parking",5,79,90,15,"parking")]},
-];
-const plots=[{label:"15 × 30 ft",w:15,d:30},{label:"20 × 30 ft",w:20,d:30},{label:"20 × 40 ft",w:20,d:40},{label:"25 × 40 ft",w:25,d:40},{label:"30 × 40 ft",w:30,d:40},{label:"30 × 50 ft",w:30,d:50},{label:"40 × 60 ft",w:40,d:60}];
-const upstairs:FloorRoom[]=[r("up-family","Family lounge",5,5,50,25),r("up-balcony","Balcony",55,5,40,15,"open"),r("up-bed1","Bedroom 3",5,30,43,25),r("up-bath","Bathroom",48,30,20,17,"service"),r("up-stairs","Stairs",68,20,27,27,"service"),r("up-study","Study / bedroom",5,55,43,24),r("up-utility","Utility",5,79,43,15,"service"),r("up-terrace","Open terrace",48,55,47,39,"open")];
-
-export function HomeStudio() {
-  const [plotIndex,setPlotIndex]=useState(2); const [planIndex,setPlanIndex]=useState(0); const [floor,setFloor]=useState(0); const [revision,setRevision]=useState(0);
-  const plot=plots[plotIndex]; const plan=plans[planIndex]; const rooms=floor===1?upstairs:plan.rooms;
-  return <div className="studio-app">
-    <div className="studio-toolbar"><div><Link href="/">← Home</Link><span>/</span><strong>Home Design Studio</strong></div><span className="studio-save-label">Draft {revision+1} · saved locally only when requested</span></div>
-    <div className="studio-workspace"><aside className="studio-controls"><span className="eyebrow">1 · YOUR PLOT</span><h2>Set the footprint</h2><div className="preset-grid">{plots.map((item,index)=><button key={item.label} className={index===plotIndex?"preset-button active":"preset-button"} onClick={()=>{setPlotIndex(index);setRevision((v)=>v+1);}}>{item.label}</button>)}</div><p className="studio-small">Plot area: <strong>{(plot.w*plot.d).toLocaleString("en-IN")} sq ft</strong> · {((plot.w*plot.d)/9).toFixed(1)} square gaj</p><div className="studio-rule"/><span className="eyebrow">2 · SAME PLOT, DIFFERENT PLAN</span><h2>Choose a layout</h2><div className="layout-choice-list">{plans.map((item,index)=><button key={item.id} className={index===planIndex?"layout-choice active":"layout-choice"} onClick={()=>{setPlanIndex(index);setFloor(0);setRevision((v)=>v+1);}}><strong>{item.title}</strong><small>{item.summary}</small><span>{item.style}</span></button>)}</div><div className="studio-rule"/><span className="eyebrow">3 · FLOOR</span><div className="floor-switch"><button className={floor===0?"active":""} onClick={()=>setFloor(0)}>Ground floor</button><button className={floor===1?"active":""} onClick={()=>setFloor(1)}>First-floor concept</button></div><div className="studio-feature-list"><span>Living + dining</span><span>Kitchen</span><span>Bedrooms</span><span>Bathrooms + utility</span><span>Parking + stairs</span><span>Balcony + courtyard</span></div><div className="studio-actions"><Link href="/design-studio/visualizer" className="button button-dark">Design the exterior →</Link><Link href="/quotes" className="text-link">Request a material quote →</Link></div></aside>
-      <FloorPlanEditor key={`${plot.label}-${plan.id}-${floor}`} plot={plot} title={floor===1?"First-floor concept":plan.title} summary={floor===1?"Bedroom, lounge, balcony, utility and terrace concept.":plan.summary} rooms={rooms} onSave={()=>setRevision((v)=>v+1)}/>
-    </div>
-    <p className="studio-disclaimer">Conceptual planning aid only. Room sizes shown are proportional estimates. Layout, ventilation, setbacks, structure, services and local approvals require qualified architect/engineer review. Do not use as construction drawings.</p>
-  </div>;
-}
+export function HomeStudio({
+  rules: cityRules,
+  configured,
+  shades = palette,
+}: {
+  rules: Rules;
+  configured: boolean;
+  shades?: Shade[];
+}) {
+  const [saved, setSaved] = useState<Design | null>(null);
+  const rules = saved?.rules ?? cityRules;
+  const [hi, setHi] = useState(false),
+    t = (en: string, hindi: string) => (hi ? hindi : en);
+  const [unit, setUnit] = useState("ft"),
+    [width, setWidth] = useState("30"),
+    [depth, setDepth] = useState("50");
+  const [settings, setSettings] = useState({
+    road: "S" as Side,
+    facing: "S" as Side,
+    beds: 2,
+    floors: 1,
+    parking: true,
+    variant: 0,
+  });
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("lang") === "hi")
+      queueMicrotask(() => setHi(true));
+    function restore() {
+      const d = readDesign(location.hash);
+      if (!d) return;
+      setSaved(d);
+      setUnit("m");
+      setWidth(String(d.brief.width / 1000));
+      setDepth(String(d.brief.depth / 1000));
+      setSettings({ ...d.brief, variant: ���q�^

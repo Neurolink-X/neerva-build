@@ -10,6 +10,8 @@ const validRequest = {
   unit: "truck",
   city: "Kanpur",
   pincode: "208001",
+  deliveryAddress: "A-12, Swaroop Nagar, near the community park",
+  shareAddressConsent: true,
   contactName: "Asha Kumar",
   phone: "9876543210",
   turnstileToken: "opaque-challenge-token",
@@ -29,3 +31,6 @@ test("RFQ category and quantity unit must be supported together", () => {
   assert.equal(rfqSchema.safeParse({ ...validRequest, categorySlug: "cement", unit: "truck" }).success, false);
   assert.equal(rfqSchema.safeParse({ ...validRequest, categorySlug: "cement", unit: "bag" }).success, true);
 });
+
+test("multi-item quote payload accepts bounded catalogue snapshots", () => {
+  const payload = { ...validRequest, categorySlug: "cement", materialDescription: "PPC cem¶»§q«^

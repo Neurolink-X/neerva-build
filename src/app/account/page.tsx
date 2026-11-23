@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
+import { AccountAccess } from "@/components/account-access";
 
 export const metadata: Metadata = {
   title: "Account access",
@@ -14,12 +15,10 @@ export default function AccountPage() {
     <SiteHeader />
     <section className="page-hero account-status-page">
       <span className="eyebrow">ACCOUNT ACCESS</span>
-      <h1>Sign-in is being prepared.</h1>
-      <p>Customer and dealer accounts will be enabled after NEERVA BUILD’s separate authentication and database services are configured. This preview will not ask you to enter credentials or pretend to create an account.</p>
-      <div className="detail-actions">
-        <Link className="button button-dark" href="/materials">Continue browsing materials →</Link>
-        <Link className="button button-outline" href="/design-studio">Explore Home Studio</Link>
-      </div>
+      <h1>Keep your build in view.</h1>
+      <p>Sign in to manage saved material requests and construction plans. Dealer and administrator access is granted separately.</p>
+      <Link href="/account/orders">My Orders</Link><AccountAccess />
+      <div className="detail-actions"><Link className="button button-outline" href="/materials">Continue browsing materials →</Link><Link className="button button-outline" href="/design-studio">Explore Home Studio</Link></div>
     </section>
     <SiteFooter />
   </main>;

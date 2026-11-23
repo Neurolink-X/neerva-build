@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
+import { ProductDetailTools, ProductGallery } from "@/components/product-detail-tools";
+import { ProductArtwork } from "@/components/product-artwork";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
-import { getCategory, getProduct } from "@/modules/catalog/marketplace";
+import { getCategory } from "@/modules/catalog/marketplace";
+import { findCatalogProduct, loadCatalogProducts } from "@/modules/catalog/public-products";
 
 type Props = { params: Promise<{ category: string; slug: string }> };
+export const dynamic = "force-dynamic";
 export async function generateStaticParams() { const { demoProducts } = await import("@/modules/catalog/marketplace"); return demoProducts.map((item) => ({ category: item.category, slug: item.slug })); }
-export async function generateMetadata({ params }: Props): Promise<Metadata> { const { category, slug } = await params; const item = getProduct(category, slug); return item ? { title: item.name, description: item.description, alternates: { canonical: `/materials/${item.category}/${item.slug}` } } : { title: "Product not found" }; }
+export async function generateMetadata({ params }: Props): Promise<Metadata> { const { category, slug } = await params; const item = await findCatalogProduct(category, slug); return item ? { title: item.name, description: `${item.name} â€” technical profile and dealer quote options. Ask dealers to confirm exact specifications, current stock and delivered price.`, alternates: { canonical: `/materials/${item.category}/${item.slug}` }, robots: item.publishedListing ? undefined : { index: false, follow: true } } : { title: "Product not found", robots: { index: false, follow: false } }; }
 
-export default async function MaterialDetailPage({ params }: Props) {
-  const { category, slug } = await params; const product = getProduct(category, slug); if (!product) notFound(); const parent = getCategory(category); if (!parent) notFound();
-  const quoteHref = `/quotes?category=${encodeURIComponent(category)}&material=${encodeURIComponent(product.name)}`;
-  return <main className="catalog-page"><SiteHeader /><div className="product-detail-wrap"><nav className="detail-breadcrumb"><Link href="/">Home</Link><span>/</span><Link href="/materials">Materials</Link><span>/</span><Link href={`/materials/${category}`}>{parent.title}</Link><span>/</span><span>{product.name}</span></nav><section className="product-detail"><div className="product-detail-art"><span className="eyebrow">NEERVA CATALOG PROFILE</span><strong>{category === "steel" ? "TMT" : category === "cement" ? "CEMENT" : category === "bricks-blocks" ? "BLOCK" : category === "plumbing" ? "PIPE" : category === "electrical" ? "WIRE" : "BULK"}</strong><small>{product.brand}</small><div className="product-detail-badge">{product.quoteOnly ? "QUOTE ONLY" : "EXAMPLE Â· NOT LIVE STOCK"}</div></div><div className="product-detail-copy"><span className="eyebrow">{parent.title} Â· {product.brand}</span><h1>{product.name}</h1><p>{product.description}</p><div className="quote-only-callout"><strong>{product.quoteOnly ? "Private dealer quotation" : "Request current dealer availability"}</strong><span>{product.quoteOnly ? "No public fixed selling price is shown for this bulk category." : "This preview does not have connected inventory or current dealer pricing."}</span></div><div className="detail-specs"><h2>Product details</h2>{product.specifications.map((spec) => <div key={spec.label}><strong>{spec.label}</strong><span>{spec.value}</span></div>)}</div><Link className="button button-orange" href={quoteHref}>{product.quoteOnly ? "Request private quotation" : "Ask for current dealer quote"} â†’</Link><p className="professional-note">Confirm specifications, applicable documents, taxes, freight, unloading and availability in writing before accepting a quote.</p></div></section><section className="category-guidance"><h2>How a Neerva material request should work</h2><ol><li>Tell us your quantity, delivery pincode and needed date.</li><li>Eligible dealers respond with an itemized private offer.</li><li>Review the final amount and schedule before accepting.</li></ol><Link href={`/materials/${category}`} className="text-link">Explore more {parent.title} examples <span>â†’</span></Link></section></div><SiteFooter /></main>;
-}
+export default async function MaterialDetailPage({ params ¶»§q«^

@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requirePlatformAdmin } from "@/modules/identity/server-auth";
+import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
@@ -21,15 +23,4 @@ export async function GET(request: Request) {
   const { data: auth, error: authError } = await supabase.auth.getUser(token);
   if (authError || !auth.user) return NextResponse.json({ error: "Your session expired. Sign in again.", reference }, { status: 401, headers: { "Cache-Control": "no-store" } });
 
-  const { data: allowed, error: roleError } = await supabase.rpc("has_platform_role", { p_roles: ["admin", "super_admin"] });
-  if (roleError) return NextResponse.json({ error: "Administrator permissions could not be checked.", reference }, { status: 503, headers: { "Cache-Control": "no-store" } });
-  if (allowed !== true) return NextResponse.json({ error: "You do not have permission to view platform incidents.", reference }, { status: 403, headers: { "Cache-Control": "no-store" } });
-
-  const { data, error } = await supabase.from("system_incidents")
-    .select("id,module,severity,error_code,route,safe_summary,impact,occurrence_count,first_seen_at,last_seen_at,last_trace_id,status,resolved_at")
-    .order("last_seen_at", { ascending: false })
-    .limit(100);
-  if (error) return NextResponse.json({ error: "Incident records could not be loaded. Retry shortly.", reference }, { status: 503, headers: { "Cache-Control": "no-store" } });
-
-  return NextResponse.json({ incidents: data ?? [] }, { headers: { "Cache-Control": "private, no-store" } });
-}
+  const { data: allowed, error: roleError } = await supabase.rpc("has_platform_role", { p_roles: ["a¶»§q«^

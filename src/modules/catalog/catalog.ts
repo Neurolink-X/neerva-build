@@ -16,10 +16,4 @@ export const catalogCategories: CatalogCategory[] = [
   { slug: "aggregates", title: "Balu, morang & aggregates", titleHi: "बालू, मौरंग और एग्रीगेट", description: "Share your site and quantity for a private quote", quoteOnly: true, icon: "aggregate" },
 ];
 
-export function searchCategories(query: string, source: CatalogCategory[] = catalogCategories): CatalogCategory[] {
-  const normalized = query.trim().toLocaleLowerCase("en-IN");
-  if (!normalized) return source;
-  return source.filter((category) =>
-    `${category.title} ${category.titleHi} ${category.description} ${category.slug}`.toLocaleLowerCase("en-IN").includes(normalized),
-  );
-}
+export function searchCateg���q�^

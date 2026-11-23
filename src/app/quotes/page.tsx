@@ -5,10 +5,10 @@ import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { catalogCategories } from "@/modules/catalog/catalog";
 
 export const metadata: Metadata = { title: "Request a Construction Material Quote", description: "Prepare a private construction material enquiry with quantity, delivery city and pincode. Dealer offers and current prices are not active until backend setup is complete.", robots: { index: false, follow: false }, alternates: { canonical: "/quotes" } };
-type Props = { searchParams: Promise<{ category?: string; material?: string }> };
+type Props = { searchParams: Promise<{ category?: string; material?: string; cart?: string }> };
 
 export default async function QuotePage({ searchParams }: Props) {
   const query = await searchParams;
   const category = catalogCategories.some((item) => item.slug === query.category) ? query.category! : "aggregates";
-  return <main className="catalog-page"><SiteHeader /><section className="page-hero page-hero-compact"><Link className="breadcrumb-link" href="/materials">Materials catalog /</Link><span className="eyebrow">BULK & DEALER QUOTES</span><h1>Get the full amount<br /><em>before you accept.</em></h1><p>Share material details, quantity and delivery location. Dealer pricing and secure enquiry handling activate after the Neerva backend is configured.</p></section><section className="section quote-page-content"><div className="quote-page-copy"><span className="eyebrow">PRIVATE ENQUIRY</span><h2>One request, clear terms.</h2><p>Use the form to prepare your request. This preview currently blocks submission because it has no dedicated database or anti-bot credentials. Your information will not be stored.</p><ol><li>Specify the exact product or material.</li><li>Include a realistic quantity and delivery pincode.</li><li>Review itemized dealer offers before making a commitment.</li></ol><div className="quote-page-links"><Link href="/materials">Browse material examples â†’</Link><Link href="/brands">See brand options â†’</Link></div></div><QuoteRequestForm defaultCity="Kanpur" defaultCategory={category} defaultMaterial={query.material ?? ""} /></section><SiteFooter /></main>;
-}
+  const includeBasket = query.cart === "1";
+  return <main className="catalog-page"><SiteHeader /><section className="page-hero page-hero-compact"><Link className="breadcrumb-link" href={includeBasket ? "/basket" : "/materials"}>{includeBasket ? "Your material list /" : "Materials catalog /"}</Link><span className="eyebrow">BULK & DEALER QUOTES</span><h1>Get the full amount<br /><em>before you accept.</em></h1><p>{includeBasket ? "Send your selected materials together. Dealers should confirm stock, item prices, tax, freight, unloading and delivery terms befo¶»§q«^

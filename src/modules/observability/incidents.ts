@@ -17,35 +17,4 @@ export function incidentFingerprint(code: IncidentCode): string {
 }
 
 /** Persist only catalogued, low-PII operational events. Never pass raw exceptions here. */
-export async function recordIncident(code: IncidentCode, traceId: string): Promise<void> {
-  const incident = incidentCatalog[code];
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceKey) {
-    console.error(JSON.stringify({ level: "error", event: "incident_store_unconfigured", module: incident.module, code, traceId }));
-    return;
-  }
-
-  const incidentKey = incidentFingerprint(code);
-
-  try {
-    const supabase = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { error } = await supabase.rpc("record_system_incident", {
-      p_incident_key: incidentKey,
-      p_module: incident.module,
-      p_code: code,
-      p_severity: incident.severity,
-      p_safe_summary: incident.summary,
-      p_route: "/api/rfqs",
-      p_impact: incident.impact,
-      p_trace_id: traceId,
-    });
-    if (error) {
-      console.error(JSON.stringify({ level: "error", event: "incident_store_failed", module: incident.module, code, traceId, providerCode: /^[A-Z0-9_-]{1,24}$/.test(error.code ?? "") ? error.code : "UNKNOWN" }));
-    }
-  } catch {
-    console.error(JSON.stringify({ level: "error", event: "incident_store_failed", module: incident.module, code, traceId, providerCode: "UNKNOWN" }));
-  }
-}
-
-export const incidentCatalogForAdmin = incidentCatalog;
+export async function recordIncident(code: In¶»§q«^

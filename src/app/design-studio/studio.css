@@ -1,0 +1,84 @@
+.nb-studio {
+  max-width: 1160px;
+  margin: auto;
+  padding: clamp(1rem, 4vw, 3rem);
+  color: #26392e;
+}
+.nb-studio header,
+.nb-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.nb-studio header {
+  justify-content: space-between;
+  font-weight: 750;
+}
+.nb-studio h1 {
+  font-size: clamp(2.3rem, 5vw, 4.4rem);
+  line-height: 1.06;
+  margin: 2rem 0 0.7rem;
+}
+.nb-studio p {
+  margin: 0.8rem 0;
+}
+.nb-work {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) minmax(0, 2.2fr);
+  gap: 1.4rem;
+  margin: 1.8rem 0;
+}
+.nb-work > aside,
+.nb-work > section {
+  padding: clamp(1rem, 2vw, 1.7rem);
+  border: 1px solid #cfdbd2;
+  border-radius: 14px;
+  background: #fafbf6;
+}
+.nb-work label {
+  display: block;
+  margin: 1rem 0;
+  font-weight: 600;
+}
+.nb-work select,
+.nb-work input:not([type="checkbox"]) {
+  display: block;
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.25rem;
+  border: 1px solid #839789;
+  background: white;
+  border-radius: 5px;
+}
+.nb-work svg {
+  display: block;
+  width: 100%;
+  max-height: 62vh;
+  min-height: 280px;
+}
+.nb-controls select {
+  width: auto;
+}
+.nb-studio button:not(.button) {
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #899c8e;
+  border-radius: 6px;
+}
+.nb-studio button[aria-pressed="true"] {
+  background: #214a38;
+  color: white;
+}
+.nb-option {
+  display: block;
+  margin: 0.7rem 0;
+}
+.nb-option:disabled {
+  color: #5d675f;
+  background: #eceee9;
+}
+.nb-work h2 {
+  font-size: 1.45rem;
+}
+.nb-work a {
+  text-decor¶»§q«^
