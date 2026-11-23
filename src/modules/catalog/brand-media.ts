@@ -23,6 +23,18 @@ export const brandMedia={
   pressPhotoSource:"https://www.ultratechcement.com/corporate/media/press-kit",
   pressPhotoLabel:"Official manufacturer media-kit cement bag image; exact grade and stock not confirmed"
  },
+ "JSW Neosteel":{
+  logo:"https://upload.wikimedia.org/wikipedia/commons/3/3c/JSW_Group_logo.svg",
+  logoSource:"https://commons.wikimedia.org/wiki/File:JSW_Group_logo.svg",
+  logoAttribution:"JSW Group corporate text-logo · PD-textlogo, trademark remains with JSW; not an exact Neosteel product logo",
+  officialProductPage:"https://www.jswneosteel.in/"
+ },
+ "Asian Paints":{
+  logo:"https://upload.wikimedia.org/wikipedia/commons/e/e3/Asian_Paints_Logo.svg",
+  logoSource:"https://commons.wikimedia.org/wiki/File:Asian_Paints_Logo.svg",
+  logoAttribution:"Asian Paints corporate mark · Wikimedia PD-textlogo, trademark applies; verify current branding with manufacturer",
+  officialProductPage:"https://www.asianpaints.com/"
+ },
  "UltraTech Cement":{
   logo:"https://upload.wikimedia.org/wikipedia/commons/1/18/UltraTech_logo.jpg",
   logoSource:"https://commons.wikimedia.org/wiki/File:UltraTech_logo.jpg",
