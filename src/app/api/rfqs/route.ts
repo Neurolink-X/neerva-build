@@ -2,6 +2,7 @@ import {randomUUID} from "node:crypto";
 import {NextResponse} from "next/server";
 import {requireAuth} from "@/modules/identity/server-auth";
 import {rfqSchema} from "@/modules/rfq/schema";
+import {rfqIntakeEnabled} from "@/modules/rfq/intake-status";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -42,6 +43,7 @@ async function readJsonBounded(request:Request){
  */
 export async function POST(request:Request){
  const reference=randomUUID();
+ if(!rfqIntakeEnabled(process.env))return respond(503,"Quote intake is paused until verified dealers and support are operational. No request was saved.","INTAKE_PAUSED",reference);
  const auth=await requireAuth(request);
  if(auth instanceof Response)return auth;
  const raw=await readJsonBounded(request);

@@ -4,6 +4,7 @@ import {useEffect,useRef,useState,type FormEvent} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 
 const supabase=createNeervaBrowserClient();
+const intakeEnabled=process.env.NEXT_PUBLIC_RFQ_INTAKE_ENABLED==="true";
 type Message={kind:"success"|"error";text:string;reference?:string;details?:string[]};
 export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defaultMaterial=""}:{defaultCity:string;defaultCategory?:string;defaultMaterial?:string}){
  const requestKey=useRef<string|null>(null);
@@ -18,7 +19,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   return()=>{active=false;listener.subscription.unsubscribe()};
  },[]);
  async function submit(event:FormEvent<HTMLFormElement>){
-  event.preventDefault();if(!supabase||busy||!verified)return;
+  event.preventDefault();if(!supabase||busy||!verified||!intakeEnabled)return;
   const element=event.currentTarget,form=new FormData(element);
   const session=await supabase.auth.getSession();
   const token=session.data.session?.access_token;
@@ -65,9 +66,10 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
    <label>Contact mobile<input name="phone" required type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} autoComplete="tel-national"/></label>
   </div>
   <label className="rfq-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to submit my contact number and request details for private quotation handling. <Link href="/privacy">Read the privacy notice</Link>. No payment is requested.</span></label>
+  {!intakeEnabled&&<p className="rfq-unavailable" role="status">Quote intake is temporarily closed until verified dealers and support are available. This form will not transmit or store your details.</p>}
   {!ready?<p role="status">Checking your secure account session…</p>:!verified?<p className="rfq-unavailable" role="status">Sign in with a verified email before submitting. <Link href="/account">Open account access →</Link></p>:<p className="rfq-privacy">Your request is stored privately, with duplicate protection and submission limits. It is not an order or payment confirmation.</p>}
   {message&&<div className={`rfq-status ${message.kind}`} role={message.kind==="error"?"alert":"status"}><p>{message.text}</p>{message.details?.length?<ul>{message.details.map(item=><li key={item}>{item}</li>)}</ul>:null}{message.reference&&<small>Reference: {message.reference}</small>}</div>}
-  <button className="button button-dark rfq-submit" type="submit" disabled={!ready||!verified||busy}>{busy?"Sending securely…":"Submit private request →"}</button>
+  <button className="button button-dark rfq-submit" type="submit" disabled={!intakeEnabled||!ready||!verified||busy}>{!intakeEnabled?"Requests not open yet":busy?"Sending securely…":"Submit private request →"}</button>
   <small className="rfq-privacy">Do not enter bank/card details. No prices, goods, or availability are guaranteed.</small>
  </form>;
 }
