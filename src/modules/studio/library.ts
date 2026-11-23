@@ -51,3 +51,18 @@ export function wallPatches(room:DesignRoom,heightFt=9.5):WallPatch[]{
   }
  }return patches;
 }
+
+/** Display only plan-derived space, not legacy estimated built-up/carpet metadata.
+ * Rectangular room footprints are NOT certified building-floor or carpet area.
+ */
+export function derivePlanArea(d:StudioDesign){
+ let coveredRoomSqFt=0,parkingSqFt=0,openSqFt=0;
+ for(const r of d.layout.rooms){
+  const area=r.wFt*r.dFt;
+  if(r.kind==="parking")parkingSqFt+=area;
+  else if(r.kind==="open")openSqFt+=area;
+  else coveredRoomSqFt+=area;
+ }
+ const round=(n:number)=>Math.round(n*100)/100;
+ return{coveredRoomSqFt:round(coveredRoomSqFt),parkingSqFt:round(parkingSqFt),openSqFt:round(openSqFt),legacyBuiltAreaMismatchSqFt:round(coveredRoomSqFt-d.areas.builtUpSqFt)};
+}
