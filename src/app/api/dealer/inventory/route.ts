@@ -30,7 +30,8 @@ export async function POST(request:Request){
   ]);
   if(branch.error||variant.error||membership.error)return apiFailed();
   if(!branch.data?.approved||!auth.tenantIds.includes(String(branch.data.tenant_id)))return err(403,"Approved dealer branch required.");
-  if(!(membership.data??[]).some(x=>x.tenant_id===branch.data.tenant_id&&x.active&&["owner","manager","inventory"].includes(x.role)))return err(403,"Inventory editing permission required.");
+  if(!(membership.data??[]).some(x=>x.tenant_id===branchTenant&&x.active&&["owner","manager","inventory"].includes(x.role)))return err(403,"Inventory editing permission required.");
+  const branchTenant=String(branch.data.tenant_id);
   const v=variant.data,product=Array.isArray(v?.product)?v?.product[0]:v?.product;
   const category=product?(Array.isArray(product.category)?product.category[0]:product.category):null;
   if(!v||v.status!=="published"||product?.status!=="published"||v.unit!==value.unit||
