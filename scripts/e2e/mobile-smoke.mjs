@@ -6,7 +6,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/account","/terms","/returns"];
+const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/terms","/returns"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -59,6 +59,17 @@ async function main(){
     const offline=await page.request.get(base+"/offline.html");
     assert.equal(offline.status(),200,"safe offline page");
     assert.match(await offline.text(),/No order or payment has been submitted offline/);
+    await page.goto(base+"/install",{waitUntil:"networkidle"});
+    assert.equal(await page.getByRole("heading",{name:"Install on this device"}).count(),1,"dedicated install page displays actual browser action");
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"no duplicate global banner on install instructions");
+    await page.evaluate(()=>{
+      const event=new Event("beforeinstallprompt",{cancelable:true});
+      Object.assign(event,{prompt:async()=>undefined,userChoice:Promise.resolve({outcome:"accepted"})});
+      window.dispatchEvent(event);
+    });
+    assert.equal(await page.getByRole("button",{name:"Install NEERVA BUILD now"}).count(),1,"real install-event listener must display browser prompt action");
+    await page.getByRole("button",{name:"Install NEERVA BUILD now"}).click();
+    await page.getByText("Installation was accepted. Check your home screen.").waitFor();
     const account=await page.goto(base+"/account",{waitUntil:"networkidle"});
     assert.equal(account?.status(),200,"authenticated account route");
     assert.equal(await page.getByRole("heading",{name:/Access your projects and requests/}).count(),1,"account page must not show prelaunch placeholder");
@@ -85,6 +96,27 @@ async function main(){
    }
    if(v.w===390){
     // Business-flow smoke: category -> product -> local planning list -> quote.
+    await page.goto(base+"/quotes",{waitUntil:"networkidle"});
+    assert.equal(await page.locator("#neerva-quote-form").count(),1,"quote form is available at all viewports");
+    assert.equal(await page.getByRole("button",{name:"Copy material quote draft"}).count(),1,"local quote preparation must work even when RFQ submission is disabled");
+    await page.evaluate(()=>Object.defineProperty(navigator,"clipboard",{configurable:true,
+     value:{writeText:async text=>{window.__neervaCopiedDraft=text;}}}));
+    await page.locator('input[name="materialDescription"]').fill("Cement 50kg PPC");
+    await page.locator('input[name="quantity"]').fill("12");
+    await page.locator('input[name="city"]').fill("Lucknow");
+    await page.locator('input[name="pincode"]').fill("226001");
+    await page.getByRole("button",{name:"Copy material quote draft"}).click();
+    const copied=await page.evaluate(()=>window.__neervaCopiedDraft??"");
+    assert.match(copied,/NOT sent/,"draft never implies actual dealer delivery");
+    assert.match(copied,/Lucknow/);
+    assert.doesNotMatch(copied,/contact mobile|phone number/i,"draft does not copy personal contact data");
+    await page.goto(base+"/design-studio",{waitUntil:"networkidle"});
+    assert.equal(await page.locator(".nstudio-start-form").count(),1,"home studio must start with plot fields, not an unscaled static concept");
+    await page.locator(".nstudio-start-form input").nth(0).fill("18");
+    await page.locator(".nstudio-start-form input").nth(1).fill("50");
+    await page.getByRole("button",{name:/Create room layouts/}).click();
+    await page.waitForURL("**/design-studio/portfolio?**");
+    assert.match(new URL(page.url()).search,/width=18/);
     const cat=await page.goto(base+"/materials/steel",{waitUntil:"networkidle"});
     assert.equal(cat?.status(),200,"steel category route");
     const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"networkidle"});

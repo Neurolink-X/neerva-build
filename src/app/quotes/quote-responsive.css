@@ -1,0 +1,44 @@
+/* Neerva quote flow: robust mobile layout and readable form defaults. */
+.neerva-quote-page{min-width:0;overflow-x:clip}
+.neerva-quote-page .quote-hero{padding:clamp(28px,5vw,68px) clamp(18px,5vw,72px);min-width:0;background:radial-gradient(circle at 86% 18%,#e5e8de 0,transparent 36%),#f5f5ef}
+.neerva-quote-page .quote-hero-inner{max-width:1200px;margin:auto}
+.neerva-quote-page .quote-hero h1{font-size:clamp(36px,5.5vw,64px);line-height:1.08;letter-spacing:-.035em;margin:18px 0}
+.neerva-quote-page .quote-hero p{max-width:69ch;font-size:clamp(14px,1.5vw,17px);line-height:1.7;color:#48594e}
+.neerva-quote-page .quote-trust{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.neerva-quote-page .quote-trust span{background:#e1eadd;color:#214635;border:1px solid #c3d3be;border-radius:20px;padding:8px 11px;font-size:12px;font-weight:750}
+.neerva-quote-page .quote-page-content{max-width:1320px;margin:auto;padding:clamp(22px,4vw,56px) clamp(16px,4vw,56px) 72px;display:grid;grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr);gap:clamp(22px,4.2vw,65px);align-items:start}
+.neerva-quote-page .quote-page-content>*{min-width:0}
+.neerva-quote-page .quote-page-copy{padding:10px 0}
+.neerva-quote-page .quote-page-copy h2{font:400 clamp(27px,3vw,40px)/1.18 Georgia,serif;margin:12px 0 24px;overflow-wrap:anywhere}
+.neerva-quote-page .quote-steps{display:grid;gap:13px}
+.neerva-quote-page .quote-steps p{padding:14px 16px;margin:0;background:#fff;border:1px solid #dbe5db;border-left:4px solid #406851;border-radius:10px;display:grid;gap:5px}
+.neerva-quote-page .quote-steps strong{color:#254735;font-size:14px}
+.neerva-quote-page .quote-steps span{color:#4f6056;font-size:13px;line-height:1.55}
+.neerva-quote-page .quote-launch-note{background:#f4f0e4;border:1px solid #e1d8bf;padding:16px;border-radius:12px;margin:20px 0}
+.neerva-quote-page .quote-launch-note strong{font-size:13px;color:#564928}
+.neerva-quote-page .quote-launch-note p{font-size:13px;line-height:1.6;color:#665b43;margin:7px 0 0}
+.neerva-quote-page .quote-page-links{display:flex;flex-wrap:wrap;gap:12px 22px}
+.neerva-quote-page .quote-page-links a{min-height:44px;display:inline-flex;align-items:center;color:#275239;font-size:13px;font-weight:750;text-decoration:underline;text-underline-offset:4px}
+.neerva-quote-page .rfq-form{width:100%;min-width:0;border:1px solid #d9e4d9;box-shadow:0 18px 50px #18372511;border-radius:19px;padding:clamp(16px,2.6vw,30px)}
+.neerva-quote-page .rfq-form-title{margin-bottom:17px;padding-bottom:16px}
+.neerva-quote-page .rfq-form-title span{font-size:11px;font-weight:850;letter-spacing:.13em}
+.neerva-quote-page .rfq-form-title h2{font:400 clamp(23px,2.4vw,31px)/1.18 Georgia,serif;color:#1e3b2b;margin:0}
+.neerva-quote-page .rfq-form-title small{font-size:13px;line-height:1.5;color:#536656}
+.neerva-quote-page .rfq-form-section-label{color:#27513b;font-size:12px;letter-spacing:.05em;font-weight:850;margin:20px 0 11px}
+.neerva-quote-page .rfq-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 15px}
+.neerva-quote-page .rfq-form-grid label{min-width:0;font-size:13px;font-weight:750;line-height:1.4;gap:6px;color:#2d4837}
+.neerva-quote-page .rfq-form-grid input,.neerva-quote-page .rfq-form-grid select{display:block;width:100%;max-width:100%;min-width:0;min-height:48px;height:48px;padding:9px 12px;color:#193426;background:#fff;border:1px solid #aebfae;border-radius:10px;font-size:16px}
+.neerva-quote-page .rfq-form-grid label small{font-size:12px;line-height:1.4;font-weight:450;color:#66766a}
+.neerva-quote-page .rfq-consent{margin:20px 0 14px;display:flex;gap:11px;align-items:start;color:#455c49;font-size:12px;line-height:1.65}
+.neerva-quote-page .rfq-consent input{width:18px;height:18px;min-width:18px;margin:2px 0 0}
+.neerva-quote-page .rfq-actions{display:grid;grid-template-columns:1fr;gap:10px;margin:16px 0}
+.neerva-quote-page .rfq-copy{width:100%;min-height:49px;background:#214e38;color:#fff;border-radius:10px;font-size:14px}
+.neerva-quote-page .rfq-submit{min-height:49px;border-radius:10px;font-size:13px;margin:0}
+.neerva-quote-page .rfq-submit:disabled{background:#e9ece7;color:#536353;opacity:1;border:1px solid #cbd7ca}
+.neerva-quote-page .rfq-unavailable{font-size:12px;line-height:1.6;border:1px solid #e9d8c2;border-radius:10px;background:#fff6ea;padding:12px}
+.neerva-quote-page .rfq-status{font-size:13px;line-height:1.5;border-radius:10px}
+.neerva-quote-page .rfq-privacy{font-size:12px;line-height:1.6}
+.neerva-quote-page :is(input,select,button,a):focus-visible{outline:3px solid #ba6a3d;outline-offset:3px}
+@media(max-width:1060px){.neerva-quote-page .quote-page-content{grid-template-columns:1fr;gap:20px}.neerva-quote-page .quote-page-copy{display:grid;gap:6px}.neerva-quote-page .quote-page-copy .quote-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.neerva-quote-page .quote-launch-note{margin:10px 0}}
+@media(max-width:680px){.neerva-quote-page .quote-page-content{padding:22px 15px 54px}.neerva-quote-page .quote-page-copy .quote-steps{grid-template-columns:1fr}.neerva-quote-page .rfq-form-grid{grid-template-columns:1fr;gap:12px}.neerva-quote-page .rfq-form{padding:18px 15px}.neerva-quote-page .quote-hero{padding:34px 18px 26px}.neerva-quote-page .quote-hero h1{font-size:clamp(33px,9vw,47px)}}
+@media(max-width:360px){.neerva-quote-page .rfq-form{padding:15px 11px}.neerva-quote-page .quote-hero h1{font-size:31px}}

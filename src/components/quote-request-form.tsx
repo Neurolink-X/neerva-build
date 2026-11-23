@@ -11,10 +11,29 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
  const requestKey=useRef<string|null>(null);
  const [verified,setVerified]=useState(false),[ready,setReady]=useState(false),[busy,setBusy]=useState(false);
  const [message,setMessage]=useState<Message|null>(null);
+ const [draftCopied,setDraftCopied]=useState(false);
  const [category,setCategory]=useState(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates");
  const [unit,setUnit]=useState<MaterialQuantityUnit>(defaultCategoryUnit(defaultCategory));
  const selectedUnits=categoryUnits(category);
  function changeCategory(value:string){if(!isMaterialCategory(value))return;setCategory(value);setUnit(defaultCategoryUnit(value));setMessage(null);}
+ async function copyDraft(){
+  const element=document.querySelector<HTMLFormElement>("#neerva-quote-form");
+  if(!element)return;
+  const form=new FormData(element);
+  const material=String(form.get("materialDescription")??"").trim(),
+   quantity=Number(form.get("quantity")),pincode=String(form.get("pincode")??"").trim(),
+   city=String(form.get("city")??"").trim();
+  if(material.length<3||!Number.isFinite(quantity)||quantity<=0||city.length<2||!/^[1-9][0-9]{5}$/.test(pincode)){
+   setMessage({kind:"error",text:"Add material details, a positive quantity, city and a valid 6-digit pincode first."});return;
+  }
+  const draft=`NEERVA BUILD · Material quote draft (NOT sent)\nMaterial: ${material}\nCategory: ${category}\nQuantity: ${quantity} ${unit}\nCity: ${city}\nPincode: ${pincode}\nPreferred date: ${String(form.get("requestedDate")??"")||"Flexible"}\nGST, delivery, unloading, offer validity and real stock must be confirmed by the dealer.`;
+  try{
+   if(!navigator.clipboard?.writeText)throw Error("Clipboard unavailable");
+   await navigator.clipboard.writeText(draft);
+   setDraftCopied(true);setMessage({kind:"success",text:"Material draft copied. No personal contact information, order or payment was submitted."});
+  }catch{setMessage({kind:"error",text:"Clipboard permission unavailable. You can still review and copy your material details manually."});}
+ }
+
  useEffect(()=>{
   if(!supabase)return;
   let active=true;
@@ -57,9 +76,9 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   }catch{setMessage({kind:"error",text:"Network issue. Your details remain in the form; retry with the same request reference."})}
   finally{setBusy(false)}
  }
- return <form className="rfq-form" onSubmit={submit}>
-  <div className="rfq-form-title"><span>PRIVATE MATERIAL REQUEST</span><small>Only verified accounts can submit. Dealers are not yet onboarded.</small></div>
-  <div className="rfq-form-grid">
+ return <form id="neerva-quote-form" className="rfq-form" onSubmit={submit}>
+  <div className="rfq-form-title"><span>YOUR MATERIAL REQUIREMENT</span><h2>Tell us what you need.</h2><small>Start with your material, quantity and delivery location. Copy a draft now, or submit securely when dealer sourcing opens.</small></div>
+  <div className="rfq-form-section-label">01 · Material and delivery</div><div className="rfq-form-grid">
    <label>Material category<select name="categorySlug" value={category} onChange={event=>changeCategory(event.target.value)}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical</option><option value="paint">Paint & coatings</option><option value="tiles">Tiles & flooring</option><option value="hardware">Hardware & adhesive</option></select></label>
    <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} defaultValue={defaultMaterial} placeholder={categoryMaterialHints[category]}/></label>
    <label>Quantity<input name="quantity" required type="number" min="0.001" step="0.001" max="1000000" defaultValue={defaultQuantity} placeholder="Quantity"/></label>
@@ -67,6 +86,8 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
    <label>Delivery city<input name="city" required minLength={2} maxLength={80} defaultValue={defaultCity}/></label>
    <label>Delivery pincode<input name="pincode" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} defaultValue={defaultPincode}/></label>
    <label>Preferred delivery date (optional)<input name="requestedDate" type="date"/></label>
+  </div>
+  <div className="rfq-form-section-label">02 · Your contact details (for verified enquiries)</div><div className="rfq-form-grid rfq-contact-grid">
    <label>Contact name<input name="contactName" required minLength={2} maxLength={100} autoComplete="name"/></label>
    <label>Contact mobile<input name="phone" required type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} autoComplete="tel-national"/></label>
   </div>
@@ -74,7 +95,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   {!intakeEnabled&&<p className="rfq-unavailable" role="status">Quote intake is currently paused until verified dealer sourcing, support and privacy readiness are approved. You can prepare details, but clicking Submit cannot save a request yet. No payment is requested.</p>}
   {!ready?<p role="status">Checking your secure account session…</p>:!verified?<p className="rfq-unavailable" role="status">Sign in with a verified email before submitting. <Link href="/account">Open account access →</Link></p>:<p className="rfq-privacy">Your request is stored privately, with duplicate protection and submission limits. It is not an order or payment confirmation.</p>}
   {message&&<div className={`rfq-status ${message.kind}`} role={message.kind==="error"?"alert":"status"}><p>{message.text}</p>{message.details?.length?<ul>{message.details.map(item=><li key={item}>{item}</li>)}</ul>:null}{message.reference&&<small>Reference: {message.reference}</small>}</div>}
-  <button className="button button-dark rfq-submit" type="submit" disabled={!intakeEnabled||!ready||!verified||busy}>{!intakeEnabled?"Requests not open yet":busy?"Sending securely…":"Submit private request →"}</button>
-  <small className="rfq-privacy">Do not enter bank/card details. No prices, goods, or availability are guaranteed.</small>
+  <div className="rfq-actions"><button type="button" className="button rfq-copy" onClick={()=>void copyDraft()}>{draftCopied?"Copy draft again":"Copy material quote draft"}</button><button className="button button-dark rfq-submit" type="submit" disabled={!intakeEnabled||!ready||!verified||busy}>{!intakeEnabled?"Requests not open yet":busy?"Sending securely…":"Submit private request →"}</button></div>
+  <small className="rfq-privacy">Copying is local to your device; it does not send an enquiry. Do not enter card details. Any dealer offer must include GST, transport, unloading and valid-until date.</small>
  </form>;
 }

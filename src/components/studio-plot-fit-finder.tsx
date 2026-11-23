@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from "react";
 import {PlotMassingPreview} from "@/components/plot-massing-preview";
 import Link from "next/link";
+import {SiteFooter} from "@/components/site-chrome";
 import {studioDesigns,formatLevels} from "@/modules/studio/library";
 import {DESIGN_CITIES,designCityStatus,rankStudioDesigns,sqFtToGaj,toFeet,type PlotBrief,type PlotUnit,type Facing,validatePlotBrief} from "@/modules/studio/fit";
 const dirs:Facing[]=["North","East","South","West"];
@@ -26,18 +27,24 @@ export function StudioPlotFitFinder(){
  const errors=useMemo(()=>validatePlotBrief(brief),[brief]);
  const ranked=useMemo(()=>errors.length?[]:rankStudioDesigns(studioDesigns,brief),[brief,errors.length]);
  const candidates=showAll?ranked:ranked.slice(0,6);
+ const roadCode=({North:"N",East:"E",South:"S",West:"W"} as const)[brief.roadSide];
+ const portfolioParams=new URLSearchParams({width:String(brief.widthFt),depth:String(brief.depthFt),
+  road:roadCode,floors:String(brief.floors),bedrooms:String(brief.bedrooms),parking:String(brief.parking)});
+ const portfolioHref="/design-studio/portfolio?"+portfolioParams.toString();
+ const portfolioSupported=!errors.length&&brief.floors<=2&&brief.bedrooms<=3&&brief.parking
+  &&brief.widthFt>=17.5&&brief.depthFt>=47;
  const t=lang==="hi"?{
-   heading:"आपके प्लॉट के लिए सही विकल्प",sub:"प्लॉट बताएं। सही आकार और सीमाएं जांचें, फिर डिज़ाइन चुनें।",
+   heading:"पहले अपना प्लॉट समझें",sub:"चौड़ाई, लंबाई और सड़क की दिशा बताएं। नीचे का 3D ब्लॉक सिर्फ जमीन के आकार का नमूना है, घर का नक्शा नहीं।",
    city:"योजना शहर",width:"चौड़ाई",depth:"लंबाई",units:"माप",facing:"मुख दिशा",road:"सड़क की तरफ",
    bedrooms:"बेडरूम",floors:"मंज़िलें",parking:"कार पार्किंग",yes:"चाहिए",no:"नहीं चाहिए",
-   showing:"मिलते-जुलते कॉन्सेप्ट",more:"सभी 24 देखें",less:"कम दिखाएं",view:"डिज़ाइन और रंग देखें",
+   showing:"पुराने डिज़ाइन की प्रेरणा",more:"सभी पुराने कॉन्सेप्ट",less:"कम दिखाएं",view:"प्रेरणा देखें",
    hint:"केवल शुरुआती योजना। स्थानीय अनुमति की पुष्टि अभी नहीं हुई है।",
    missing:"आपकी शर्तों के लिए परिणाम नहीं मिले। प्लॉट का आकार जांचें।"
   }:{
-   heading:"Find a home that fits.",sub:"Enter your plot and needs. Compare real dimensions before choosing a concept.",
+   heading:"Start with your actual plot.",sub:"Check land width, depth and road direction here. The simple 3D block below illustrates plot size only—not a finished house or room layout.",
    city:"Planning city",width:"Plot width",depth:"Plot depth",units:"Units",facing:"Home facing",road:"Road side",
    bedrooms:"Bedrooms",floors:"Floors",parking:"Car parking",yes:"Needed",no:"Not needed",
-   showing:"Closest concept matches",more:"See all 24 concepts",less:"Show fewer",view:"Explore plan & colours",
+   showing:"Inspiration from existing designs",more:"See all older concepts",less:"Show fewer",view:"Explore inspiration",
    hint:"Planning guidance only. Local regulations and approvals are not verified.",
    missing:"No concepts match this brief. Review your plot dimensions."
   };
@@ -51,18 +58,19 @@ export function StudioPlotFitFinder(){
     <label>{t.units}<select value={unit} onChange={e=>changeUnit(e.target.value as PlotUnit)}><option value="ft">Feet</option><option value="m">Metres</option></select></label>
     <label>{t.width} ({unit})<input type="number" value={width} min="0" step="any" inputMode="decimal" onChange={e=>updateDimension("widthFt",e.target.value)}/></label>
     <label>{t.depth} ({unit})<input type="number" value={depth} min="0" step="any" inputMode="decimal" onChange={e=>updateDimension("depthFt",e.target.value)}/></label>
-    <label>{t.facing}<select value={brief.facing} onChange={e=>update("facing",e.target.value as Facing)}>{dirs.map(d=><option key={d}>{d}</option>)}</select></label>
-    <label>{t.road}<select value={brief.roadSide} onChange={e=>update("roadSide",e.target.value as Facing)}>{dirs.map(d=><option key={d}>{d}</option>)}</select></label>
+    
+    <label>{t.road}<select value={brief.roadSide} onChange={e=>{const road=e.target.value as Facing;setBrief(previous=>({...previous,roadSide:road,facing:road}));setShowAll(false)}}>{dirs.map(d=><option key={d}>{d}</option>)}</select></label>
     <label>{t.bedrooms}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>{[1,2,3,4,5,6].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
     <label>{t.floors}<select value={brief.floors} onChange={e=>update("floors",Number(e.target.value))}>{[1,2,3].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
     <label>{t.parking}<select value={brief.parking?"yes":"no"} onChange={e=>update("parking",e.target.value==="yes")}><option value="yes">{t.yes}</option><option value="no">{t.no}</option></select></label>
    </div>
    {errors.length>0?<div role="alert" className="nfit-error">{errors.join(" ")}</div>:<p className="nfit-area">{brief.widthFt.toFixed(1)} × {brief.depthFt.toFixed(1)} ft · {Math.round(brief.widthFt*brief.depthFt)} sq ft · {sqFtToGaj(brief.widthFt*brief.depthFt).toFixed(1)} square gaj</p>}
    <PlotMassingPreview widthFt={brief.widthFt} depthFt={brief.depthFt} floors={brief.floors} parking={brief.parking}/>
+   <div className="nfit-primary-next"><strong>{lang==="hi"?"अगला कदम: अपने नाप पर असली कमरों का नक्शा बनाएं":"Next: generate actual room arrangements for this plot"}</strong><p>{lang==="hi"?"2D नक्शा, कमरे, सीढ़ियाँ, रसोई और पार्किंग एक ही 3D मॉडल से जुड़े हैं।":"Your hall, bedrooms, kitchen, stairs, car gate and matched 3D will use the same plot-specific model."}</p>{portfolioSupported?<Link href={portfolioHref}>{lang==="hi"?"मेरे प्लॉट पर नक्शा बनाएं →":"Generate layouts for my exact plot →"}</Link>:<p className="nfit-limited">{lang==="hi"?"अभी जाँचा हुआ जनरेटर G/G+1, 1–3 बेडरूम, पार्किंग और कम से कम लगभग 17.5 × 47 फीट usable plot के लिए है। बाकी आकार पर नकली नक्शा नहीं दिखाएंगे।":"Current validated planning family supports G/G+1, 1–3 bedrooms, parking and at least approximately 17.5 × 47 ft usable dimensions. Other briefs need professional design; we won't fabricate an exact fit."}</p>}</div>
    <p className="nfit-caution">{designCityStatus}</p><p className="nfit-footnote">Gaj is an area unit (9 sq ft), not a linear dimension. Site setbacks, FAR and vehicle turning must be reviewed separately.</p>
    <Link href="/design-studio/workbench" className="nfit-alt">Need to experiment with room sizes? Open concept workbench →</Link>
   </div>
-  <section className="nfit-results" aria-live="polite"><div className="nfit-heading"><div><span className="nfit-kicker">2. REVIEW FIT</span><h2>{t.showing}</h2></div><span>{ranked.length} concepts</span></div>
+  <section className="nfit-results" aria-live="polite"><div className="nfit-heading"><div><span className="nfit-kicker">OPTIONAL · ARCHIVED DESIGN INSPIRATION</span><h2>{t.showing}</h2></div><span>{ranked.length} concepts</span></div>
    {errors.length>0?<div className="nfit-empty">{t.missing}</div>:<div className="nfit-list">{candidates.map(({design,fit})=><article key={design.slug} className="nfit-card">
     <div className="nfit-card-top"><div><span className="nfit-tag">{design.plot.widthFt}×{design.plot.depthFt} ft · {formatLevels(design.floors)}</span><h3>{lang==="hi"?design.titleHi:design.title}</h3><p>{design.bedrooms} BHK · {design.facing} facing · {design.parking?"Parking concept":"No parking"}</p></div><div className="nfit-score"><strong>{fit.score}<small>/94</small></strong><span>Concept fit</span></div></div>
     <p className={fit.plotDimensionsFit?"nfit-result-status":"nfit-result-status nfit-blocked"}>{fit.plotDimensionsFit?"Dimensions may fit — approval pending":"Plot is too small for this concept"}</p>
@@ -70,8 +78,8 @@ export function StudioPlotFitFinder(){
     <Link href={"/design-studio/library/"+design.slug} className="nfit-view">{t.view} →</Link>
    </article>)}</div>}
    {ranked.length>6&&<button type="button" className="nfit-more" onClick={()=>setShowAll(v=>!v)}>{showAll?t.less:t.more}</button>}
-   <p className="nfit-footnote">{t.hint} Scores rank concepts only; they are not a structural or legal compliance rating. Realistic render assets are not yet approved.</p>
+   <p className="nfit-footnote">{t.hint} These cards are fixed legacy concepts from other plots, not newly drawn plans for your exact plot. Scores do not validate safety or bylaws. Use the direct generator above for spatial layouts.</p>
   </section></section>
-  <footer className="nfit-footer"><Link href="/design-studio/visualizer">Already have a house? Try its colours →</Link><Link href="/materials">Explore construction materials →</Link></footer>
+  <SiteFooter/>
  </div>
 }

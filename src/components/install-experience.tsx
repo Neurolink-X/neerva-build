@@ -20,7 +20,7 @@ export function InstallExperience(){
  const [platform,setPlatform]=useState<"ios"|"android"|"desktop">("desktop");
  useEffect(()=>{
   const store=storage();
-  const allowed=()=>!standalone()&&!store?.getItem(INSTALLED)&&Number(store?.getItem(DISMISS_KEY)||0)<Date.now();
+  const allowed=()=>location.pathname!=="/install"&&!standalone()&&!store?.getItem(INSTALLED)&&Number(store?.getItem(DISMISS_KEY)||0)<Date.now();
   const frame=window.requestAnimationFrame(()=>{setPlatform(os());setReady(allowed());});
   if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){
    void navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(()=>undefined);
