@@ -2,7 +2,7 @@
 import {useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
-import {roomModel,baseline,walls,type Shade,type Finish,type Wall} from "@/modules/studio/room";
+import {roomModel,baseline,walls,type Shade,type Finish} from "@/modules/studio/room";
 import type {Room} from "@/modules/studio/layout";
 import {RoomCutaway} from "./room-cutaway";
 type Props={room:Room;finish:Finish;shades:Shade[];split?:number};

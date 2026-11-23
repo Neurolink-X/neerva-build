@@ -20,7 +20,7 @@ export function OrderList(){
   }catch{if(!signal?.aborted)setStatus("Could not load orders. Retry when connectivity is restored.");}
   finally{if(!signal?.aborted)setLoading(false)}
  },[]);
- useEffect(()=>{const c=new AbortController();void load(c.signal);return()=>c.abort()},[load]);
+ useEffect(()=>{const c=new AbortController();const task=window.setTimeout(()=>void load(c.signal),0);return()=>{window.clearTimeout(task);c.abort()}},[load]);
  return <section aria-label="Private orders" style={{maxWidth:1100}}>
   <p>No order, delivery estimate or payment is fabricated when Neerva order processing is offline.</p>
   <div style={{display:"flex",gap:12,flexWrap:"wrap",margin:"15px 0"}}><button type="button" className="button button-outline" onClick={()=>void load()} disabled={loading}>Refresh orders</button><Link href="/basket" className="button button-outline">My material list</Link></div>

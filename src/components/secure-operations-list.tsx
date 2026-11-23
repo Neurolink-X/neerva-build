@@ -26,10 +26,10 @@ export function SecureOperationsList({endpoint,title,description,arrays}:Props){
      const body=await response.json().catch(()=>({error:"The service returned an invalid response."})) as RecordRow;
      if(!response.ok){setMessage(typeof body.error==="string"?body.error:"The requested information is unavailable.");setData(null);return;}
      setData(body);
-   }catch(err){if(signal?.aborted)return;setMessage("Could not load this view. Check your connection and retry.");setData(null);}
+   }catch{if(signal?.aborted)return;setMessage("Could not load this view. Check your connection and retry.");setData(null);}
    finally{if(!signal?.aborted)setBusy(false)}
  },[endpoint]);
- useEffect(()=>{const controller=new AbortController();void load(controller.signal);return()=>controller.abort()},[load]);
+ useEffect(()=>{const controller=new AbortController();const task=window.setTimeout(()=>void load(controller.signal),0);return()=>{window.clearTimeout(task);controller.abort()}},[load]);
  return <section className="neerva-ops-panel" aria-labelledby="neerva-ops-title" style={{padding:"20px",border:"1px solid #dbe3d8",borderRadius:16,background:"#fffdf9",maxWidth:"1100px"}}>
   <h2 id="neerva-ops-title" style={{fontSize:24}}>{title}</h2><p style={{lineHeight:1.6}}>{description}</p>
   <div style={{display:"flex",flexWrap:"wrap",gap:12,margin:"16px 0"}}>

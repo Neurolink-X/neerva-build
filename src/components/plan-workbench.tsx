@@ -10,7 +10,7 @@ const faces=["N","E","S","W"] as const;
 const feet=(mm:number)=>Math.round(mm/304.8);
 export function PlanWorkbench(){
  const [brief,setBrief]=useState<Brief>(initial),[floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[saved,setSaved]=useState<Design|null>(null);
- useEffect(()=>{const found=readDesign(window.location.hash);if(found){setBrief(found.brief);setSaved(found)}},[]);
+ useEffect(()=>{const task=window.setTimeout(()=>{const found=readDesign(window.location.hash);if(found){setBrief(found.brief);setSaved(found)}},0);return()=>window.clearTimeout(task)},[]);
  const plan=useMemo(()=>generate(brief,conceptRules),[brief]);
  function update(key:keyof Brief,value:number|string|boolean){setBrief(prev=>({...prev,[key]:value}));setFloor(0);setSaved(null)}
  return <div className="catalog-page" style={{maxWidth:1450,margin:"auto",padding:"18px clamp(14px,3vw,46px) 80px"}}>
