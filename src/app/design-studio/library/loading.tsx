@@ -1,0 +1,1 @@
+export default function Loading(){return <main style={{minHeight:"70vh",padding:"3rem 1.5rem"}} aria-busy="true"><p>Loading original home concepts…</p><div style={{height:300,background:"#e8e6df",borderRadius:24}}/></main>}

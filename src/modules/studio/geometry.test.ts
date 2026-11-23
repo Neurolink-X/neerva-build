@@ -1,0 +1,7 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {studioDesigns} from "./library.ts";
+import {buildingWallCells,structuralFootprint} from "./geometry.ts";
+test("all 24 designs create finite bounded 3D wall geometry",()=>{for(const d of studioDesigns){const cells=buildingWallCells(d);assert.ok(cells.length>10,d.slug);for(const c of cells){assert.ok(c.endFt>c.startFt&&c.topFt>c.bottomFt);assert.ok(c.floorIndex>=0&&c.floorIndex<d.floors);assert.ok(Number.isFinite(c.planeFt));}}});
+test("wall cells preserve modeled door and window voids",()=>{for(const d of studioDesigns){const cells=buildingWallCells(d);for(const r of d.layout.rooms){if(r.kind==="open"||r.kind==="parking")continue;for(const o of r.openings){const axis=o.wall==="front"||o.wall==="rear"?"z":"x",plane=axis==="z"?r.yFt+(o.wall==="rear"?r.dFt:0):r.xFt+(o.wall==="right"?r.wFt:0),start=axis==="z"?r.xFt+o.offsetFt:r.yFt+o.offsetFt,end=start+o.widthFt;const hit=cells.some(c=>c.floorIndex===r.floorIndex&&c.axis===axis&&Math.abs(c.planeFt-plane)<.001&&c.startFt<end-.001&&c.endFt>start+.001&&c.bottomFt<o.sillFt+o.heightFt-.001&&c.topFt>o.sillFt+.001);assert.equal(hit,false,d.slug+" "+r.id+" "+o.kind);}}}});
+test("all ground-floor structural footprints remain inside plots",()=>{for(const d of studioDesigns){const f=structuralFootprint(d);assert.ok(f.minX>=0&&f.maxX<=d.plot.widthFt);assert.ok(f.minZ>=0&&f.maxZ<=d.plot.depthFt);}});
