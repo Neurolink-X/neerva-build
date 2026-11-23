@@ -14,6 +14,7 @@ const baseRfqSchema = z.object({
   requestedDate: z.string().date().optional(),
   contactName: z.string().trim().min(2).max(100),
   phone: z.string().regex(/^[6-9][0-9]{9}$/),
+  privacyAccepted: z.literal(true),
 }).strict();
 
 const allowedUnits: Record<string, readonly string[]> = {

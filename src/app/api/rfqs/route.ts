@@ -17,7 +17,8 @@ export const rfqFieldHelp:Record<string,string>={
  pincode:"Enter a six-digit Indian pincode.",
  requestedDate:"Enter a valid preferred delivery date.",
  contactName:"Enter a name for your request.",
- phone:"Enter a valid Indian 10-digit mobile number."
+ phone:"Enter a valid Indian 10-digit mobile number.",
+ privacyAccepted:"Review and accept the private quotation privacy notice before submitting."
 };
 function respond(status:number,error:string,code:string,reference:string,other:Record<string,unknown>={}){
  return NextResponse.json({error,code,reference,...other},{status,headers});

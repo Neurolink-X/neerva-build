@@ -28,13 +28,14 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   setBusy(true);setMessage(null);
   requestKey.current??=crypto.randomUUID();
   const requestedDate=String(form.get("requestedDate")??"");
+  const privacyAccepted=form.get("privacyAccepted")==="yes";
   const body={
    idempotencyKey:requestKey.current,categorySlug:String(form.get("categorySlug")??""),
    materialDescription:String(form.get("materialDescription")??""),
    quantity:Number(form.get("quantity")),unit:String(form.get("unit")??""),
    city:String(form.get("city")??""),pincode:String(form.get("pincode")??""),
    ...(requestedDate?{requestedDate}:{}),
-   contactName:String(form.get("contactName")??""),phone:String(form.get("phone")??"")
+   contactName:String(form.get("contactName")??""),phone:String(form.get("phone")??""),privacyAccepted
   };
   try{
    const response=await fetch("/api/rfqs",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify(body),cache:"no-store"});
@@ -63,6 +64,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
    <label>Contact name<input name="contactName" required minLength={2} maxLength={100} autoComplete="name"/></label>
    <label>Contact mobile<input name="phone" required type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} autoComplete="tel-national"/></label>
   </div>
+  <label className="rfq-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to submit my contact number and request details for private quotation handling. <Link href="/privacy">Read the privacy notice</Link>. No payment is requested.</span></label>
   {!ready?<p role="status">Checking your secure account session…</p>:!verified?<p className="rfq-unavailable" role="status">Sign in with a verified email before submitting. <Link href="/account">Open account access →</Link></p>:<p className="rfq-privacy">Your request is stored privately, with duplicate protection and submission limits. It is not an order or payment confirmation.</p>}
   {message&&<div className={`rfq-status ${message.kind}`} role={message.kind==="error"?"alert":"status"}><p>{message.text}</p>{message.details?.length?<ul>{message.details.map(item=><li key={item}>{item}</li>)}</ul>:null}{message.reference&&<small>Reference: {message.reference}</small>}</div>}
   <button className="button button-dark rfq-submit" type="submit" disabled={!ready||!verified||busy}>{busy?"Sending securely…":"Submit private request →"}</button>

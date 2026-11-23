@@ -12,13 +12,16 @@ const validRequest = {
   pincode: "208001",
   contactName: "Asha Kumar",
   phone: "9876543210",
+  privacyAccepted: true,
 };
 
 test("valid quote request has a bounded, typed shape", () => {
   assert.equal(rfqSchema.safeParse(validRequest).success, true);
 });
 
-test("invalid pincode and unexpected fields are rejected", () => {
+test("invalid pincode, non-consent and unexpected fields are rejected", () => {
+  assert.equal(rfqSchema.safeParse({ ...validRequest, privacyAccepted: false }).success, false);
+  assert.equal(rfqSchema.safeParse({ ...validRequest, privacyAccepted: undefined }).success, false);
   assert.equal(rfqSchema.safeParse({ ...validRequest, pincode: "123" }).success, false);
   assert.equal(rfqSchema.safeParse({ ...validRequest, dealerQuote: 100 }).success, false);
 });
