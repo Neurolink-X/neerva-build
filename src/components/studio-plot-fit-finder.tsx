@@ -1,12 +1,16 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
-import {PlotMassingPreview} from "@/components/plot-massing-preview";
+import dynamic from "next/dynamic";
+import {OrientedPlanDrawing} from "./oriented-plan-drawing";
+import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
+import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
+const Building=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{ssr:false});
 import Link from "next/link";
 import {SiteFooter} from "@/components/site-chrome";
 import {studioDesigns,formatLevels} from "@/modules/studio/library";
 import {DESIGN_CITIES,designCityStatus,rankStudioDesigns,sqFtToGaj,toFeet,type PlotBrief,type PlotUnit,type Facing,validatePlotBrief} from "@/modules/studio/fit";
 const dirs:Facing[]=["North","East","South","West"];
-const initial:PlotBrief={widthFt:20,depthFt:40,city:"Kanpur",facing:"North",roadSide:"North",bedrooms:2,floors:1,parking:true};
+const initial:PlotBrief={widthFt:20,depthFt:40,city:"Kanpur",facing:"North",roadSide:"North",bedrooms:2,floors:2,parking:true};
 export function StudioPlotFitFinder(){
  const [brief,setBrief]=useState<PlotBrief>(initial),[unit,setUnit]=useState<PlotUnit>("ft"),[width,setWidth]=useState("20"),[depth,setDepth]=useState("40"),[lang,setLang]=useState<"en"|"hi">("en"),[showAll,setShowAll]=useState(false);
  useEffect(()=>{
@@ -31,17 +35,22 @@ export function StudioPlotFitFinder(){
  const portfolioParams=new URLSearchParams({width:String(brief.widthFt),depth:String(brief.depthFt),
   road:roadCode,floors:String(brief.floors),bedrooms:String(brief.bedrooms),parking:String(brief.parking)});
  const portfolioHref="/design-studio/portfolio?"+portfolioParams.toString();
- const portfolioSupported=!errors.length&&brief.floors<=2&&brief.bedrooms<=3&&brief.parking
-  &&brief.widthFt>=17.5&&brief.depthFt>=47;
+ const [showModel,setShowModel]=useState(false);
+ const preview=useMemo(()=>errors.length?null:generateSpatialPortfolio({
+  widthFt:brief.widthFt,depthFt:brief.depthFt,roadSide:roadCode,floors:brief.floors as 1|2|3,
+  bedrooms:brief.bedrooms,parking:brief.parking,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}
+ },1),[brief,roadCode,errors.length]);
+ const plan=preview?.plans[0];
+ const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
  const t=lang==="hi"?{
-   heading:"पहले अपना प्लॉट समझें",sub:"चौड़ाई, लंबाई और सड़क की दिशा बताएं। नीचे का 3D ब्लॉक सिर्फ जमीन के आकार का नमूना है, घर का नक्शा नहीं।",
+   heading:"पहले अपना प्लॉट समझें",sub:"चौड़ाई, लंबाई और सड़क की दिशा बताएं। आपके नाप से कमरों का नक्शा और उसी घर का 3D रूप बनता है।",
    city:"योजना शहर",width:"चौड़ाई",depth:"लंबाई",units:"माप",facing:"मुख दिशा",road:"सड़क की तरफ",
    bedrooms:"बेडरूम",floors:"मंज़िलें",parking:"कार पार्किंग",yes:"चाहिए",no:"नहीं चाहिए",
    showing:"पुराने डिज़ाइन की प्रेरणा",more:"सभी पुराने कॉन्सेप्ट",less:"कम दिखाएं",view:"प्रेरणा देखें",
    hint:"केवल शुरुआती योजना। स्थानीय अनुमति की पुष्टि अभी नहीं हुई है।",
    missing:"आपकी शर्तों के लिए परिणाम नहीं मिले। प्लॉट का आकार जांचें।"
   }:{
-   heading:"Start with your actual plot.",sub:"Check land width, depth and road direction here. The simple 3D block below illustrates plot size only—not a finished house or room layout.",
+   heading:"Start with your actual plot.",sub:"Check land width, depth and road direction here. See room dimensions and a matching 3D concept as you change your plot.",
    city:"Planning city",width:"Plot width",depth:"Plot depth",units:"Units",facing:"Home facing",road:"Road side",
    bedrooms:"Bedrooms",floors:"Floors",parking:"Car parking",yes:"Needed",no:"Not needed",
    showing:"Inspiration from existing designs",more:"See all older concepts",less:"Show fewer",view:"Explore inspiration",
@@ -65,8 +74,13 @@ export function StudioPlotFitFinder(){
     <label>{t.parking}<select value={brief.parking?"yes":"no"} onChange={e=>update("parking",e.target.value==="yes")}><option value="yes">{t.yes}</option><option value="no">{t.no}</option></select></label>
    </div>
    {errors.length>0?<div role="alert" className="nfit-error">{errors.join(" ")}</div>:<p className="nfit-area">{brief.widthFt.toFixed(1)} × {brief.depthFt.toFixed(1)} ft · {Math.round(brief.widthFt*brief.depthFt)} sq ft · {sqFtToGaj(brief.widthFt*brief.depthFt).toFixed(1)} square gaj</p>}
-   <PlotMassingPreview widthFt={brief.widthFt} depthFt={brief.depthFt} floors={brief.floors} parking={brief.parking}/>
-   <div className="nfit-primary-next"><strong>{lang==="hi"?"अगला कदम: अपने नाप पर असली कमरों का नक्शा बनाएं":"Next: generate actual room arrangements for this plot"}</strong><p>{lang==="hi"?"2D नक्शा, कमरे, सीढ़ियाँ, रसोई और पार्किंग एक ही 3D मॉडल से जुड़े हैं।":"Your hall, bedrooms, kitchen, stairs, car gate and matched 3D will use the same plot-specific model."}</p>{portfolioSupported?<Link href={portfolioHref}>{lang==="hi"?"मेरे प्लॉट पर नक्शा बनाएं →":"Generate layouts for my exact plot →"}</Link>:<p className="nfit-limited">{lang==="hi"?"अभी जाँचा हुआ जनरेटर G/G+1, 1–3 बेडरूम, पार्किंग और कम से कम लगभग 17.5 × 47 फीट usable plot के लिए है। बाकी आकार पर नकली नक्शा नहीं दिखाएंगे।":"Current validated planning family supports G/G+1, 1–3 bedrooms, parking and at least approximately 17.5 × 47 ft usable dimensions. Other briefs need professional design; we won't fabricate an exact fit."}</p>}</div>
+   {plan&&design?<section className="nfit-primary-next">
+    <h3>{lang==="hi"?"आपका भूतल नक्शा":"Your ground-floor plan"}</h3>
+    <OrientedPlanDrawing plan={plan}/>
+    <button type="button" aria-expanded={showModel} onClick={()=>setShowModel(v=>!v)}>{lang==="hi"?"3D घर देखें / बंद करें":"Show / hide matching 3D house"}</button>
+    {showModel&&<Building design={design} planModel={plan} colour={plan.facade.main}/>}
+    <Link href={portfolioHref}>{lang==="hi"?"सभी मंज़िलें और विकल्प देखें →":"Explore floors, front elevation and layout options →"}</Link>
+   </section>:preview&&<p role="status">{preview.blockers.join(" ")}</p>}
    <p className="nfit-caution">{designCityStatus}</p><p className="nfit-footnote">Gaj is an area unit (9 sq ft), not a linear dimension. Site setbacks, FAR and vehicle turning must be reviewed separately.</p>
    <Link href="/design-studio/workbench" className="nfit-alt">Need to experiment with room sizes? Open concept workbench →</Link>
   </div>
@@ -83,3 +97,4 @@ export function StudioPlotFitFinder(){
   <SiteFooter/>
  </div>
 }
+

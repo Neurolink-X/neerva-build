@@ -22,6 +22,7 @@ const colours=[
 export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
  const [brief,setBrief]=useState<PlanBrief>(()=>initialBrief??initial),[chosen,setChosen]=useState(0);
  const [floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
+ const [kit,setKit]=useState<PlanModel["facade"]["kit"]>("simple-parapet");
  const [threeReady,setThreeReady]=useState(false);
  const [saving,setSaving]=useState(false),[saveInfo,setSaveInfo]=useState("");
  async function saveDraft(){
@@ -32,7 +33,7 @@ export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
   const token=session.data.session?.access_token;
   if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
   setSaving(true);setSaveInfo("");
-  try{const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id}),cache:"no-store"});
+  try{const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id,finish:{kit,main:shade.main,accent:shade.accent}}),cache:"no-store"});
    const body=await response.json() as {project?:{id?:string};error?:string};
    setSaveInfo(response.ok&&body.project?.id?"Private concept saved. Not a construction-approved plan.":(body.error??"Project was not saved."));
   }catch{setSaveInfo("Network issue. Your concept was not confirmed saved.");}finally{setSaving(false)}
@@ -41,7 +42,7 @@ export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
  const result=useMemo(()=>generateSpatialPortfolio(brief,24),[brief]);
  const draft=result.plans[chosen]??result.plans[0]??null;
  const shade=colours.find(c=>c.id===palette)??colours[0];
- const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,main:shade.main,accent:shade.accent}}:null,[draft,shade]);
+ const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,kit,main:shade.main,accent:shade.accent}}:null,[draft,shade,kit]);
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
  const metrics=useMemo(()=>plan?planMetrics(plan):null,[plan]);
  function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setBrief(v=>({...v,[key]:value}));setChosen(0);setFloor(0)}
@@ -60,8 +61,8 @@ export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
    <aside className="nroad-controls">
     <div className="nroad-head"><h2>{str("Your plot","आपका प्लॉट")}</h2><span>{brief.widthFt} × {brief.depthFt} ft · live geometry</span></div>
     <form onSubmit={e=>e.preventDefault()} className="nroad-form">
-     <label>{str("Frontage / width (ft)","चौड़ाई (फीट)")}<input type="number" min="10" max="200" step=".5" value={brief.widthFt} onChange={e=>update("widthFt",Number(e.target.value))}/></label>
-     <label>{str("Plot depth (ft)","लंबाई (फीट)")}<input type="number" min="15" max="250" step=".5" value={brief.depthFt} onChange={e=>update("depthFt",Number(e.target.value))}/></label>
+     <label>{str("Frontage / width (ft)","चौड़ाई (फीट)")}<input type="number" min="10" max="200" step="any" value={brief.widthFt} onChange={e=>update("widthFt",Number(e.target.value))}/></label>
+     <label>{str("Plot depth (ft)","लंबाई (फीट)")}<input type="number" min="15" max="250" step="any" value={brief.depthFt} onChange={e=>update("depthFt",Number(e.target.value))}/></label>
      <label>{str("Road along which edge?","सड़क किस दिशा में है?")}<select value={brief.roadSide} onChange={e=>update("roadSide",e.target.value as RoadSide)}>
       {(["N","E","S","W"] as const).map(side=><option key={side} value={side}>{({N:"North",E:"East",S:"South",W:"West"} as const)[side]}</option>)}
      </select></label>
@@ -79,15 +80,15 @@ export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
        <option value="rear-right-notch">L shape · rear-right missing corner</option>
       </select></label>
       {brief.siteShape&&brief.siteShape.kind!=="rectangle"&&<>
-       <label>{str("Missing rear-corner width (ft)","पीछे कटे कोने की चौड़ाई")}<input type="number" min="1" max="60" step=".5" value={brief.siteShape.notchWidthFt}
+       <label>{str("Missing rear-corner width (ft)","पीछे कटे कोने की चौड़ाई")}<input type="number" min="1" max="60" step="any" value={brief.siteShape.notchWidthFt}
         onChange={e=>update("siteShape",{...brief.siteShape!,notchWidthFt:Number(e.target.value)} as PlanBrief["siteShape"])}/></label>
-       <label>{str("Missing rear-corner depth (ft)","पीछे कटे कोने की लंबाई")}<input type="number" min="1" max="100" step=".5" value={brief.siteShape.notchDepthFt}
+       <label>{str("Missing rear-corner depth (ft)","पीछे कटे कोने की लंबाई")}<input type="number" min="1" max="100" step="any" value={brief.siteShape.notchDepthFt}
         onChange={e=>update("siteShape",{...brief.siteShape!,notchDepthFt:Number(e.target.value)} as PlanBrief["siteShape"])}/></label>
       </>}
       <p className="nroad-small">These are conservative concept constraints, not municipal setbacks, cadastral proof or licensed architecture.</p>
      </details>
-     <label>{str("Levels","मंज़िलें")}<select value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2)}>
-      <option value={1}>G · Ground</option><option value={2}>G+1 · Two levels</option></select></label>
+     <label>{str("Levels","मंज़िलें")}<select value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2|3)}>
+      <option value={1}>G · Ground</option><option value={2}>G+1 · Two levels</option><option value={3}>G+2 · Three levels</option></select></label>
      <label>{str("Total bedrooms","कुल बेडरूम")}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>
       {[1,2,3].map(n=><option key={n} value={n}>{n} BHK</option>)}</select></label>
      <label>{str("Car parking","कार पार्किंग")}<select value={String(brief.parking)} onChange={e=>update("parking",e.target.value==="true")}>
@@ -121,13 +122,14 @@ export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
      <div className="nroad-save"><button type="button" disabled={saving} onClick={()=>void saveDraft()}>{saving?"Saving…":str("Save this plot-specific concept privately","अपना नक्शा सुरक्षित सेव करें")}</button>{saveInfo&&<p role="status">{saveInfo} {saveInfo.startsWith("Sign in")&&<Link href="/account">Sign in →</Link>}</p>}</div>
      <div className="nroad-head"><h2>{str("Plan & room dimensions","प्लान और कमरों का नाप")}</h2><span>Road · {plan.plot.roadSide}</span></div>
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
-      {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{i===0?"Ground floor":"First floor"}</button>)}
+      {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{["Ground floor","First floor","Second floor"][i]}</button>)}
      </div>
      <OrientedPlanDrawing plan={plan} floor={floor}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Touch orbit · concept-only</span></div>
-     {design&&(threeReady?<Building3D key={plan.id} design={design} colour={shade.main} planModel={plan}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
+     {design&&(threeReady?<Building3D key={plan.id} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The legacy viewer simplifies wall thickness and stair construction; it is not verified CAD/BIM.</p>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
+     {plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>
      <div className="nroad-palette"><h2>{str("House colour mood","घर की रंग योजना")}</h2>
       <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>setPalette(x.id)}>
@@ -149,3 +151,4 @@ export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
   </div>
  <SiteFooter/></main>;
 }
+

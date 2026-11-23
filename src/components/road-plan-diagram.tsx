@@ -46,19 +46,23 @@ export function RoadPlanDiagram({plan,floor=0}:{plan:PlanModel;floor?:number}){
 }
 export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;accent:string}){
  const front=plan.rooms.filter(r=>r.floor===0&&r.y<=16);
- const w=plan.plot.widthFt,d=plan.floors,scale=600/w,left=50,roofY=d===1?147:65,storey=136,bottom=roofY+storey*d;
+ const w=plan.plot.widthFt,d=plan.floors,scale=600/w,left=50,roofY=d===1?147:65,storey=d===3?91:136,bottom=roofY+storey*d;
  const g=plan.gate,ped=plan.pedestrianGate;
  return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel">
   <svg viewBox="0 0 700 460" role="img" aria-label={`Illustrative road-side elevation for ${w} ft frontage with ${d} levels and gate located ${g.xFt} ft along the road`}>
    <rect x="0" y="0" width="700" height="460" fill="#e7efea"/>
    <rect x={left} y={roofY} width={600} height={bottom-roofY} fill={main} stroke="#5e655d" strokeWidth="4"/>
-   {d===2&&<rect x={left} y={roofY} width={600} height={storey} fill={accent} fillOpacity=".2"/>}
-   {d===2&&<rect x={left} y={roofY-30} width={600} height="30" fill={accent} stroke="#7e796c" strokeWidth="3"/>}
+   {d>1&&<rect x={left} y={roofY} width={600} height={storey} fill={accent} fillOpacity=".2"/>}
+   {d>1&&<rect x={left} y={roofY-30} width={600} height="30" fill={accent} stroke="#7e796c" strokeWidth="3"/>}
    <rect x={left-8} y={bottom-52} width={616} height="72" fill="#677e6e" stroke="#3f5e50" strokeWidth="4"/>
    <rect x={left+g.xFt*scale} y={bottom-52} width={g.widthFt*scale} height="72" fill="#44524d" stroke="#22382f" strokeWidth="4"/>
    <rect x={left+ped.xFt*scale} y={bottom-52} width={ped.widthFt*scale} height="72" fill="#4b6b57" stroke="#294837" strokeWidth="3"/>
    {Array.from({length:8},(_,i)=><line key={i} x1={left+g.xFt*scale+i*g.widthFt*scale/8} x2={left+g.xFt*scale+i*g.widthFt*scale/8} y1={bottom-50} y2={bottom+18} stroke="#b9c7bb" strokeWidth="3"/>)}
-   {d===2&&<g><rect x={left+5} y={roofY+95} width={590} height="32" fill="#8bb8af" fillOpacity=".65" stroke="#4c6760" strokeWidth="4"/></g>}
+   {plan.rooms.filter(r=>r.kind==="balcony").map(r=><rect key={r.id} x={left+r.x*scale} y={bottom-r.floor*storey-25} width={r.w*scale} height="25" fill="#8bb8af" fillOpacity=".65" stroke="#4c6760" strokeWidth="4"/>)}
+   {plan.rooms.filter(r=>r.kind==="balcony").map(r=><g key={r.id} fill={accent}>
+    {plan.facade.kit==="jali-screen"&&Array.from({length:8},(_,i)=><rect key={i} x={left+(r.x+(i+.5)*r.w/24)*scale} y={bottom-(r.floor+1)*storey} width="4" height={storey}/>)}
+    {plan.facade.kit==="pergola"&&Array.from({length:6},(_,i)=><rect key={i} x={left+(r.x+(i+.5)*r.w/6)*scale} y={bottom-(r.floor+1)*storey} width="8" height="9"/>)}
+   </g>)}
    <rect x={left} y={bottom+22} width="600" height="10" fill="#969f91"/>
    <text x="350" y="420" fontSize="15" textAnchor="middle" fill="#314e3e">ROAD-SIDE FRONT · {plan.plot.roadSide} · CONCEPT ONLY</text>
    <text x="350" y="442" fontSize="11" textAnchor="middle" fill="#516554">Not a site photograph, structural drawing or verified facade</text>
@@ -66,3 +70,4 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
   </svg>
  </section>;
 }
+

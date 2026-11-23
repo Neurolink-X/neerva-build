@@ -18,11 +18,11 @@ export function StudioStartForm(){
  }
  return <form className="nstudio-start-form" onSubmit={submit} aria-label="Start a plot-specific architectural concept">
   <div className="nstudio-start-grid">
-   <label>Plot width (feet)<input inputMode="decimal" type="number" min="10" max="200" step=".5" required value={width} onChange={e=>setWidth(e.target.value)}/></label>
-   <label>Plot depth (feet)<input inputMode="decimal" type="number" min="15" max="250" step=".5" required value={depth} onChange={e=>setDepth(e.target.value)}/></label>
+   <label>Plot width (feet)<input inputMode="decimal" type="number" min="10" max="200" step="any" required value={width} onChange={e=>setWidth(e.target.value)}/></label>
+   <label>Plot depth (feet)<input inputMode="decimal" type="number" min="15" max="250" step="any" required value={depth} onChange={e=>setDepth(e.target.value)}/></label>
    <label>Road on which side?<select value={road} onChange={e=>setRoad(e.target.value)}><option value="N">North</option><option value="E">East</option><option value="S">South</option><option value="W">West</option></select></label>
    <label>Bedrooms<select value={bedrooms} onChange={e=>setBedrooms(e.target.value)}>{[1,2,3].map(x=><option key={x} value={x}>{x} BHK</option>)}</select></label>
-   <label>Floors<select value={floors} onChange={e=>setFloors(e.target.value)}><option value="1">Ground</option><option value="2">Ground + first</option></select></label>
+   <label>Floors<select value={floors} onChange={e=>setFloors(e.target.value)}><option value="1">Ground</option><option value="2">Ground + first</option><option value="3">Ground + two floors</option></select></label>
    <label>Car parking<select value={parking} onChange={e=>setParking(e.target.value)}><option value="true">Needed</option><option value="false">Not needed (limited support)</option></select></label>
   </div>
   {error&&<p role="alert" className="nstudio-error">{error}</p>}
@@ -30,3 +30,4 @@ export function StudioStartForm(){
   <small>Draft concepts, not construction drawings. The system shows only layouts that pass its current circulation checks. Small or unusual plots may have no valid layouts.</small>
  </form>;
 }
+

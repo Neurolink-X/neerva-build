@@ -9,7 +9,7 @@ import type {PlanModel} from "@/modules/studio/plan-model";
 import {threeRoadRotation} from "@/modules/studio/plan-coordinate";
 const FT=.3048;
 type Mode="exterior"|"dollhouse"|"walkthrough";
-export function StudioBuilding3D({design,colour,planModel}:{design:StudioDesign;colour:string;planModel?:PlanModel}){
+export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design:StudioDesign;colour:string;planModel?:PlanModel;selectedFloor?:number}){
  const host=useRef<HTMLDivElement>(null),wallMat=useRef<THREE.MeshStandardMaterial|null>(null),refresh=useRef<(()=>void)|null>(null),colourRef=useRef(colour);
  const [mode,setMode]=useState<Mode>("exterior"),[fallback,setFallback]=useState(false);
  useEffect(()=>{colourRef.current=colour;if(wallMat.current){wallMat.current.color.set(colour);refresh.current?.()}},[colour]);
@@ -45,13 +45,14 @@ export function StudioBuilding3D({design,colour,planModel}:{design:StudioDesign;
     else groundPart(0,W-w,D-d,D);
    }
    const fp=structuralFootprint(design),W=(fp.maxX-fp.minX)*FT,D=(fp.maxZ-fp.minZ)*FT,cx=xCoord((fp.maxX+fp.minX)/2),cz=zCoord((fp.maxZ+fp.minZ)/2);
+   const visible=(floor:number)=>mode!=="dollhouse"||selectedFloor===undefined||floor<=selectedFloor;
    if(planModel){
     // Phase 1 bridge: do not place a giant slab above the open parking bay or rear terrace.
-    for(const r of planModel.rooms.filter(r=>!["parking","verandah","balcony","terrace"].includes(r.kind))){
+    for(const r of planModel.rooms.filter(r=>visible(r.floor)&&!["parking","verandah"].includes(r.kind))){
      box(xCoord(r.x+r.w/2),r.floor*height,zCoord(r.y+r.d/2),r.w*FT,.14,r.d*FT,concrete,false);
     }
    }else for(let f=0;f<design.floors;f++)box(cx,f*height,cz,W,.14,D,concrete,false);
-   const wallCells=buildingWallCells(design),instances=new THREE.InstancedMesh(shared,wall,wallCells.length),dummy=new THREE.Object3D();
+   const wallCells=buildingWallCells(design).filter(c=>visible(c.floorIndex)),instances=new THREE.InstancedMesh(shared,wall,wallCells.length),dummy=new THREE.Object3D();
    wallCells.forEach((cell,index)=>{const length=(cell.endFt-cell.startFt)*FT,mid=(cell.startFt+cell.endFt)/2;
     dummy.position.set(cell.axis==="x"?xCoord(cell.planeFt):xCoord(mid),cell.floorIndex*height+(cell.bottomFt+cell.topFt)/2*FT,cell.axis==="z"?zCoord(cell.planeFt):zCoord(mid));
     const external=planModel&&(cell.axis==="x"
@@ -61,7 +62,7 @@ export function StudioBuilding3D({design,colour,planModel}:{design:StudioDesign;
     dummy.scale.set(cell.axis==="x"?thickness:length,(cell.topFt-cell.bottomFt)*FT,cell.axis==="z"?thickness:length);dummy.updateMatrix();instances.setMatrixAt(index,dummy.matrix);
    });instances.instanceMatrix.needsUpdate=true;instances.castShadow=true;instances.receiveShadow=true;site.add(instances);
    const glass=material("#88b6c3",.18,.08);glass.transparent=true;glass.opacity=.68;const frameMat=material(design.elevation.surfaces.frame,.35,.3);
-   for(const room of design.layout.rooms){if(room.kind==="open"||room.kind==="parking")continue;
+   for(const room of design.layout.rooms){if(!visible(room.floorIndex)||room.kind==="open"||room.kind==="parking")continue;
     const base=room.floorIndex*height;for(const o of room.openings){if(o.kind!=="window")continue;
      const vertical=o.wall==="left"||o.wall==="right",plane=vertical?room.xFt+(o.wall==="right"?room.wFt:0):room.yFt+(o.wall==="rear"?room.dFt:0);
      const outside=vertical?(Math.abs(plane-fp.minX)<.02||Math.abs(plane-fp.maxX)<.02):(Math.abs(plane-fp.minZ)<.02||Math.abs(plane-fp.maxZ)<.02);
@@ -73,12 +74,22 @@ export function StudioBuilding3D({design,colour,planModel}:{design:StudioDesign;
      box(xpos,ypos+he/2,zpos,vertical?.08:wi+.08,.055,vertical?wi+.08:.08,frameMat);
     }
    }
-   for(const r of design.layout.rooms){if(r.kind==="open"||r.kind==="parking")continue;const surface=r.kind==="bath"?material("#c7d5d6"):floorMat;
+   for(const r of design.layout.rooms){if(!visible(r.floorIndex)||r.kind==="open"||r.kind==="parking")continue;const surface=r.kind==="bath"?material("#c7d5d6"):floorMat;
     box(xCoord(r.xFt+r.wFt/2),r.floorIndex*height+.09,zCoord(r.yFt+r.dFt/2),r.wFt*FT-.03,.025,r.dFt*FT-.03,surface,false);
    }
-   if(design.floors>1){const stair=design.layout.rooms.find(r=>r.kind==="stairs"&&r.floorIndex===0);if(stair){for(let i=0;i<12;i++){
-    const stepD=stair.dFt*FT/12;box(xCoord(stair.xFt+stair.wFt/2),(i+1)*height/12,zCoord(stair.yFt+(i+.5)*stair.dFt/12),stair.wFt*FT*.7,.12,stepD*.95,concrete);
-   }}}
+   for(const stair of design.layout.rooms.filter(r=>r.kind==="stairs"&&visible(r.floorIndex)&&r.floorIndex<design.floors-1)){for(let i=0;i<12;i++){
+    const stepD=stair.dFt*FT/12;box(xCoord(stair.xFt+stair.wFt/2),stair.floorIndex*height+(i+1)*height/12,zCoord(stair.yFt+(i+.5)*stair.dFt/12),stair.wFt*FT*.7,.12,stepD*.95,concrete);
+   }}
+   for(const r of planModel?.rooms.filter(r=>r.kind==="balcony"&&visible(r.floor))??[]){
+    const center=xCoord(r.x+r.w/2),front=zCoord(r.y),y=r.floor*height;
+    box(center,y+.5,front,r.w*FT,.85,.05,glass,false);
+    box(center,y+.95,front,r.w*FT,.06,.07,railingMat);
+    if(planModel?.facade.kit==="pergola"){
+     for(let i=0;i<6;i++)box(xCoord(r.x+(i+.5)*r.w/6),y+height-.12,zCoord(r.y+r.d/2),.12,.15,r.d*FT,roofMat);
+    }else if(planModel?.facade.kit==="jali-screen"){
+     for(let i=0;i<8;i++)box(xCoord(r.x+(i+.5)*r.w/24),y+height/2,front,.08,height,.12,roofMat);
+    }
+   }
    const roofGroup=new THREE.Group();const roof=(x:number,y:number,z:number,sx:number,sy:number,sz:number)=>{const m=new THREE.Mesh(shared,roofMat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;roofGroup.add(m)};
    const top=design.floors*height;
    if(planModel){
@@ -130,7 +141,7 @@ export function StudioBuilding3D({design,colour,planModel}:{design:StudioDesign;
    const resize=()=>{if(!renderer)return;const w=Math.max(200,target.clientWidth),h=Math.max(260,Math.min(630,w*.7));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();schedule()};
    observer=new ResizeObserver(resize);observer.observe(target);resize();
   }catch{failedTimer=window.setTimeout(()=>setFallback(true),0)}
-  return()=>{window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();renderer?.dispose();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
- },[design,mode,planModel]);
+  return()=>{window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();scene.traverse(o=>{if(o instanceof THREE.InstancedMesh)o.dispose()});renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
+ },[design,mode,planModel,selectedFloor]);
  return <section className="nbd-building"><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>Concept geometry · touch orbit</span></div><div className="nbd-buttons">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Dollhouse":"Exterior"}</button>)}</div>{fallback?<div><p role="status">3D unavailable on this device. The 2D plan is still accessible.</p><DesignPlanArt design={design}/></div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}<p className="nbd-disclaimer">Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Slabs and roofs are simplified; parapet details are not modeled for PlanModel mode. HDRI, phototextures and photoreal renders are not yet bundled. Eye-level beta is not a measured walkthrough.</p></section>;
 }

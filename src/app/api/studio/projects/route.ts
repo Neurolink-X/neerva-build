@@ -10,7 +10,7 @@ const headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nos
 const error=(status:number,message:string)=>NextResponse.json({error:message},{status,headers});
 const brief=z.object({
  widthFt:z.number().finite().min(10).max(200),depthFt:z.number().finite().min(15).max(250),
- roadSide:z.enum(["N","E","S","W"]),floors:z.union([z.literal(1),z.literal(2)]),
+ roadSide:z.enum(["N","E","S","W"]),floors:z.union([z.literal(1),z.literal(2),z.literal(3)]),
  bedrooms:z.number().int().min(1).max(3),parking:z.boolean(),
  siteShape:z.discriminatedUnion("kind",[
   z.object({kind:z.literal("rectangle")}).strict(),
@@ -21,7 +21,7 @@ const brief=z.object({
   leftFt:z.number().finite().min(0).max(30),rightFt:z.number().finite().min(0).max(30)}).strict()
 }).strict();
 const create=z.object({idempotencyKey:z.string().uuid(),title:z.string().trim().min(3).max(120),
- brief,variant:z.enum(["parking-left","parking-right"]),planId:z.string().min(5).max(200)}).strict();
+ brief,finish:z.object({kit:z.enum(["simple-parapet","jali-screen","pergola"]),main:z.string().regex(/^#[0-9a-f]{6}$/i),accent:z.string().regex(/^#[0-9a-f]{6}$/i)}).strict().optional(),variant:z.enum(["parking-left","parking-right"]),planId:z.string().min(5).max(200)}).strict();
 async function parseBounded(request:Request){if(!request.headers.get("content-type")?.includes("application/json"))return null;
  const size=Number(request.headers.get("content-length")??0);if(size>12000)return null;
  try{const text=await request.text();return text.length<=12000?JSON.parse(text) as unknown:null}catch{return null}}
@@ -46,6 +46,7 @@ export async function POST(request:Request){
  const plan=result.plans.find(p=>p.id===input.planId&&p.variant===input.variant);
  if(!plan)return NextResponse.json({error:"No safe draft fits this plot and room request.",blockers:result.blockers.slice(0,6)},{status:422,headers});
  if(validatePlan(plan).length)return error(422,"Draft failed circulation or dimension checks.");
+ if(input.finish)plan.facade={...plan.facade,...input.finish};
  const geometry=JSON.stringify(plan);
  const sha=createHash("sha256").update(geometry).digest("hex");
  try{
@@ -66,3 +67,4 @@ export async function POST(request:Request){
   return NextResponse.json({project:saved,stored:true,conceptOnly:true,note:"Saved as private concept; city permissions and architect sign-off are still required."},{status:201,headers});
  }catch{return error(503,"Private project storage is temporarily unavailable.")}
 }
+

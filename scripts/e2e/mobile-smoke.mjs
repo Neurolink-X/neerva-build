@@ -141,6 +141,18 @@ async function main(){
     assert.equal(await exterior.getAttribute("aria-pressed"),"true","original concept remains available");
     await photo.click();
     assert.equal(await photo.getAttribute("aria-pressed"),"true","photo editor resumes without a reload");
+ await page.getByRole("button",{name:"Try a furnished living room"}).click();
+ const canvas=page.locator(".nbd-photo canvas");
+ await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
+ async function mark(x){let b=await canvas.boundingBox();for(const [u,v] of [[x,.12],[x+.12,.12],[x+.12,.26],[x,.26]])await canvas.click({position:{x:u*b.width,y:v*b.height}});}
+ await mark(.06);
+ await page.getByLabel("Wall design").selectOption("bands");
+ await page.getByRole("button",{name:"Keep wall & select another"}).click();
+ await mark(.56);await page.getByLabel("Wall design").selectOption("diamonds");
+ const png=()=>canvas.evaluate(c=>c.toDataURL());
+ const combo=await png();await page.getByRole("button",{name:"View original"}).click();assert.notEqual(await png(),combo);
+ await page.getByRole("button",{name:"Show new colour"}).click();assert.equal(await png(),combo);
+ const download=page.waitForEvent("download");await page.getByRole("button",{name:"Save colour preview"}).click();assert.match((await download).suggestedFilename(),/png$/);
     // Tested road-correct 18x50 PlanModel: one source for geometry, 3D and paint quantities.
     await page.goto(base+"/design-studio/road-planner",{waitUntil:"networkidle"});
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
@@ -197,9 +209,10 @@ async function main(){
       assert.match((await link.getAttribute("href"))??"",new RegExp("width="+w+"&depth="+d),"plot dimensions need to persist into fit flow");
       await link.click();
       await page.waitForURL("**/design-studio/fit?**");
-      await page.getByText("Plot proportion in 3D").waitFor({timeout:15000});
-      await page.getByText(w+" × "+d+" ft",{exact:true}).first().waitFor({timeout:10000});
-      assert.equal(await page.getByRole("img",{name:new RegExp("Isometric massing concept for a "+w+" by "+d)}).count(),1,"dynamic 3D plot massing should show");
+      const next=page.getByRole("link",{name:/Explore floors, front elevation/});
+      await page.getByRole("img",{name:/Road on N side/}).waitFor();
+      await page.waitForFunction(([w,d])=>document.querySelector(".nfit-primary-next a")?.href.includes("width="+w+"&depth="+d),[w,d]);
+      assert.ok(await next.isVisible());
       await page.goto(base+"/",{waitUntil:"networkidle"});
     }
 
