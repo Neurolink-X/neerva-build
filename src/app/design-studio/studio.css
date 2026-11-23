@@ -1,0 +1,12 @@
+/* Scoped to rebuilt plan-based workspace. Existing Phase 1 home editor remains unchanged. */
+.neerva-studio-plan{background:#f5f6f2;border:1px solid #dde6dc;border-radius:16px;padding:16px;min-height:240px}
+.neerva-studio-plan svg{display:block;max-width:100%;height:auto;margin:auto}
+.neerva-studio-tools{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(240px,.55fr);gap:18px;align-items:start}
+.neerva-studio-palette{background:#fff;border:1px solid #dce3dc;border-radius:16px;padding:18px}
+.neerva-studio-palette label{display:flex;flex-direction:column;gap:7px;font-size:14px;margin:12px 0}
+.neerva-studio-palette select,.neerva-studio-palette input{min-height:44px;border:1px solid #c8d8ca;background:#fff;border-radius:8px;padding:8px}
+.neerva-studio-room{border:1px solid #dbe3db;padding:12px;border-radius:12px;background:#fff;margin-top:12px}
+.neerva-studio-room button{min-height:44px}
+.neerva-studio-photo canvas{max-width:100%;height:auto;display:block;touch-action:manipulation}
+@media(max-width:740px){.neerva-studio-tools{grid-template-columns:1fr}.neerva-studio-plan{padding:8px}}
+@media(prefers-reduced-motion:reduce){.neerva-studio-tools *, .neerva-studio-plan *{transition:none!important;animation:none!important}}

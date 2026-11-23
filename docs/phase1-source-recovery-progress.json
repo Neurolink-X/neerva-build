@@ -1,0 +1,263 @@
+{
+  "sourceDeployment": "dpl_GBZpLhjcXvCdihSX7Lfd2YqBwnZF",
+  "baselineMain": "95df30497fa1c2459b4df7d45448e80937531557",
+  "recoveryBranchHead": "551ef73c840480778d279072008b945db2b1a092",
+  "sourceFiles": 112,
+  "baselineMissing": 62,
+  "restoredVerified": 26,
+  "stillMissing": 36,
+  "warning": "Path existence does not verify identical content of previously tracked files. Recovery branch must not be merged or deployed until full parity and regression checks pass.",
+  "restored": [
+    {
+      "path": "public/images/catalog/aggregates-samples.webp",
+      "sourceSha1": "bf2bfd85265d1c2f583a5aa7a9aa08279b53d938"
+    },
+    {
+      "path": "public/images/catalog/cement-sack.webp",
+      "sourceSha1": "0ab896d890cac0f4d6b1943024ba9063fee4dfcc"
+    },
+    {
+      "path": "public/images/catalog/clay-bricks.webp",
+      "sourceSha1": "d7b0a37ab42e40fa89e78e6a2261202d30028bbd"
+    },
+    {
+      "path": "public/images/catalog/electrical-wiring.webp",
+      "sourceSha1": "3f8eb4c53d1f27c61c660ac5cbe473ab8fe96c9e"
+    },
+    {
+      "path": "public/images/catalog/pvc-pipe.webp",
+      "sourceSha1": "8eb249b81969451d8cb63778eeecaf5759b283d3"
+    },
+    {
+      "path": "public/images/catalog/tmt-bars.webp",
+      "sourceSha1": "b957fa013557c0a8d04fb7e77b2642505ffcda08"
+    },
+    {
+      "path": "src/app/account/orders/page.tsx",
+      "sourceSha1": "9165b1c55d92b8650a9ce958c5a5861590f813df"
+    },
+    {
+      "path": "src/app/account/quotes/page.tsx",
+      "sourceSha1": "ee03e215c270a9c386add17411eea195a35ecb6b"
+    },
+    {
+      "path": "src/app/admin/catalog/page.tsx",
+      "sourceSha1": "a3b8d3621939eb7fc0312599c4f38e111c81a1a4"
+    },
+    {
+      "path": "src/app/admin/pricing/page.tsx",
+      "sourceSha1": "85bcc547e4ea99a60f8e72c4fb305e1912a37229"
+    },
+    {
+      "path": "src/app/admin/rfqs/page.tsx",
+      "sourceSha1": "626709831f8d388b1464c30e7a4907e95124112b"
+    },
+    {
+      "path": "src/app/admin/studio/page.tsx",
+      "sourceSha1": "eba1ce8f1f898498fa406922a51ed5e18a3be4c6"
+    },
+    {
+      "path": "src/app/admin/system-health/page.tsx",
+      "sourceSha1": "3a3e75f0c7f9210d424e4898db7e5878e1b20b99"
+    },
+    {
+      "path": "src/app/admin/users/page.tsx",
+      "sourceSha1": "67445e73868f7d3d9e8e4fc52a41927c2f47b0d1"
+    },
+    {
+      "path": "src/app/dealer/inventory/page.tsx",
+      "sourceSha1": "9f23ea63ed3c3204009e56bb0d052b233073abff"
+    },
+    {
+      "path": "src/app/dealer/quotes/page.tsx",
+      "sourceSha1": "1f7823bc625698be7d47bc7e9b7babb4eee96388"
+    },
+    {
+      "path": "src/app/error.tsx",
+      "sourceSha1": "b06a8ea0938543b8b5fe1c4e7602e9cd546df162"
+    },
+    {
+      "path": "src/app/not-found.tsx",
+      "sourceSha1": "3a9c7aac0e06d7553d9e43517ba39bfdb6014eea"
+    },
+    {
+      "path": "src/components/catalog-admin-panel.tsx",
+      "sourceSha1": "30e0f72804e6127de0219b36db86a5ee3c84c5e3"
+    },
+    {
+      "path": "src/components/dealer-inventory-panel.tsx",
+      "sourceSha1": "d6a6eac1487a99359334362f834272e57432b8c1"
+    },
+    {
+      "path": "src/modules/catalog/basket.test.ts",
+      "sourceSha1": "4e9d226c693b9a44d99ddcb3ef5227515ab80fad"
+    },
+    {
+      "path": "src/modules/orders/backend.ts",
+      "sourceSha1": "7098ce192a4ccdd62084f6ed2d50c454b50e33b5"
+    },
+    {
+      "path": "src/modules/studio/room.test.ts",
+      "sourceSha1": "92699b24c5cfad590d108b2142da6907761be1db"
+    },
+    {
+      "path": "src/modules/studio/share.ts",
+      "sourceSha1": "3c08c876a2c723587ef091e64eb515527b2e86a0"
+    },
+    {
+      "path": "src/modules/supabase/browser.ts",
+      "sourceSha1": "33cda552d4460665c91c423d512b602dc85f4964"
+    },
+    {
+      "path": "src/modules/supabase/database.ts",
+      "sourceSha1": "415d246dbe07d0ae1b45249811d6c8d98e9a679b"
+    }
+  ],
+  "missing": [
+    {
+      "path": "src/app/api/admin/catalog/route.ts",
+      "sourceSha1": "749be02074e68c1fe25f0e7b1810622cc339dc6f"
+    },
+    {
+      "path": "src/app/api/admin/pricing/route.ts",
+      "sourceSha1": "175e31928944e3a1fda255f14d07fe0f81ad0292"
+    },
+    {
+      "path": "src/app/api/admin/rfqs/route.ts",
+      "sourceSha1": "78e0d19948be2624b8e7bc71857979bcaf7307bf"
+    },
+    {
+      "path": "src/app/api/admin/users/route.ts",
+      "sourceSha1": "ef4f46d7a1982f887521ad75f290bcf6c8e4fa97"
+    },
+    {
+      "path": "src/app/api/customer/quotes/route.ts",
+      "sourceSha1": "715bf1cfafdb1a279d330940036a372b1061a0ba"
+    },
+    {
+      "path": "src/app/api/dealer/inventory/route.ts",
+      "sourceSha1": "0d84ca026b72f950b479df4285f1b48ac72a5518"
+    },
+    {
+      "path": "src/app/api/dealer/quotes/route.ts",
+      "sourceSha1": "64bb69b71e8812de24a1ec91f0bf51091e9f8405"
+    },
+    {
+      "path": "src/app/api/orders/route.ts",
+      "sourceSha1": "ded8c64f8c376983dbeaf6191ad64ae807c65432"
+    },
+    {
+      "path": "src/app/business-model/page.tsx",
+      "sourceSha1": "3ae8a4e280dd24e15f17918389409d86944e387c"
+    },
+    {
+      "path": "src/app/design-studio/studio.css",
+      "sourceSha1": "615752cf08255b729289df722b3d5c340d837e4f"
+    },
+    {
+      "path": "src/app/experience.css",
+      "sourceSha1": "f5f2dc522185c5d1f807df930b9cf058b37418b4"
+    },
+    {
+      "path": "src/components/account-access.tsx",
+      "sourceSha1": "25e64f0bfb8bc2405dbd4885795129e9fd846691"
+    },
+    {
+      "path": "src/components/admin-rfq-panel.tsx",
+      "sourceSha1": "a67531c548a0f83b1da7ced9b73e218b8def68df"
+    },
+    {
+      "path": "src/components/customer-quote-inbox.tsx",
+      "sourceSha1": "0affe38cbffdb765ae3eac774a3aef2d1729c8f2"
+    },
+    {
+      "path": "src/components/dealer-quote-inbox.tsx",
+      "sourceSha1": "45eaa933c90c4479c0fc2608d08f3d3cdb7cf402"
+    },
+    {
+      "path": "src/components/material-basket.tsx",
+      "sourceSha1": "ec30405b935bd3bce8b4cab04fb4833c2eb18917"
+    },
+    {
+      "path": "src/components/order-invoice.tsx",
+      "sourceSha1": "3cc48a7deae46acd03801253fff2c44a6955c19f"
+    },
+    {
+      "path": "src/components/order-list.tsx",
+      "sourceSha1": "08e38403a77dd226299a755e490fdfb5af500d58"
+    },
+    {
+      "path": "src/components/photo-paint.tsx",
+      "sourceSha1": "64ee5f5054e738b326f1956fe2e252a35974f31f"
+    },
+    {
+      "path": "src/components/plan-preview.tsx",
+      "sourceSha1": "89a09b599c24238237b8503da56c1b6cc73a999a"
+    },
+    {
+      "path": "src/components/plan-sheet.tsx",
+      "sourceSha1": "cf4dc73c80796ff4bd1fa130bcdbee3415dc2c7f"
+    },
+    {
+      "path": "src/components/pricing-review-panel.tsx",
+      "sourceSha1": "c65dde552f26eda2f92d6396b2c55ebb6653b374"
+    },
+    {
+      "path": "src/components/product-artwork.tsx",
+      "sourceSha1": "9908bfba6ffc97efb74c6c0a94b89f3df7de97c3"
+    },
+    {
+      "path": "src/components/product-detail-tools.tsx",
+      "sourceSha1": "f3152d232c735f706d4701f26714c82b73110a14"
+    },
+    {
+      "path": "src/components/room-cutaway.tsx",
+      "sourceSha1": "2cf595538d08280779b1ba217620a6605734edc8"
+    },
+    {
+      "path": "src/components/room-finishes.tsx",
+      "sourceSha1": "13082419c0844c570096974cffb99fc60111e169"
+    },
+    {
+      "path": "src/components/room-orbit.tsx",
+      "sourceSha1": "1c5664235131c981a0d14b7b91dc4665ab59e7ce"
+    },
+    {
+      "path": "src/components/studio-admin.tsx",
+      "sourceSha1": "ba44daa37f6abdaa262204f6b4ec8fb0bc84b14d"
+    },
+    {
+      "path": "src/components/system-health-panel.tsx",
+      "sourceSha1": "93282eed6dd348e2e5610e7df1c9cbad885dec31"
+    },
+    {
+      "path": "src/components/user-access-panel.tsx",
+      "sourceSha1": "f3debb3631033dd726534a302b6daa897a5ab832"
+    },
+    {
+      "path": "src/modules/catalog/basket.ts",
+      "sourceSha1": "a4ef0ad98b421d1e3ab0e63e69c07646d648215e"
+    },
+    {
+      "path": "src/modules/catalog/public-products.ts",
+      "sourceSha1": "f04ab0a2248c61984d545097449985df91e6bb2b"
+    },
+    {
+      "path": "src/modules/identity/server-auth.ts",
+      "sourceSha1": "48f6094883fbff5ee0953eb2351b01261963896d"
+    },
+    {
+      "path": "src/modules/studio/layout.test.ts",
+      "sourceSha1": "93abe219f7b5136c39f328aabf5164245721bca5"
+    },
+    {
+      "path": "src/modules/studio/layout.ts",
+      "sourceSha1": "08fd4776533b4e56a55aab470c5ff39645d7ca91"
+    },
+    {
+      "path": "src/modules/studio/room.ts",
+      "sourceSha1": "06ecde2afdaea95d6b320712766b5206e1230316"
+    }
+  ],
+  "additionalRecoverySource": "feat/product-marketplace: two identical source files recovered by matching raw SHA-1 to Vercel UIDs"
+}

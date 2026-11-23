@@ -1,0 +1,8 @@
+/* Phase 1 restored operations, error/empty states and responsive tables */
+.neerva-ops-panel{color:#263f34}
+.neerva-ops-panel h2,.neerva-ops-panel h3{font-family:Georgia,serif;line-height:1.15}
+.neerva-ops-panel button,.neerva-ops-panel a,.neerva-invoice button{min-height:44px}
+.neerva-ops-panel table td,.neerva-ops-panel table th{vertical-align:top}
+.neerva-ops-panel :focus-visible,.neerva-invoice :focus-visible{outline:3px solid #b94e2d;outline-offset:3px}
+@media(max-width:600px){.neerva-ops-panel{padding:14px!important}.neerva-ops-panel table{font-size:12px}}
+@media(print){.neerva-ops-panel button,.neerva-invoice button{display:none!important}.neerva-invoice{border:0!important}}
