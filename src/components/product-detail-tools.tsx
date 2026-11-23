@@ -25,11 +25,13 @@ const specsByCategory: Record<string, string[]> = {
 /** Never repeat the same generic pipe/pack image as four claimed camera angles. */
 export function ProductGallery({ product }: { product: DemoProduct }) {
   const [active,setActive]=useState(0);
+  const [failedPhotos,setFailedPhotos]=useState<string[]>([]);
   const actual=(product.verification==="merchant_verified"&&product.imageVerified===true)
-    ? [...new Set((product.images??[]).filter(isApprovedSkuPhoto))] : [];
+    ? [...new Set((product.images??[]).filter(isApprovedSkuPhoto))].filter(source=>!failedPhotos.includes(source)) : [];
   const hasDiagram=["steel","cement","bricks-blocks","plumbing","electrical","aggregates"].includes(product.category);
   const brand=brandMediaFor(product.brand);
-  const pressPhoto=product.category==="cement"&&brand&&"pressPhoto" in brand?brand.pressPhoto:null;
+  const pressPhotoCandidate=product.category==="cement"&&brand&&"pressPhoto" in brand?brand.pressPhoto:null;
+  const pressPhoto=pressPhotoCandidate&&!failedPhotos.includes(pressPhotoCandidate)?pressPhotoCandidate:null;
   const pressPhotoSource=product.category==="cement"&&brand&&"pressPhotoSource" in brand?brand.pressPhotoSource:null;
   type View={kind:"verified"|"press";source:string;label:string}|{kind:"sample"|"diagram";label:string};
   const views:View[]=actual.length
@@ -41,7 +43,8 @@ export function ProductGallery({ product }: { product: DemoProduct }) {
   const view=views[selected];
   function display(item:View,thumb=false){
     if(item.kind==="verified"||item.kind==="press")return <Image className="catalog-real-image" src={item.source}
-      alt={thumb?"":item.kind==="press"?`Manufacturer press-kit cement bag image for ${product.brand}, not confirmed as exact ${product.name} SKU`:`Reviewed photo of ${product.name}`} fill sizes={thumb?"130px":"(max-width:680px) 100vw, 50vw"} unoptimized/>;
+      alt={thumb?"":item.kind==="press"?`Manufacturer press-kit cement bag image for ${product.brand}, not confirmed as exact ${product.name} SKU`:`Reviewed photo of ${product.name}`} fill sizes={thumb?"130px":"(max-width:680px) 100vw, 50vw"} unoptimized
+      onError={()=>setFailedPhotos(previous=>previous.includes(item.source)?previous:[...previous,item.source])}/>;
     if(item.kind==="sample")return <CatalogMaterialImage category={product.category} name={product.name} compact={thumb}/>;
     return <ProductArtwork category={product.category} scene="detail"/>;
   }
