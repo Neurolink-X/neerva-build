@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useRef,useState,type ChangeEvent,type PointerEvent as ReactPointerEvent} from "react";
 import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type MaskCorner} from "@/modules/studio/mask-editor";
-type Pattern="plain"|"bands"|"diamonds";
+import {finishes,patternKeys,type Pattern,type Motif} from "@/modules/studio/wall-patterns";
 type Wall={points:MaskCorner[];colour:string;accent:string;pattern:Pattern};
 function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number){
  const corners=wall.points.map(p=>({x:p.x*w,y:p.y*h}));
@@ -17,14 +17,12 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number){
    x:(1-v)*(a.x+(b.x-a.x)*u)+v*(d.x+(c.x-d.x)*u),
    y:(1-v)*(a.y+(b.y-a.y)*u)+v*(d.y+(c.y-d.y)*u)
   });
-  ctx.strokeStyle=wall.accent;ctx.lineWidth=Math.max(1,w/250);
-  const line=(u:number,v:number,x:number,y:number)=>{
-   const from=at(u,v),to=at(x,y);ctx.beginPath();ctx.moveTo(from.x,from.y);ctx.lineTo(to.x,to.y);ctx.stroke();
-  };
-  for(let i=0;i<=8;i++){
-   const u=i/8;
-   if(wall.pattern==="bands")line(u,0,u,1);
-   else {line(u,0,u+1,1);line(u-1,0,u,1);line(u,0,u-1,1);line(u+1,0,u,1);}
+  ctx.globalCompositeOperation="source-over";ctx.globalAlpha=.78;
+  ctx.strokeStyle=ctx.fillStyle=wall.accent;ctx.lineWidth=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)*.006);
+  for(const motif of finishes[wall.pattern].motifs as Motif[]){
+   ctx.beginPath();
+   motif.points.forEach(([u,v],i)=>{const p=at(u,v);if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y)});
+   if(motif.filled){ctx.closePath();ctx.fill()}else ctx.stroke();
   }
  }
  ctx.restore();
@@ -101,10 +99,16 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   <h2>Preview colour on your own wall</h2>
   <p>Preview a wall finish below, then mark four corners on a room photo. Keep each wall to see the combination across the room.</p>
   <label>Wall design <select value={pattern} onChange={e=>setPattern(e.target.value as Pattern)}>
-   <option value="plain">Plain paint</option><option value="bands">Vertical pinstripes</option><option value="diamonds">Diamond lattice</option>
+   {patternKeys.map(key=><option key={key} value={key}>{finishes[key].name}</option>)}
   </select></label>
   {pattern!=="plain"&&<label>Pattern colour <input type="color" value={accent} onChange={e=>setAccent(e.target.value)}/></label>}
-  <div aria-label="Wall finish sample" style={{height:85,borderRadius:8,backgroundColor:base,backgroundImage:pattern==="bands"?`repeating-linear-gradient(90deg,transparent 0 20px,${accent} 20px 22px)`:pattern==="diamonds"?[45,-45].map(angle=>`repeating-linear-gradient(${angle}deg,transparent 0 21px,${accent} 21px 23px)`).join(","):undefined}}/>
+  <div className="wall-pattern-options" aria-label="Wall design samples">
+   {patternKeys.map(key=><button type="button" key={key} aria-pressed={pattern===key} onClick={()=>setPattern(key)}>
+    <svg viewBox="0 0 150 100" aria-hidden="true" style={{background:base}}>
+     {(finishes[key].motifs as Motif[]).map((motif,i)=><polyline key={i} points={motif.points.map(([x,y])=>[x*150,y*100].join(",")).join(" ")} fill={motif.filled?accent:"none"} stroke={accent} strokeWidth="1.2"/>)}
+    </svg><span>{finishes[key].name}</span>
+   </button>)}
+  </div>
   <button type="button" onClick={()=>openPhoto("/images/studio/daylight-living-room.webp")}>Try a furnished living room</button>
   <label>Choose a photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label>
   <p role="status">{points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>

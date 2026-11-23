@@ -20,7 +20,7 @@ export function explainImpossible(b:PlanBrief):string[]{
  if(b.parking&&W<17.5)x.push("Parking + pedestrian entry + stairs needs at least 17.5 ft clear frontage in this layout family.");
  if(W<17.5||D<40)x.push("This road-front layout family needs at least 17.5 × 40 ft usable area. Check dimensions and setbacks.");
  if(!b.parking)x.push("Parking-free compact layout family has not yet passed circulation validation; no plan will be invented.");
- if(b.floors===1&&b.bedrooms>1)x.push("With this narrow parking-first template, only 1BHK fits on ground. Consider G+1 for 2–3 bedrooms.");
+ if(b.floors===1&&(b.bedrooms>2||(b.bedrooms===2&&W<20)))x.push("With this narrow parking-first template, only 1BHK fits on ground. Consider G+1 for 2–3 bedrooms.");
  if(b.bedrooms<b.floors)x.push("Choose at least one bedroom per level.");
  if(b.widthFt<=15&&b.depthFt<=30&&b.parking&&b.bedrooms>=3)x.push("3BHK + car parking on 15 × 30 ft cannot pass the tested room and access constraints.");
  return [...new Set(x)];
@@ -75,8 +75,9 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  const sb=houseEnvelope(b),
  U={x:sb.leftFt,y:sb.frontFt,w:b.widthFt-sb.leftFt-sb.rightFt,d:b.depthFt-sb.frontFt-sb.rearFt};
  const W=U.w,D=U.d,parkW=recipe.parkWidthFt??Math.max(8.5,Math.min(10,round(W*.46)));
- const stairW=recipe.stairWidthFt??5.5,kitchenW=recipe.kitchenWidthFt??8.5,bathW=5;
- const rearBedW=recipe.rearBedWidthFt??Math.max(11,Math.min(12.5,W-6));
+ const twinRear=b.floors===1&&b.bedrooms===2;
+ const stairW=twinRear?Math.max(6.5,W-13.5):recipe.stairWidthFt??5.5,kitchenW=twinRear?stairW+3:recipe.kitchenWidthFt??8.5,bathW=5;
+ const rearBedW=twinRear?W/2:recipe.rearBedWidthFt??Math.max(11,Math.min(12.5,W-6));
  const entryDepth=recipe.entryDepthFt??5;
  const rearProgramme=recipe.rearProgramme??"wash";
  const rearKind:RoomKind=rearProgramme==="family-gallery"?"lounge":rearProgramme==="rear-courtyard"?"terrace":rearProgramme==="rear-baranda"?"verandah":"utility";
@@ -95,7 +96,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  put("corridor-g","Passage","corridor",0,kitchenW+bathW,26,W-kitchenW-bathW,8);
  put("hall-g","Rear access hall","corridor",0,0,34,W,3);
  put("bed-g","Bedroom 1","bedroom",0,0,37,rearBedW,D-37);
- put("utility-g",rearLabel,rearKind,0,rearBedW,37,W-rearBedW,D-37);
+ put(twinRear?"bed-g2":"utility-g",twinRear?"Bedroom 2":rearLabel,twinRear?"bedroom":rearKind,0,rearBedW,37,W-rearBedW,D-37);
  for(let level=1;level<b.floors;level++){
   const upper=b.bedrooms-b.floors+1;
   put(`balcony-${level}`,"Street balcony","balcony",level,0,0,W,4);
@@ -114,7 +115,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  // On shorter plots preserve the 16 ft parking bay and the 3 ft rear hall.
  // Redistribute the stair and service bands before validating each room.
  if(D<47){
-  const stairDepth=Math.max(7,10-(47-D)*.6);
+  const stairDepth=Math.max(twinRear?5.5:7,10-(47-D)*(twinRear?.65:.6));
   const serviceDepth=Math.max(6,8-(47-D)*.4);
   const stations=[[0,0],[16,16],[26,16+stairDepth],[34,16+stairDepth+serviceDepth],
    [37,19+stairDepth+serviceDepth],[D,D]];
@@ -135,7 +136,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  const joins=[
   ["verandah","living"],["living","dining"],["dining","stairs-g"],
   ["dining","kitchen"],["dining","corridor-g"],[recipe.familyLabel?"dining":"kitchen","bath-g"],
-  ["corridor-g","hall-g"],["hall-g","bed-g"],["hall-g","utility-g"]
+  ["corridor-g","hall-g"],["hall-g","bed-g"],["hall-g",twinRear?"bed-g2":"utility-g"]
  ];
  for(let level=1;level<b.floors;level++){
   joins.push([`stairs-${level}`,`lounge-${level}`],[`stairs-${level}`,`bath-${level}`],[`lounge-${level}`,`utility-${level}`],[`lounge-${level}`,`bed-${level}a`],[`balcony-${level}`,`bed-${level}a`]);

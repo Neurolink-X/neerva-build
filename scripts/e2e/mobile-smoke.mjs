@@ -117,6 +117,13 @@ async function main(){
     await page.getByRole("button",{name:/Create room layouts/}).click();
     await page.waitForURL("**/design-studio/portfolio?**");
     assert.match(new URL(page.url()).search,/width=18/);
+    await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"networkidle"});
+    const pack=page.locator(".product-gallery-stage img");
+    assert.ok(await pack.evaluate(img=>img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin),"pack photo must load locally");
+    await page.goto(base+"/design-studio/fit",{waitUntil:"networkidle"});
+    await page.getByLabel("Floors",{exact:true}).selectOption("1");
+    await page.getByRole("img",{name:/Road on N side/}).waitFor();
+    assert.equal(await page.locator(".nroad-diagram svg").getByText("BEDROOM 2",{exact:true}).count(),1);
     const cat=await page.goto(base+"/materials/steel",{waitUntil:"networkidle"});
     assert.equal(cat?.status(),200,"steel category route");
     const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"networkidle"});
@@ -148,7 +155,7 @@ async function main(){
  await mark(.06);
  await page.getByLabel("Wall design").selectOption("bands");
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
- await mark(.56);await page.getByLabel("Wall design").selectOption("diamonds");
+ await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
  const png=()=>canvas.evaluate(c=>c.toDataURL());
  const combo=await png();await page.getByRole("button",{name:"View original"}).click();assert.notEqual(await png(),combo);
  await page.getByRole("button",{name:"Show new colour"}).click();assert.equal(await png(),combo);

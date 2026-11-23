@@ -24,21 +24,22 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{
  const media=product?brandMediaFor(product.brand):null;
  const referencePhoto=category==="cement"&&media&&"pressPhoto" in media?media.pressPhoto:null;
  const categoryPhoto=categoryImage(category);
- const sources=[exact||null,referencePhoto,categoryPhoto].filter((src):src is string=>Boolean(src));
+ const sources=[exact||null,product?.referenceImage,referencePhoto,categoryPhoto].filter((src):src is string=>Boolean(src));
  const src=[...new Set(sources)].find(value=>!failed.includes(value))??null;
  const exactSelected=Boolean(src&&src===exact);
  const pressSelected=Boolean(src&&src===referencePhoto&&!exactSelected);
- const alt=exactSelected? `Verified photo of ${name}`:
+ const listingSelected=Boolean(src&&src===product?.referenceImage);
+ const alt=listingSelected?`Product listing image for ${name}`:exactSelected? `Verified photo of ${name}`:
   pressSelected?`Manufacturer media-kit cement packaging reference for ${product?.brand}; not the exact ${name} SKU`:
   `Representative ${category.replaceAll("-"," ")} material photo; not the exact ${name} branded product`;
- return <div className={compact?"catalog-material-image compact":"catalog-material-image"}>
+ return <div className={`catalog-material-image${compact?" compact":""}${listingSelected||pressSelected?" pack-photo":""}`}>
   {src?<Image src={src} alt={compact?"":alt}
     fill sizes="(max-width:680px) 100vw, (max-width:1100px) 50vw, 33vw"
-    quality={76} unoptimized={pressSelected} loading="lazy"
+    quality={75} loading="lazy"
     onError={()=>setFailed(old=>old.includes(src)?old:[...old,src])}/>:
    <div className="catalog-image-awaiting" role="img" aria-label={`Photograph of ${name} unavailable`}>
     <span>Material photo temporarily unavailable</span><small>Confirm exact product packaging and SKU with the dealer</small>
    </div>}
-  <span className="catalog-image-note">{exactSelected?"Exact SKU photo · reviewed":pressSelected?"Manufacturer press reference · not exact SKU":src?"Representative material photo · not exact SKU":"Verified product photo unavailable"}</span>
+  <span className="catalog-image-note">{listingSelected?(product?.referenceSource?"Product listing image":"Manufacturer range image"):exactSelected?"Exact SKU photo · reviewed":pressSelected?"Manufacturer press reference · not exact SKU":src?"Representative material photo · not exact SKU":"Verified product photo unavailable"}</span>
  </div>;
 }

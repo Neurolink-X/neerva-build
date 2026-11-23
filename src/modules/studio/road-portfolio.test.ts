@@ -89,3 +89,11 @@ test("compact and three-level plots keep precise dimensions across drawings and 
    preview.rooms.map(r=>[r.id,r.floor,r.x,r.y,r.w,r.d]));
  }
 });
+
+test("20 by 40 ft ground-floor request fits two independently accessible bedrooms and road parking",()=>{
+ const plan=generateSpatialPortfolio({...standard,widthFt:20,depthFt:40,bedrooms:2,floors:1},1).plans[0];
+ assert.ok(plan);
+ assert.deepEqual(validatePlan(plan),[]);
+ assert.equal(plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===0).length,2);
+ assert.equal(plan.parking?.clearDepthFt,16);
+});

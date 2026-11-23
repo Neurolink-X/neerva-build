@@ -6,9 +6,9 @@ export const PUBLIC_CATEGORY_IMAGES={
   plumbing:"/images/catalog/pvc-pipe.webp",
   electrical:"/images/catalog/electrical-wiring.webp",
   aggregates:"/images/catalog/aggregates-samples.webp",
-  paint:"https://images.pexels.com/photos/6764238/pexels-photo-6764238.jpeg?auto=compress&cs=tinysrgb&w=900",
-  tiles:"https://images.pexels.com/photos/40080972/pexels-photo-40080972.jpeg?auto=compress&cs=tinysrgb&w=900",
-  hardware:"https://images.pexels.com/photos/4049352/pexels-photo-4049352.jpeg?auto=compress&cs=tinysrgb&w=900",
+  paint:"/images/catalog/reference/pexels-photo-6764238.webp",
+  tiles:"/images/catalog/reference/pexels-photo-40080972.webp",
+  hardware:"/images/catalog/reference/pexels-photo-4049352.webp",
 } as const;
 export function categoryImage(category:string):string|null{
   return Object.prototype.hasOwnProperty.call(PUBLIC_CATEGORY_IMAGES,category)

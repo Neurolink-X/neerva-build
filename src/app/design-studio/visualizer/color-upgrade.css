@@ -16,3 +16,9 @@
 .neerva-tier-note{font-size:12px;color:#5f7060;line-height:1.55}
 @media(max-width:850px){.visualizer-layout{grid-template-columns:1fr}.visualizer-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.visualizer-controls section:last-child{grid-column:1/-1}}
 @media(max-width:600px){.visualizer-controls{grid-template-columns:1fr}.visualizer-controls section:last-child{grid-column:auto}.neerva-color-modes{display:grid;grid-template-columns:1fr 1fr}.neerva-color-modes button{padding:12px 9px;font-size:12px}.neerva-photo-stage{padding:12px}}
+
+.wall-pattern-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,100px),1fr));gap:.55rem;margin:1rem 0}
+.wall-pattern-options button{padding:.25rem;border:1px solid #b6c0b8;background:white;border-radius:9px;color:#203b30;text-align:left;overflow:hidden}
+.wall-pattern-options button[aria-pressed=true]{outline:2px solid #29563d}
+.wall-pattern-options svg{display:block;width:100%;border-radius:5px}
+.wall-pattern-options span{display:block;padding:.3rem;font-size:.85rem}

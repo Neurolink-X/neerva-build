@@ -23,3 +23,14 @@ test("brand grade and size facets filter searchable technical specs",()=>{
  assert.ok(cement.length>=1);
  assert.deepEqual(filterCatalog(demoProducts,{category:"paint",brand:"all",gradeOrSize:"all",query:"will-never-match"}),[]);
 });
+
+test("sourced references use readable local media and keep stock separate",async()=>{
+ const {existsSync}=await import("node:fs");
+ for(const item of demoProducts.filter(p=>p.referenceImage)){
+  assert.match(item.referenceImage!,/^\/images\/catalog\/reference\/[a-z0-9_-]+\.webp$/);
+  assert.ok(existsSync("public"+item.referenceImage));
+  assert.ok(item.referenceSource||item.manufacturerReference);
+  assert.equal(productEvidence(item).inventoryVerified,false);
+ }
+ assert.ok(demoProducts.filter(p=>p.category==="cement"&&p.referenceSource).length>=8);
+});
