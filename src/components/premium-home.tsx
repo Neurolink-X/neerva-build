@@ -106,7 +106,7 @@ export function PremiumHome(){
    <div className="nbh-header-actions">
     <label className="nbh-city"><Icon name="location"/><span className="nbh-sr">{t.location}</span><select aria-label={t.location} value={["Kanpur","Noida"].includes(city)?city:"custom"} onChange={e=>pickCity(e.target.value)}><option value="Kanpur">Kanpur</option><option value="Noida">Noida</option><option value="custom">{["Kanpur","Noida"].includes(city)?"Other city":city}</option></select></label>
     <Link className="nbh-icon-link" href="/materials" aria-label={t.navMaterials}><Icon name="search"/></Link>
-    <Link className="nbh-icon-link" href="/quotes" aria-label={t.navQuote}><Icon name="file"/></Link>
+    <Link className="nbh-icon-link" href="/basket" aria-label={lang==="hi"?"सामग्री सूची":"Material list"}><Icon name="cart"/></Link>
     <button className="nbh-language" type="button" onClick={language}>{t.langButton}</button>
    </div>
   </header>
