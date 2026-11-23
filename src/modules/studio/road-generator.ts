@@ -1,5 +1,6 @@
 import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type RoomKind,
  type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
+import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;
@@ -11,8 +12,11 @@ export function explainImpossible(b:PlanBrief):string[]{
  if(!["N","E","S","W"].includes(b.roadSide))x.push("Select a valid road side.");
  if(![b.setbacks.frontFt,b.setbacks.rearFt,b.setbacks.leftFt,b.setbacks.rightFt].every(valid))x.push("Setbacks must be nonnegative.");
  if(![1,2].includes(b.floors)||!Number.isInteger(b.bedrooms)||b.bedrooms<1||b.bedrooms>3)x.push("This audited prototype supports 1–3 bedrooms across G or G+1.");
- const W=b.widthFt-b.setbacks.leftFt-b.setbacks.rightFt;
- const D=b.depthFt-b.setbacks.frontFt-b.setbacks.rearFt;
+ const shape=b.siteShape??{kind:"rectangle"} as const;
+ x.push(...shapeErrors(b.widthFt,b.depthFt,shape));
+ const safe=conservativeEnvelope(b.widthFt,b.depthFt,shape,b.setbacks);
+ const W=b.widthFt-safe.leftFt-safe.rightFt;
+ const D=b.depthFt-safe.frontFt-safe.rearFt;
  if(b.parking&&W<17.5)x.push("Parking + pedestrian entry + stairs needs at least 17.5 ft clear frontage in this layout family.");
  if(W<17.5||D<47)x.push("This road-front layout family needs at least 17.5 × 47 ft usable area; try G+1 without parking, or architect-designed alternatives.");
  if(!b.parking)x.push("Parking-free compact layout family has not yet passed circulation validation; no plan will be invented.");
@@ -59,7 +63,8 @@ export type SpatialProgramme="wash"|"family-gallery"|"rear-courtyard"|"rear-bara
 type SpatialRecipe={parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
  rearBedWidthFt?:number;upperBedRatio?:number;rearProgramme?:SpatialProgramme;frontProgramme?:"dining"|"family-hall"|"family-lounge";familyLabel?:string;};
 function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:SpatialRecipe={}):PlanModel{
- const sb=b.setbacks,U={x:sb.leftFt,y:sb.frontFt,w:b.widthFt-sb.leftFt-sb.rightFt,d:b.depthFt-sb.frontFt-sb.rearFt};
+ const sb=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks),
+ U={x:sb.leftFt,y:sb.frontFt,w:b.widthFt-sb.leftFt-sb.rightFt,d:b.depthFt-sb.frontFt-sb.rearFt};
  const W=U.w,D=U.d,parkW=recipe.parkWidthFt??Math.max(8.5,Math.min(10,round(W*.46)));
  const stairW=recipe.stairWidthFt??5.5,kitchenW=recipe.kitchenWidthFt??8.5,bathW=5;
  const rearBedW=recipe.rearBedWidthFt??Math.max(11,Math.min(12.5,W-6));
@@ -115,8 +120,8 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  const gateParking=rooms.find(r=>r.kind==="parking")!;
  const parkingGate={side:"front" as const,xFt:round(gateParking.x+.25),widthFt:Math.min(8,round(gateParking.w-.5))};
  const p:PlanModel={
-  version:1,id:b.widthFt+"x"+b.depthFt+"-"+b.roadSide+"-"+b.floors+"-"+b.bedrooms+"-"+variant+(recipe.familyLabel?"-"+recipe.familyLabel:""),
-  variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide},
+  version:1,id:b.widthFt+"x"+b.depthFt+"-"+b.roadSide+"-"+b.floors+"-"+b.bedrooms+"-"+variant+(b.siteShape&&b.siteShape.kind!=="rectangle"?"-"+b.siteShape.kind+"-"+b.siteShape.notchWidthFt+"x"+b.siteShape.notchDepthFt:"")+(recipe.familyLabel?"-"+recipe.familyLabel:""),
+  variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},
   setbacks:{...sb,verified:false},walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},
   floors:b.floors,rooms,openings,gate:parkingGate,
   pedestrianGate:{side:"front",xFt:round(entry.x+(entry.w-3)/2),widthFt:3},
@@ -127,6 +132,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   facade:{kit:"simple-parapet",massing:"box",main:variant==="parking-left"?"#e9e2d4":"#e7e6df",accent:"#8e755b"},
   score:0,notes:[
    ...(recipe.familyLabel?["Spatial programme: "+recipe.familyLabel+" · "+rearLabel+" · "+(recipe.frontProgramme==="family-hall"?"family hall":recipe.frontProgramme==="family-lounge"?"lounge / drawing":"dining")]:[]),
+   ...(b.siteShape&&b.siteShape.kind!=="rectangle"?["L-plot rear corner omitted. Entire adjacent strip is kept unbuilt as a conservative construction envelope; a cadastral site survey and licensed architect must verify the actual boundary."]:[]),
    "City rules, setbacks, FAR, actual stair rise/tread/headroom, vehicle turning and parking permissions are unverified.",
    "Concept only; engage a licensed architect/engineer and obtain local authority approval before construction.",
    "Bathrooms require a licensed professional to check exhaust/ventilation shafts, drainage falls and plumbing."
@@ -175,7 +181,8 @@ export function generateRoadPlans(brief:PlanBrief):PlanningResult{
 export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResult{
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
- const W=brief.widthFt-brief.setbacks.leftFt-brief.setbacks.rightFt;
+ const envelope=conservativeEnvelope(brief.widthFt,brief.depthFt,brief.siteShape??{kind:"rectangle"},brief.setbacks);
+ const W=brief.widthFt-envelope.leftFt-envelope.rightFt;
  const baseParking=Math.max(8.5,Math.min(10,round(W*.46)));
  const plans:PlanModel[]=[],seen=new Set<string>();
  const normalized=Math.max(1,Math.min(24,Math.floor(limit)));
