@@ -1,5 +1,6 @@
 "use client";
-import {useMemo,useState} from "react";
+import {useEffect,useMemo,useState} from "react";
+import {PlotMassingPreview} from "@/components/plot-massing-preview";
 import Link from "next/link";
 import {studioDesigns,formatLevels} from "@/modules/studio/library";
 import {DESIGN_CITIES,designCityStatus,rankStudioDesigns,sqFtToGaj,toFeet,type PlotBrief,type PlotUnit,type Facing,validatePlotBrief} from "@/modules/studio/fit";
@@ -7,8 +8,20 @@ const dirs:Facing[]=["North","East","South","West"];
 const initial:PlotBrief={widthFt:20,depthFt:40,city:"Kanpur",facing:"North",roadSide:"North",bedrooms:2,floors:1,parking:true};
 export function StudioPlotFitFinder(){
  const [brief,setBrief]=useState<PlotBrief>(initial),[unit,setUnit]=useState<PlotUnit>("ft"),[width,setWidth]=useState("20"),[depth,setDepth]=useState("40"),[lang,setLang]=useState<"en"|"hi">("en"),[showAll,setShowAll]=useState(false);
+ useEffect(()=>{
+  // URL prefill is a browser-only preference; preserve server/client hydration parity.
+  const timer=window.setTimeout(()=>{
+   const params=new URLSearchParams(window.location.search);
+   const w=Number(params.get("width")),d=Number(params.get("depth"));
+   if(!params.has("width")||!params.has("depth")||!Number.isFinite(w)||!Number.isFinite(d)||w<10||w>200||d<15||d>250)return;
+   setWidth(String(w));setDepth(String(d));
+   setBrief(current=>({...current,widthFt:w,depthFt:d}));
+  },0);
+  return()=>window.clearTimeout(timer);
+ },[]);
+
  const update=<K extends keyof PlotBrief>(field:K,value:PlotBrief[K])=>{setBrief(p=>({...p,[field]:value}));setShowAll(false)};
- function updateDimension(field:"widthFt"|"depthFt",raw:string){field==="widthFt"?setWidth(raw):setDepth(raw);const n=Number(raw);update(field,raw.trim()===""?NaN:toFeet(n,unit));}
+ function updateDimension(field:"widthFt"|"depthFt",raw:string){if(field==="widthFt")setWidth(raw);else setDepth(raw);const n=Number(raw);update(field,raw.trim()===""?NaN:toFeet(n,unit));}
  function changeUnit(next:PlotUnit){setUnit(next);const w=Number.isFinite(brief.widthFt)?brief.widthFt*(next==="m"?.3048:1):NaN;const d=Number.isFinite(brief.depthFt)?brief.depthFt*(next==="m"?.3048:1):NaN;setWidth(Number.isFinite(w)?String(Number(w.toFixed(2))):"");setDepth(Number.isFinite(d)?String(Number(d.toFixed(2))):"");}
  const errors=useMemo(()=>validatePlotBrief(brief),[brief]);
  const ranked=useMemo(()=>errors.length?[]:rankStudioDesigns(studioDesigns,brief),[brief,errors.length]);
@@ -45,6 +58,7 @@ export function StudioPlotFitFinder(){
     <label>{t.parking}<select value={brief.parking?"yes":"no"} onChange={e=>update("parking",e.target.value==="yes")}><option value="yes">{t.yes}</option><option value="no">{t.no}</option></select></label>
    </div>
    {errors.length>0?<div role="alert" className="nfit-error">{errors.join(" ")}</div>:<p className="nfit-area">{brief.widthFt.toFixed(1)} × {brief.depthFt.toFixed(1)} ft · {Math.round(brief.widthFt*brief.depthFt)} sq ft · {sqFtToGaj(brief.widthFt*brief.depthFt).toFixed(1)} square gaj</p>}
+   <PlotMassingPreview widthFt={brief.widthFt} depthFt={brief.depthFt} floors={brief.floors} parking={brief.parking}/>
    <p className="nfit-caution">{designCityStatus}</p><p className="nfit-footnote">Gaj is an area unit (9 sq ft), not a linear dimension. Site setbacks, FAR and vehicle turning must be reviewed separately.</p>
    <Link href="/design-studio/workbench" className="nfit-alt">Need to experiment with room sizes? Open concept workbench →</Link>
   </div>

@@ -17,3 +17,27 @@
 @media(max-width:390px){.nbh-header{padding-inline:9px}.nbh-logo{font-size:10px}.nbh-city select{max-width:65px}.nbh-header-actions{gap:0}.nbh-icon-link{min-width:38px}.nbh-language{font-size:11px;min-width:41px}.nbh-hero{padding-inline:13px}.nbh-journey strong{font-size:12px}.nbh-journey small{font-size:11px}.nbh-material-image{height:110px}.nbh-house-frame{height:260px}.nbh-house-chip{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.nbh *, .nbh *::before,.nbh *::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 @media print{.nbh-header,.nbh-search,.nbh-journeys,.nbh-colour,.nbh-footer,.nbh-filter-row{display:none!important}.nbh-hero{display:block}.nbh-material-card,.nbh-design-card{break-inside:avoid}}
+
+
+/* Construction reveal: visibly distinct construction and finished-home illustrations. */
+.nbh-house-tone{transition:clip-path .35s ease;will-change:clip-path}
+.nbh-image-tag{position:absolute;top:58px;z-index:2;border-radius:8px;padding:7px 10px;background:#102c24e6;color:#fff;font-size:10px;font-weight:800;letter-spacing:.07em;pointer-events:none;white-space:nowrap}
+.nbh-tag-before{background:#734c34df;max-width:46%;overflow:hidden;text-overflow:ellipsis}
+.nbh-tag-after{right:12px;top:58px;background:#154d37e6}
+.nbh-slider-label{z-index:3;display:grid;gap:4px}
+.nbh-slider-label span{display:flex;gap:8px;justify-content:space-between;color:#2b4835;font-size:11px;font-weight:700;flex-wrap:wrap}
+.nbh-slider-label strong{color:#a64f32}
+.nbh-filter-row{flex-wrap:wrap}
+.nbh-filter-row input{min-height:44px;width:110px;max-width:32vw;border:1px solid #cbd6cb;border-radius:9px;background:#fff;padding:8px 10px;font-size:14px}
+.nbh-custom-fit{font-size:13px;line-height:1.5;color:#385642;margin:-4px 0 16px}
+.nbh-custom-fit a{font-weight:800;color:#975333;text-decoration:underline}
+.nbh-empty a{display:inline-flex;min-height:44px;align-items:center;color:#99583b;font-weight:800}
+.nbh-footer-expanded{grid-template-columns:minmax(210px,1.6fr) repeat(3,minmax(145px,1fr));gap:clamp(18px,3vw,46px);align-items:start}
+.nbh-footer-expanded nav{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.nbh-footer-expanded nav strong{font-size:13px;margin-bottom:6px;letter-spacing:.04em}
+.nbh-footer-expanded nav a{font-size:13px;line-height:1.4}
+.nbh-footer-brand>p{max-width:270px;font-size:14px;line-height:1.6}
+.nbh-footer-bottom{grid-column:1/-1;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-top:18px;border-top:1px solid #ffffff22}
+.nbh-footer-bottom small{font-size:12px}
+@media(max-width:980px){.nbh-footer-expanded{grid-template-columns:repeat(2,minmax(0,1fr))}.nbh-footer-bottom{grid-column:1/-1}}
+@media(max-width:520px){.nbh-footer-expanded{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px}.nbh-footer-brand{grid-column:1/-1}.nbh-footer-expanded nav{gap:10px}.nbh-footer-bottom{grid-column:1/-1}.nbh-tag-before,.nbh-tag-after{font-size:8px;padding:6px}.nbh-house-chip{max-width:calc(100% - 25px);font-size:9px}.nbh-slider-label span{font-size:10px}.nbh-filter-row label{flex-wrap:wrap}}

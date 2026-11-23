@@ -9,6 +9,7 @@ const pexels=(id:number)=>"https://images.pexels.com/photos/"+id+"/pexels-photo-
 const unsplash=(id:string)=>"https://images.unsplash.com/"+id+"?auto=format&fit=crop&q=78";
 export const homeVisuals={
  hero:unsplash("photo-1600585154340-be6161a56a0c"),
+ construction:unsplash("photo-1504307651254-35680f356dfd"),
  warm:unsplash("photo-1600585152915-d208bec867a1"),
  slate:unsplash("photo-1600585152220-90363fe7e115"),
  nature:unsplash("photo-1600566753190-17f0baa2a6c3"),
