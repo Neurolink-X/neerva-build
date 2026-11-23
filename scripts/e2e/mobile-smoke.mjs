@@ -108,7 +108,7 @@ async function main(){
     assert.equal(await photo.getAttribute("aria-pressed"),"true","photo editor resumes without a reload");
     // Tested road-correct 18x50 PlanModel: one source for geometry, 3D and paint quantities.
     await page.goto(base+"/design-studio/road-planner",{waitUntil:"networkidle"});
-    const roadPlan=page.getByRole("img",{name:/Road at top: N side/});
+    const roadPlan=page.getByRole("img",{name:/Road on N side/});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
     assert.equal(await page.getByText("These 2 options are mirror arrangements").count(),1,"do not invent a third design");
     await page.getByRole("button",{name:/Parking right/}).click();
@@ -118,7 +118,7 @@ async function main(){
     assert.equal(await floorToggle.getAttribute("aria-pressed"),"true","G+1 levels must switch");
     const roadSelector=page.getByLabel("Road along which edge?");
     await roadSelector.selectOption("E");
-    assert.equal(await page.getByRole("img",{name:/Road at top: E side/}).count(),1,"east-side road is still the entry edge");
+    assert.equal(await page.getByRole("img",{name:/Road on E side/}).count(),1,"east-side road is still the entry edge");
     const plotInputs=page.locator(".nroad-controls input[type=number]");
     await plotInputs.nth(0).fill("15");
     await plotInputs.nth(1).fill("30");
@@ -127,7 +127,7 @@ async function main(){
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-impossible-15x30.png"),fullPage:true,animations:"disabled"});
     await plotInputs.nth(0).fill("18");
     await plotInputs.nth(1).fill("50");
-    await page.getByRole("img",{name:/Road at top: E side/}).waitFor();
+    await page.getByRole("img",{name:/Road on E side/}).waitFor();
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"networkidle"});

@@ -5,7 +5,8 @@ import Link from "next/link";
 import {generateRoadPlans} from "@/modules/studio/road-generator";
 import {planMetrics,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
-import {RoadPlanDiagram,RoadElevation} from "./road-plan-diagram";
+import {RoadElevation} from "./road-plan-diagram";
+import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 const Building3D=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{
  ssr:false,loading:()=> <p role="status" className="nroad-loading">Loading plan-matched 3D viewer… The 2D plan is available immediately.</p>
 });
@@ -33,7 +34,7 @@ export function RoadPlanWorkbench(){
   <nav className="nroad-nav" aria-label="House planner navigation"><Link href="/design-studio/workbench">← {str("Previous workbench","पुराना प्लानर")}</Link>
    <span>NEERVA BUILD · PLANMODEL</span><button type="button" onClick={()=>setHindi(x=>!x)}>{hindi?"English":"हिन्दी"}</button></nav>
   <header className="nroad-hero">
-   <span className="nroad-kicker">ROAD-FIRST · TESTED CONCEPT GENERATOR</span>
+   <span className="nroad-kicker">ROAD-FIRST · DRAFT CONCEPT GENERATOR</span>
    <h1>{str("A house plan that starts at your road.","सड़क के अनुसार घर का नक्शा।")}</h1>
    <p>{str("Enter your plot frontage, road direction and household requirements. See the same rooms in 2D, 3D and an approximate quantity view.",
     "प्लॉट की चौड़ाई, सड़क और कमरों की जानकारी भरें। एक ही प्लान को 2D, 3D और सामग्री अनुमान में देखें।")}</p>
@@ -68,7 +69,7 @@ export function RoadPlanWorkbench(){
      <p>{str("Try G+1, fewer bedrooms, or review parking and setbacks. We do not shrink rooms below minimums to fabricate a fit.",
        "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>
     </section>:<>
-     <div className="nroad-head nroad-choices"><h2>{str("Validated concept options","जाँचे गए कॉन्सेप्ट")}</h2><span>{result.plans.length} mirrored entry arrangements</span></div>
+     <div className="nroad-head nroad-choices"><h2>{str("Geometry-checked draft options","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} mirrored entry arrangements</span></div>
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=><button key={v.id} type="button" aria-pressed={v.id===plan.id}
        onClick={()=>{setChosen(i);setFloor(0)}}><strong>{i+1}. {v.variant==="parking-left"?"Parking left":"Parking right"}</strong>
        <span>{v.score.toFixed(0)}/90 concept score</span></button>)}</div>
@@ -77,7 +78,7 @@ export function RoadPlanWorkbench(){
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{i===0?"Ground floor":"First floor"}</button>)}
      </div>
-     <RoadPlanDiagram plan={plan} floor={floor}/>
+     <OrientedPlanDrawing plan={plan} floor={floor}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Touch orbit · concept-only</span></div>
      {design&&(threeReady?<Building3D key={plan.id} design={design} colour={shade.main} planModel={plan}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The legacy viewer simplifies wall thickness and stair construction; it is not verified CAD/BIM.</p>

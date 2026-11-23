@@ -26,7 +26,7 @@ export function studioDesignFromPlan(p:PlanModel):StudioDesign{
   bathrooms:p.rooms.filter(r=>r.kind==="bath").length,
   parking:!!p.parking,hasCourtyard:false,roof:"flat-rcc",
   layout:{version:1,rooms,wallThicknessFt:p.walls.internalFt,wallHeightFt:p.walls.heightFt,parapetHeightFt:p.walls.parapetFt},
-  elevation:{mass:p.facade.kit,surfaces:{
+  elevation:{mass:p.facade.kit+"--"+p.facade.massing,surfaces:{
     main:p.facade.main,accent:p.facade.accent,cladding:"#756a59",railing:"#33453f",
     gate:"#3f4b44",frame:"#384c48",boundary:"#d4d5cb"
    },finishes:["smooth"],viewModes:["day","evening"]},

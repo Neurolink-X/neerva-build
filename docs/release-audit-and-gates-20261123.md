@@ -13,7 +13,7 @@
 
 ## Verified blockers before changing code
 1. Three incompatible planning systems remain: 24-design library, workbench, road-first PlanModel, plus plot-fit SVG. No single authoritative plan yet.
-2. PlanModel explicitly stores N/E/S/W as metadata; 2D plots all orientations with the road at top. No real compass transform shared across 2D/3D/elevation.
+2. PlanModel explicitly stores N/E/S/W as metadata; 2D plots all orientations with the road at top. The earlier source lacked a real compass transform; PR #21 now introduces one canonical `src/modules/studio/plan-coordinate.ts` used by 2D/3D. Remaining detail consistency still requires QA.
 3. 18×50 ground-floor 2BHK is rejected. 15×30, 20×40, 25×40, 30×40, 30×50, 40×60 have no verified candidate families.
 4. Two mirror variants only; no third topologically distinct plan. Do not claim 24 validated distinct designs.
 5. Existing 3D has approximate slab, stairs and parapet; facade SVG is conceptual, not engineered.
@@ -32,3 +32,6 @@
 - Gate F: customer/dealer/admin/RBAC/PWA and 360px/AA/Lighthouse/e2e gates; screenshot evidence and preview approval.
 
 **Fail closed:** a failed validation stays draft; an absent backend stays unconfigured; noindex remains on preview. Production merge requires explicit user approval.
+
+## Combined-branch reconciliation
+PR #22 deliberately reuses PR #21's canonical `plan-coordinate.ts`; the duplicate `orientation.ts` helper is omitted. Additional tests assert road-edge geometry for both gates in N/E/S/W and reject invalid site dimensions. Future phases remain not approved for publication.
