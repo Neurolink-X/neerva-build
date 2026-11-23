@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
+import {publicIndexingEnabled} from "@/modules/seo/indexing";
 import { articles } from "@/modules/blog/articles";
 import { catalogCategories } from "@/modules/catalog/catalog";
 import { demoProducts } from "@/modules/catalog/marketplace";
 import { studioDesigns } from "@/modules/studio/library";
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  if(!publicIndexingEnabled(process.env))return [];
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   return [
     { url: siteUrl, changeFrequency: "weekly", priority: 1 },

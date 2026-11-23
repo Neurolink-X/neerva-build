@@ -24,3 +24,35 @@
 @media(max-width:900px){.catalog-content,.brand-directory,.quote-page-content,.calculator-page-content{padding-inline:6vw}.product-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.studio-workspace{grid-template-columns:250px minmax(0,1fr)}.visualizer-layout{grid-template-columns:280px minmax(0,1fr)}.elevation-stage{min-height:450px}.elevation-svg{min-height:350px}}
 @media(max-width:680px){.page-hero{padding:52px 20px 42px}.page-hero>p{font-size:12px}.catalog-content,.brand-directory,.quote-page-content,.calculator-page-content{padding-inline:20px}.catalog-categories h2,.catalog-products-title h2{font-size:29px}.catalog-toolbar{grid-template-columns:1fr 1fr}.catalog-search{grid-column:1/-1}.product-grid{grid-template-columns:1fr}.product-card-art{height:125px}.category-detail-head,.product-detail{grid-template-columns:1fr;gap:20px}.category-detail-head{margin:0 20px}.product-detail-wrap{padding:25px 20px 50px}.product-detail-art{min-height:220px}.product-detail-copy h1{font-size:38px}.brand-directory-grid{grid-template-columns:1fr 1fr}.quote-page-content,.calculator-page-content{grid-template-columns:1fr;gap:12px}.studio-app{padding-inline:12px}.studio-toolbar{height:53px}.studio-save-label{display:none}.studio-workspace{grid-template-columns:1fr}.studio-controls{position:static;order:0;padding:15px}.plan-editor{order:1;padding:13px}.preset-grid{grid-template-columns:repeat(4,1fr)}.preset-button{font-size:8px;padding:8px 3px}.layout-choice-list{grid-template-columns:repeat(3,minmax(0,1fr))}.layout-choice{padding:8px}.layout-choice strong{font-size:8px}.layout-choice small{font-size:7px}.studio-controls h2{font-size:18px}.plan-editor-heading h1{font-size:21px}.plan-canvas-wrap{min-height:310px;height:45vh}.plan-room-label{font-size:2.6px}.plan-room-dim{font-size:2px}.visualizer-app{padding-inline:12px}.visualizer-topbar{height:53px;font-size:8px}.visualizer-topbar span{display:none}.visualizer-heading{padding:35px 10px 24px}.visualizer-heading h1{font-size:41px}.visualizer-layout{grid-template-columns:1fr}.visualizer-controls{grid-template-columns:1fr}.visualizer-controls section{padding:14px}.elevation-presets{grid-template-columns:repeat(4,1fr)}.elevation-choice{padding:6px}.elevation-choice strong{font-size:7px}.elevation-choice small{font-size:6px}.elevation-stage{min-height:350px;padding:10px}.elevation-svg{min-height:280px}.elevation-stage-footer{flex-wrap:wrap}.home-visualizer-link{margin-left:0}.site-footer{padding:22px 20px;grid-template-columns:1fr 1fr}.site-footer nav{grid-column:1/-1;justify-content:flex-start;flex-wrap:wrap}.site-footer small{grid-column:1/-1}}
 @media print{.site-header,.site-footer,.studio-toolbar,.studio-controls,.plan-editor-actions,.zoom-tools,.visualizer-controls,.visualizer-topbar,.visualizer-heading,.elevation-stage-footer button,.studio-disclaimer{display:none!important}.design-studio-page,.visualizer-page{background:#fff}.studio-workspace{display:block}.plan-editor{border:0}.plan-canvas-wrap{height:80vh;border:0}.visualizer-app{padding:0}.elevation-stage{border:0;height:90vh}}
+
+
+/* Launch foundation: readable forms and thumb-reachable PWA install experience */
+.rfq-form-grid label,.rfq-form-title small,.rfq-privacy,.rfq-status,.rfq-unavailable{font-size:clamp(14px,1.5vw,16px);line-height:1.55}
+.rfq-form-grid input,.rfq-form-grid select{min-height:44px;height:46px;font-size:16px}
+.account-access-card{padding:clamp(16px,3vw,32px);background:#fffefa;border:1px solid #dbe2d8;border-radius:18px}
+.account-access-card h2{font-size:clamp(26px,3.5vw,34px)}
+.account-mode-switch{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
+.account-mode-switch button{min-height:44px;border:1px solid #a3b6a7;border-radius:10px;padding:10px 17px;background:#fff;color:#294636;font-size:16px}
+.account-mode-switch button.active{background:#294636;color:white}
+.account-auth-form{display:grid;gap:17px}
+.account-auth-form label{display:grid;gap:8px;font-size:16px}
+.account-auth-form input{width:100%;min-height:48px;padding:10px 12px;border-radius:10px;border:1px solid #9eafa0;background:white;font-size:16px}
+.account-auth-form button{min-height:48px}
+.account-feedback{padding:13px;margin:15px 0;border-radius:10px}
+.account-feedback.error{color:#8a2d1d;background:#ffede8}
+.account-feedback.success{color:#20533b;background:#e8f3e8}
+.account-dashboard-links{display:grid;gap:10px;margin:18px 0}
+.account-dashboard-links a{display:flex;min-height:44px;align-items:center;color:#9c462e;font-weight:700}
+.neerva-install-banner{position:fixed;z-index:1000;bottom:max(12px,env(safe-area-inset-bottom));left:12px;right:12px;width:min(470px,calc(100vw - 24px));margin-left:auto;background:#fffefa;color:#20392e;border:1px solid #b9c8b9;border-radius:16px;box-shadow:0 12px 40px #152b2440;padding:14px 16px;display:flex;justify-content:space-between;gap:14px;align-items:center}
+.neerva-install-banner strong{font-size:15px}
+.neerva-install-banner p{font-size:13px;line-height:1.4;margin:5px 0 0}
+.neerva-install-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.neerva-install-actions button{background:#244537;color:#fff;font-size:14px;min-height:44px;padding:9px 12px;border:0;border-radius:10px;cursor:pointer}
+.neerva-install-actions button.neerva-install-skip{background:#f2f3ed;color:#284536;border:1px solid #c9d3c9}
+@media(max-width:420px){.neerva-install-banner{flex-direction:column;align-items:stretch}.neerva-install-actions button{flex:1}}
+
+/* Consent controls retain native checkbox size and 44px tap hit area. */
+.rfq-consent,.neerva-account-consent{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:12px;margin:18px 0;font-size:15px!important;line-height:1.6!important;color:#274032}
+.rfq-consent input[type=checkbox],.account-auth-form .neerva-account-consent input[type=checkbox]{flex:none;width:20px;height:20px;min-height:20px;margin:3px 0 0;accent-color:#254538}
+.rfq-consent a,.neerva-account-consent a{text-decoration:underline;color:#914a2c}
+.rfq-consent:focus-within,.neerva-account-consent:focus-within{outline:2px solid #b66f42;outline-offset:5px;border-radius:4px}

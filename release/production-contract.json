@@ -127,7 +127,7 @@
   "protectedGitBlobs": {
     "src/app/api/orders/route.ts": "788fa4382600a4cdf422bfb4b7b047333db7641e",
     "src/modules/orders/backend.ts": "6b88957c2e4892ce3dc8381e335117ccde5349c5",
-    "src/modules/identity/server-auth.ts": "c6564ff9aca670fbd4d8cb200729eb4e0bfd1d08",
+    "src/modules/identity/server-auth.ts": "de3afb321bdbb51fe51fe83a89523cc416e83674",
     "src/app/api/admin/catalog/route.ts": "a2592ec29b8d0da150425802451e7909d547c64e",
     "src/app/api/admin/pricing/route.ts": "e06c3bf4b1ac03aac78dae022178bc6673ab46c8",
     "src/app/api/admin/rfqs/route.ts": "114511d29e48a7b644fd5d16722af0bab4284340",

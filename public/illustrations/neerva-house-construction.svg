@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" role="img" aria-label="Original illustrative Neerva house planning concept">
+<defs>
+ <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#9ed0e6"/><stop offset="1" stop-color="#f6eedf"/></linearGradient>
+ <linearGradient id="earth" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#91a68b"/><stop offset="1" stop-color="#6b836a"/></linearGradient>
+ <linearGradient id="wall" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#faf5e9"/><stop offset="1" stop-color="#cfcac0"/></linearGradient>
+ <linearGradient id="stone" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ada8a0"/><stop offset="1" stop-color="#736e66"/></linearGradient>
+ <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#548199"/><stop offset=".48" stop-color="#1f4c64"/><stop offset="1" stop-color="#12364b"/></linearGradient>
+ <filter id="softShadow" x="-20%" y="-20%" width="140%" height="160%"><feGaussianBlur stdDeviation="26"/></filter>
+</defs>
+<rect width="1600" height="1100" fill="url(#sky)"/>
+<circle cx="1310" cy="160" r="85" fill="#fff4d7" opacity=".68"/>
+<path d="M0 670 Q300 606 610 674 T1600 650 V1100 H0Z" fill="url(#earth)"/>
+<path d="M0 858 L1600 770 V1100 H0Z" fill="#b5b2a8"/>
+<path d="M120 1100L660 790 1380 800 1600 1100Z" fill="#d2cdc1" opacity=".8"/>
+<ellipse cx="840" cy="837" rx="650" ry="112" fill="#1a241f" opacity=".27" filter="url(#softShadow)"/>
+
+<!-- Same geometry before completion: concrete, blockwork and scaffold -->
+<path d="M270 362 L1050 298 1310 415 1310 820 287 885Z" fill="#918881" stroke="#6a635f" stroke-width="5"/>
+<path d="M290 362 L1090 322 1218 393 1204 787 304 849Z" fill="#c4afa0" stroke="#9f9185" stroke-width="8"/>
+<path d="M1090 322L1218 393 1204 787 1094 747Z" fill="#93857d"/>
+<path d="M255 358 L1054 286 1332 385 1318 423 1075 346 261 409Z" fill="#7d7a73"/>
+<path d="M261 409L1075 346 1318 423" fill="none" stroke="#585752" stroke-width="14"/>
+<path d="M303 598 L1207 551 1252 580 1250 627 300 670Z" fill="#88847b"/>
+<path d="M290 633L1237 590" stroke="#615f58" stroke-width="11"/>
+<!-- Unfilled window and door apertures -->
+<path d="M383 421 L690 402 690 573 383 589Z" fill="#3e3832" stroke="#9c8e7d" stroke-width="16"/>
+<path d="M757 388 L1058 371 1058 553 757 568Z" fill="#413c37" stroke="#9c8e7d" stroke-width="17"/>
+<path d="M377 674 L682 657 682 826 377 845Z" fill="#3c3632" stroke="#9c8e7d" stroke-width="18"/>
+<path d="M793 654 L1016 642 1016 810 793 823Z" fill="#413a35" stroke="#9c8e7d" stroke-width="16"/>
+<path d="M1091 623 L1180 615 1180 787 1091 799Z" fill="#5b534d"/>
+<!-- Architectural brick bonds / rough surfaces -->
+<g stroke="#896d5d" stroke-width="3" opacity=".7">
+<path d="M309 457L377 454 M310 486L377 483 M310 515L376 513 M309 543L376 540 M309 575L377 572"/>
+<path d="M694 437L753 432 M695 466L754 462 M696 495L754 490 M697 524L755 520"/>
+<path d="M1068 424L1180 465 M1068 458L1180 499 M1068 492L1180 533"/>
+<path d="M310 703L375 700 M310 733L377 730 M310 763L376 760 M310 793L376 790"/>
+<path d="M689 706L793 699 M688 734L794 727 M688 761L794 754 M688 790L794 784"/>
+</g>
+<!-- Rebar above slab -->
+<g stroke="#584c48" stroke-width="8"><path d="M368 370L364 277 M594 345L591 252 M830 325L828 232 M1059 307L1059 223"/></g>
+<!-- Galvanized scaffold and bracing -->
+<g fill="none" stroke="#caa34f" stroke-width="10" stroke-linecap="round" opacity=".93">
+<path d="M324 297L324 903 M644 263L644 860 M956 241L956 833 M1264 351L1264 871"/>
+<path d="M270 455L1300 410 M275 625L1300 592 M275 797L1300 767"/>
+<path d="M322 455L644 625 M644 453L323 625 M644 625L956 799 M956 592L645 800 M956 410L1264 590 M1264 412L956 592"/>
+</g>
+<!-- Site rubble and tools -->
+<path d="M258 889 L340 883 380 933 300 950Z" fill="#a59889"/>
+<path d="M1170 858 L1240 846 1294 902 1185 922Z" fill="#a48c78"/>
+<g fill="#84776b"><ellipse cx="240" cy="936" rx="62" ry="16"/><ellipse cx="1285" cy="918" rx="73" ry="19"/><ellipse cx="1380" cy="963" rx="81" ry="20"/></g>
+<path d="M420 1065L720 875L938 867" stroke="#8e8a80" stroke-width="16" fill="none" stroke-dasharray="44 20"/>
+<path d="M280 903 L1290 833" stroke="#a79c8a" stroke-width="9"/>
+</svg>

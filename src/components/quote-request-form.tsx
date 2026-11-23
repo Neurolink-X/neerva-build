@@ -1,106 +1,75 @@
 "use client";
+import Link from "next/link";
+import {useEffect,useRef,useState,type FormEvent} from "react";
+import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 
-import Script from "next/script";
-import { useEffect, useRef, useState, type FormEvent } from "react";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (element: HTMLElement, options: { sitekey: string; callback: (token: string) => void; "expired-callback": () => void; "error-callback": () => void }) => string;
-      reset: (widgetId?: string) => void;
-      remove: (widgetId: string) => void;
-    };
+const supabase=createNeervaBrowserClient();
+const intakeEnabled=process.env.NEXT_PUBLIC_RFQ_INTAKE_ENABLED==="true";
+type Message={kind:"success"|"error";text:string;reference?:string;details?:string[]};
+export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defaultMaterial=""}:{defaultCity:string;defaultCategory?:string;defaultMaterial?:string}){
+ const requestKey=useRef<string|null>(null);
+ const [verified,setVerified]=useState(false),[ready,setReady]=useState(false),[busy,setBusy]=useState(false);
+ const [message,setMessage]=useState<Message|null>(null);
+ useEffect(()=>{
+  if(!supabase)return;
+  let active=true;
+  const apply=(user:{email_confirmed_at?:string|null}|null|undefined)=>{if(active){setVerified(Boolean(user?.email_confirmed_at));setReady(true)}};
+  void supabase.auth.getSession().then(({data})=>apply(data.session?.user??null)).catch(()=>{if(active)setReady(true)});
+  const {data:listener}=supabase.auth.onAuthStateChange((_event,session)=>apply(session?.user));
+  return()=>{active=false;listener.subscription.unsubscribe()};
+ },[]);
+ async function submit(event:FormEvent<HTMLFormElement>){
+  event.preventDefault();if(!supabase||busy||!verified||!intakeEnabled)return;
+  const element=event.currentTarget,form=new FormData(element);
+  const session=await supabase.auth.getSession();
+  const token=session.data.session?.access_token;
+  if(!token||!session.data.session?.user.email_confirmed_at){
+   setVerified(false);setMessage({kind:"error",text:"Please verify your email and sign in again."});return;
   }
-}
-
-const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-
-export function QuoteRequestForm({ defaultCity, defaultCategory = "aggregates", defaultMaterial = "" }: { defaultCity: string; defaultCategory?: string; defaultMaterial?: string }) {
-  const captchaElement = useRef<HTMLDivElement>(null);
-  const widgetId = useRef<string | null>(null);
-  const idempotencyKey = useRef<string | null>(null);
-  const [scriptReady, setScriptReady] = useState(false);
-  const [token, setToken] = useState("");
-  const [status, setStatus] = useState<{ kind: "success" | "error"; message: string; reference?: string; details?: string[] } | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!scriptReady || !siteKey || !captchaElement.current || !window.turnstile || widgetId.current) return;
-    widgetId.current = window.turnstile.render(captchaElement.current, {
-      sitekey: siteKey,
-      callback: setToken,
-      "expired-callback": () => setToken(""),
-      "error-callback": () => setToken(""),
-    });
-    return () => {
-      if (widgetId.current && window.turnstile) window.turnstile.remove(widgetId.current);
-      widgetId.current = null;
-    };
-  }, [scriptReady]);
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!token) {
-      setStatus({ kind: "error", message: "Complete the security check before submitting." });
-      return;
-    }
-    setBusy(true);
-    setStatus(null);
-    const formElement = event.currentTarget;
-    const form = new FormData(event.currentTarget);
-    const requestedDate = String(form.get("requestedDate") ?? "");
-    idempotencyKey.current ??= crypto.randomUUID();
-    const payload = {
-      idempotencyKey: idempotencyKey.current,
-      categorySlug: String(form.get("categorySlug")),
-      materialDescription: String(form.get("materialDescription")),
-      quantity: Number(form.get("quantity")),
-      unit: String(form.get("unit")),
-      city: String(form.get("city")),
-      pincode: String(form.get("pincode")),
-      ...(requestedDate ? { requestedDate } : {}),
-      contactName: String(form.get("contactName")),
-      phone: String(form.get("phone")),
-      turnstileToken: token,
-    };
-    try {
-      const response = await fetch("/api/rfqs", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const result = await response.json().catch(() => null) as { requestId?: string; error?: string; reference?: string; fields?: { field: string; message: string }[] } | null;
-      if (!response.ok) {
-        setStatus({ kind: "error", message: result?.error ?? "We couldn’t send this request. Your details are still here—please retry shortly.", reference: result?.reference, details: result?.fields?.map((field) => field.message) });
-        return;
-      }
-      setStatus({ kind: "success", message: "Your quote request was received. Keep this reference if you contact support.", reference: result?.requestId });
-      formElement.reset();
-      idempotencyKey.current = null;
-    } catch {
-      setStatus({ kind: "error", message: "We couldn’t reach the quote service. Your details are still here—check your connection and retry." });
-    } finally {
-      setBusy(false);
-      setToken("");
-      if (widgetId.current) window.turnstile?.reset(widgetId.current);
-    }
-  }
-
-  return (
-    <form className="rfq-form" onSubmit={submit}>
-      {siteKey && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onLoad={() => setScriptReady(true)} />}
-      <div className="rfq-form-title"><span>QUOTE REQUEST</span><small>Prices are shared privately by eligible dealers.</small></div>
-      <div className="rfq-form-grid">
-        <label>Material category<select name="categorySlug" defaultValue={defaultCategory}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical / hardware</option></select></label>
-        <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} defaultValue={defaultMaterial} placeholder="Type, grade, size or other details" /></label>
-        <label>Quantity<input name="quantity" required type="number" min="0.001" step="0.001" max="1000000" placeholder="e.g. 1" /></label>
-        <label>Unit<select name="unit" defaultValue="truck"><option value="truck">Truck</option><option value="tonne">Tonne</option><option value="cubic_metre">Cubic metre</option><option value="bag">Bag</option><option value="piece">Piece</option><option value="bundle">Bundle</option><option value="kg">Kilogram</option><option value="quintal">Quintal</option></select></label>
-        <label>City<input name="city" required minLength={2} maxLength={80} defaultValue={defaultCity} placeholder="Your delivery city" /></label>
-        <label>Pincode<input name="pincode" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} placeholder="6-digit pincode" /></label>
-        <label>Preferred delivery date (optional)<input name="requestedDate" type="date" min={new Date().toLocaleDateString("en-CA")} /></label>
-        <label>Your name<input name="contactName" required minLength={2} maxLength={100} autoComplete="name" placeholder="Name" /></label>
-        <label>Mobile number<input name="phone" required type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} autoComplete="tel-national" placeholder="10-digit mobile number" /></label>
-      </div>
-      {siteKey ? <div ref={captchaElement} className="turnstile-wrap" /> : <p className="rfq-unavailable">Secure enquiries are not configured yet. No request will be sent or stored.</p>}
-      {status && <div className={`rfq-status ${status.kind}`} role={status.kind === "error" ? "alert" : "status"}><p>{status.message}</p>{status.details && status.details.length > 0 && <ul>{status.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>}{status.reference && <small>Reference: {status.reference}{status.kind === "error" ? ". Share it with support if this continues." : ""}</small>}</div>}
-      <button className="button button-dark rfq-submit" type="submit" disabled={!siteKey || busy}>{busy ? "Sending securely…" : status?.kind === "error" ? "Try again →" : "Request dealer quotes →"}</button>
-      <small className="rfq-privacy">Your contact details are used only to respond to this request. Do not enter payment details here.</small>
-    </form>
-  );
+  setBusy(true);setMessage(null);
+  requestKey.current??=crypto.randomUUID();
+  const requestedDate=String(form.get("requestedDate")??"");
+  const privacyAccepted=form.get("privacyAccepted")==="yes";
+  const body={
+   idempotencyKey:requestKey.current,categorySlug:String(form.get("categorySlug")??""),
+   materialDescription:String(form.get("materialDescription")??""),
+   quantity:Number(form.get("quantity")),unit:String(form.get("unit")??""),
+   city:String(form.get("city")??""),pincode:String(form.get("pincode")??""),
+   ...(requestedDate?{requestedDate}:{}),
+   contactName:String(form.get("contactName")??""),phone:String(form.get("phone")??""),privacyAccepted
+  };
+  try{
+   const response=await fetch("/api/rfqs",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify(body),cache:"no-store"});
+   const result=await response.json().catch(()=>null) as {requestId?:string;error?:string;reference?:string;fields?:{message:string}[]}|null;
+   if(!response.ok){
+    setMessage({kind:"error",text:result?.error??"Request not saved. Retry safely.",reference:result?.reference,details:result?.fields?.map(f=>f.message)});
+   }else if(!result?.requestId){
+    setMessage({kind:"error",text:"Request status could not be confirmed. Keep the form and retry."});
+   }else{
+    setMessage({kind:"success",text:"Your material request was securely recorded. No dealer offer or delivery is guaranteed yet.",reference:result.requestId});
+    element.reset();requestKey.current=null;
+   }
+  }catch{setMessage({kind:"error",text:"Network issue. Your details remain in the form; retry with the same request reference."})}
+  finally{setBusy(false)}
+ }
+ return <form className="rfq-form" onSubmit={submit}>
+  <div className="rfq-form-title"><span>PRIVATE MATERIAL REQUEST</span><small>Only verified accounts can submit. Dealers are not yet onboarded.</small></div>
+  <div className="rfq-form-grid">
+   <label>Material category<select name="categorySlug" defaultValue={defaultCategory}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical / hardware</option></select></label>
+   <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} defaultValue={defaultMaterial} placeholder="Type, grade, size or exact item"/></label>
+   <label>Quantity<input name="quantity" required type="number" min="0.001" step="0.001" max="1000000" placeholder="Quantity"/></label>
+   <label>Unit<select name="unit" defaultValue="truck"><option value="truck">Truck</option><option value="tonne">Tonne</option><option value="cubic_metre">Cubic metre</option><option value="bag">Bag</option><option value="piece">Piece</option><option value="bundle">Bundle</option><option value="kg">Kilogram</option><option value="quintal">Quintal</option></select></label>
+   <label>Delivery city<input name="city" required minLength={2} maxLength={80} defaultValue={defaultCity}/></label>
+   <label>Delivery pincode<input name="pincode" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6}/></label>
+   <label>Preferred delivery date (optional)<input name="requestedDate" type="date"/></label>
+   <label>Contact name<input name="contactName" required minLength={2} maxLength={100} autoComplete="name"/></label>
+   <label>Contact mobile<input name="phone" required type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} autoComplete="tel-national"/></label>
+  </div>
+  <label className="rfq-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to submit my contact number and request details for private quotation handling. <Link href="/privacy">Read the privacy notice</Link>. No payment is requested.</span></label>
+  {!intakeEnabled&&<p className="rfq-unavailable" role="status">Quote intake is temporarily closed until verified dealers and support are available. This form will not transmit or store your details.</p>}
+  {!ready?<p role="status">Checking your secure account session…</p>:!verified?<p className="rfq-unavailable" role="status">Sign in with a verified email before submitting. <Link href="/account">Open account access →</Link></p>:<p className="rfq-privacy">Your request is stored privately, with duplicate protection and submission limits. It is not an order or payment confirmation.</p>}
+  {message&&<div className={`rfq-status ${message.kind}`} role={message.kind==="error"?"alert":"status"}><p>{message.text}</p>{message.details?.length?<ul>{message.details.map(item=><li key={item}>{item}</li>)}</ul>:null}{message.reference&&<small>Reference: {message.reference}</small>}</div>}
+  <button className="button button-dark rfq-submit" type="submit" disabled={!intakeEnabled||!ready||!verified||busy}>{!intakeEnabled?"Requests not open yet":busy?"Sending securely…":"Submit private request →"}</button>
+  <small className="rfq-privacy">Do not enter bank/card details. No prices, goods, or availability are guaranteed.</small>
+ </form>;
 }

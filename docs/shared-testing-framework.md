@@ -1,7 +1,7 @@
 # Neerva shared release validation matrix
 
 **Scope:** All customer, contractor, dealer, dealer staff, admin and design studio flows.
-**Current infrastructure:** GitHub is authoritative for source. Dedicated Neerva database and staging credentials are NOT provisioned. Do not report database/E2E workflows as tested until deployment fixtures and approved data exist.
+**Current infrastructure:** GitHub is authoritative for source. Dedicated Neerva Supabase project `djgghisbkucprqiezrcn` exists with migrations 0001–0006. Vercel public auth URL/key are configured, but CI has no real account credentials and staging test accounts have NOT been validated. Never mark authenticated E2E as passed until genuine separate approved test identities have been exercised.
 
 | Layer | Purpose and acceptance | Evidence / automated gate | Status |
 |---|---|---|---|
@@ -10,9 +10,9 @@
 | Execution | Click material -> choose spec -> local planning list -> quote; choose wall colour -> original/preview | mobile-smoke.mjs runs 390 px interactive workflow | Automated local browser smoke |
 | Positive/negative | Correct quantity/grade, empty/full list, invalid inputs, storage failures, no fake price | planning-list.test.ts + interactive mobile smoke | Unit/browser |
 | Integration | Materials, basket, quotes, studio and existing routes still work | Next build and regression flow in protected PR CI | Partial |
-| Security | JWT authentication, dealer tenant isolation, admin checks, private price and images, RLS deny cross-tenant | role tests and unauthenticated API smoke; authenticated 2-tenant DB test pending | Block production until DB evidence |
+| Security | JWT authentication, dealer tenant isolation, admin checks, private price and images, RLS deny cross-tenant | role tests, SQL column grants/trigger introspection and unauthenticated API smoke; authenticated 2-tenant DB test pending | Block production until DB evidence |
 | Performance | Cached static assets, API timings, unnecessary roundtrips and real CWV | Mobile lab audit and instrumented staging/production, p75 LCP<=2.5s, INP<=200ms, CLS<=0.1 | Not measured on this PR |
-| Real E2E | Customer signup -> RFQ -> dealer offer -> order -> tracking; admin KYC/publish | Requires isolated staging auth, seeded two-tenant DB and protection-aware browser credentials | **Blocked: no Neerva DB** |
+| Real E2E | Customer signup -> verified RFQ -> dealer offer -> order -> tracking; admin KYC/publish | Requires isolated staging auth, two-tenant verified fixtures and protection-aware browser credentials | **BLOCKED: no verified test identities/dealer workflow** |
 | CI gates | npm ci -> lint -> strict TypeScript -> unit -> production build -> mobile browser smoke | ci.yml and mobile-regression.yml; branch protection is not available for this private repository on the connected GitHub plan; PR reviewers must verify BOTH, and Vercel production must stay gated | Implemented workflows; protection not verified |
 
 ## Source-of-truth rules
