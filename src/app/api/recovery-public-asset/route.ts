@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const rawLength=request.nextUrl.searchParams.get("length")??"4096";
   if (!allowed.has(name)||!/^(0|[1-9][0-9]{0,6})$/.test(rawOffset)||!/^[1-9][0-9]{0,4}$/.test(rawLength)) return NextResponse.json({error:"invalid request"},{status:400});
   const offset=Number(rawOffset),length=Number(rawLength);
-  if (length>4096) return NextResponse.json({error:"limit"},{status:400});
+  if (length>8190) return NextResponse.json({error:"limit"},{status:400});
   try {
     const upstream=await fetch("https://neerva-build.vercel.app/images/catalog/"+name,{cache:"no-store"});
     if(!upstream.ok) return NextResponse.json({error:"asset unavailable"},{status:502});
