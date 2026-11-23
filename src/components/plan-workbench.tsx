@@ -15,7 +15,7 @@ export function PlanWorkbench(){
  function update(key:keyof Brief,value:number|string|boolean){setBrief(prev=>({...prev,[key]:value}));setFloor(0);setSaved(null)}
  return <div className="catalog-page" style={{maxWidth:1450,margin:"auto",padding:"18px clamp(14px,3vw,46px) 80px"}}>
   <nav style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-   <Link href="/design-studio">← Design Studio</Link><button type="button" className="button button-outline" onClick={()=>setHindi(x=>!x)}>{hindi?"English":"हिंदी"}</button>
+   <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center"}}><Link href="/design-studio">← Design Studio</Link><Link href="/design-studio/road-planner" style={{fontWeight:800,color:"#a04b2a"}}>New: road-correct 18×50 planner →</Link></div><button type="button" className="button button-outline" onClick={()=>setHindi(x=>!x)}>{hindi?"English":"हिंदी"}</button>
   </nav>
   <header style={{margin:"30px 0"}}><span className="eyebrow">ORIGINAL PLAN-BASED CONCEPT</span><h1 style={{fontFamily:"Georgia,serif",fontSize:"clamp(32px,5vw,46px)"}}>{hindi?"प्लॉट से घर का नक्शा":"Design a concept for your plot."}</h1>
    <p>{hindi?"प्लॉट, कमरे, मंजिल चुनें। निर्माण से पहले वास्तुकार से पुष्टि करें।":"Choose dimensions, bedrooms and floors. Structural safety requires a licensed architect or engineer."}</p></header>
