@@ -16,6 +16,8 @@ const steps = ["Share your material list", "Dealers send itemized offers", "Comp
 export function HomeShell({ categories }: { categories: CatalogCategory[] }) {
   const [query, setQuery] = useState("");
   const [city, setCity] = useState("Kanpur");
+  const [language, setLanguage] = useState<"en" | "hi">("en");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [length, setLength] = useState("20");
   const [width, setWidth] = useState("40");
   const [unit, setUnit] = useState<"ft" | "m">("ft");
@@ -31,32 +33,38 @@ export function HomeShell({ categories }: { categories: CatalogCategory[] }) {
 
   return (
     <main>
-      <div className="topline"><span>Materials, planning and dealer quotes in one place</span><span>English <b>·</b> हिन्दी coming soon</span></div>
+      <div className="topline"><span>Materials, planning and dealer quotes in one place</span><span>Concept plans · itemised quotes · no invented rates</span></div>
       <header className="site-header">
         <a className="brand" href="#top" aria-label="NEERVA BUILD home"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></a>
         <nav className="desktop-nav" aria-label="Main navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/quotes">Bulk quotes</Link><Link href="/design-studio">Home studio</Link><Link href="/calculators">Calculators</Link><Link href="/blog">Guides</Link></nav>
-        <div className="header-actions"><label className="city-select"><span aria-hidden="true">⌖</span><select value={city} onChange={(event) => setCity(event.target.value)} aria-label="Choose city"><option>Kanpur</option><option>Noida</option><option>Other city</option></select></label><Link className="sign-in" href="/account">Sign in</Link><a className="button button-dark button-small" href="#quotes">Get a quote</a></div>
+        <div className="header-actions"><label className="city-select"><span aria-hidden="true">⌖</span><select value={city} onChange={(event) => setCity(event.target.value)} aria-label="Choose city"><option>Kanpur</option><option>Noida</option><option value="Other city">Check another city</option></select></label><button type="button" className="home-language" aria-label="Switch language" onClick={() => setLanguage(language === "en" ? "hi" : "en")}>{language === "en" ? "हिंदी" : "EN"}</button><Link className="home-cart" href="/basket" aria-label="Open material basket">▣</Link><Link className="sign-in" href="/account">Sign in</Link></div>
       </header>
 
-      <section className="hero" id="top">
+      <section className="hero home-v2-hero" id="top">
         <div className="hero-copy">
-          <div className="eyebrow"><span className="eyebrow-dot" /> BUILT FOR INDIAN BUILDERS & HOMEOWNERS</div>
-          <h1>Build better.<br /><span>Buy smarter.</span></h1>
-          <p>Compare materials, get clear dealer quotes and plan your home—without the guesswork.</p>
-          <form className="hero-search" action="/materials" method="get">
+          <div className="eyebrow"><span className="eyebrow-dot" /> {language === "en" ? "YOUR HOME. YOUR VISION." : "आपका घर, आपकी पसंद"}</div>
+          <h1>{language === "en" ? <>Plan your home.<br /><span>See it your way.</span></> : <>अपने घर का प्लान बनाएं।<br /><span>रंगों में देखें।</span></>}</h1>
+          <p>{language === "en" ? "Designs, colours and material quotes." : "घर के डिज़ाइन, रंग और सामग्री के कोटेशन।"}</p>
+          <div className="home-journeys">
+            <Link href="/design-studio" className="home-journey home-journey-primary"><span className="home-journey-icon" aria-hidden="true">⌂</span><span><strong>{language === "en" ? "Design my home" : "घर का डिज़ाइन बनाएं"}</strong><small>{language === "en" ? "Explore plans for your plot" : "अपने प्लॉट के लिए प्लान देखें"}</small></span><span aria-hidden="true">→</span></Link>
+            <div className="home-journey-pair">
+              <Link href="/design-studio/visualizer" className="home-journey"><span className="home-journey-icon" aria-hidden="true">◉</span><strong>{language === "en" ? "See it in my colours" : "अपने रंगों में देखें"}</strong><small>{language === "en" ? "Preview wall finishes" : "दीवारों के रंग देखें"}</small></Link>
+              <Link href="/quotes" className="home-journey"><span className="home-journey-icon" aria-hidden="true">▤</span><strong>{language === "en" ? "Get material quote" : "सामग्री का कोटेशन"}</strong><small>{language === "en" ? "Review delivered costs" : "पूरी लागत की जानकारी"}</small></Link>
+            </div>
+          </div>
+          <form className="hero-search home-v2-search" action="/materials" method="get">
             <span className="search-glyph" aria-hidden="true">⌕</span>
-            <input value={query} onChange={(event) => setQuery(event.target.value)} name="search" placeholder="Search steel, cement, bricks, pipes…" aria-label="Search construction materials" />
-            <button className="button button-orange" type="submit">Search <span aria-hidden="true">→</span></button>
+            <input value={query} onFocus={() => setShowSuggestions(true)} onChange={(event) => {setQuery(event.target.value);setShowSuggestions(true);}} name="search" placeholder={language === "en" ? "Search cement, TMT, bricks, pipes…" : "सीमेंट, सरिया, ईंट, पाइप खोजें…"} aria-label="Search construction materials" autoComplete="off" />
+            <button className="button button-orange" type="submit">{language === "en" ? "Search" : "खोजें"} <span aria-hidden="true">→</span></button>
           </form>
-          <div className="hero-meta"><span><i className="check-dot">✓</i> No made-up prices</span><span><i className="check-dot">✓</i> Dealer quotes itemized</span><span><i className="check-dot">✓</i> Start in {city === "Other city" ? "your city" : city}</span></div>
+          {showSuggestions && <div className="home-suggestions" aria-label="Popular material searches">{["cement","TMT","bricks","pipes"].map(term=><Link key={term} href={"/materials?search="+encodeURIComponent(term)} onClick={()=>setShowSuggestions(false)}>{term}</Link>)}</div>}
+          <div className="hero-meta"><span><i className="check-dot">✓</i> {language === "en" ? "Itemised quote terms" : "मदवार कोटेशन"}</span><span><i className="check-dot">✓</i> {language === "en" ? "Dealer status disclosed" : "डीलर की स्थिति स्पष्ट"}</span><span><i className="check-dot">✓</i> {language === "en" ? "Review before accepting" : "स्वीकारने से पहले जांचें"}</span></div>
+          {city === "Other city" && <p className="home-city-notice" role="status">Serviceability outside Kanpur is checked for each request. No delivery availability is guaranteed.</p>}
         </div>
-        <div className="hero-art" aria-label="Illustration of a home under construction">
+        <Link href="/design-studio/visualizer" className="hero-art home-v2-visual" aria-label="Open the home colour visualizer">
           <div className="sun" />
-          <div className="art-label"><span className="art-live-dot" /> PLAN WITH CONFIDENCE</div>
           <div className="building"><div className="roof" /><div className="floor floor-top"><i /><i /><i /></div><div className="floor floor-bottom"><i /><i /><i /></div><div className="door" /><div className="foundation" /></div>
-          <div className="art-note"><strong>One project.</strong><span>Every material, accounted for.</span></div>
-          <div className="art-spark spark-one">✳</div><div className="art-spark spark-two">✳</div>
-        </div>
+        </Link>
       </section>
 
       <section className="trust-strip" aria-label="Service principles"><div><span className="trust-icon">01</span><span><strong>Know what you’re buying</strong><small>Useful specifications, not vague listings</small></span></div><div><span className="trust-icon">02</span><span><strong>See the complete quote</strong><small>Material, freight and charges shown clearly</small></span></div><div><span className="trust-icon">03</span><span><strong>Stay in control</strong><small>Accept only after you review the terms</small></span></div></section>
@@ -74,7 +82,7 @@ export function HomeShell({ categories }: { categories: CatalogCategory[] }) {
 
       <section className="studio-section" id="studio"><div className="studio-visual"><div className="blueprint-grid" /><div className="blueprint-house"><div className="room room-one"><span>BEDROOM</span><b>12 ft × 11 ft</b></div><div className="room room-two"><span>LIVING</span><b>15 ft × 12 ft</b></div><div className="room room-three"><span>KITCHEN</span><b>9 ft × 8 ft</b></div><div className="room room-four"><span>COURTYARD</span><b>OPEN TO SKY</b></div><span className="dimension dimension-width">20 ft</span><span className="dimension dimension-height">40 ft</span></div><span className="blueprint-caption">CONCEPTUAL PLAN · 20 × 40 FT</span></div><div className="studio-copy"><div className="eyebrow">A HOME, BEFORE THE FIRST BRICK</div><h2>Compare different plans for the same plot.</h2><p>Explore curated layout concepts by plot size, room needs and orientation. Save options and ask a qualified professional to review them.</p><div className="studio-pills"><span>2D plan concepts</span><span>Multiple layouts</span><span>Professional review</span></div><p className="disclaimer">Conceptual design only. Final drawings, structural safety and local approvals require qualified professional review.</p><Link href="/design-studio" className="button button-dark">Explore the Home Studio <span>→</span></Link><Link href="/design-studio/visualizer" className="home-visualizer-link">Try wall colours, balcony glass and gate finishes →</Link></div></section>
 
-      <section className="section city-section"><div className="city-card"><div><div className="eyebrow">START LOCAL, STAY OPEN</div><h2>Building in {city === "Other city" ? "another city" : city}?</h2><p>City selection helps route enquiries. A delivery promise appears only when an approved dealer confirms stock, location and capacity.</p></div><div className="city-options"><button className={city === "Kanpur" ? "city-option selected" : "city-option"} onClick={() => setCity("Kanpur")}><span>Kanpur</span><small>Initial market</small></button><button className={city === "Noida" ? "city-option selected" : "city-option"} onClick={() => setCity("Noida")}><span>Noida</span><small>Next focus</small></button><button className={city === "Other city" ? "city-option selected" : "city-option"} onClick={() => setCity("Other city")}><span>Other city</span><small>Availability checked per request</small></button></div></div></section>
+      <section className="section city-section"><div className="city-card"><div><div className="eyebrow">START LOCAL, STAY OPEN</div><h2>Building in {city === "Other city" ? "another city" : city}?</h2><p>City selection helps route enquiries. A delivery promise appears only when an approved dealer confirms stock, location and capacity.</p></div><div className="city-options"><button className={city === "Kanpur" ? "city-option selected" : "city-option"} onClick={() => setCity("Kanpur")}><span>Kanpur</span><small>Initial market</small></button><button className={city === "Noida" ? "city-option selected" : "city-option"} onClick={() => setCity("Noida")}><span>Noida</span><small>Next focus</small></button><button className={city === "Other city" ? "city-option selected" : "city-option"} onClick={() => setCity("Other city")}><span>Check another city</span><small>Availability checked per request</small></button></div></div></section>
 
       <section className="footer-cta"><div><div className="eyebrow eyebrow-light">BUILDING SHOULD FEEL LESS UNCERTAIN</div><h2>Start with the full picture.</h2><p>Compare the material, delivery and site requirements before placing an order.</p></div><Link href="/materials" className="button button-orange">Explore materials <span>→</span></Link></section>
       <footer id="guides"><a className="brand brand-footer" href="#top"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></a><span>Build better. Buy smarter.</span><nav><a href="#materials">Materials</a><a href="#quotes">Quotes</a><a href="#studio">Home Studio</a><a href="#calculator">Calculator</a><Link href="/blog">Guides</Link></nav><small>© 2026 NEERVA BUILD · Prices and coverage appear only from verified current data.</small></footer>
