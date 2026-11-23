@@ -68,3 +68,29 @@
 @media(max-width:1100px){.site-footer{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}.site-footer nav{grid-column:1/-1}}
 @media(max-width:680px){.header-utility{gap:0}.header-install{font-size:11px;min-height:42px;padding:8px 10px}.site-footer{display:flex;flex-direction:column;align-items:stretch;gap:18px;padding:30px 20px 24px}.site-footer nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px 16px}.site-footer nav a{min-height:28px}.site-footer small{font-size:12px}}
 @media(max-width:360px){.header-install{font-size:10px;padding:7px}.site-footer nav{grid-template-columns:1fr 1fr}}
+
+/* Tablet header: collapse BEFORE nav links exceed the viewport; no silent horizontal clip. */
+.site-header{position:relative;min-width:0}
+.site-mobile-menu{display:none}
+@media(max-width:1100px){
+ .site-header{gap:12px}
+ .site-header .desktop-nav{display:none}
+ .site-mobile-menu{display:block;order:2;flex:none}
+ .site-mobile-menu summary{list-style:none;display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:44px;padding:9px 13px;border-radius:9px;border:1px solid #c6d3c5;background:#fff;color:#294935;font-size:13px;font-weight:800}
+ .site-mobile-menu summary::-webkit-details-marker{display:none}
+ .site-mobile-menu nav{position:absolute;right:15px;top:calc(100% - 2px);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;z-index:60;width:min(92vw,340px);max-height:75vh;overflow:auto;background:#fffefa;border:1px solid #d4ded4;box-shadow:0 18px 40px #17312638;border-radius:12px;padding:12px}
+ .site-mobile-menu nav a{min-height:44px;display:flex;align-items:center;padding:9px 10px;white-space:normal;font-weight:700;font-size:13px;color:#2b4938}
+ .site-mobile-menu nav a:focus-visible{outline:2px solid #b65c39}
+ .site-footer{min-width:0}
+}
+@media(max-width:680px){
+ .site-mobile-menu{order:0;margin-left:auto}
+ .site-header .header-utility{order:1;flex:0 0 auto}
+ .site-header .brand{flex-shrink:1;min-width:0;font-size:11px}
+ .site-mobile-menu summary{font-size:12px;padding:8px}
+ .site-header .header-quote{display:none}
+}
+@media(max-width:390px){
+ .site-mobile-menu summary{padding:7px 6px;font-size:11px}
+ .site-header .header-install{font-size:10px;padding:7px}
+}
