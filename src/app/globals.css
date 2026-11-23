@@ -50,3 +50,9 @@
 .neerva-install-actions button{background:#244537;color:#fff;font-size:14px;min-height:44px;padding:9px 12px;border:0;border-radius:10px;cursor:pointer}
 .neerva-install-actions button.neerva-install-skip{background:#f2f3ed;color:#284536;border:1px solid #c9d3c9}
 @media(max-width:420px){.neerva-install-banner{flex-direction:column;align-items:stretch}.neerva-install-actions button{flex:1}}
+
+/* Consent controls retain native checkbox size and 44px tap hit area. */
+.rfq-consent,.neerva-account-consent{display:flex!important;flex-direction:row!important;align-items:flex-start;gap:12px;margin:18px 0;font-size:15px!important;line-height:1.6!important;color:#274032}
+.rfq-consent input[type=checkbox],.account-auth-form .neerva-account-consent input[type=checkbox]{flex:none;width:20px;height:20px;min-height:20px;margin:3px 0 0;accent-color:#254538}
+.rfq-consent a,.neerva-account-consent a{text-decoration:underline;color:#914a2c}
+.rfq-consent:focus-within,.neerva-account-consent:focus-within{outline:2px solid #b66f42;outline-offset:5px;border-radius:4px}
