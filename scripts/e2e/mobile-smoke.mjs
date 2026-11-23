@@ -15,8 +15,8 @@ async function main(){
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:1,isMobile:v.w<=430,hasTouch:v.w<=430});
    const page=await ctx.newPage(),errors=[];
-   page.on("pageerror",error=>errors.push("uncaught: "+error.message));
-   page.on("console",message=>{if(message.type()==="error")errors.push("console: "+message.text().slice(0,180))});
+   page.on("pageerror",error=>errors.push("uncaught at "+new URL(page.url()).pathname+": "+error.message));
+   page.on("console",message=>{if(message.type()==="error")errors.push("console at "+new URL(page.url()).pathname+": "+message.text().slice(0,180))});
    for(const route of routes){
     const res=await page.goto(base+route,{waitUntil:"networkidle",timeout:40000});
     assert.equal(res?.status(),200,"HTTP "+route+" at "+v.w+"px");
