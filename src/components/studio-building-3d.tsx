@@ -87,13 +87,23 @@ export function StudioBuilding3D({design,colour,planModel}:{design:StudioDesign;
     }
    }
    const fenceH=.85;box(-width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(0,-.13+fenceH/2,depth/2,width,fenceH,.12,concrete);
-   const gateWidth=planModel?planModel.gate.widthFt*FT:Math.min(3,width*.65);
-   const gateX=planModel?xCoord(planModel.gate.xFt+planModel.gate.widthFt/2):0;
-   const leftWidth=gateX+width/2-gateWidth/2,rightWidth=width-leftWidth-gateWidth;
-   if(leftWidth>.01)box(-width/2+leftWidth/2,fenceH/2,-depth/2,leftWidth,fenceH,.14,concrete);
-   if(rightWidth>.01)box(width/2-rightWidth/2,fenceH/2,-depth/2,rightWidth,fenceH,.14,concrete);
-   box(gateX,fenceH*.47,-depth/2,gateWidth,fenceH*.94,.08,gateMat);
-   for(let i=0;i<7;i++)box(gateX-gateWidth/2+gateWidth*(i+.5)/7,fenceH*.48,-depth/2-.06,.028,fenceH*.86,.04,railingMat);
+   const gates=planModel?[
+    {start:planModel.gate.xFt,width:planModel.gate.widthFt},
+    {start:planModel.pedestrianGate.xFt,width:planModel.pedestrianGate.widthFt}
+   ].sort((a,b)=>a.start-b.start):[{start:(design.plot.widthFt-Math.min(3,width*.65)/FT)/2,width:Math.min(3,width*.65)/FT}];
+   let fenceCursor=0;
+   for(const gate of gates){
+    if(gate.start>fenceCursor+.01){
+     const len=(gate.start-fenceCursor)*FT;
+     box(xCoord((fenceCursor+gate.start)/2),fenceH/2,-depth/2,len,fenceH,.14,concrete);
+    }
+    const gw=gate.width*FT,gx=xCoord(gate.start+gate.width/2);
+    box(gx,fenceH*.47,-depth/2,gw,fenceH*.94,.08,gateMat);
+    for(let k=0;k<7;k++)box(gx-gw/2+gw*(k+.5)/7,fenceH*.48,-depth/2-.06,.028,fenceH*.86,.04,railingMat);
+    fenceCursor=gate.start+gate.width;
+   }
+   if(fenceCursor<design.plot.widthFt-.01)
+    box(xCoord((fenceCursor+design.plot.widthFt)/2),fenceH/2,-depth/2,(design.plot.widthFt-fenceCursor)*FT,fenceH,.14,concrete);
    box(0,-.26,0,width*1.8,.05,depth*1.8,material("#b4c7ad"),false);
    scene.add(new THREE.HemisphereLight("#ffffff","#78816d",2.2));const sun=new THREE.DirectionalLight("#fff1d7",2.4);sun.position.set(width,top+8,depth*.7);sun.castShadow=renderer.shadowMap.enabled;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-width*1.8;sun.shadow.camera.right=width*1.8;sun.shadow.camera.top=depth*1.8;sun.shadow.camera.bottom=-depth*1.8;sun.shadow.bias=-.001;scene.add(sun);
    const camera=new THREE.PerspectiveCamera(46,1,.04,300);

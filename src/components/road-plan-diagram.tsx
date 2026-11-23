@@ -30,7 +30,12 @@ export function RoadPlanDiagram({plan,floor=0}:{plan:PlanModel;floor?:number}){
     const r=rs.find(r=>r.id===o.roomId)!;const l=lineFor(o,r);
     return <g key={o.id}><line {...l} stroke={o.kind==="door"?"#b66b42":"#3186a0"} strokeWidth={o.kind==="door"?".65":".38"}/></g>;
    })}
-   {floor===0&&<g><line x1={plan.gate.xFt} y1="0" x2={plan.gate.xFt+plan.gate.widthFt} y2="0" stroke="#ba7748" strokeWidth=".85"/><text x={plan.gate.xFt+plan.gate.widthFt/2} y={-0.65} fontSize=".8" fontWeight="800" textAnchor="middle">CAR GATE</text></g>}
+   {floor===0&&<g>
+    <line x1={plan.gate.xFt} y1="0" x2={plan.gate.xFt+plan.gate.widthFt} y2="0" stroke="#ba7748" strokeWidth=".85"/>
+    <text x={plan.gate.xFt+plan.gate.widthFt/2} y={-0.65} fontSize=".8" fontWeight="800" textAnchor="middle">CAR GATE</text>
+    <line x1={plan.pedestrianGate.xFt} y1="0" x2={plan.pedestrianGate.xFt+plan.pedestrianGate.widthFt} y2="0" stroke="#2c7657" strokeWidth=".8"/>
+    <text x={plan.pedestrianGate.xFt+plan.pedestrianGate.widthFt/2} y={-0.65} fontSize=".7" fontWeight="800" textAnchor="middle">ENTRY</text>
+   </g>}
   </svg>
   <div className="nroad-legend"><span><i style={{background:"#b66b42"}}/>Door</span><span><i style={{background:"#3186a0"}}/>Window</span><span><i style={{background:"#d0ded9"}}/>Parking</span></div>
   <details><summary>Room dimensions and access details</summary>

@@ -16,6 +16,7 @@ export type PlanModel={
  walls:{externalFt:number;internalFt:number;heightFt:number;parapetFt:number};
  floors:number;rooms:Room[];openings:Opening[];
  gate:{side:"front";xFt:number;widthFt:number};
+ pedestrianGate:{side:"front";xFt:number;widthFt:number};
  parking:{roomId:string;clearWidthFt:number;clearDepthFt:number}|null;
  stairs:{roomIds:string[];note:string};
  balcony:{roomId:string}|null;
@@ -109,7 +110,13 @@ export function validatePlan(p:PlanModel):string[]{
  const ground=p.rooms.filter(r=>r.floor===0);
  const verandah=ground.find(r=>r.kind==="verandah");
  if(!verandah||!near(verandah.y,U.y))errors.push("Verandah not on road-facing front edge");
- if(p.gate.side!=="front"||p.gate.xFt<0||p.gate.xFt+p.gate.widthFt>w+EPS)errors.push("Road-side gate missing or invalid");
+ if(p.gate.side!=="front"||p.gate.xFt<0||p.gate.xFt+p.gate.widthFt>w+EPS)errors.push("Road-side car gate missing or invalid");
+ if(p.pedestrianGate.side!=="front"||p.pedestrianGate.xFt<0||p.pedestrianGate.widthFt<2.5||
+    p.pedestrianGate.xFt+p.pedestrianGate.widthFt>w+EPS)errors.push("Road-side pedestrian gate missing or invalid");
+ if(verandah&&(p.pedestrianGate.xFt<verandah.x-EPS||p.pedestrianGate.xFt+p.pedestrianGate.widthFt>verandah.x+verandah.w+EPS))
+  errors.push("Pedestrian gate must connect directly to front verandah");
+ if(Math.max(p.gate.xFt,p.pedestrianGate.xFt)<Math.min(p.gate.xFt+p.gate.widthFt,p.pedestrianGate.xFt+p.pedestrianGate.widthFt)-EPS)
+  errors.push("Car and pedestrian gates overlap");
  if(p.parking){const park=byId.get(p.parking.roomId);if(!park||park.kind!=="parking"||park.floor!==0||!near(park.y,U.y)||p.parking.clearWidthFt<8||p.parking.clearDepthFt<16)errors.push("Road parking invalid");}
  if(p.stairs.roomIds.length!==p.floors||p.stairs.roomIds.some(id=>byId.get(id)?.kind!=="stairs"))errors.push("Stair circulation missing floor");
  // Connectivity graph uses actual reciprocal door coordinates; mere wall-touching is insufficient.

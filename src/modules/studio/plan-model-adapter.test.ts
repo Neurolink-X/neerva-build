@@ -34,9 +34,13 @@ test("left and right parking variants send different real gate coordinates to th
  assert.ok(a&&b);
  assert.notEqual(a.gate.xFt,b.gate.xFt);
  assert.equal(a.gate.side,"front");assert.equal(b.gate.side,"front");
+ assert.notEqual(a.pedestrianGate.xFt,b.pedestrianGate.xFt);
  for(const p of [a,b]){
   const park=p.rooms.find(r=>r.id===p.parking?.roomId)!;
   assert.ok(p.gate.xFt>=park.x);
   assert.ok(p.gate.xFt+p.gate.widthFt<=park.x+park.w);
+  const entry=p.rooms.find(r=>r.kind==="verandah")!;
+  assert.ok(p.pedestrianGate.xFt>=entry.x&&p.pedestrianGate.xFt+p.pedestrianGate.widthFt<=entry.x+entry.w);
+  assert.ok(Math.max(p.gate.xFt,p.pedestrianGate.xFt)>=Math.min(p.gate.xFt+p.gate.widthFt,p.pedestrianGate.xFt+p.pedestrianGate.widthFt));
  }
 });

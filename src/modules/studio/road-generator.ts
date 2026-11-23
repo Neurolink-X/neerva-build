@@ -112,6 +112,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right"):PlanModel{
   variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide},
   setbacks:{...sb,verified:false},walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},
   floors:b.floors,rooms,openings,gate:parkingGate,
+  pedestrianGate:{side:"front",xFt:round(entry.x+(entry.w-3)/2),widthFt:3},
   parking:{roomId:"parking",clearWidthFt:gateParking.w,clearDepthFt:gateParking.d},
   stairs:{roomIds:b.floors===2?["stairs-g","stairs-1"]:["stairs-g"],
    note:"Staircase is a conceptual volume, NOT a checked tread/rise/headroom or fire escape."},

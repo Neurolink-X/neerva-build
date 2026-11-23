@@ -15,7 +15,7 @@ test("18×50 G 1BHK: two actually distinct road-front plans, car, gate, veranda,
   assert.equal(p.plot.widthFt*p.plot.depthFt,900);
   assert.equal(p.parking?.clearDepthFt,16);
   assert.ok((p.parking?.clearWidthFt??0)>=8);
-  assert.equal(p.gate.side,"front");assert.equal(p.rooms.find(r=>r.id==="verandah")?.y,0);
+  assert.equal(p.gate.side,"front");assert.equal(p.pedestrianGate.side,"front");assert.equal(p.rooms.find(r=>r.id==="verandah")?.y,0);
   assert.ok(p.rooms.some(r=>r.kind==="living"));
   assert.ok(p.rooms.some(r=>r.kind==="kitchen"));
   assert.ok(p.rooms.some(r=>r.kind==="stairs"));
