@@ -14,7 +14,6 @@ const baseRfqSchema = z.object({
   requestedDate: z.string().date().optional(),
   contactName: z.string().trim().min(2).max(100),
   phone: z.string().regex(/^[6-9][0-9]{9}$/),
-  turnstileToken: z.string().min(1).max(2048),
 }).strict();
 
 const allowedUnits: Record<string, readonly string[]> = {

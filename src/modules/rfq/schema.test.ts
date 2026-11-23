@@ -12,7 +12,6 @@ const validRequest = {
   pincode: "208001",
   contactName: "Asha Kumar",
   phone: "9876543210",
-  turnstileToken: "opaque-challenge-token",
 };
 
 test("valid quote request has a bounded, typed shape", () => {
