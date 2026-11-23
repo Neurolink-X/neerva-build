@@ -1,0 +1,18 @@
+.neerva-color-modes{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:22px auto 4px}
+.neerva-color-modes button{min-height:48px;border:1px solid #b5c5b6;border-radius:30px;padding:12px 22px;background:#fff;color:#354536;font-size:14px;font-weight:650;cursor:pointer}
+.neerva-color-modes button.active{color:white;border-color:#254738;background:#254738}
+.neerva-photo-stage{background:#f9faf6;min-width:0;gap:14px}
+.neerva-photo-stage h2{font-size:clamp(23px,2.8vw,35px);font-family:Georgia,serif;font-weight:400;margin:4px 0}
+.neerva-photo-stage>p{font-size:13px;line-height:1.6;color:#58675b}
+.neerva-photo-stage .nbd-photo{background:#fff;border:1px solid #d5e0d4;border-radius:16px;padding:16px;max-width:100%}
+.neerva-photo-stage .nbd-photo h2{font-size:20px}
+.neerva-photo-stage .nbd-photo label{display:grid;gap:9px;font-size:14px;font-weight:650;color:#354536;margin:12px 0}
+.neerva-photo-stage .nbd-photo input[type="file"]{padding:12px;min-width:0;max-width:100%;border:1px dashed #b0c0b2;border-radius:10px;background:#f6faf5}
+.neerva-photo-stage .nbd-photo p{font-size:13px;line-height:1.5}
+.neerva-photo-stage .nbd-buttons{display:flex;gap:9px;margin-top:12px}
+.neerva-photo-stage .nbd-buttons button{border:1px solid #b6c5b7;background:#f5f8f3;color:#344a39;min-height:43px;padding:9px 13px;border-radius:9px;font-size:13px;cursor:pointer}
+.neerva-photo-stage .nbd-buttons button:disabled{cursor:not-allowed;opacity:.45}
+.neerva-photo-stage .nbd-buttons button:not(:disabled):hover{background:#e7ede5}
+.neerva-tier-note{font-size:12px;color:#5f7060;line-height:1.55}
+@media(max-width:850px){.visualizer-layout{grid-template-columns:1fr}.visualizer-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.visualizer-controls section:last-child{grid-column:1/-1}}
+@media(max-width:600px){.visualizer-controls{grid-template-columns:1fr}.visualizer-controls section:last-child{grid-column:auto}.neerva-color-modes{display:grid;grid-template-columns:1fr 1fr}.neerva-color-modes button{padding:12px 9px;font-size:12px}.neerva-photo-stage{padding:12px}}
