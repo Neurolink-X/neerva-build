@@ -30,6 +30,33 @@ async function main(){
     if(issues.h1<1)failures.push(v.w+"px "+route+": missing main heading");
     if(v.w===360||v.w===430)await page.screenshot({path:path.join("test-results/mobile",v.w+"-"+(route.replaceAll("/","-")||"home")+".png"),fullPage:true,animations:"disabled"});
    }
+   if(v.w===390){
+    // Business-flow smoke: category -> product -> local planning list -> quote.
+    const cat=await page.goto(base+"/materials/steel",{waitUntil:"networkidle"});
+    assert.equal(cat?.status(),200,"steel category route");
+    const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"networkidle"});
+    assert.equal(details?.status(),200,"specific material detail route");
+    const add=page.getByRole("button",{name:"Add to material list"});
+    assert.equal(await add.count(),1,"a product must provide an actionable add button");
+    await add.click();
+    const listLink=page.getByRole("link",{name:/Review material list/});
+    assert.equal(await listLink.count(),1,"added item must link to the existing planning list");
+    await listLink.click();
+    await page.waitForURL("**/basket",{timeout:15000});
+    await page.getByText(/TMT bar.*12 mm/).first().waitFor({timeout:10000});
+    const prepareQuote=page.getByRole("link",{name:/Prepare dealer quote/});
+    await prepareQuote.waitFor({timeout:15000});
+    assert.match((await prepareQuote.getAttribute("href"))??"",/^\/quotes\?/,"list quote link should target quote preparation");
+    const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"networkidle"});
+    assert.equal(visual?.status(),200,"colour editor route");
+    const photo=page.getByRole("button",{name:"Use my home photo"});
+    const exterior=page.getByRole("button",{name:"Explore exterior concept"});
+    assert.equal(await photo.getAttribute("aria-pressed"),"true","real-photo editor must be default");
+    await exterior.click();
+    assert.equal(await exterior.getAttribute("aria-pressed"),"true","original concept remains available");
+    await photo.click();
+    assert.equal(await photo.getAttribute("aria-pressed"),"true","photo editor resumes without a reload");
+   }
    await page.goto(base+"/",{waitUntil:"networkidle"});
    const mainLink=page.getByRole("link",{name:/Design my home/i}).first();
    if(await mainLink.count()){
@@ -42,9 +69,13 @@ async function main(){
   const req=await browser.newContext();
   const a=await req.request.get(base+"/api/orders");
   if(![401,503].includes(a.status()))failures.push("Unauthenticated order API must fail closed; observed "+a.status());
+  for(const route of ["/api/customer/quotes","/api/dealer/inventory","/api/admin/users"]) {
+   const response=await req.request.get(base+route);
+   if(![401,403,503].includes(response.status()))failures.push("Unauthenticated protected "+route+" must fail closed; observed "+response.status());
+  }
   await req.close();
  }finally{await browser.close()}
  if(failures.length){console.error("Mobile regression failed:\n"+failures.join("\n"));process.exitCode=1}
- else console.log("Mobile browser smoke: five viewports, eight routes, no horizontal overflow, no browser console errors, fail-closed order API.");
+ else console.log("Mobile browser smoke: five viewports, material-to-quote navigation, editable colour preview, no browser errors, protected API denials.");
 }
 main().catch(error=>{console.error(error);process.exitCode=1});

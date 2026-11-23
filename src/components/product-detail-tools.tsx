@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { AddToMaterialList } from "@/components/material-basket";
+import Link from "next/link";
+import {PLANNING_STORAGE_KEY,appendPlanningLine,isPlanningUnit,safePlanningList} from "@/modules/catalog/planning-list";
 import { ProductArtwork } from "@/components/product-artwork";
+import { CatalogMaterialImage } from "@/components/catalog-material-image";
 import type { DemoProduct } from "@/modules/catalog/marketplace";
 
 const optionsByCategory: Record<string, { specs: string[]; units: string[] }> = {
@@ -22,13 +24,13 @@ export function ProductGallery({ product }: { product: DemoProduct }) {
   return (
     <div className="product-gallery">
       <div className="product-gallery-stage">
-        {product.images?.[active] ? <Image className="catalog-real-image" src={product.images[active]} alt={`${product.name} product image ${active + 1}`} fill sizes="(max-width: 680px) 100vw, 50vw" unoptimized /> : <ProductArtwork category={product.category} scene={scenes[active]} />}
+        {product.images?.[active] ? <Image className="catalog-real-image" src={product.images[active]} alt={`${product.name} product image ${active + 1}`} fill sizes="(max-width: 680px) 100vw, 50vw" unoptimized /> : active === 0 ? <CatalogMaterialImage category={product.category} name={product.name} /> : <ProductArtwork category={product.category} scene={scenes[active]} />}
         <span className="gallery-disclaimer">Illustrative profile / actual product packaging may vary</span>
       </div>
       <div className="product-gallery-thumbs" aria-label="Product illustration views">
         {scenes.map((scene, index) => (
           <button type="button" className={active === index ? "active" : ""} aria-label={labels[index]} aria-pressed={active === index} key={scene} onClick={() => setActive(index)}>
-            {product.images?.[index] ? <Image className="catalog-real-image" src={product.images[index]} alt="" fill sizes="120px" unoptimized /> : <ProductArtwork category={product.category} scene={scene} />}<span>{labels[index]}</span>
+            {product.images?.[index] ? <Image className="catalog-real-image" src={product.images[index]} alt="" fill sizes="120px" unoptimized /> : index === 0 ? <CatalogMaterialImage category={product.category} name={product.name} /> : <ProductArtwork category={product.category} scene={scene} />}<span>{labels[index]}</span>
           </button>
         ))}
       </div>
@@ -43,6 +45,17 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
   const [specification, setSpecification] = useState(startingChoice);
   const [unit, setUnit] = useState(choices.units[0]);
   const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
+  const [notice, setNotice] = useState("");
+  function saveMaterial() {
+    try {
+      const previous = safePlanningList(JSON.parse(window.localStorage.getItem(PLANNING_STORAGE_KEY) ?? "[]"));
+      const next = appendPlanningLine(previous, { id: crypto.randomUUID(), name: `${product.name} · ${product.brand} · ${specification}`.slice(0,160), unit: isPlanningUnit(unit) ? unit : "piece", quantity: Number.isFinite(quantity) && quantity > 0 ? quantity : 1 });
+      if (next.length === previous.length) { setNotice("List is full. Review the 25 existing items before adding another."); return; }
+      window.localStorage.setItem(PLANNING_STORAGE_KEY, JSON.stringify(next));
+      setAdded(true); setNotice("Saved locally. Open your material list to review or prepare a quote.");
+    } catch { setNotice("Browser storage is unavailable. Please enter this item manually on the material list page."); }
+  }
   return (
     <div className="product-request-config">
       <div className="product-choice-grid">
@@ -61,7 +74,7 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
         </label>
       </div>
       <p className="option-confirmation-note">Options describe your requirement; the dealer will confirm whether this brand supplies that exact variant, its current stock and the final rate.</p>
-      <AddToMaterialList product={product} option={specification} unit={unit} quantity={Number.isFinite(quantity) && quantity > 0 ? quantity : 1} className="button button-orange product-add-button" />
+      <button type="button" className="button button-orange product-add-button" onClick={saveMaterial}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
     </div>
   );
 }
