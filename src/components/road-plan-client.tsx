@@ -1,5 +1,6 @@
 "use client";
 import dynamic from "next/dynamic";
+import type {PlanBrief} from "@/modules/studio/plan-model";
 /** This spatial editor relies on WebGL and client-side geometry state. The route
  * itself is a noindex preview; render a stable SSR shell and hydrate the
  * editor only on the browser to avoid mixed server/browser 3D markup.
@@ -12,4 +13,4 @@ const Planner=dynamic(()=>import("./road-plan-workbench").then(m=>m.RoadPlanWork
   <div className="nroad-loading" style={{margin:"15px",minHeight:420}}>Preparing 2D rooms and 3D previews…</div>
  </main>
 });
-export function RoadPlanClient(){return <Planner/>}
+export function RoadPlanClient({initialBrief}:{initialBrief?:PlanBrief}={}){return <Planner initialBrief={initialBrief}/>;}
