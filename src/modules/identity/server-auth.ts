@@ -33,8 +33,13 @@ export async function requireDealer(request:Request):Promise<(AuthResult&{tenant
  try{
    const {data,error}=await auth.client.from("tenant_memberships").select("tenant_id").eq("user_id",auth.userId).eq("active",true);
    if(error)return failure("Dealer permissions could not be checked.",503);
-   const tenantIds=(data??[]).map(x=>String(x.tenant_id)).filter(Boolean);
-   if(!tenantIds.length)return failure("Approved dealer membership required.",403);
+   const memberTenantIds=(data??[]).map(x=>String(x.tenant_id)).filter(Boolean);
+   if(!memberTenantIds.length)return failure("Approved dealer membership required.",403);
+   // Active membership alone is not merchant approval. Enforce tenant status.
+   const approved=await auth.client.from("tenants").select("id").in("id",memberTenantIds).eq("status","active");
+   if(approved.error)return failure("Dealer approval status could not be checked.",503);
+   const tenantIds=(approved.data??[]).map(x=>String(x.id)).filter(Boolean);
+   if(!tenantIds.length)return failure("Dealer approval required before access.",403);
    return {...auth,tenantIds};
  }catch{return failure("Dealer permissions could not be checked.",503)}
 }
