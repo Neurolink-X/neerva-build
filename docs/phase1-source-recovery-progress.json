@@ -1,11 +1,11 @@
 {
   "sourceDeployment": "dpl_GBZpLhjcXvCdihSX7Lfd2YqBwnZF",
   "baselineMain": "95df30497fa1c2459b4df7d45448e80937531557",
-  "recoveryBranchHead": "fa8b2f5151bd7c5af37466898805a00dcd13c7ff",
+  "recoveryBranchHead": "551ef73c840480778d279072008b945db2b1a092",
   "sourceFiles": 112,
   "baselineMissing": 62,
-  "restoredVerified": 24,
-  "stillMissing": 38,
+  "restoredVerified": 26,
+  "stillMissing": 36,
   "warning": "Path existence does not verify identical content of previously tracked files. Recovery branch must not be merged or deployed until full parity and regression checks pass.",
   "restored": [
     {
@@ -79,6 +79,14 @@
     {
       "path": "src/app/not-found.tsx",
       "sourceSha1": "3a9c7aac0e06d7553d9e43517ba39bfdb6014eea"
+    },
+    {
+      "path": "src/components/catalog-admin-panel.tsx",
+      "sourceSha1": "30e0f72804e6127de0219b36db86a5ee3c84c5e3"
+    },
+    {
+      "path": "src/components/dealer-inventory-panel.tsx",
+      "sourceSha1": "d6a6eac1487a99359334362f834272e57432b8c1"
     },
     {
       "path": "src/modules/catalog/basket.test.ts",
@@ -159,16 +167,8 @@
       "sourceSha1": "a67531c548a0f83b1da7ced9b73e218b8def68df"
     },
     {
-      "path": "src/components/catalog-admin-panel.tsx",
-      "sourceSha1": "30e0f72804e6127de0219b36db86a5ee3c84c5e3"
-    },
-    {
       "path": "src/components/customer-quote-inbox.tsx",
       "sourceSha1": "0affe38cbffdb765ae3eac774a3aef2d1729c8f2"
-    },
-    {
-      "path": "src/components/dealer-inventory-panel.tsx",
-      "sourceSha1": "d6a6eac1487a99359334362f834272e57432b8c1"
     },
     {
       "path": "src/components/dealer-quote-inbox.tsx",
@@ -258,5 +258,6 @@
       "path": "src/modules/studio/room.ts",
       "sourceSha1": "06ecde2afdaea95d6b320712766b5206e1230316"
     }
-  ]
+  ],
+  "additionalRecoverySource": "feat/product-marketplace: two identical source files recovered by matching raw SHA-1 to Vercel UIDs"
 }
