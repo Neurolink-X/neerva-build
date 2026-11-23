@@ -1,0 +1,3 @@
+"use client";
+import Link from "next/link";import {SecureOperationsList} from "./secure-operations-list";
+export function SystemHealthPanel(){return <section><p><Link href="/admin/system-health">System health</Link> is accessible to approved administrators only.</p><SecureOperationsList endpoint="/api/admin/system-incidents" title="Platform incidents" description="Only sanitized events are shown; no customer credentials, session tokens or raw request bodies." arrays={[{key:"incidents",label:"Incident log",fields:["module","severity","error_code","safe_summary","status","occurrence_count","last_seen_at"]}]}/></section>}
