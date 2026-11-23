@@ -1,4 +1,5 @@
 import {createClient,type SupabaseClient} from "@supabase/supabase-js";
+import {activeDealerTenantIds} from "@/modules/identity/dealer-tenant-access";
 /** Server-only, user-JWT authenticated access; RLS remains enforced. Never use service-role in these routes. */
 export type AuthResult={userId:string;client:SupabaseClient};
 const failure=(message:string,status:number)=>Response.json({error:message},{status,headers:{"Cache-Control":"private, no-store"}});
@@ -31,14 +32,14 @@ export async function requireDealer(request:Request):Promise<(AuthResult&{tenant
  const auth=await requireAuth(request);
  if(auth instanceof Response)return auth;
  try{
-   const {data,error}=await auth.client.from("tenant_memberships").select("tenant_id").eq("user_id",auth.userId).eq("active",true);
+   const {data,error}=await auth.client.from("tenant_memberships").select("tenant_id,active").eq("user_id",auth.userId).eq("active",true);
    if(error)return failure("Dealer permissions could not be checked.",503);
    const memberTenantIds=(data??[]).map(x=>String(x.tenant_id)).filter(Boolean);
    if(!memberTenantIds.length)return failure("Approved dealer membership required.",403);
    // Active membership alone is not merchant approval. Enforce tenant status.
    const approved=await auth.client.from("tenants").select("id").in("id",memberTenantIds).eq("status","active");
    if(approved.error)return failure("Dealer approval status could not be checked.",503);
-   const tenantIds=(approved.data??[]).map(x=>String(x.id)).filter(Boolean);
+   const tenantIds=activeDealerTenantIds((data??[]).map(x=>({tenant_id:String(x.tenant_id),active:x.active===true})),(approved.data??[]).map(x=>({id:String(x.id),status:"active"})));
    if(!tenantIds.length)return failure("Dealer approval required before access.",403);
    return {...auth,tenantIds};
  }catch{return failure("Dealer permissions could not be checked.",503)}
