@@ -13,7 +13,7 @@
 | Security | JWT authentication, dealer tenant isolation, admin checks, private price and images, RLS deny cross-tenant | role tests and unauthenticated API smoke; authenticated 2-tenant DB test pending | Block production until DB evidence |
 | Performance | Cached static assets, API timings, unnecessary roundtrips and real CWV | Mobile lab audit and instrumented staging/production, p75 LCP<=2.5s, INP<=200ms, CLS<=0.1 | Not measured on this PR |
 | Real E2E | Customer signup -> RFQ -> dealer offer -> order -> tracking; admin KYC/publish | Requires isolated staging auth, seeded two-tenant DB and protection-aware browser credentials | **Blocked: no Neerva DB** |
-| CI gates | npm ci -> lint -> strict TypeScript -> unit -> production build -> mobile browser smoke | ci.yml and mobile-regression.yml; branch protection must require BOTH | Implemented workflows; protection not verified |
+| CI gates | npm ci -> lint -> strict TypeScript -> unit -> production build -> mobile browser smoke | ci.yml and mobile-regression.yml; branch protection is not available for this private repository on the connected GitHub plan; PR reviewers must verify BOTH, and Vercel production must stay gated | Implemented workflows; protection not verified |
 
 ## Source-of-truth rules
 1. Do not publish prices, inventory, GST verification, municipal setbacks or architect plans until verified. Aggregates/morang/sand remain quote-only.
@@ -34,3 +34,9 @@
 - [ ] Mobile 360/390/430/768/1440 viewports, no console error, keyboard and Hindi text layout.
 - [ ] DB migration forward checks, read-only backup/restore drill, stress/concurrency and RLS security advisors.
 - [ ] Verified domain alias points to approved commit and rollback is available.
+
+## GitHub private-repository constraint verified 2026-11-23
+- `GET /repos/Neurolink-X/neerva-build/rulesets` returned HTTP 403: upgrade to GitHub Pro or make repository public to use this feature. Preserve private source; **do not** make it public just to enable rulesets.
+- The branch-protection endpoint also returns 403 for the connected app. Do not claim merge is automatically blocked by CI.
+- No-cost temporary safety: verify both required GitHub Actions green before merging, keep protected production deploy on the reviewed SHA/attestation, and verify the Vercel production alias after release. Preview deploys remain available for QA; canceling superseded preview builds is normal.
+- Long term: use a manual release workflow which requires an explicit approved commit SHA, matching successful check runs and a reviewer-confirmed Phase 1 parity manifest. Do not use an undocumented hardcoded production SHA bypass forever.
