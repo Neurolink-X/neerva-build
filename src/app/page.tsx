@@ -6,7 +6,7 @@ export const metadata:Metadata={
  title:"Plan Your Home, See Colours & Explore Material Quotes | NEERVA BUILD",
  description:"Explore home plans for Indian plots, preview exterior colours and prepare transparent material quote requests. NEERVA BUILD starts in Kanpur.",
  alternates:{canonical:"/"},
- openGraph:{title:"NEERVA BUILD — Plan your home. See it your way.",description:"Plan your home, explore colours and prepare itemised construction material quotes. Starting in Kanpur.",type:"website",images:[{url:"https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=78",width:1200,height:630,alt:"Illustrative modern house exterior"}]},
+ openGraph:{title:"NEERVA BUILD — Plan your home. See it your way.",description:"Plan your home, explore colours and prepare itemised construction material quotes. Starting in Kanpur.",type:"website",images:[{url:"/opengraph-image",width:1200,height:630,alt:"NEERVA BUILD brand illustration — home planning and construction materials"}]},
 };
 export default function HomePage(){
  const url=process.env.NEXT_PUBLIC_SITE_URL??"https://neerva-build.vercel.app";
