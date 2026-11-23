@@ -56,6 +56,28 @@ async function main(){
     assert.equal(await exterior.getAttribute("aria-pressed"),"true","original concept remains available");
     await photo.click();
     assert.equal(await photo.getAttribute("aria-pressed"),"true","photo editor resumes without a reload");
+    // Home construction comparison and arbitrary plot-size journey.
+    await page.goto(base+"/",{waitUntil:"networkidle"});
+    const reveal=page.getByRole("slider",{name:"Compare illustrative construction-stage and completed homes"});
+    assert.equal(await reveal.count(),1,"construction comparison needs a keyboard-accessible range slider");
+    await reveal.fill("74");
+    assert.equal(await reveal.inputValue(),"74","range input should move construction reveal");
+    assert.equal(await page.getByText("FINISHED HOME",{exact:true}).count(),1,"finished stage must be visibly labeled");
+    const dimensions=page.locator(".nbh-filter-row input[type=number]");
+    assert.equal(await dimensions.count(),2,"home must support arbitrary plot width and depth");
+    for(const [w,d] of [["18","50"],["20","45"]]){
+      await dimensions.nth(0).fill(w);
+      await dimensions.nth(1).fill(d);
+      const link=page.getByRole("link",{name:/Open detailed plot fit/});
+      assert.match((await link.getAttribute("href"))??"",new RegExp("width="+w+"&depth="+d),"plot dimensions need to persist into fit flow");
+      await link.click();
+      await page.waitForURL("**/design-studio/fit?**");
+      await page.getByText("Plot proportion in 3D").waitFor({timeout:15000});
+      await page.getByText(w+" × "+d+" ft",{exact:true}).first().waitFor({timeout:10000});
+      assert.equal(await page.getByRole("img",{name:new RegExp("Isometric massing concept for a "+w+" by "+d)}).count(),1,"dynamic 3D plot massing should show");
+      await page.goto(base+"/",{waitUntil:"networkidle"});
+    }
+
    }
    await page.goto(base+"/",{waitUntil:"networkidle"});
    const mainLink=page.getByRole("link",{name:/Design my home/i}).first();
@@ -76,6 +98,6 @@ async function main(){
   await req.close();
  }finally{await browser.close()}
  if(failures.length){console.error("Mobile regression failed:\n"+failures.join("\n"));process.exitCode=1}
- else console.log("Mobile browser smoke: five viewports, material-to-quote navigation, editable colour preview, no browser errors, protected API denials.");
+ else console.log("Mobile browser smoke: five viewports, material-to-quote navigation, editable colour preview, custom 18×50/20×45 plot massing, construction reveal, no browser errors, protected API denials.");
 }
 main().catch(error=>{console.error(error);process.exitCode=1});
