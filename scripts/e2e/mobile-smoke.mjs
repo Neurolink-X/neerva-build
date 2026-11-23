@@ -156,7 +156,7 @@ async function main(){
  await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
  async function mark(x){let b=await canvas.boundingBox();for(const [u,v] of [[x,.12],[x+.12,.12],[x+.12,.26],[x,.26]])await canvas.click({position:{x:u*b.width,y:v*b.height}});}
  await mark(.06);
- await page.getByLabel("Wall design").selectOption("bands");
+ await page.getByRole("combobox",{name:"Wall design",exact:true}).selectOption("bands");
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
  const png=()=>canvas.evaluate(c=>c.toDataURL());
