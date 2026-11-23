@@ -56,7 +56,7 @@ export function StudioPhotoPaint({colour}:{colour:string}){
   setHistory(prev=>addCorner(prev,point));
  }
  function saveImage(){
-  const el=canvas.current;if(!el||!ready||!valid)return;
+  const el=canvas.current;if(!el||!ready||!valid||showOriginal)return;
   el.toBlob(blob=>{if(!blob){setMessage("Could not export the photo. Try again.");return;}
    const address=URL.createObjectURL(blob),a=document.createElement("a");
    a.href=address;a.download="neerva-wall-colour-concept.png";a.click();
@@ -75,7 +75,7 @@ export function StudioPhotoPaint({colour}:{colour:string}){
    <button type="button" disabled={!history.redo.length} onClick={()=>setHistory(redoCorner)}>Redo corner</button>
    <button type="button" disabled={!valid} aria-pressed={showOriginal} onClick={()=>setShowOriginal(v=>!v)}>{showOriginal?"Show new colour":"View original"}</button>
    <button type="button" onClick={()=>{setHistory(emptyMaskHistory());setShowOriginal(false)}}>Select wall again ({points.length}/4)</button>
-   <button type="button" disabled={!valid} onClick={saveImage}>Save colour preview</button>
+   <button type="button" disabled={!valid||showOriginal} onClick={saveImage}>Save colour preview</button>
   </div>}
   <p className="nbd-disclaimer">Manual polygon preview preserves much of the existing light and texture; edge accuracy and screen shades are approximate. Verify physical shade cards and measured wall area before buying.</p>
  </section>;
