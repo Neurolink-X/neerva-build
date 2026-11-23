@@ -164,6 +164,14 @@ async function main(){
  await page.getByRole("button",{name:"Show new colour"}).click();assert.equal(await png(),combo);
  const download=page.waitForEvent("download");await page.getByRole("button",{name:"Save colour preview"}).click();assert.match((await download).suggestedFilename(),/png$/);
     // Tested road-correct 18x50 PlanModel: one source for geometry, 3D and paint quantities.
+    // A gallery deep link must choose the SAME plan for both 2D geometry and 3D.
+    await page.goto(base+"/design-studio/portfolio?width=18&depth=50&road=N&floors=2&bedrooms=3&parking=true&option=5",{waitUntil:"networkidle"});
+    const chosenLayout=page.locator(".nroad-variants button[aria-pressed=true]");
+    assert.equal(await chosenLayout.count(),1,"exactly one linked gallery option selected");
+    assert.match((await chosenLayout.innerText()),/^6\./,"gallery card #6 opens option #6, not the default plan");
+    await page.getByRole("button",{name:"Ground floor"}).click();
+    await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Selected floor cutaway"}).getAttribute("aria-pressed"),"true","ground-floor 3D defaults to matching floor");
     await page.goto(base+"/design-studio/road-planner",{waitUntil:"networkidle"});
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");

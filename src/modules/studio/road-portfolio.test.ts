@@ -97,3 +97,15 @@ test("20 by 40 ft ground-floor request fits two independently accessible bedroom
  assert.equal(plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===0).length,2);
  assert.equal(plan.parking?.clearDepthFt,16);
 });
+
+test("different option indices lead to different PlanModel room geometry, all floor levels are explicit",()=>{
+ const variants=generateSpatialPortfolio(standard,24).plans;
+ assert.equal(variants.length,24);
+ const first=variants[0],sixth=variants[5];
+ assert.notEqual(first.id,sixth.id);
+ assert.notEqual(geometrySignature(first),geometrySignature(sixth));
+ assert.deepEqual(new Set(first.rooms.map(r=>r.floor)),new Set([0,1]));
+ const ground=generateSpatialPortfolio({...standard,widthFt:20,depthFt:40,bedrooms:2,floors:1},24).plans;
+ assert.ok(ground.length>0);
+ assert.ok(ground.every(p=>p.floors===1&&p.rooms.every(r=>r.floor===0)));
+});

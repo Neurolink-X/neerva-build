@@ -11,7 +11,7 @@ const FT=.3048;
 type Mode="exterior"|"dollhouse"|"walkthrough";
 export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design:StudioDesign;colour:string;planModel?:PlanModel;selectedFloor?:number}){
  const host=useRef<HTMLDivElement>(null),wallMat=useRef<THREE.MeshStandardMaterial|null>(null),refresh=useRef<(()=>void)|null>(null),colourRef=useRef(colour);
- const [mode,setMode]=useState<Mode>("exterior"),[fallback,setFallback]=useState(false);
+ const [mode,setMode]=useState<Mode>(selectedFloor===undefined?"exterior":"dollhouse"),[fallback,setFallback]=useState(false);
  useEffect(()=>{colourRef.current=colour;if(wallMat.current){wallMat.current.color.set(colour);refresh.current?.()}},[colour]);
  useEffect(()=>{
   const target=host.current;if(!target)return;
@@ -45,7 +45,9 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
     else groundPart(0,W-w,D-d,D);
    }
    const fp=structuralFootprint(design),W=(fp.maxX-fp.minX)*FT,D=(fp.maxZ-fp.minZ)*FT,cx=xCoord((fp.maxX+fp.minX)/2),cz=zCoord((fp.maxZ+fp.minZ)/2);
-   const visible=(floor:number)=>mode!=="dollhouse"||selectedFloor===undefined||floor<=selectedFloor;
+   // A selected 2D floor is the *only* level in cutaway/eye-level previews.
+   // Full-building exterior deliberately shows every storey, with a separate label.
+   const visible=(floor:number)=>mode==="exterior"||selectedFloor===undefined||floor===selectedFloor;
    if(planModel){
     // Phase 1 bridge: do not place a giant slab above the open parking bay or rear terrace.
     for(const r of planModel.rooms.filter(r=>visible(r.floor)&&!["parking","verandah"].includes(r.kind))){
@@ -130,11 +132,12 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    box(0,-.26,0,width*1.8,.05,depth*1.8,material("#b4c7ad"),false);
    scene.add(new THREE.HemisphereLight("#ffffff","#78816d",2.2));const sun=new THREE.DirectionalLight("#fff1d7",2.4);sun.position.set(width,top+8,depth*.7);sun.castShadow=renderer.shadowMap.enabled;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-width*1.8;sun.shadow.camera.right=width*1.8;sun.shadow.camera.top=depth*1.8;sun.shadow.camera.bottom=-depth*1.8;sun.shadow.bias=-.001;scene.add(sun);
    const camera=new THREE.PerspectiveCamera(46,1,.04,300);
-   const cameraPosition=mode==="walkthrough"?new THREE.Vector3(cx,1.65,cz+Math.min(D*.38,2.4))
+   const focusHeight=selectedFloor!==undefined&&mode!=="exterior"?(selectedFloor+.5)*height:Math.min(top,top*.55);
+   const cameraPosition=mode==="walkthrough"?new THREE.Vector3(cx,(selectedFloor??0)*height+1.65,cz+Math.min(D*.38,2.4))
      :new THREE.Vector3(width*.92,top+Math.max(3,top*.4),-depth*1.15);
    camera.position.copy(cameraPosition.applyAxisAngle(new THREE.Vector3(0,1,0),angle));
    controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.minDistance=mode==="walkthrough"?.7:2;controls.maxDistance=Math.max(width,depth)*3;controls.maxPolarAngle=Math.PI*.51;
-   controls.target.set(cx,mode==="walkthrough"?1.55:Math.min(top,top*.55),cz);controls.update();
+   controls.target.set(cx,mode==="walkthrough"?(selectedFloor??0)*height+1.55:focusHeight,cz);controls.update();
    function draw(){frame=0;if(!renderer||!controls)return;controls.update();renderer.render(scene,camera)}
    function schedule(){if(!frame)frame=window.requestAnimationFrame(draw)}
    refresh.current=schedule;controls.addEventListener("change",schedule);
@@ -143,5 +146,5 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
   }catch{failedTimer=window.setTimeout(()=>setFallback(true),0)}
   return()=>{window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();scene.traverse(o=>{if(o instanceof THREE.InstancedMesh)o.dispose()});renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
  },[design,mode,planModel,selectedFloor]);
- return <section className="nbd-building"><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>Concept geometry · touch orbit</span></div><div className="nbd-buttons">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Dollhouse":"Exterior"}</button>)}</div>{fallback?<div><p role="status">3D unavailable on this device. The 2D plan is still accessible.</p><DesignPlanArt design={design}/></div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}<p className="nbd-disclaimer">Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Slabs and roofs are simplified; parapet details are not modeled for PlanModel mode. HDRI, phototextures and photoreal renders are not yet bundled. Eye-level beta is not a measured walkthrough.</p></section>;
+ return <section className="nbd-building"><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>{selectedFloor===undefined?"Full building":mode==="exterior"?"Full building · all floors":`${["Ground floor","First floor","Second floor"][selectedFloor]??`Floor ${selectedFloor+1}`} only`} · touch to rotate</span></div><div className="nbd-buttons">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Selected floor cutaway":"Full exterior · all floors"}</button>)}</div>{fallback?<div><p role="status">3D unavailable on this device. The 2D plan is still accessible.</p><DesignPlanArt design={design} floor={selectedFloor??0}/></div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}<p className="nbd-disclaimer">{selectedFloor!==undefined?"Floor tabs show that level only by default. Choose Full exterior to inspect all selected storeys. ":""}Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Slabs and roofs are simplified; parapet details are not modeled for PlanModel mode. HDRI, phototextures and photoreal renders are not yet bundled. Eye-level beta is not a measured walkthrough.</p></section>;
 }

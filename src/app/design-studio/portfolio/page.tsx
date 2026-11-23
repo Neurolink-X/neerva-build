@@ -25,6 +25,7 @@ export default async function PlotPortfolioPage({searchParams}:Props){
   roadSide,floors,bedrooms,parking,
   setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}
  };
- return <RoadPlanClient initialBrief={initialBrief}/>;
+ const initialOption=Math.trunc(safe(params.option,0,23,0));
+ return <RoadPlanClient initialBrief={initialBrief} initialOption={initialOption}/>;
 }
 
