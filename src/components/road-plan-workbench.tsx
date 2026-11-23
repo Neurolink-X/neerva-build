@@ -69,6 +69,22 @@ export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
        <p>{str("Car gate and house entry face the selected road edge. Changing sides rotates the whole 2D plan and 3D house; it never places parking at the back of a front-road plot.","मुख्य गेट और पार्किंग चुनी गई सड़क की तरफ हैं। दिशा बदलने पर 2D नक्शा और 3D घर दोनों घूमते हैं।")}</p>
        <button type="button" onClick={()=>update("roadSide",oppositeRoadSide(brief.roadSide))}>{str("Road actually on opposite side? Switch","सड़क दूसरी तरफ है? दिशा बदलें")}</button>
      </div>
+     <details className="nroad-advanced nroad-site-shape"><summary>{str("Plot shape: rectangle or L-shaped land","प्लॉट का आकार: चौकोर या L शेप")}</summary>
+      <p>{str("For an L-shaped plot, mark a missing rear corner. The model leaves an entire side strip unbuilt to avoid placing rooms outside your land. A surveyor must confirm boundaries.","L आकार के प्लॉट में पीछे का कटा हुआ कोना बताएं। नक्शा सुरक्षित जगह तक सीमित रहता है, जमीन की सही नाप सर्वेयर से जाँचें।")}</p>
+      <label>{str("Site outline","प्लॉट का आकार")}<select value={brief.siteShape?.kind??"rectangle"}
+       onChange={e=>update("siteShape",e.target.value==="rectangle"?{kind:"rectangle"}:{kind:e.target.value as "rear-left-notch"|"rear-right-notch",notchWidthFt:2,notchDepthFt:10})}>
+       <option value="rectangle">Rectangle · full frontage</option>
+       <option value="rear-left-notch">L shape · rear-left missing corner</option>
+       <option value="rear-right-notch">L shape · rear-right missing corner</option>
+      </select></label>
+      {brief.siteShape&&brief.siteShape.kind!=="rectangle"&&<>
+       <label>{str("Missing rear-corner width (ft)","पीछे कटे कोने की चौड़ाई")}<input type="number" min="1" max="60" step=".5" value={brief.siteShape.notchWidthFt}
+        onChange={e=>update("siteShape",{...brief.siteShape!,notchWidthFt:Number(e.target.value)} as PlanBrief["siteShape"])}/></label>
+       <label>{str("Missing rear-corner depth (ft)","पीछे कटे कोने की लंबाई")}<input type="number" min="1" max="100" step=".5" value={brief.siteShape.notchDepthFt}
+        onChange={e=>update("siteShape",{...brief.siteShape!,notchDepthFt:Number(e.target.value)} as PlanBrief["siteShape"])}/></label>
+      </>}
+      <p className="nroad-small">These are conservative concept constraints, not municipal setbacks, cadastral proof or licensed architecture.</p>
+     </details>
      <label>{str("Levels","मंज़िलें")}<select value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2)}>
       <option value={1}>G · Ground</option><option value={2}>G+1 · Two levels</option></select></label>
      <label>{str("Total bedrooms","कुल बेडरूम")}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>
