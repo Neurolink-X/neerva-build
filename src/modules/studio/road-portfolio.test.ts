@@ -71,3 +71,29 @@ test("impossible plot constraints never produce duplicate fake plans",()=>{
   assert.ok(generated.blockers.length>0);
  }
 });
+
+test("compact and three-level plots keep precise dimensions across drawings and meshes",()=>{
+ for(const brief of [{...standard,widthFt:20,depthFt:40,bedrooms:2},
+  {...standard,widthFt:30,depthFt:40},{...standard,widthFt:40,depthFt:60},
+  {...standard,widthFt:21.25,depthFt:51.75,floors:3 as const}]){
+  const preview=generateSpatialPortfolio(brief,1).plans[0];
+  assert.ok(preview);
+  assert.equal(preview.id,generateSpatialPortfolio(brief,24).plans[0].id);
+  assert.deepEqual(validatePlan(preview),[]);
+  const design=studioDesignFromPlan(preview);
+  assert.equal(design.plot.widthFt,brief.widthFt);
+  assert.equal(design.plot.depthFt,brief.depthFt);
+  assert.equal(design.bedrooms,brief.bedrooms);
+  assert.equal(new Set(design.layout.rooms.map(r=>r.floorIndex)).size,brief.floors);
+  assert.deepEqual(design.layout.rooms.map(r=>[r.id,r.floorIndex,r.xFt,r.yFt,r.wFt,r.dFt]),
+   preview.rooms.map(r=>[r.id,r.floor,r.x,r.y,r.w,r.d]));
+ }
+});
+
+test("20 by 40 ft ground-floor request fits two independently accessible bedrooms and road parking",()=>{
+ const plan=generateSpatialPortfolio({...standard,widthFt:20,depthFt:40,bedrooms:2,floors:1},1).plans[0];
+ assert.ok(plan);
+ assert.deepEqual(validatePlan(plan),[]);
+ assert.equal(plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===0).length,2);
+ assert.equal(plan.parking?.clearDepthFt,16);
+});

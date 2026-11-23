@@ -26,7 +26,7 @@ export type PlanModel={
  facade:{kit:FacadeKit;massing:MassingType;main:string;accent:string};
  score:number;notes:string[];conceptOnly:true;
 };
-export type PlanBrief={widthFt:number;depthFt:number;roadSide:RoadSide;floors:1|2;bedrooms:number;parking:boolean;
+export type PlanBrief={widthFt:number;depthFt:number;roadSide:RoadSide;floors:1|2|3;bedrooms:number;parking:boolean;
  setbacks:{frontFt:number;rearFt:number;leftFt:number;rightFt:number};siteShape?:SiteShape;};
 const EPS=1e-6;
 export const snap=(n:number)=>Math.round(n*2)/2;
@@ -187,3 +187,4 @@ export function recolorMasked(source:Uint8ClampedArray,mask:Uint8ClampedArray,ta
  }
  return out;
 }
+

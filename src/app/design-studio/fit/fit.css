@@ -36,3 +36,6 @@
 .nfit .site-footer{margin-top:24px}
 .nfit .nfit-form{overflow:visible}
 @media(max-width:640px){.nfit .site-footer{margin-top:12px}.nfit-primary-next{padding:15px}.nfit-massing-head{align-items:start}.nfit-massing-size{font-size:11px}}
+
+
+.nfit-primary-next .nroad-diagram svg,.nfit-primary-next .nbd-webgl canvas{display:block;width:100%;max-height:32rem}.nfit-primary-next .nbd-webgl{min-width:0;overflow:hidden}

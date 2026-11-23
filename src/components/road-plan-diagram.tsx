@@ -45,24 +45,30 @@ export function RoadPlanDiagram({plan,floor=0}:{plan:PlanModel;floor?:number}){
  </section>;
 }
 export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;accent:string}){
- const front=plan.rooms.filter(r=>r.floor===0&&r.y<=16);
- const w=plan.plot.widthFt,d=plan.floors,scale=600/w,left=50,roofY=d===1?147:65,storey=136,bottom=roofY+storey*d;
- const g=plan.gate,ped=plan.pedestrianGate;
+ const {widthFt,roadSide}=plan.plot;
+ const storeyFt=plan.walls.heightFt;
+ const scale=Math.min(600/widthFt,280/(plan.floors*storeyFt));
+ const x=(feet:number)=>350+(feet-widthFt/2)*scale;
+ const y=(feet:number)=>355-feet*scale;
+ const levels=Array.from({length:plan.floors},(_,floor)=>{
+  const rooms=plan.rooms.filter(r=>r.floor===floor&&!["parking","verandah","balcony","terrace"].includes(r.kind));
+  return {floor,left:Math.min(...rooms.map(r=>r.x)),right:Math.max(...rooms.map(r=>r.x+r.w))};
+ });
  return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel">
-  <svg viewBox="0 0 700 460" role="img" aria-label={`Illustrative road-side elevation for ${w} ft frontage with ${d} levels and gate located ${g.xFt} ft along the road`}>
-   <rect x="0" y="0" width="700" height="460" fill="#e7efea"/>
-   <rect x={left} y={roofY} width={600} height={bottom-roofY} fill={main} stroke="#5e655d" strokeWidth="4"/>
-   {d===2&&<rect x={left} y={roofY} width={600} height={storey} fill={accent} fillOpacity=".2"/>}
-   {d===2&&<rect x={left} y={roofY-30} width={600} height="30" fill={accent} stroke="#7e796c" strokeWidth="3"/>}
-   <rect x={left-8} y={bottom-52} width={616} height="72" fill="#677e6e" stroke="#3f5e50" strokeWidth="4"/>
-   <rect x={left+g.xFt*scale} y={bottom-52} width={g.widthFt*scale} height="72" fill="#44524d" stroke="#22382f" strokeWidth="4"/>
-   <rect x={left+ped.xFt*scale} y={bottom-52} width={ped.widthFt*scale} height="72" fill="#4b6b57" stroke="#294837" strokeWidth="3"/>
-   {Array.from({length:8},(_,i)=><line key={i} x1={left+g.xFt*scale+i*g.widthFt*scale/8} x2={left+g.xFt*scale+i*g.widthFt*scale/8} y1={bottom-50} y2={bottom+18} stroke="#b9c7bb" strokeWidth="3"/>)}
-   {d===2&&<g><rect x={left+5} y={roofY+95} width={590} height="32" fill="#8bb8af" fillOpacity=".65" stroke="#4c6760" strokeWidth="4"/></g>}
-   <rect x={left} y={bottom+22} width="600" height="10" fill="#969f91"/>
-   <text x="350" y="420" fontSize="15" textAnchor="middle" fill="#314e3e">ROAD-SIDE FRONT · {plan.plot.roadSide} · CONCEPT ONLY</text>
-   <text x="350" y="442" fontSize="11" textAnchor="middle" fill="#516554">Not a site photograph, structural drawing or verified facade</text>
-   <title>{front.length} front-zone spaces; exact wall openings are represented in the plan and 3D</title>
+  <svg viewBox="0 0 700 420" role="img" aria-label={`Road-side elevation for ${widthFt} ft frontage, ${plan.floors} levels`}>
+   <rect width="700" height="420" fill="#e7efea"/>
+   <rect x={x(0)} y={355} width={widthFt*scale} height={8} fill="#85938a"/>
+   {levels.map(({floor,left,right})=><g key={floor}>
+    <rect x={x(left)} y={y((floor+1)*storeyFt)} width={(right-left)*scale} height={storeyFt*scale} fill={main} stroke="#68736a"/>
+    <rect x={x(left)} y={y((floor+1)*storeyFt)} width={(right-left)*scale} height={.55*scale} fill={accent}/>
+   </g>)}
+   {plan.rooms.filter(r=>r.kind==="balcony").map(r=><g key={r.id}>
+    <rect x={x(r.x)} y={y(r.floor*storeyFt+3)} width={r.w*scale} height={3*scale} fill="#95b6ae" stroke="#526860"/>
+    {plan.facade.kit==="jali-screen"&&Array.from({length:8},(_,i)=><rect key={i} x={x(r.x+(i+.5)*r.w/24)} y={y((r.floor+1)*storeyFt)} width={.26*scale} height={storeyFt*scale} fill={accent}/>)}
+    {plan.facade.kit==="pergola"&&Array.from({length:6},(_,i)=><rect key={i} x={x(r.x+(i+.5)*r.w/6)} y={y((r.floor+1)*storeyFt)} width={.4*scale} height={.5*scale} fill={accent}/>)}
+   </g>)}
+   {[plan.gate,plan.pedestrianGate].map(g=><rect key={g.xFt} x={x(g.xFt)} y={y(4)} width={g.widthFt*scale} height={4*scale} fill="#485d50" stroke="#304739"/>)}
+   <text x="350" y="395" fontSize="15" textAnchor="middle" fill="#314e3e">{widthFt} ft frontage · Road {roadSide} · Concept elevation</text>
   </svg>
  </section>;
 }

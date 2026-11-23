@@ -28,7 +28,7 @@ export function MaterialsBrowser({products,categories,initialQuery=""}:{
    <label>Size / grade / pack<select value={gradeOrSize} onChange={e=>setGradeOrSize(e.target.value)}>
     <option value="all">All sizes and grades</option>{facets.gradesAndSizes.map(x=><option key={x} value={x}>{x}</option>)}</select></label>
   </form>
-  <div className="catalog-results-meta"><p aria-live="polite"><strong>{visible.length}</strong> reference profiles · <strong>0</strong> confirmed selling offers</p>
+  <div className="catalog-results-meta"><p aria-live="polite"><strong>{visible.length}</strong> references for quotation</p>
    <button type="button" onClick={clear}>Reset filters</button></div>
   <p className="catalog-demo-note"><strong>Product identity first.</strong> Brand/range examples and material photographs help choose specifications. Exact SKU, manufacturer-authorized packaging, local stock, prices and delivery are pending supplier verification. Unverified products are not buyable.</p>
   {visible.length?<div className="product-grid">{visible.map(p=><article className="product-card" key={p.category+":"+p.slug}>
@@ -38,7 +38,7 @@ export function MaterialsBrowser({products,categories,initialQuery=""}:{
     <h2><Link href={`/materials/${p.category}/${p.slug}`}>{p.name}</Link></h2>
     <p>{p.description}</p>
     <div className="catalog-spec-chips">{p.specifications.slice(0,3).map(s=><span key={s.label}><b>{s.label}:</b> {s.value}</span>)}</div>
-    <div className="catalog-sku-status"><span>SKU: awaiting seller confirmation</span><span>Stock: not verified</span></div>
+    <div className="catalog-sku-status"><span>Availability by pincode</span></div>
     <div className="product-card-foot"><span>{p.quoteOnly?"Location-based quote only":"Price upon verified offer"}</span>
      <Link href={`/materials/${p.category}/${p.slug}`}>View details →</Link></div>
    </div>

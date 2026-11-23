@@ -12,12 +12,12 @@ export const metadata:Metadata={
 type Props={searchParams:Promise<Record<string,string|string[]|undefined>>};
 const safe=(x:string|string[]|undefined,min:number,max:number,fallback:number)=>{
  const value=typeof x==="string"?Number(x):NaN;
- return Number.isFinite(value)&&value>=min&&value<=max?Math.round(value*2)/2:fallback;
+ return Number.isFinite(value)&&value>=min&&value<=max?value:fallback;
 };
 export default async function PlotPortfolioPage({searchParams}:Props){
  const params=await searchParams;
  const roadSide=(typeof params.road==="string"&&["N","E","S","W"].includes(params.road)?params.road:"N") as RoadSide;
- const floors=safe(params.floors,1,2,2) as 1|2;
+ const floors=safe(params.floors,1,3,2) as 1|2|3;
  const bedrooms=safe(params.bedrooms,1,3,3);
  const parking=params.parking!=="false";
  const initialBrief:PlanBrief={
@@ -27,3 +27,4 @@ export default async function PlotPortfolioPage({searchParams}:Props){
  };
  return <RoadPlanClient initialBrief={initialBrief}/>;
 }
+

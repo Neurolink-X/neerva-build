@@ -117,6 +117,16 @@ async function main(){
     await page.getByRole("button",{name:/Create room layouts/}).click();
     await page.waitForURL("**/design-studio/portfolio?**");
     assert.match(new URL(page.url()).search,/width=18/);
+    await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"networkidle"});
+    const pack=page.locator(".product-gallery-stage img");
+    assert.ok(await pack.evaluate(img=>img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin),"pack photo must load locally");
+    await page.goto(base+"/design-studio/fit",{waitUntil:"networkidle"});
+    const floorsSelect=page.locator("#nfit-floors");
+    assert.equal(await floorsSelect.count(),1,"plot-fit page must render a labelled floors selector");
+    await floorsSelect.selectOption("1");
+    assert.equal(await floorsSelect.inputValue(),"1","ground-floor selection must update the plot brief");
+    await page.getByRole("img",{name:/Road on N side/}).waitFor();
+    assert.equal(await page.locator(".nroad-diagram svg").getByText("BEDROOM 2",{exact:true}).count(),1);
     const cat=await page.goto(base+"/materials/steel",{waitUntil:"networkidle"});
     assert.equal(cat?.status(),200,"steel category route");
     const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"networkidle"});
@@ -141,6 +151,18 @@ async function main(){
     assert.equal(await exterior.getAttribute("aria-pressed"),"true","original concept remains available");
     await photo.click();
     assert.equal(await photo.getAttribute("aria-pressed"),"true","photo editor resumes without a reload");
+ await page.getByRole("button",{name:"Try a furnished living room"}).click();
+ const canvas=page.locator(".nbd-photo canvas");
+ await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
+ async function mark(x){let b=await canvas.boundingBox();for(const [u,v] of [[x,.12],[x+.12,.12],[x+.12,.26],[x,.26]])await canvas.click({position:{x:u*b.width,y:v*b.height}});}
+ await mark(.06);
+ await page.getByRole("combobox",{name:"Wall design",exact:true}).selectOption("bands");
+ await page.getByRole("button",{name:"Keep wall & select another"}).click();
+ await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
+ const png=()=>canvas.evaluate(c=>c.toDataURL());
+ const combo=await png();await page.getByRole("button",{name:"View original"}).click();assert.notEqual(await png(),combo);
+ await page.getByRole("button",{name:"Show new colour"}).click();assert.equal(await png(),combo);
+ const download=page.waitForEvent("download");await page.getByRole("button",{name:"Save colour preview"}).click();assert.match((await download).suggestedFilename(),/png$/);
     // Tested road-correct 18x50 PlanModel: one source for geometry, 3D and paint quantities.
     await page.goto(base+"/design-studio/road-planner",{waitUntil:"networkidle"});
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
@@ -197,9 +219,10 @@ async function main(){
       assert.match((await link.getAttribute("href"))??"",new RegExp("width="+w+"&depth="+d),"plot dimensions need to persist into fit flow");
       await link.click();
       await page.waitForURL("**/design-studio/fit?**");
-      await page.getByText("Plot proportion in 3D").waitFor({timeout:15000});
-      await page.getByText(w+" × "+d+" ft",{exact:true}).first().waitFor({timeout:10000});
-      assert.equal(await page.getByRole("img",{name:new RegExp("Isometric massing concept for a "+w+" by "+d)}).count(),1,"dynamic 3D plot massing should show");
+      const next=page.getByRole("link",{name:/Explore floors, front elevation/});
+      await page.getByRole("img",{name:/Road on N side/}).waitFor();
+      await page.waitForFunction(([w,d])=>document.querySelector(".nfit-primary-next a")?.href.includes("width="+w+"&depth="+d),[w,d]);
+      assert.ok(await next.isVisible());
       await page.goto(base+"/",{waitUntil:"networkidle"});
     }
 
