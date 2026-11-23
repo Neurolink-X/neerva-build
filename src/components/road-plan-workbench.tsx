@@ -34,7 +34,7 @@ export function RoadPlanWorkbench(){
   <nav className="nroad-nav" aria-label="House planner navigation"><Link href="/design-studio/workbench">← {str("Previous workbench","पुराना प्लानर")}</Link>
    <span>NEERVA BUILD · PLANMODEL</span><button type="button" onClick={()=>setHindi(x=>!x)}>{hindi?"English":"हिन्दी"}</button></nav>
   <header className="nroad-hero">
-   <span className="nroad-kicker">ROAD-FIRST · TESTED CONCEPT GENERATOR</span>
+   <span className="nroad-kicker">ROAD-FIRST · DRAFT CONCEPT GENERATOR</span>
    <h1>{str("A house plan that starts at your road.","सड़क के अनुसार घर का नक्शा।")}</h1>
    <p>{str("Enter your plot frontage, road direction and household requirements. See the same rooms in 2D, 3D and an approximate quantity view.",
     "प्लॉट की चौड़ाई, सड़क और कमरों की जानकारी भरें। एक ही प्लान को 2D, 3D और सामग्री अनुमान में देखें।")}</p>
@@ -69,7 +69,7 @@ export function RoadPlanWorkbench(){
      <p>{str("Try G+1, fewer bedrooms, or review parking and setbacks. We do not shrink rooms below minimums to fabricate a fit.",
        "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>
     </section>:<>
-     <div className="nroad-head nroad-choices"><h2>{str("Validated concept options","जाँचे गए कॉन्सेप्ट")}</h2><span>{result.plans.length} mirrored entry arrangements</span></div>
+     <div className="nroad-head nroad-choices"><h2>{str("Geometry-checked draft options","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} mirrored entry arrangements</span></div>
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=><button key={v.id} type="button" aria-pressed={v.id===plan.id}
        onClick={()=>{setChosen(i);setFloor(0)}}><strong>{i+1}. {v.variant==="parking-left"?"Parking left":"Parking right"}</strong>
        <span>{v.score.toFixed(0)}/90 concept score</span></button>)}</div>
