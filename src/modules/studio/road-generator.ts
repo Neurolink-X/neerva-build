@@ -62,8 +62,17 @@ function addWindow(p:Pick<PlanModel,"rooms"|"openings"|"plot"|"setbacks">){
 export type SpatialProgramme="wash"|"family-gallery"|"rear-courtyard"|"rear-baranda";
 type SpatialRecipe={parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
  rearBedWidthFt?:number;upperBedRatio?:number;rearProgramme?:SpatialProgramme;frontProgramme?:"dining"|"family-hall"|"family-lounge";familyLabel?:string;};
+function houseEnvelope(b:PlanBrief){
+ const envelope=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
+ const width=b.widthFt-envelope.leftFt-envelope.rightFt,depth=b.depthFt-envelope.frontFt-envelope.rearFt;
+ // Keep oversized plots useful as gardens rather than stretching habitable rooms.
+ const maxWidth=Math.min(30,23+Math.max(0,depth-42)*1.4);
+ const sideGarden=Math.max(0,width-maxWidth)/2;
+ return {...envelope,leftFt:envelope.leftFt+sideGarden,rightFt:envelope.rightFt+sideGarden,
+  rearFt:envelope.rearFt+Math.max(0,depth-60)};
+}
 function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:SpatialRecipe={}):PlanModel{
- const sb=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks),
+ const sb=houseEnvelope(b),
  U={x:sb.leftFt,y:sb.frontFt,w:b.widthFt-sb.leftFt-sb.rightFt,d:b.depthFt-sb.frontFt-sb.rearFt};
  const W=U.w,D=U.d,parkW=recipe.parkWidthFt??Math.max(8.5,Math.min(10,round(W*.46)));
  const stairW=recipe.stairWidthFt??5.5,kitchenW=recipe.kitchenWidthFt??8.5,bathW=5;
@@ -199,7 +208,7 @@ export function generateRoadPlans(brief:PlanBrief):PlanningResult{
 export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResult{
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
- const envelope=conservativeEnvelope(brief.widthFt,brief.depthFt,brief.siteShape??{kind:"rectangle"},brief.setbacks);
+ const envelope=houseEnvelope(brief);
  const W=brief.widthFt-envelope.leftFt-envelope.rightFt;
  const baseParking=Math.max(8.5,Math.min(10,round(W*.46)));
  const plans:PlanModel[]=[],seen=new Set<string>();

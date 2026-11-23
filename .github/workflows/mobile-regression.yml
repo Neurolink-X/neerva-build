@@ -25,14 +25,14 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - name: Install temporary browser test driver
-        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.2 @axe-core/playwright@4.10.2
+        run: npm install --prefix "$RUNNER_TEMP/neerva-browser" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.2 @axe-core/playwright@4.10.2
       - name: Cache Chromium browser
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ runner.os }}-1.58.2
       - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+        run: '"$RUNNER_TEMP/neerva-browser/node_modules/.bin/playwright" install --with-deps chromium'
       - run: npm run release:verify
       - run: npm run build
       - name: Start isolated local preview, test 360–1440px
@@ -46,7 +46,8 @@ jobs:
             if curl -fsS http://127.0.0.1:3000/ >/dev/null; then break; fi
             sleep 2
           done
-          node scripts/e2e/mobile-smoke.mjs
+          cp scripts/e2e/mobile-smoke.mjs "$RUNNER_TEMP/neerva-browser/mobile-smoke.mjs"
+          node "$RUNNER_TEMP/neerva-browser/mobile-smoke.mjs"
       - name: Store mobile evidence
         if: always()
         uses: actions/upload-artifact@v4

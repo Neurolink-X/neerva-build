@@ -74,6 +74,7 @@ test("impossible plot constraints never produce duplicate fake plans",()=>{
 
 test("compact and three-level plots keep precise dimensions across drawings and meshes",()=>{
  for(const brief of [{...standard,widthFt:20,depthFt:40,bedrooms:2},
+  {...standard,widthFt:30,depthFt:40},{...standard,widthFt:40,depthFt:60},
   {...standard,widthFt:21.25,depthFt:51.75,floors:3 as const}]){
   const preview=generateSpatialPortfolio(brief,1).plans[0];
   assert.ok(preview);
