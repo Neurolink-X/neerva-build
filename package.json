@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/modules/calculator/units.test.ts src/modules/observability/incidents.test.ts src/modules/pricing/public-price.test.ts src/modules/rfq/schema.test.ts src/modules/blog/articles.test.ts src/modules/studio/library.test.ts"
+    "test": "node --experimental-strip-types --test src/modules/calculator/units.test.ts src/modules/observability/incidents.test.ts src/modules/pricing/public-price.test.ts src/modules/rfq/schema.test.ts src/modules/blog/articles.test.ts src/modules/studio/library.test.ts src/modules/studio/geometry.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.57.4",
