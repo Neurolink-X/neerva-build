@@ -1,5 +1,5 @@
 "use client";
-import {useMemo,useState} from "react";
+import {useEffect,useMemo,useState} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {generateRoadPlans} from "@/modules/studio/road-generator";
@@ -18,6 +18,8 @@ const colours=[
 export function RoadPlanWorkbench(){
  const [brief,setBrief]=useState<PlanBrief>(initial),[chosen,setChosen]=useState(0);
  const [floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
+ const [threeReady,setThreeReady]=useState(false);
+ useEffect(()=>{const frame=window.requestAnimationFrame(()=>setThreeReady(true));return()=>window.cancelAnimationFrame(frame)},[]);
  const result=useMemo(()=>generateRoadPlans(brief),[brief]);
  const draft=result.plans[chosen]??result.plans[0]??null;
  const shade=colours.find(c=>c.id===palette)??colours[0];
@@ -77,7 +79,7 @@ export function RoadPlanWorkbench(){
      </div>
      <RoadPlanDiagram plan={plan} floor={floor}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Touch orbit · concept-only</span></div>
-     {design&&<Building3D key={plan.id} design={design} colour={shade.main} planModel={plan}/>}
+     {design&&(threeReady?<Building3D key={plan.id} design={design} colour={shade.main} planModel={plan}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The legacy viewer simplifies wall thickness and stair construction; it is not verified CAD/BIM.</p>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>
