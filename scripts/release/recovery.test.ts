@@ -26,6 +26,7 @@ test("production release contract retains original source inventory and pins sen
  * credentials into an intentionally invalid release-gate fixture.
  */
 const fixtureEnv={
+ NODE_ENV:"test" as const,
  PATH:process.env.PATH??"",
  VERCEL_ENV:"preview",
  VERCEL_GIT_COMMIT_REF:"feature-test",
@@ -34,7 +35,7 @@ const fixtureEnv={
  NEXT_PUBLIC_SUPABASE_ANON_KEY:"intentionally-invalid-not-a-real-publishable-key",
  NEERVA_RELEASE_APPROVED_SHA:"a".repeat(40)
 };
-function ignoredBuildStep(env:Record<string,string>,ci=false){
+function ignoredBuildStep(env:NodeJS.ProcessEnv,ci=false){
  return spawnSync(process.execPath,["scripts/release/production-gate.mjs",...(ci?["--check"]:[])],{
   env,encoding:"utf8",timeout:10000
  });
