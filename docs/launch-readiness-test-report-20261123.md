@@ -9,7 +9,7 @@
 - Dedicated Supabase project HEALTHY, migrations 0001–0006 applied; 29 earlier public business tables had RLS enabled. No merchants or RFQs have been entered into the production project.
 - Database `quote_requests`: authenticated users have limited INSERT column permissions; anon has no table INSERT; changing `status` or `created_at` from a client is denied by PostgreSQL privileges. Triggers enforce verified email, per-user throttle, consent and audit logging. Evidence: Supabase SQL metadata query and migration 0005/0006.
 - Account page in PR #19 uses existing `AccountAccess` and optional email magic link; phone OTP remains feature-gated and requires a real SMS provider.
-- Public RFQ intake requires JWT and consent; no Upstash, paid redis, external CAPTCHA or service-role credentials.
+- Public RFQ intake is **OFF by default**. Once operator activates both server and frontend flags after merchant/legal support readiness, requests require JWT and consent; no Upstash, paid redis, external CAPTCHA or service-role credentials.
 - PWA contains generated local PNG icon routes, maskable manifest declaration, safe offline fallback, install engagement/cooldown; installed-state / Safari prompt behavior requires real devices.
 - Homepage hero now uses **original illustrated construction/finished concept art**, not a photo of a real Neerva house. Other illustrative photographs may still be sourced from free-license providers.
 - Preview indexing remains disabled; production requires explicit `NEXT_PUBLIC_SITE_INDEXABLE=true` and HTTPS URL, without which robots/sitemap block indexing.
@@ -21,7 +21,7 @@
 |---|---|---|
 | Guest | Home / custom plot 18×50 and 20×45 / materials → local basket / photo colour / PWA routes | CI browser smoke exists, final current-run outcome must be checked on GitHub; no real transaction |
 | Customer authentication | Route wires Supabase email/password + magic link; safe unconfigured fallback | Code + build; **real email delivery, signup/session expiry NOT VERIFIED** |
-| Customer RFQ | Server schema, privacy checkbox, owned insert, SQL throttling/idempotency/audit; anonymous negative | Unit + database metadata + browser negative; **real two-customer POST NOT VERIFIED** |
+| Customer RFQ | Server schema, privacy checkbox, owned insert, SQL throttling/idempotency/audit; anonymous negative | Unit + database metadata + browser negative; **currently OFF by safety flag, real two-customer POST NOT VERIFIED** |
 | Contractor | No distinct authenticated workflow implemented | **FAIL — missing feature** |
 | Dealer | API role guard requires active tenant; domain negative tests for suspended/unapproved merchant | Unit; **FAIL — no approved dealers, no KYC workflow or offer submission** |
 | Delivery | No delivery identity, assigned job, OTP or proof handling | **FAIL — missing feature** |
@@ -62,3 +62,6 @@
 
 ## Evidence standards
 Never report a role as PASS from a UI screenshot alone. Require positive and negative authenticated API evidence, correct tenant isolation, measured mobile performance, confirmed merchant inventory/terms and a verified production alias.
+
+## Operator activation guard
+The customer RFQ intake toggle is deliberately disabled until real approved dealers, staffed customer support, a verified email sender, legal/privacy signoff and authenticated RLS E2E tests are complete. Enable only **both** `NEERVA_RFQ_INTAKE_ENABLED=true` (server) and `NEXT_PUBLIC_RFQ_INTAKE_ENABLED=true` (client) for the approved production environment, then redeploy and inspect the actual database write + audit logs. The default disabled value prevents an accidental collection of real contact data during an incomplete launch.

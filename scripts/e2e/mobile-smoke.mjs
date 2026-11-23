@@ -68,8 +68,8 @@ async function main(){
       assert.equal(await page.getByText("Waiting for backend setup").count(),1,"unconfigured account must not collect passwords");
     }
     const unauth=await page.request.post(base+"/api/rfqs",{data:{idempotencyKey:"f1d3068d-3f5f-4e5c-a14e-2546fb9902ed"}});
-    const expectedUnauth=process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?401:503;
-    assert.equal(unauth.status(),expectedUnauth,"RFQ must fail closed: 401 when configured, 503 without credentials");
+    const expectedUnauth=process.env.NEERVA_RFQ_INTAKE_ENABLED==="true"&&process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?401:503;
+    assert.equal(unauth.status(),expectedUnauth,"RFQ must fail closed: 401 only when intake and auth are enabled, otherwise 503");
     await page.goto(base+"/",{waitUntil:"networkidle"});
     assert.equal(await page.locator(".neerva-install-banner").count(),0,"do not show install prompt on first paint");
     // Authenticated role isolation needs live fixture accounts and cannot be simulated by guest screenshots.
