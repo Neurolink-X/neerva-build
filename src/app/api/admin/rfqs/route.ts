@@ -45,7 +45,8 @@ export async function POST(request:Request){
   if(!rfq.data||rfq.data.status!=="open")return Response.json({error:"Only open, real customer requests can be assigned."},{status:409});
   if(tenant.data?.status!=="active"||!applications.data?.length||!branches.data?.length)
    return Response.json({error:"Dealer requires approved KYC, active tenancy and approved branch."},{status:409});
-  const match=branches.data.some(b=>b.pincode===rfq.data.pincode);
+  const requestedPin=String(rfq.data.pincode);
+  const match=branches.data.some(b=>b.pincode===requestedPin);
   const {data:saved,error}=await auth.client.from("quote_invites")
    .insert({quote_request_id:requestId,tenant_id:tenantId,invited_by:auth.userId,status:"invited"})
    .select("quote_request_id,tenant_id,status,invited_at").single();
