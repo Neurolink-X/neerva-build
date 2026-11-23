@@ -77,7 +77,7 @@ export function RoadPlanWorkbench(){
      </div>
      <RoadPlanDiagram plan={plan} floor={floor}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Touch orbit · concept-only</span></div>
-     {design&&<Building3D key={plan.id} design={design} colour={shade.main}/>}
+     {design&&<Building3D key={plan.id} design={design} colour={shade.main} planModel={plan}/>}
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The legacy viewer simplifies wall thickness and stair construction; it is not verified CAD/BIM.</p>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>

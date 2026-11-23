@@ -3,7 +3,7 @@ import type {PlanModel,RoomKind} from "./plan-model.ts";
 import {planMetrics} from "./plan-model.ts";
 const kindMap:Record<RoomKind,DesignRoom["kind"]>={
  parking:"parking",verandah:"open",living:"living",dining:"living",kitchen:"kitchen",
- bedroom:"bedroom",bath:"bath",stairs:"stairs",corridor:"open",utility:"utility",
+ bedroom:"bedroom",bath:"bath",stairs:"stairs",corridor:"living",utility:"utility",
  balcony:"open",lounge:"living",terrace:"open"
 };
 const kind=(k:RoomKind):DesignRoom["kind"]=>kindMap[k];
