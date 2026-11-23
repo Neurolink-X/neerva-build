@@ -17,7 +17,7 @@ export function ProductGallery({product}:{product:DemoProduct}){
   <div className="product-gallery-stage">
    {current?<Image key={current.src} src={current.src} alt={current.alt} fill sizes="(max-width:850px) 94vw, 48vw"
      quality={82} className="catalog-real-image" onError={()=>setFailed(old=>old.includes(current.src)?old:[...old,current.src])}/>:
-    <div className="catalog-image-awaiting" role="img" aria-label="Material photograph unavailable"><strong>Awaiting accurate product photos</strong><small>We will not substitute another brand's packaging.</small></div>}
+    <div className="catalog-image-awaiting" role="img" aria-label="Material photograph unavailable"><strong>Awaiting accurate product photos</strong><small>We will not substitute another brand&apos;s packaging.</small></div>}
   </div>
   <figcaption className="product-gallery-caption"><strong>{current?.label??"Photograph not verified"}</strong>
     <span>{current?.kind==="sku"?"Uploaded and reviewed seller image.":"Photo is a reference, not proof of the quoted manufacturer SKU, size or availability."}</span></figcaption>

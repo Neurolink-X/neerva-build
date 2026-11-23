@@ -26,3 +26,20 @@ test("family groups keep individual sizes available",()=>{
  assert.equal(grouped.length,1);
  assert.equal(grouped[0].variants.length,variants.length);
 });
+
+test("all locally licensed editorial images are present, JPEG, unique and substantial",async()=>{
+ const {curatedPhotoPaths}=await import("./curated-photo-paths.ts");
+ const fs=await import("node:fs");
+ const crypto=await import("node:crypto");
+ const paths=Object.values(curatedPhotoPaths);
+ assert.equal(paths.length,10,"PR30 only displays photo assets after import and verification");
+ const fingerprints=new Set<string>();
+ for(const p of paths){
+  assert.match(p,/^\/images\/catalog\/editorial\/[a-z-]+\.jpg$/);
+  const bytes=fs.readFileSync("public"+p);
+  assert.ok(bytes.length>15000&&bytes.length<2200000,p);
+  assert.equal(bytes[0],255);assert.equal(bytes[1],216);assert.equal(bytes[2],255);
+  fingerprints.add(crypto.createHash("sha256").update(bytes).digest("hex"));
+ }
+ assert.equal(fingerprints.size,paths.length,"no repeated binary editorial images");
+});

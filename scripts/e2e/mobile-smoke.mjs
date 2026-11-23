@@ -117,6 +117,15 @@ async function main(){
     await page.getByRole("button",{name:/Create room layouts/}).click();
     await page.waitForURL("**/design-studio/portfolio?**");
     assert.match(new URL(page.url()).search,/width=18/);
+    await page.goto(base+"/materials/plumbing/cpvc-pipe-25mm",{waitUntil:"networkidle"});
+    assert.equal(await page.locator(".product-gallery-caption").count(),1,"gallery has a single truthful caption below the photo");
+    assert.equal(await page.locator(".product-gallery-stage .catalog-image-note").count(),0,"no duplicate overlaid labels in product photo");
+    assert.equal(await page.locator(".city-select").count(),0,"header does not show a fake location picker");
+    const photoThumbs=page.locator(".product-gallery-thumbs button");
+    assert.ok(await photoThumbs.count()>=2,"catalog product has distinct locally cached material photo views");
+    const firstHeroSource=await page.locator(".product-gallery-stage img").getAttribute("src");
+    await photoThumbs.nth(1).click();
+    assert.notEqual(await page.locator(".product-gallery-stage img").getAttribute("src"),firstHeroSource,"second thumbnail displays different image");
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"networkidle"});
     const pack=page.locator(".product-gallery-stage img");
     assert.ok(await pack.evaluate(img=>img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin),"pack photo must load locally");
