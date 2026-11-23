@@ -6,6 +6,7 @@
 - There are already 24 original plan JSON concepts: 15×30, 20×40, 25×40, 30×40, 30×50, 40×60 ft, each with four styles. The new brief mentions two additional dimensions, 18×50 and 20×45. Eight plot sizes × four styles is **32 designs**, not 24. Add the extra 8 only after real plan and asset reviews.
 - Existing 3D viewer has actual wall openings, slab and RCC roof/parapet, but lacks approved original photorealistic images, matching interior renders, verified HDRI/material pipeline, and full 30+fps real-device evidence. Existing elevation and gallery are *concept SVGs*, NOT photorealistic assets.
 - Existing geometry validation tests plot boundaries and overlaps. It does NOT verify local authority setbacks or practical room/parking usability.
+- **Area reconciliation finding:** 13 of 24 stored built-up metadata values differ from the sum of enclosed room rectangles. User-visible covered room and open/parking areas are now computed directly from plan polygons. Legacy carpet estimates are no longer presented as certified measurements.
 - All four 15×30 plans contain a roughly 76 sq ft living/dining room, beneath a 100 sq ft **advisory planning reference**. Some 20×40 concepts have an 18×7.3 ft parking rectangle which fails a simple 8×16 ft clearance check; turning radius, gate and access also need expert review.
 - Existing older Home Studio uses relative-position rectangles. Treat them only as conceptual; do not confuse with licensed architectural drawings. Main homepage hero currently enters the older studio instead of a plot-fitting flow.
 - No dedicated **Neerva** Supabase project is connected. Existing connected project names are unrelated. Never apply Neerva migrations to another project's database.
@@ -32,7 +33,7 @@ All new exposed tables must enable PostgreSQL RLS; publishing privileges limited
 - /design-studio/fit — public guided brief and concept ranking (Phase A new).
 - /design-studio/library and /design-studio/library/[slug] — existing gallery/detail, preserve.
 - /design-studio/visualizer and /design-studio/workbench — existing colour/editor routes, preserve.
-- GET /api/studio/city-rules?city=... — only verified city rules (after dedicated DB).
+- GET /api/studio/city-rules?city=... — implemented with dedicated Neerva-only credentials, returns 503 until the correct DB exists; will return only verified rules after migration.
 - GET /api/studio/designs — published versions and approved assets (after dedicated DB).
 - POST/PATCH /api/admin/studio/designs and /assets — JWT, admin review and audit (after dedicated DB).
 - POST /api/quotes/from-design — validated BOQ, user consent and request idempotency (after authenticated commerce).
@@ -63,4 +64,4 @@ C. Compare, saved concept, brochure, BOQ to real RFQ/offers/orders.
 D. Full geometrical 3D, interiors, photo repaint, complete Hindi, accessibility.
 E. Scale to 32 designs if eight sizes are required, approved asset catalog, analytics, offers, SEO.
 
-**This PR delivers A1/A2 only until schema and media work are proven.** Production is guarded. The old live site stays unchanged until verified new release.
+**This PR delivers A1/A2, staged migration and media validation contracts, and a fail-closed city rules endpoint.** It does not deliver the actual licence-approved architectural imagery or live database. Production is guarded. The old live site stays unchanged until verified new release.
