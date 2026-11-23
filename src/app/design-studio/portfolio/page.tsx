@@ -1,5 +1,5 @@
 import type {Metadata} from "next";
-import {RoadPlanWorkbench} from "@/components/road-plan-workbench";
+import {RoadPlanClient} from "@/components/road-plan-client";
 import type {PlanBrief,RoadSide} from "@/modules/studio/plan-model";
 import "../studio.css";
 import "../road-planner/road-planner.css";
@@ -25,5 +25,5 @@ export default async function PlotPortfolioPage({searchParams}:Props){
   roadSide,floors,bedrooms,parking,
   setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}
  };
- return <RoadPlanWorkbench initialBrief={initialBrief}/>;
+ return <RoadPlanClient initialBrief={initialBrief}/>;
 }
