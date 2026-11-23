@@ -12,7 +12,7 @@ export type Opening={id:string;roomId:string;side:Side;atFt:number;widthFt:numbe
 export type PlanModel={
  version:1;id:string;variant:"parking-left"|"parking-right";
  plot:{widthFt:number;depthFt:number;roadSide:RoadSide};
- setbacks:{frontFt:number;rearFt:number;leftFt:number;rightFt:number;verified:false};
+ setbacks:{frontFt:number;rearFt:number;leftFt:number;rightFt:number;verified:boolean};
  walls:{externalFt:number;internalFt:number;heightFt:number;parapetFt:number};
  floors:number;rooms:Room[];openings:Opening[];
  gate:{side:"front";xFt:number;widthFt:number};
