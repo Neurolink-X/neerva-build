@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   mobile:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
             if curl -fsS http://127.0.0.1:3000/ >/dev/null; then break; fi
             sleep 2
           done
-          node scripts/e2e/mobile-smoke.cjs
+          node scripts/e2e/mobile-smoke.mjs
       - name: Store mobile evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,8 +1,8 @@
 /* Minimal mobile browser gate: no external telemetry, no credentials, no fake metrics. */
-const {chromium}=require("playwright");
-const fs=require("node:fs");
-const path=require("node:path");
-const assert=require("node:assert/strict");
+import {chromium} from "playwright";
+import fs from "node:fs";
+import path from "node:path";
+import assert from "node:assert/strict";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
 const routes=["/","/design-studio","/design-studio/library","/design-studio/visualizer","/design-studio/workbench","/materials","/basket","/quotes"];
