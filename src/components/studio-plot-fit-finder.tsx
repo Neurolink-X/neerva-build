@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
+import {PlotMassingPreview} from "@/components/plot-massing-preview";
 import Link from "next/link";
 import {studioDesigns,formatLevels} from "@/modules/studio/library";
 import {DESIGN_CITIES,designCityStatus,rankStudioDesigns,sqFtToGaj,toFeet,type PlotBrief,type PlotUnit,type Facing,validatePlotBrief} from "@/modules/studio/fit";
@@ -57,6 +58,7 @@ export function StudioPlotFitFinder(){
     <label>{t.parking}<select value={brief.parking?"yes":"no"} onChange={e=>update("parking",e.target.value==="yes")}><option value="yes">{t.yes}</option><option value="no">{t.no}</option></select></label>
    </div>
    {errors.length>0?<div role="alert" className="nfit-error">{errors.join(" ")}</div>:<p className="nfit-area">{brief.widthFt.toFixed(1)} × {brief.depthFt.toFixed(1)} ft · {Math.round(brief.widthFt*brief.depthFt)} sq ft · {sqFtToGaj(brief.widthFt*brief.depthFt).toFixed(1)} square gaj</p>}
+   <PlotMassingPreview widthFt={brief.widthFt} depthFt={brief.depthFt} floors={brief.floors} parking={brief.parking}/>
    <p className="nfit-caution">{designCityStatus}</p><p className="nfit-footnote">Gaj is an area unit (9 sq ft), not a linear dimension. Site setbacks, FAR and vehicle turning must be reviewed separately.</p>
    <Link href="/design-studio/workbench" className="nfit-alt">Need to experiment with room sizes? Open concept workbench →</Link>
   </div>
