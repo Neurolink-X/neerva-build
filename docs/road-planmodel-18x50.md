@@ -13,7 +13,7 @@ All lengths in feet; `x=0..frontage`, **`y=0` along the road**. `roadSide` label
 - Configurable 9-inch outer and 4.5-inch inner walls (geometry is still simplified in bridged Three.js).
 - Rooms with type, ID, floor, rectangle, minimum width.
 - Door/window openings with explicit connecting room, sill, height and width. Connection edges require paired actual openings.
-- Car gate, 8 × 16 ft minimum advisory bay, verandah, stair shaft aligned across G+1, balcony and facade theme.
+- Separate car and pedestrian gates, 8 × 16 ft minimum advisory bay, verandah, stair shaft aligned across G+1, balcony and facade theme.
 - Advisory score, concept-only flag, never a claim of regulation or construction approval.
 
 ## Road-to-rear generator
@@ -33,7 +33,7 @@ No parking / 2BHK-G narrow single-floor / 15×30 3BHK+parking requests are delib
 ## Geometry and visual consistency
 - SVG floor plan draws every actual room dimension, paired door and window at PlanModel coordinates and always places ROAD at local y=0.
 - The existing Three.js building renderer receives a **derived** `StudioDesign` adapter. Geometry, door/window positions and floor selection originate in PlanModel; its current wall thickness/stairs are simplified.
-- Elevation is a **conceptual roadside illustration** with gate placement derived from PlanModel. It is not yet a unique parametric facade kit or verified architectural rendering.
+- Elevation is a **conceptual roadside illustration** with both gate positions derived from PlanModel. It is not yet a unique parametric facade kit or verified architectural rendering.
 - Area and paint estimate derive from the same rooms/openings; measured as *room-facing surfaces*, not a structural material BOQ. Shared walls count both faces; no fake cement/steel quantities or selling prices.
 - Mask recolor utility preserves source pixels, feathering and luminance hierarchy, but is NOT yet used to replace the photo editor.
 

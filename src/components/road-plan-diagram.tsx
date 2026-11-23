@@ -47,7 +47,7 @@ export function RoadPlanDiagram({plan,floor=0}:{plan:PlanModel;floor?:number}){
 export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;accent:string}){
  const front=plan.rooms.filter(r=>r.floor===0&&r.y<=16);
  const w=plan.plot.widthFt,d=plan.floors,scale=600/w,left=50,roofY=d===1?147:65,storey=136,bottom=roofY+storey*d;
- const g=plan.gate;
+ const g=plan.gate,ped=plan.pedestrianGate;
  return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel">
   <svg viewBox="0 0 700 460" role="img" aria-label={`Illustrative road-side elevation for ${w} ft frontage with ${d} levels and gate located ${g.xFt} ft along the road`}>
    <rect x="0" y="0" width="700" height="460" fill="#e7efea"/>
@@ -56,6 +56,7 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
    {d===2&&<rect x={left} y={roofY-30} width={600} height="30" fill={accent} stroke="#7e796c" strokeWidth="3"/>}
    <rect x={left-8} y={bottom-52} width={616} height="72" fill="#677e6e" stroke="#3f5e50" strokeWidth="4"/>
    <rect x={left+g.xFt*scale} y={bottom-52} width={g.widthFt*scale} height="72" fill="#44524d" stroke="#22382f" strokeWidth="4"/>
+   <rect x={left+ped.xFt*scale} y={bottom-52} width={ped.widthFt*scale} height="72" fill="#4b6b57" stroke="#294837" strokeWidth="3"/>
    {Array.from({length:8},(_,i)=><line key={i} x1={left+g.xFt*scale+i*g.widthFt*scale/8} x2={left+g.xFt*scale+i*g.widthFt*scale/8} y1={bottom-50} y2={bottom+18} stroke="#b9c7bb" strokeWidth="3"/>)}
    {d===2&&<g><rect x={left+5} y={roofY+95} width={590} height="32" fill="#8bb8af" fillOpacity=".65" stroke="#4c6760" strokeWidth="4"/></g>}
    <rect x={left} y={bottom+22} width="600" height="10" fill="#969f91"/>
