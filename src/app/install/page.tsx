@@ -10,7 +10,7 @@ export default function InstallPage(){
   <Link href="/" style={{display:"inline-block",marginBottom:24}}>← Back to NEERVA BUILD</Link>
   <p style={{fontSize:12,fontWeight:800,letterSpacing:1.4}}>NEERVA BUILD · QUICK ACCESS</p>
   <h1 style={{fontFamily:"Georgia,serif",fontSize:"clamp(32px,7vw,48px)",lineHeight:1.2}}>Add NEERVA BUILD to your home screen</h1>
-  <p>Installable as a progressive web app (PWA) on supported browsers. This is not a native Play Store or App Store download. The installer available on this site will use the browser's real install prompt when supported.</p>
+  <p>Installable as a progressive web app (PWA) on supported browsers. This is not a native Play Store or App Store download. The installer available on this site will use the browser&apos;s real install prompt when supported.</p>
   <section style={{display:"grid",gap:15,marginTop:30}}>
    <article style={{background:"#fff",padding:20,border:"1px solid #dde5dc",borderRadius:16}}>
     <h2>Android · Chrome</h2>
@@ -22,7 +22,7 @@ export default function InstallPage(){
    </article>
    <article style={{background:"#fff",padding:20,border:"1px solid #dde5dc",borderRadius:16}}>
     <h2>Desktop · Chrome or Edge</h2>
-    <p>Look for the install icon in the address bar, or use the browser's menu and select <strong>Install NEERVA BUILD</strong> when available.</p>
+    <p>Look for the install icon in the address bar, or use the browser&apos;s menu and select <strong>Install NEERVA BUILD</strong> when available.</p>
    </article>
   </section>
   <p style={{marginTop:24,fontSize:14}}>App installation adds a shortcut and some offline-readable public pages. Login, dealer quotes, prices, live stock, orders and payments still require internet connectivity and active verified services.</p>
