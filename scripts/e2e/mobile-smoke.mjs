@@ -151,11 +151,11 @@ async function main(){
     assert.match(resultHtml,/TMT 12 mm/,"draft material preserved");
     const newCatalog=await page.request.get(base+"/materials/paint");
     assert.equal(newCatalog.status(),200,"new paint category exists");
-    const reveal=page.getByRole("slider",{name:"Compare illustrative construction-stage and completed homes"});
-    assert.equal(await reveal.count(),1,"construction comparison needs a keyboard-accessible range slider");
-    await reveal.fill("74");
-    assert.equal(await reveal.inputValue(),"74","range input should move construction reveal");
-    assert.equal(await page.getByText("FINISHED HOME",{exact:true}).count(),1,"finished stage must be visibly labeled");
+    assert.equal(await page.getByRole("slider",{name:/construction-stage/}).count(),0,"real-photo panels must not pretend to be a single building before/after slider");
+    assert.equal(await page.locator(".nbh-real-construction img").count(),2,"show actual editorial construction and completed home photos");
+    assert.equal(await page.getByText(/STRUCTURE \/ WORK SITE/).count(),1,"construction photo must be labelled");
+    assert.equal(await page.getByText(/COMPLETED HOME STYLE/).count(),1,"completed home reference must be labelled");
+    assert.equal(await page.getByText(/different properties/).count()>0,true,"do not claim two unrelated photographs are the same project");
     const dimensions=page.locator(".nbh-filter-row input[type=number]");
     assert.equal(await dimensions.count(),2,"home must support arbitrary plot width and depth");
     for(const [w,d] of [["18","50"],["20","45"]]){
