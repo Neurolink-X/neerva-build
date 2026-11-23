@@ -9,6 +9,7 @@ const supabase = createNeervaBrowserClient();
 
 function friendlyAuthError(message: string) {
   const normalized = message.toLowerCase();
+  if (normalized.includes("privacy consent required")) return "Read the privacy notice and agree before creating an account.";
   if (normalized.includes("invalid login credentials")) return "Email or password is incorrect. Check both and try again.";
   if (normalized.includes("email not confirmed")) return "Verify your email using the link we sent, then sign in.";
   if (normalized.includes("user already registered")) return "An account already uses this email. Sign in instead.";
@@ -61,10 +62,11 @@ export function AccountAccess() {
         if (error) throw error;
         setMessage({ kind: "success", text: "You’re signed in. Your saved material list is still on this device." });
       } else {
+        if(form.get("privacyAccepted")!=="yes")throw new Error("Privacy consent required");
         const displayName = String(form.get("displayName") ?? "").trim();
         const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
         if (error) throw error;
-        setMessage({ kind: "success", text: data.session ? "Your customer account is ready." : "Check your email for the verification link. Your account will be ready after confirmation." });
+        setMessage({ kind: "success", text: data.session?.user.email_confirmed_at ? "Your verified account is ready." : "Check your email for verification. Private quotation requests require a verified email." });
       }
     } catch (error) {
       setMessage({ kind: "error", text: friendlyAuthError(error instanceof Error ? error.message : "") });
@@ -114,7 +116,7 @@ export function AccountAccess() {
     {!supabase ? <><span className="eyebrow">ACCOUNT SETUP</span><h2>Sign-in will open here.</h2><p>Customer and dealer accounts use NEERVA BUILD’s separate Supabase project. The account service is not configured yet, so no password field is shown and no credentials are collected.</p><div className="account-service-state"><span aria-hidden="true">○</span><span><strong>Waiting for backend setup</strong><small>Separate auth URL and public key are missing.</small></span></div></> : user ? <><span className="eyebrow">YOUR ACCOUNT</span><h2>You’re signed in.</h2><p>{user.email}</p><div className="account-dashboard-links">{admin && <Link href="/admin/catalog">Manage platform catalog →</Link>}{dealer && <Link href="/dealer/inventory">Open dealer inventory →</Link>}<Link href="/basket">Review your material list →</Link></div><button className="button button-outline" onClick={() => void supabase.auth.signOut()}>Sign out</button></> : <>
       <div className="account-mode-switch"><button type="button" className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setMessage(null); }}>Sign in</button><button type="button" className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setMessage(null); }}>Create account</button></div>
       <h2>{mode === "signin" ? "Welcome back." : "Create your customer account."}</h2><p>{mode === "signin" ? "Manage your project and material requests." : "Save projects, addresses and dealer quotations in one account."}</p>
-      <form className="account-auth-form" onSubmit={submit}>{mode === "signup" && <label>Your name<input name="displayName" required minLength={2} maxLength={100} autoComplete="name" /></label>}<label>Email address<input name="email" type="email" required maxLength={254} autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={128} autoComplete={mode === "signin" ? "current-password" : "new-password"} /></label><button className="button button-dark" disabled={busy}>{busy ? "Please wait…" : mode === "signin" ? "Sign in securely →" : "Create customer account →"}</button></form>
+      <form className="account-auth-form" onSubmit={submit}>{mode === "signup" && <label>Your name<input name="displayName" required minLength={2} maxLength={100} autoComplete="name" /></label>}<label>Email address<input name="email" type="email" required maxLength={254} autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={128} autoComplete={mode === "signin" ? "current-password" : "new-password"} /></label>{mode==="signup"&&<label className="neerva-account-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> I agree to the <Link href="/privacy">privacy notice</Link> for creating an account.</label>}<button className="button button-dark" disabled={busy}>{busy ? "Please wait…" : mode === "signin" ? "Sign in securely →" : "Create customer account →"}</button></form>
       <form className="account-auth-form" onSubmit={sendMagicLink} style={{marginTop:23}}>
         <strong>Prefer a password-free email sign-in?</strong>
         <label>Your registered email<input type="email" value={magicEmail} onChange={e=>setMagicEmail(e.target.value)} required autoComplete="email" maxLength={254}/></label>

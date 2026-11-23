@@ -5,5 +5,5 @@ export function SiteHeader() {
 }
 
 export function SiteFooter() {
-  return <footer className="site-footer"><Link className="brand brand-footer" href="/"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link><span>Build better. Buy smarter.</span><nav aria-label="Footer"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/quotes">Quotes</Link><Link href="/design-studio">Home studio</Link><Link href="/blog">Guides</Link></nav><small>© 2026 NEERVA BUILD · Live prices and stock will appear only from verified dealer data.</small></footer>;
+  return <footer className="site-footer"><Link className="brand brand-footer" href="/"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link><span>Build better. Buy smarter.</span><nav aria-label="Footer"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/quotes">Quotes</Link><Link href="/design-studio">Home studio</Link><Link href="/blog">Guides</Link><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/returns">Returns</Link></nav><small>© 2026 NEERVA BUILD · Live prices and stock will appear only from verified dealer data.</small></footer>;
 }
