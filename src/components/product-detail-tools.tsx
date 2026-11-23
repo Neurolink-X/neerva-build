@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { AddToMaterialList } from "@/components/material-basket";
 import { ProductArtwork } from "@/components/product-artwork";
+import { CatalogMaterialImage } from "@/components/catalog-material-image";
 import type { DemoProduct } from "@/modules/catalog/marketplace";
 
 const optionsByCategory: Record<string, { specs: string[]; units: string[] }> = {
@@ -22,13 +23,13 @@ export function ProductGallery({ product }: { product: DemoProduct }) {
   return (
     <div className="product-gallery">
       <div className="product-gallery-stage">
-        {product.images?.[active] ? <Image className="catalog-real-image" src={product.images[active]} alt={`${product.name} product image ${active + 1}`} fill sizes="(max-width: 680px) 100vw, 50vw" unoptimized /> : <ProductArtwork category={product.category} scene={scenes[active]} />}
+        {product.images?.[active] ? <Image className="catalog-real-image" src={product.images[active]} alt={`${product.name} product image ${active + 1}`} fill sizes="(max-width: 680px) 100vw, 50vw" unoptimized /> : active === 0 ? <CatalogMaterialImage category={product.category} name={product.name} /> : <ProductArtwork category={product.category} scene={scenes[active]} />}
         <span className="gallery-disclaimer">Illustrative profile / actual product packaging may vary</span>
       </div>
       <div className="product-gallery-thumbs" aria-label="Product illustration views">
         {scenes.map((scene, index) => (
           <button type="button" className={active === index ? "active" : ""} aria-label={labels[index]} aria-pressed={active === index} key={scene} onClick={() => setActive(index)}>
-            {product.images?.[index] ? <Image className="catalog-real-image" src={product.images[index]} alt="" fill sizes="120px" unoptimized /> : <ProductArtwork category={product.category} scene={scene} />}<span>{labels[index]}</span>
+            {product.images?.[index] ? <Image className="catalog-real-image" src={product.images[index]} alt="" fill sizes="120px" unoptimized /> : index === 0 ? <CatalogMaterialImage category={product.category} name={product.name} /> : <ProductArtwork category={product.category} scene={scene} />}<span>{labels[index]}</span>
           </button>
         ))}
       </div>
