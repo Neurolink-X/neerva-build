@@ -6,6 +6,7 @@ import type {RoadSide,Rect} from "./plan-model.ts";
  */
 export type Pt={x:number;y:number};
 export function siteDimensions(w:number,d:number,side:RoadSide){
+ if(!Number.isFinite(w)||!Number.isFinite(d)||w<=0||d<=0)throw new RangeError("Invalid plot dimensions");
  return side==="E"||side==="W"?{w:d,d:w}:{w,d};
 }
 export function roadPoint(p:Pt,w:number,d:number,side:RoadSide):Pt{
