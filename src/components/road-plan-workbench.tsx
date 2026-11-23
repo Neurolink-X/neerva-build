@@ -19,8 +19,8 @@ const colours=[
  {id:"sage",en:"Sage + sandstone",hi:"सेज + सैंडस्टोन",main:"#bec9b6",accent:"#a78f72"},
  {id:"slate",en:"Slate + cream",hi:"स्लेट + क्रीम",main:"#bdc5c4",accent:"#ddd5c4"}
 ] as const;
-export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
- const [brief,setBrief]=useState<PlanBrief>(()=>initialBrief??initial),[chosen,setChosen]=useState(0);
+export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:PlanBrief;initialOption?:number}={}){
+ const [brief,setBrief]=useState<PlanBrief>(()=>initialBrief??initial),[chosen,setChosen]=useState(Number.isInteger(initialOption)&&initialOption>=0&&initialOption<24?initialOption:0);
  const [floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
  const [kit,setKit]=useState<PlanModel["facade"]["kit"]>("simple-parapet");
  const [threeReady,setThreeReady]=useState(false);
@@ -125,8 +125,8 @@ export function RoadPlanWorkbench({initialBrief}:{initialBrief?:PlanBrief}={}){
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{["Ground floor","First floor","Second floor"][i]}</button>)}
      </div>
      <OrientedPlanDrawing plan={plan} floor={floor}/>
-     <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Touch orbit · concept-only</span></div>
-     {design&&(threeReady?<Building3D key={plan.id} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
+     <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
+     {design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The legacy viewer simplifies wall thickness and stair construction; it is not verified CAD/BIM.</p>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
      {plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}

@@ -13,4 +13,4 @@ const Planner=dynamic(()=>import("./road-plan-workbench").then(m=>m.RoadPlanWork
   <div className="nroad-loading" style={{margin:"15px",minHeight:420}}>Preparing 2D rooms and 3D previews…</div>
  </main>
 });
-export function RoadPlanClient({initialBrief}:{initialBrief?:PlanBrief}={}){return <Planner initialBrief={initialBrief}/>;}
+export function RoadPlanClient({initialBrief,initialOption=0}:{initialBrief?:PlanBrief;initialOption?:number}={}){return <Planner initialBrief={initialBrief} initialOption={initialOption}/>;}
