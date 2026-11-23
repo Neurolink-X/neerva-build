@@ -85,6 +85,9 @@ export function validatePlan(p:PlanModel):string[]{
   if(r.kind==="living"&&(area(r)<95||clear<8))errors.push("Living below advisory space minimum "+r.id);
   if(r.kind==="kitchen"&&(area(r)<48||clear<6))errors.push("Kitchen below advisory space minimum "+r.id);
   if(r.kind==="parking"&&(r.w<8||r.d<16||!near(r.y,U.y)))errors.push("Parking lacks 8 × 16 ft road-side clearance "+r.id);
+  if(r.kind==="stairs"&&clear<3.25)errors.push("Stair bay below 3.25 ft advisory width "+r.id);
+  if(["living","bedroom","kitchen","dining","lounge"].includes(r.kind)&&clear>0&&Math.max(r.w,r.d)/clear>2.5)
+   errors.push("Unusable long/narrow habitable room aspect "+r.id);
  }
  for(let i=0;i<p.rooms.length;i++)for(let j=i+1;j<p.rooms.length;j++)
   if(p.rooms[i].floor===p.rooms[j].floor&&overlapArea(p.rooms[i],p.rooms[j])>.01)errors.push("Rooms overlap "+p.rooms[i].id+"/"+p.rooms[j].id);
@@ -107,6 +110,9 @@ export function validatePlan(p:PlanModel):string[]{
    if(!p.openings.some(o=>o.roomId===r.id&&o.kind==="window"&&sides.includes(o.side)))errors.push("No external ventilation window "+r.id);
   }
  }
+ const covered=p.rooms.filter(r=>!["parking","verandah","balcony","terrace"].includes(r.kind)).reduce((t,r)=>t+area(r),0);
+ const circulation=p.rooms.filter(r=>r.kind==="corridor").reduce((t,r)=>t+area(r),0);
+ if(covered>0&&circulation/covered>.28)errors.push("Circulation share exceeds 28% advisory limit");
  const ground=p.rooms.filter(r=>r.floor===0);
  const verandah=ground.find(r=>r.kind==="verandah");
  if(!verandah||!near(verandah.y,U.y))errors.push("Verandah not on road-facing front edge");

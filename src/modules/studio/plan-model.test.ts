@@ -90,3 +90,20 @@ test("different score order cannot duplicate same physical layout",()=>{
  const {plans}=generateRoadPlans(brief());
  assert.equal(pickDiverse([plans[0],plans[0],plans[1]],3).length,2);
 });
+
+test("unusable long and narrow rooms, undersized stairs and excessive corridors are rejected",()=>{
+ const p=generateRoadPlans(brief()).plans[0];
+ assert.ok(p);
+ const malformed={...p,rooms:p.rooms.map(r=>({...r}))};
+ const bedroom=malformed.rooms.find(r=>r.kind==="bedroom")!;
+ bedroom.w=2.5;bedroom.d=40;
+ const stairs=malformed.rooms.find(r=>r.kind==="stairs")!;
+ stairs.w=2;
+ const errs=validatePlan(malformed);
+ assert.ok(errs.some(e=>e.includes("aspect")),errs.join(", "));
+ assert.ok(errs.some(e=>e.includes("Stair bay")),errs.join(", "));
+ const manyCorridors={...p,rooms:p.rooms.map(r=>({...r}))};
+ const corridor=manyCorridors.rooms.find(r=>r.kind==="corridor")!;
+ corridor.w=15;corridor.d=20;
+ assert.ok(validatePlan(manyCorridors).some(e=>e.includes("Circulation share")));
+});
