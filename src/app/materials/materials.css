@@ -51,3 +51,25 @@
 .product-gallery-stage .catalog-material-image{height:100%;border-radius:0}
 .product-gallery-thumbs .catalog-material-image{height:70px;border-radius:5px}
 .product-gallery-thumbs .catalog-material-image .catalog-image-note{display:none}
+
+/* Honest SKU-first material discovery; brand is metadata, not dealer approval */
+.catalog-discovery{min-width:0}
+.catalog-results-meta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0}
+.catalog-results-meta p{font-size:14px;line-height:1.6;margin:0}
+.catalog-results-meta button{border:1px solid #9fb7a2;background:white;color:#275041;padding:10px 15px;min-height:44px;border-radius:10px;cursor:pointer;font-weight:700}
+.catalog-spec-chips{display:flex;flex-wrap:wrap;gap:6px 8px;margin:10px 0}
+.catalog-spec-chips span{background:#eef3ed;color:#294334;border:1px solid #d5e2d5;padding:6px 9px;border-radius:8px;font-size:11px;line-height:1.45;max-width:100%;overflow-wrap:anywhere}
+.catalog-spec-chips b{font-weight:800}
+.catalog-sku-status{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 14px}
+.catalog-sku-status span{font-size:11px;padding:6px 9px;border:1px solid #e5d9c9;border-radius:8px;background:#fff7ed;color:#835638}
+.catalog-image-awaiting{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100%;width:100%;min-height:130px;background:linear-gradient(135deg,#e6ede6,#f3eee3);color:#335245;text-align:center;padding:12px}
+.catalog-image-awaiting span{font-size:14px;font-weight:800}
+.catalog-image-awaiting small{max-width:195px;font-size:11px;line-height:1.5}
+.catalog-product-proof{display:grid;gap:8px;margin:16px 0;background:#f4f7f2;border:1px solid #d9e6d6;padding:16px;border-radius:13px;font-size:13px;line-height:1.5}
+.catalog-product-proof a{color:#8b4d2c;font-weight:800;text-decoration:underline}
+.catalog-toolbar label{font-size:13px;line-height:1.45}
+.catalog-toolbar input,.catalog-toolbar select{min-height:48px;font-size:16px}
+.product-card-copy{min-width:0}
+.product-card-copy h2{overflow-wrap:anywhere}
+@media(max-width:680px){.catalog-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-toolbar .catalog-search{grid-column:1/-1}.catalog-results-meta{align-items:flex-start}}
+@media(max-width:390px){.catalog-toolbar{grid-template-columns:1fr}.catalog-toolbar .catalog-search{grid-column:1/-1}.catalog-spec-chips span{font-size:11px}}
