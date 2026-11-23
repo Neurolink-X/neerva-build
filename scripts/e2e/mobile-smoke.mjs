@@ -42,8 +42,11 @@ async function main(){
     const listLink=page.getByRole("link",{name:/Review material list/});
     assert.equal(await listLink.count(),1,"added item must link to the existing planning list");
     await listLink.click();
+    await page.waitForURL("**/basket",{timeout:15000});
     await page.getByText(/TMT bar.*12 mm/).first().waitFor({timeout:10000});
-    assert.equal(await page.getByRole("link",{name:/Prepare dealer quote/}).count(),1,"list must connect to quote preparation");
+    const prepareQuote=page.getByRole("link",{name:/Prepare dealer quote/});
+    await prepareQuote.waitFor({timeout:15000});
+    assert.match((await prepareQuote.getAttribute("href"))??"",/^\/quotes\?/,"list quote link should target quote preparation");
     const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"networkidle"});
     assert.equal(visual?.status(),200,"colour editor route");
     const photo=page.getByRole("button",{name:"Use my home photo"});
