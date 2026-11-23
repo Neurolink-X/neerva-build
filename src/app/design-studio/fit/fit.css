@@ -9,3 +9,16 @@
 @media(max-width:950px){.nfit-layout{grid-template-columns:1fr}.nfit-form{position:static}.nfit-fields{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:640px){.nfit-nav{padding:10px 14px}.nfit-layout{padding:12px 15px}.nfit-hero{padding:26px 16px 12px}.nfit-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.nfit-form{padding:15px}.nfit-list{grid-template-columns:1fr}.nfit-card{padding:15px}.nfit-card-top{gap:8px}.nfit-nav>a{font-size:12px}.nfit-nav>div{gap:8px}}
 @media(prefers-reduced-motion:reduce){.nfit *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+
+/* Custom-plot massing intentionally illustrates proportions, not site-approved geometry. */
+.nfit-massing{border:1px solid #cbd9ce;border-radius:18px;background:linear-gradient(140deg,#fafbf6,#edf3e9);padding:18px;margin:18px 0;color:#274534;min-width:0}
+.nfit-massing-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.nfit-massing-head h3{font-family:Georgia,serif;font-size:19px;font-weight:500;margin:3px 0 0}
+.nfit-massing-size{font-size:12px;font-weight:800;border:1px solid #bdccbd;border-radius:20px;padding:8px 11px;white-space:nowrap}
+.nfit-massing svg{display:block;width:100%;max-width:450px;max-height:320px;margin:auto;filter:drop-shadow(0 12px 11px #3c524b19)}
+.nfit-massing-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+.nfit-massing-stats span{border:1px solid #bfcdbf;background:#fffefc;border-radius:20px;padding:6px 10px;font-size:11px;font-weight:700}
+.nfit-massing .nfit-footnote{font-size:12px;line-height:1.55;margin:9px 0 0}
+.nfit-massing-empty{font-size:13px;padding:22px}
+@media(max-width:500px){.nfit-massing{padding:11px}.nfit-massing svg{max-height:280px}.nfit-massing-size{font-size:11px}}
