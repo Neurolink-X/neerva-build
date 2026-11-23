@@ -11,8 +11,8 @@ type Language="en"|"hi";
 const copy={
  en:{
  eyebrow:"PLAN · VISUALISE · SOURCE",
- title1:"Plan your home.",title2:"See it your way.",subhead:"Designs, colours and material quotes.",
- design:"Design my home",designDesc:"Explore a plan for your plot",visual:"See it in my colours",visualDesc:"Try exterior finishes",quote:"Get material quote",quoteDesc:"Prepare an itemised request",
+ title1:"From your plot.",title2:"To a home worth building.",subhead:"Explore home plans, visualise construction and prepare a clear material list.",
+ design:"Design my home",designDesc:"Find concepts that fit your plot",visual:"Shape my house plan",visualDesc:"Explore rooms and building layout",quote:"Get material quote",quoteDesc:"Prepare an itemised request",
  search:"Search construction materials",searchHint:"Cement, TMT, bricks or pipes",searchGo:"Search",
  trust1:"Clear material specifications",trust2:"Dealer status shown honestly",trust3:"Review charges before accepting",
  category:"Explore materials",catDesc:"Choose a category to compare specifications. Dealer stock and prices appear only after verification.",options:"See options",paintLabel:"Explore finishes",
@@ -32,8 +32,8 @@ const copy={
  },
  hi:{
  eyebrow:"प्लान · रंग · निर्माण सामग्री",
- title1:"अपने घर का प्लान बनाएं।",title2:"रंगों में देखिए।",subhead:"घर के डिज़ाइन, रंग और सामग्री के कोटेशन।",
- design:"घर का डिज़ाइन बनाएं",designDesc:"प्लॉट के अनुसार प्लान देखें",visual:"अपने रंगों में देखें",visualDesc:"बाहरी दीवारों के रंग चुनें",quote:"सामग्री का कोटेशन",quoteDesc:"सामग्री की सूची तैयार करें",
+ title1:"अपने प्लॉट से शुरुआत।",title2:"सपनों का घर बनाइए।",subhead:"प्लान देखें, घर का निर्माण समझें और सामग्री की सूची तैयार करें।",
+ design:"घर का डिज़ाइन बनाएं",designDesc:"अपने प्लॉट के लिए प्लान देखें",visual:"घर का लेआउट बनाएं",visualDesc:"कमरों और आकार के विकल्प देखें",quote:"सामग्री का कोटेशन",quoteDesc:"सामग्री की सूची तैयार करें",
  search:"निर्माण सामग्री खोजें",searchHint:"सीमेंट, सरिया, ईंट या पाइप",searchGo:"खोजें",
  trust1:"सामग्री की पूरी जानकारी",trust2:"डीलर की स्थिति स्पष्ट",trust3:"स्वीकार करने से पहले सभी शुल्क देखें",
  category:"निर्माण सामग्री देखें",catDesc:"सामग्री की जानकारी और विकल्प देखें। सत्यापित स्टॉक या रेट उपलब्ध होने पर ही दिखेंगे।",options:"विकल्प देखें",paintLabel:"रंग चुनें",
@@ -132,7 +132,7 @@ export function PremiumHome(){
     <p className="nbh-sub">{t.subhead}</p>
     <div className="nbh-journeys">
      <Link className="nbh-journey nbh-primary" href="/design-studio/fit"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
-     <Link className="nbh-journey" href="/design-studio/visualizer"><span className="nbh-jicon"><Icon name="palette"/></span><span><strong>{t.visual}</strong><small>{t.visualDesc}</small></span><Icon name="arrow"/></Link>
+     <Link className="nbh-journey" href="/design-studio/workbench"><span className="nbh-jicon"><Icon name="building"/></span><span><strong>{t.visual}</strong><small>{t.visualDesc}</small></span><Icon name="arrow"/></Link>
      <Link className="nbh-journey" href="/quotes"><span className="nbh-jicon"><Icon name="file"/></span><span><strong>{t.quote}</strong><small>{t.quoteDesc}</small></span><Icon name="arrow"/></Link>
     </div>
     <form className="nbh-search" action="/materials" method="get" onSubmit={submitSearch} role="search"><Icon name="search"/><input aria-label={t.search} name="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.searchHint} maxLength={80}/><button type="submit">{t.searchGo}</button></form>
