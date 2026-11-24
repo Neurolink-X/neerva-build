@@ -14,17 +14,17 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{cate
  const sources=product?media:[{src:categoryImage(category),label:"Category photograph · not exact SKU",alt:"Representative "+category+" material photo",kind:"category" as const}];
  const current=sources.find(x=>x.src&&!failed.includes(x.src));
  const src=current?.src;
- // Specification-only ranges share editorial/category images. Show their dimensions
- // directly in the card below instead of repeating a photograph from another range.
- if(product && (category==="plumbing" || category==="tiles") &&
-    (current?.kind==="editorial" || current?.kind==="category")) return null;
+ // A real editorial photo is useful if its identity is explicitly labeled. Never render a
+ // generic category photo as a particular fitting or cable conduit product.
+ const isPipe=product&&(category==="plumbing"||category==="electrical")&&!product.referenceImage;
+ const safeSrc=isPipe&&current?.kind==="category"?undefined:src;
  return <div className={"catalog-material-image"+(compact?" compact":"")+(current?.kind==="sku"||current?.kind==="listing"?" pack-photo":"")}>
-  {src?<Image src={src} alt={compact?"":current.alt} fill sizes="(max-width:680px) 100vw, (max-width:1100px) 50vw, 33vw"
-   quality={75} loading="lazy" onError={()=>setFailed(previous=>previous.includes(src)?previous:[...previous,src])}/>:
+  {safeSrc?<Image src={safeSrc} alt={compact?"":current.alt} fill sizes="(max-width:680px) 100vw, (max-width:1100px) 50vw, 33vw"
+   quality={75} loading="lazy" onError={()=>setFailed(previous=>previous.includes(safeSrc)?previous:[...previous,safeSrc])}/>:
    <div className="catalog-image-awaiting" role="img" aria-label={"Product photo for "+name+" unavailable"}>
     <strong>Image awaiting verification</strong><small>Brand/grade can be checked with the supplying dealer</small>
    </div>}
-  {!compact&&<span className="catalog-image-note">{current?.label??"Photo currently unavailable"}</span>}
+  {!compact&&<span className="catalog-image-note">{(safeSrc?current?.label:null)??"Photo currently unavailable"}</span>}
  </div>;
 }
 
