@@ -1,10 +1,11 @@
+import {canonicalPublicOrigin} from "@/modules/seo/site-origin";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./typography.css";
 import {InstallExperience} from "@/components/install-experience";
 import {publicIndexingEnabled} from "@/modules/seo/indexing";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl = canonicalPublicOrigin(process.env);
 const isIndexable = publicIndexingEnabled(process.env);
 
 export const metadata: Metadata = {
