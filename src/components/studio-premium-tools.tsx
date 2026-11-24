@@ -4,11 +4,13 @@ import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import type {PlanBrief} from "@/modules/studio/plan-model";
 import "@/app/studio-pricing/pricing.css";
+import {useStudioSettings} from "@/components/use-studio-settings";
 import type {StudioProduct} from "@/modules/studio/paid-products";
 const esc=(s:unknown)=>String(s??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]??ch));
 type Props={product:StudioProduct;brief?:PlanBrief;option?:number;base?:string;accent?:string;room?:string};
 export function StudioPremiumTools({product,brief,option=0,base="#b6c7a3",accent="#c4925f",room="Home colour concept"}:Props){
  const [busy,setBusy]=useState(false),[message,setMessage]=useState("");
+ const {ready,config}=useStudioSettings(product);
  async function exportReport(){
   if(busy)return;setBusy(true);setMessage("");
   try{
@@ -41,8 +43,8 @@ export function StudioPremiumTools({product,brief,option=0,base="#b6c7a3",accent
   finally{setBusy(false)}
  }
  return <section className="studio-premium-export">
-  <h3>Paid Studio — downloadable concept report</h3>
-  <p>An optional one-time fee applies when enabled by admin. Your file is generated from the current plan or chosen digital palette; architectural and physical paint accuracy are not certified.</p>
+  <h3>{ready&&config.published&&config.mode==="free"?"Free Studio report":"Personal Studio concept report"}</h3>
+  <p>{ready&&config.published&&config.mode==="free"?"Administrator has made this report free.":ready&&config.published?"Paid access requires the published one-time price and verified bank payment.":"Report pricing is temporarily unavailable."} Your file uses your chosen plan or digital palette; architectural and colour matching accuracy are not certified.</p>
   <button type="button" onClick={()=>void exportReport()} disabled={busy}>{busy?"Verifying access…":"Download my detailed Studio report"}</button>
   <p role="status">{message}</p>
   <Link href={"/studio-pricing?product="+product}>Compare free preview and paid access →</Link>
