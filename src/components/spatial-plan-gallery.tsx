@@ -72,7 +72,7 @@ export function SpatialPlanGallery(){
     <div className="nbd-spatial-copy">
      <h3>{planLabel(plan,i)}</h3>
      <p>{entranceType(plan)} · {plan.variant==="parking-left"?"Left":"Right"} · {floors===1?"Ground only":"G+"+(floors-1)} · {bedrooms} BHK</p>
-     <Link href={"/design-studio/portfolio?"+new URLSearchParams({...baseParams,option:String(i)}).toString()}>Explore this exact 2D + 3D →</Link>
+     <Link href={"/design-studio/portfolio?"+new URLSearchParams({...baseParams,option:String(i)}).toString()+"#selected-plan-drawing"}>Explore this exact 2D + 3D →</Link>
     </div>
    </article>)}</div>}
   <p className="nbd-spatial-note">Illustrative planning models only; not measured construction drawings. Setbacks, circulation, structure and legal approvals require a licensed architect. Unsupported inputs do not generate made-up designs.</p>
