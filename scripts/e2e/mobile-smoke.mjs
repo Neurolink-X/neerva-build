@@ -45,9 +45,9 @@ async function main(){
     // Verify role shells, legal/support destinations, and catalog routes not in the
     // repeated five-viewport sample. Status checks avoid creating fake test orders.
     const extraPages=[
-      "/admin/catalog","/admin/rfqs","/admin/fulfilment","/admin/pricing",
+      "/admin/catalog","/admin/rfqs","/admin/fulfilment","/admin/pricing","/admin/orders",
       "/admin/studio","/admin/studio-payments","/admin/system-health","/admin/users",
-      "/dealer/inventory","/dealer/quotes","/account/orders","/account/quotes",
+      "/dealer/inventory","/dealer/quotes","/dealer/orders","/account/orders","/account/quotes",
       "/support","/privacy","/brands","/business-model","/calculators","/blog",
       "/learn/plot-size-in-gaj","/learn/2d-to-3d-house-layout","/learn/wall-paint-pattern-ideas",
       "/materials/cement","/materials/steel","/materials/tiles","/materials/plumbing",
@@ -334,7 +334,7 @@ async function main(){
     "/api/admin/orders","/api/admin/pricing","/api/admin/rfqs",
     "/api/admin/studio-payments","/api/admin/studio-settings","/api/admin/studio-support",
     "/api/admin/system-incidents","/api/admin/users","/api/customer/quotes",
-    "/api/dealer/inventory","/api/dealer/quotes","/api/orders",
+    "/api/dealer/inventory","/api/dealer/quotes","/api/dealer/orders","/api/orders",
     "/api/studio/payments","/api/studio/projects","/api/studio/support"],
    POST:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/pricing",
     "/api/admin/rfqs","/api/admin/users","/api/dealer/inventory","/api/dealer/quotes",
@@ -342,7 +342,7 @@ async function main(){
     "/api/studio/premium-report","/api/studio/projects","/api/studio/support"],
    PATCH:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
     "/api/admin/pricing","/api/admin/studio-payments","/api/admin/studio-settings",
-    "/api/admin/studio-support","/api/admin/users"],
+    "/api/admin/studio-support","/api/admin/users","/api/admin/orders","/api/dealer/orders","/api/orders"],
    DELETE:["/api/studio/payments"]
   };
   for(const [method,routes] of Object.entries(protectedMatrix)){
