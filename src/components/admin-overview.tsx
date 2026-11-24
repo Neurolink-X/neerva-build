@@ -5,7 +5,7 @@ import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 type Studio={product_code:string;access_mode:string;checkout_enabled:boolean;is_published:boolean;price_paise:number};
 type Snapshot={counts:Record<string,number|null>;studio:Studio[]|null;paymentInfrastructureEnabled:boolean;updatedAt:string};
 const modules=[
- {title:"Orders",key:"orders",href:"/admin/orders",desc:"Accepted orders, fulfilment and delivery exceptions"},
+ {title:"Orders",key:"orders",href:"/admin/orders",desc:"Direct orders, dealer orders, sourcing and delivery exceptions"},
  {title:"Quotations",key:"requests",href:"/admin/rfqs",desc:"Customer requirements and dealer offers"},
  {title:"Materials",key:"products",href:"/admin/catalog",desc:"Create, edit, publish or archive catalog records"},
  {title:"SKUs",key:"variants",href:"/admin/catalog",desc:"Variants and category-specific units"},
