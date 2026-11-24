@@ -42,7 +42,7 @@ export function StudioPremiumTools({product,brief,option=0,base="#b6c7a3",accent
  }
  return <section className="studio-premium-export">
   <h3>Paid Studio — downloadable concept report</h3>
-  <p>₹149 one-time per studio. Your file is generated from the current plan or chosen digital palette; architectural and physical paint accuracy are not certified.</p>
+  <p>An optional one-time fee applies when enabled by admin. Your file is generated from the current plan or chosen digital palette; architectural and physical paint accuracy are not certified.</p>
   <button type="button" onClick={()=>void exportReport()} disabled={busy}>{busy?"Verifying access…":"Download my detailed Studio report"}</button>
   <p role="status">{message}</p>
   <Link href={"/studio-pricing?product="+product}>Compare free preview and paid access →</Link>
