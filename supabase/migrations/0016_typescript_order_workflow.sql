@@ -51,8 +51,9 @@ create policy neerva_orders_read on public.orders for select to authenticated us
  or (
   (select public.is_tenant_member(tenant_id))
   and exists(select 1 from public.tenants t where t.id=tenant_id and t.status='active')
-  and exists(select 1 from public.dealer_applications da where da.tenant_id=orders.tenant_id
-   and da.status='approved' and da.gstin_verification='verified')
+  -- App approval is enforced atomically when accepted; tenant must remain active.
+  -- Dealer-application RLS intentionally hides KYC from staff, so don't query
+  -- that restricted table inside the read policy (it would hide valid staff orders).
  )
 );
 create policy neerva_orders_insert_customer on public.orders for insert to authenticated
@@ -125,6 +126,9 @@ begin
  if application_id is null or not exists(
   select 1 from public.dealer_service_pincodes p
   where p.application_id=application_id and p.pincode=request_row.pincode
+ ) or not exists(
+  select 1 from public.merchant_branches b
+  where b.tenant_id=chosen.tenant_id and b.approved
  ) then
   raise exception using errcode='23514',message='DEALER_DELIVERY_AREA_UNVERIFIED';
  end if;
