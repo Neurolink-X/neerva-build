@@ -1,16 +1,3 @@
-import { StudioAdmin } from "@/components/studio-admin";
-import { SiteHeader } from "@/components/site-chrome";
-export const metadata = {
-  title: "Studio configuration",
-  robots: { index: false, follow: false },
-};
-export default function Page() {
-  return (
-    <main className="catalog-page">
-      <SiteHeader />
-      <section className="section ops-content">
-        <StudioAdmin />
-      </section>
-    </main>
-  );
-}
+import {StudioAdmin} from "@/components/studio-admin";
+export const metadata={title:"Design library",robots:{index:false,follow:false}};
+export default function Page(){return <main className="admin-catalog-workbench"><div><h1>Design library</h1><p>Manage the review queue for architectural concepts.</p></div><StudioAdmin/></main>}
