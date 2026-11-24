@@ -43,10 +43,11 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [notice, setNotice] = useState("");
-  function addToOrderCart(){try{if(!Number.isFinite(quantity)||quantity<.001||quantity>1000000){setNotice('Enter a valid quantity.');return;}const old=safeDirectCart(JSON.parse(localStorage.getItem(DIRECT_CART_KEY)??'[]'));const next=addDirectCart(old,{category:product.category,productSlug:product.slug,productName:product.name,unit,quantity});if(JSON.stringify(old)===JSON.stringify(next)){setNotice('Cart limit reached or invalid item.');return;}localStorage.setItem(DIRECT_CART_KEY,JSON.stringify(next));setNotice('Added to order cart. Review before submitting.');}catch{setNotice('Cart storage unavailable; use direct order instead.');}}
+  const validQuantity=Number.isFinite(quantity)&&quantity>=.001&&quantity<=1000000&&Math.abs(quantity*1000-Math.round(quantity*1000))<.00001;
+  function addToOrderCart(){try{if(!validQuantity){setNotice('Enter a valid quantity.');return;}const old=safeDirectCart(JSON.parse(localStorage.getItem(DIRECT_CART_KEY)??'[]'));const next=addDirectCart(old,{category:product.category,productSlug:product.slug,productName:product.name,unit,quantity});if(JSON.stringify(old)===JSON.stringify(next)){setNotice('Cart limit reached or invalid item.');return;}localStorage.setItem(DIRECT_CART_KEY,JSON.stringify(next));setNotice('Added to order cart. Review before submitting.');}catch{setNotice('Cart storage unavailable; use direct order instead.');}}
   function saveMaterial() {
     try {
-      if(!Number.isFinite(quantity)||quantity<=0||quantity>1000000){setNotice("Enter a quantity above zero and up to 1,000,000.");return;}
+      if(!validQuantity){setNotice("Enter a quantity from 0.001 to 1,000,000, with at most three decimal places.");return;}
       const previous = safePlanningList(JSON.parse(window.localStorage.getItem(PLANNING_STORAGE_KEY) ?? "[]"));
       const next = appendPlanningLine(previous, { id: crypto.randomUUID(), name: `${product.name} · ${product.brand}`.slice(0,160), unit: isPlanningUnit(unit) ? unit : "piece", quantity });
       if (next.length === previous.length) { setNotice("List is full. Review the 25 existing items before adding another."); return; }
@@ -67,7 +68,7 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
         </label>
       </div>
       <p className="option-confirmation-note">Options describe your requirement; the dealer will confirm whether this brand supplies that exact variant, its current stock and the final rate.</p>
-      <Link className="button button-dark" href={"/checkout?"+new URLSearchParams({category:product.category,product:product.slug,qty:String(quantity),unit})}>Place order with selected quantity →</Link> <button type="button" className="button button-dark" onClick={addToOrderCart}>Add to order cart</button> <Link href="/checkout?cart=1" className="button button-outline">View order cart →</Link><button type="button" className="button button-orange product-add-button" onClick={saveMaterial}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
+      {validQuantity?<Link className="button button-dark" href={"/checkout?"+new URLSearchParams({category:product.category,product:product.slug,qty:String(quantity),unit})}>Place order with selected quantity →</Link>:<button type="button" className="button button-dark" disabled>Enter a valid quantity to order</button>} <button type="button" className="button button-dark" onClick={addToOrderCart} disabled={!validQuantity}>Add to order cart</button> <Link href="/checkout?cart=1" className="button button-outline">View order cart →</Link><button type="button" className="button button-orange product-add-button" onClick={saveMaterial} disabled={!validQuantity}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
     </div>
   );
 }
