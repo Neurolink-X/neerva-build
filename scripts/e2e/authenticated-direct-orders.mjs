@@ -6,7 +6,7 @@ import {createClient} from "@supabase/supabase-js";
 const base=new URL(process.env.NEERVA_E2E_BASE_URL??"http://127.0.0.1:3000");
 assert.ok(["localhost","127.0.0.1"].includes(base.hostname),"Local app server required");
 const db=new URL(process.env.NEERVA_E2E_SUPABASE_URL??"https://invalid.example");
-assert.match(db.hostname,/^[a-z0-9]+\.supabase\.co$/);
+assert.ok(/^[a-z0-9]+\.supabase\.co$/.test(db.hostname)||(["localhost","127.0.0.1"].includes(db.hostname)&&db.protocol==="http:"&&db.port==="54321"&&process.env.NEERVA_E2E_LOCAL==="yes"),"Dedicated staging or isolated local Supabase required");
 assert.notEqual(db.hostname,"djgghisbkucprqiezrcn.supabase.co","Production DB forbidden");
 assert.equal(process.env.NEERVA_E2E_DISPOSABLE,"yes","Explicit disposable staging authorization required");
 assert.equal(process.env.NEXT_PUBLIC_SUPABASE_URL,db.origin,"Local app and fixture project must match");
