@@ -7,7 +7,7 @@ const manifest="src/modules/catalog/approved-family-media.ts";
 const text=await fs.readFile(manifest,"utf8");
 const prefix=text.slice(0,text.indexOf("export const approvedMedia:"));
 if(!prefix.includes("export type ApprovedMedia"))throw Error("Manifest format invalid");
-const rows=[];
+const existing=JSON.parse(text.slice(text.indexOf("[]=")+3).trim().replace(/;$/,""));const rows=[];
 for(const r of reviewed){
  const u=new URL(r.url);
  if(u.protocol!=="https:"||u.hostname!=="upload.wikimedia.org"||!u.pathname.startsWith("/wikipedia/commons/"))throw Error("Unexpected source");
@@ -34,5 +34,5 @@ for(const r of reviewed){
 }
 if(!rows.length)throw Error("No verified originals could be downloaded; no public manifest changed");
 if(rows.length!==reviewed.length)throw Error("Incomplete batch; no public manifest changed");
-await fs.writeFile(manifest,prefix+"export const approvedMedia:readonly ApprovedMedia[]="+JSON.stringify(rows,null,2)+";\n");
+const merged=[...existing];for(const row of rows){const index=merged.findIndex(m=>m.category===row.category&&m.family===row.family&&m.scope===row.scope&&m.view===row.view);if(index>=0)merged[index]=row;else merged.push(row);}if(new Set(merged.map(m=>m.sha256)).size!==merged.length)throw Error("Duplicate approved image");const primaryCounts=new Map();for(const m of merged){const key=[m.category,m.scope,m.family].join(":");primaryCounts.set(key,(primaryCounts.get(key)??0)+Number(m.primary));}if([...primaryCounts.values()].some(n=>n!==1))throw Error("Exactly one primary per family required");await fs.writeFile(manifest,prefix+"export const approvedMedia:readonly ApprovedMedia[]="+JSON.stringify(merged,null,2)+";\n");
 console.log("Verified imported photos:",rows.length);

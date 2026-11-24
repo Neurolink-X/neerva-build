@@ -16,7 +16,10 @@ for(const item of candidates){try{
  let r;for(let attempt=0;attempt<2;attempt++){r=await fetch(expected,{redirect:"error",signal:AbortSignal.timeout(20000),headers:{"User-Agent":"NeervaBuildCatalogMedia/1.0 (https://github.com/Neurolink-X/neerva-build)"}});if(r.ok||![429,503].includes(r.status))break;await r.body?.cancel();const delay=Math.min(10000,Math.max(1500,Number(r.headers.get("Retry-After")||0)*1000||1500));await new Promise(resolve=>setTimeout(resolve,delay));}
  if(!r?.ok||!r.body)throw Error("HTTP "+r.status);
  const reader=r.body.getReader(),chunks=[];let size=0;while(true){const p=await reader.read();if(p.done)break;size+=p.value.length;if(size>8000000){await reader.cancel();throw Error("Source too large");}chunks.push(Buffer.from(p.value));}
- const source=Buffer.concat(chunks);const {data,info}=await sharp(source,{limitInputPixels:30000000,density:96}).rotate().resize({width:1200,height:1200,fit:"inside",withoutEnlargement:true}).webp({quality:78}).toBuffer({resolveWithObject:true});
+ const source=Buffer.concat(chunks);
+ let encoded;
+ for(const edge of [1200,1000,800,640]){for(const quality of [78,68,58]){encoded=await sharp(source,{limitInputPixels:30000000,density:96}).rotate().resize({width:edge,height:edge,fit:"inside",withoutEnlargement:true}).webp({quality}).toBuffer({resolveWithObject:true});if(encoded.data.length<=350000)break;}if(encoded.data.length<=350000)break;}
+ const {data,info}=encoded;
  if(info.width<100||info.height<40||data.length>350000)throw Error("Invalid image dimensions or size");
  const sha256=createHash("sha256").update(data).digest("hex");const file=sha256.slice(0,24)+".webp";
  await fs.writeFile(root+"/"+file,data);rows.push({...item,status:"visual-review-required",file,width:info.width,height:info.height,bytes:data.length,originalSha256:createHash("sha256").update(source).digest("hex"),sha256});
