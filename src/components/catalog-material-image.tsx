@@ -11,7 +11,7 @@ export function isApprovedSkuPhoto(path:string):boolean{
 export function CatalogMaterialImage({category,name,compact=false,product}:{category:string;name:string;compact?:boolean;product?:DemoProduct}){
  const [failed,setFailed]=useState<string[]>([]);
  const media=product?catalogPhotos(product):[];
- const sources=media.length?media:[{src:categoryImage(category),label:"Category photograph · not exact SKU",alt:"Representative "+category+" material photo",kind:"category" as const}];
+ const sources=product?media:[{src:categoryImage(category),label:"Category photograph · not exact SKU",alt:"Representative "+category+" material photo",kind:"category" as const}];
  const current=sources.find(x=>x.src&&!failed.includes(x.src));
  const src=current?.src;
  return <div className={"catalog-material-image"+(compact?" compact":"")+(current?.kind==="sku"||current?.kind==="listing"?" pack-photo":"")}>
@@ -23,3 +23,4 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{cate
   {!compact&&<span className="catalog-image-note">{current?.label??"Photo currently unavailable"}</span>}
  </div>;
 }
+

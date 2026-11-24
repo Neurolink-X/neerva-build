@@ -43,3 +43,11 @@ test("all locally licensed editorial images are present, JPEG, unique and substa
  }
  assert.equal(fingerprints.size,paths.length,"no repeated binary editorial images");
 });
+
+
+test("pack galleries stay on the selected product and fly-ash never shows clay",()=>{
+ const acc=demoProducts.find(p=>p.slug==="acc-suraksha-power-ppc-cement-50-kg-bag")!;
+ assert.deepEqual(catalogPhotos(acc).map(p=>p.src),[acc.referenceImage]);
+ for(const brick of technicalOptions.filter(p=>p.familyKey==="generic-fly-ash"))
+  assert.deepEqual(catalogPhotos(brick).map(p=>p.src),["/images/catalog/material/fly-ash.webp"]);
+});

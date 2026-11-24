@@ -153,17 +153,12 @@ async function main(){
     assert.match((await prepareQuote.getAttribute("href"))??"",/^\/quotes\?/,"list quote link should target quote preparation");
     const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"networkidle"});
     assert.equal(visual?.status(),200,"colour editor route");
-    const photo=page.getByRole("button",{name:"Use my home photo"});
-    const exterior=page.getByRole("button",{name:"Explore exterior concept"});
-    assert.equal(await photo.getAttribute("aria-pressed"),"true","real-photo editor must be default");
-    await exterior.click();
-    assert.equal(await exterior.getAttribute("aria-pressed"),"true","original concept remains available");
-    await photo.click();
-    assert.equal(await photo.getAttribute("aria-pressed"),"true","photo editor resumes without a reload");
- await page.getByRole("button",{name:"Try a furnished living room"}).click();
+    await page.getByRole("button",{name:"Sample house exterior"}).click();
+    await page.getByRole("button",{name:"Sample room",exact:true}).click();
  const canvas=page.locator(".nbd-photo canvas");
  await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
  async function mark(x){let b=await canvas.boundingBox();for(const [u,v] of [[x,.12],[x+.12,.12],[x+.12,.26],[x,.26]])await canvas.click({position:{x:u*b.width,y:v*b.height}});}
+ await page.getByRole("button",{name:/Reset wall selection/}).click();
  await mark(.06);
  await page.getByRole("combobox",{name:"Wall design",exact:true}).selectOption("bands");
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
@@ -207,9 +202,9 @@ async function main(){
     await page.goto(base+"/",{waitUntil:"networkidle"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
-     assert.equal(await page.locator(".nbh-real-construction img").count(),2,"construction and completed home use separate editorial photos");
+     assert.equal(await page.locator("#construction figure img").count(),2,"paired construction-stage renders");
     assert.equal(await page.getByRole("button",{name:/Replay illustration/}).count(),0,"do not fabricate manual state before dragging");
-    assert.equal(await page.locator(".nbh-build-visual").count(),1,"construction stages replace static colour mood");
+    assert.equal(await page.locator("#construction figure").count(),1,"construction stages replace static colour mood");
     const quick=page.locator(".nbh-quick-quote");
     await quick.locator("select[name=category]").selectOption("steel");
     await quick.locator("input[name=material]").fill("TMT 12 mm");
@@ -222,11 +217,9 @@ async function main(){
     assert.match(resultHtml,/TMT 12 mm/,"draft material preserved");
     const newCatalog=await page.request.get(base+"/materials/paint");
     assert.equal(newCatalog.status(),200,"new paint category exists");
-    assert.equal(await page.getByRole("slider",{name:/construction-stage/}).count(),0,"real-photo panels must not pretend to be a single building before/after slider");
-    assert.equal(await page.locator(".nbh-real-construction img").count(),2,"show actual editorial construction and completed home photos");
-    assert.equal(await page.getByText(/STRUCTURE \/ WORK SITE/).count(),1,"construction photo must be labelled");
-    assert.equal(await page.getByText(/COMPLETED HOME STYLE/).count(),1,"completed home reference must be labelled");
-    assert.equal(await page.getByText(/different properties/).count()>0,true,"do not claim two unrelated photographs are the same project");
+    const reveal=page.getByRole("slider",{name:/construction-stage/});
+    await reveal.focus();await reveal.press("End");assert.equal(await reveal.inputValue(),"100");
+    await reveal.press("Home");assert.equal(await reveal.inputValue(),"0");
     const dimensions=page.locator(".nbh-filter-row input[type=number]");
     assert.equal(await dimensions.count(),2,"home must support arbitrary plot width and depth");
     for(const [w,d] of [["18","50"],["20","45"]]){
@@ -271,3 +264,4 @@ async function main(){
  else console.log("Mobile browser smoke: five viewports, private RFQ API denial and privacy-first PWA, material-to-quote navigation, editable colour preview, custom 18×50/20×45 plot massing, construction reveal, no browser errors, protected API denials.");
 }
 main().catch(error=>{console.error(error);process.exitCode=1});
+

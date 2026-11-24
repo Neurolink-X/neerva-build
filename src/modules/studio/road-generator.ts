@@ -60,7 +60,7 @@ function addWindow(p:Pick<PlanModel,"rooms"|"openings"|"plot"|"setbacks">){
  }
 }
 export type SpatialProgramme="wash"|"family-gallery"|"rear-courtyard"|"rear-baranda";
-type SpatialRecipe={parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
+type SpatialRecipe={reverseService?:boolean;reverseRear?:boolean;parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
  rearBedWidthFt?:number;upperBedRatio?:number;rearProgramme?:SpatialProgramme;frontProgramme?:"dining"|"family-hall"|"family-lounge";familyLabel?:string;};
 function houseEnvelope(b:PlanBrief){
  const envelope=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
@@ -112,6 +112,12 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   put(`utility-${level}`,"Wash / service","utility",level,stairW,26,W-stairW,8);
   put(`terrace-${level}`,"Open terrace","terrace",level,0,34,W,D-34);
  }
+ // Place the wet core and sleeping wing independently of the street entrance.
+ for(const r of rooms){
+  const serviceWing=recipe.reverseService && (r.y===U.y+26);
+  const sleepingWing=recipe.reverseRear && r.y===U.y+37;
+  if(serviceWing||sleepingWing)r.x=round(U.x+W-(r.x-U.x)-r.w);
+ }
  // On shorter plots preserve the 16 ft parking bay and the 3 ft rear hall.
  // Redistribute the stair and service bands before validating each room.
  if(D<47){
@@ -142,7 +148,15 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   joins.push([`stairs-${level}`,`lounge-${level}`],[`stairs-${level}`,`bath-${level}`],[`lounge-${level}`,`utility-${level}`],[`lounge-${level}`,`bed-${level}a`],[`balcony-${level}`,`bed-${level}a`]);
   if(b.bedrooms>b.floors)joins.push([`lounge-${level}`,`bed-${level}b`],[`balcony-${level}`,`bed-${level}b`]);
  }
- for(const [a,b] of joins)connect(rooms,openings,a,b);
+ for(const [a,b] of joins){
+  const first=rooms.find(r=>r.id===a),second=rooms.find(r=>r.id===b);
+  if(recipe.reverseService&&first&&second&&!sharedEdge(first,second)){
+   // A reflected wet core opens into the adjoining landing or hall.
+   const landing=rooms.find(r=>r.floor===second.floor && (r.kind==="stairs"||r.id==="dining"||r.id.startsWith("lounge-")) && sharedEdge(r,second));
+   if(!landing)throw new Error("No adjacent landing for "+b);
+   connect(rooms,openings,landing.id,b);
+  }else connect(rooms,openings,a,b);
+ }
  const entry=rooms.find(r=>r.id==="verandah")!;
  openings.push({id:"pedestrian-entry",roomId:entry.id,side:"front",atFt:round((entry.w-3)/2),widthFt:3,sillFt:0,heightFt:7,kind:"door"});
  const gateParking=rooms.find(r=>r.kind==="parking")!;
@@ -226,7 +240,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
    const kitchen=8.5+(Math.floor(i/9)%3)*.25;
    const bedWidth=Math.min(W-4.5,Math.max(10.5,Math.min(12.5,W-6)+(Math.floor(i/12)%3-1)*.5));
    const ratio=(Math.floor(i/5)%3===0?.48:Math.floor(i/5)%3===1?.5:.52);
-   const recipe:SpatialRecipe={parkWidthFt:park,entryDepthFt:entryDepth,stairWidthFt:stair,
+   const recipe:SpatialRecipe={reverseService:i%4>=2,reverseRear:i%2===1,parkWidthFt:park,entryDepthFt:entryDepth,stairWidthFt:stair,
     kitchenWidthFt:kitchen,rearBedWidthFt:bedWidth,upperBedRatio:ratio,rearProgramme:prog,
     frontProgramme:family,familyLabel:"spatial-"+i+"-"+prog+"-"+family};
    try{
@@ -248,4 +262,5 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
  return {plans:ordered.slice(0,normalized),
   blockers:ordered.length?[]:["No validated distinct spatial layout fits these dimensions, rooms, parking and setbacks."]};
 }
+
 

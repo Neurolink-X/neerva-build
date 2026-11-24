@@ -12,6 +12,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number){
  // Apply the chosen paint hue while retaining the photo’s original light and shadows.
  ctx.globalCompositeOperation="color";ctx.fillStyle=wall.colour;ctx.globalAlpha=1;
  ctx.fillRect(0,0,w,h);
+ ctx.globalCompositeOperation="multiply";ctx.globalAlpha=.62;ctx.fillRect(0,0,w,h);
  if(wall.pattern!=="plain"){
   const [a,b,c,d]=corners;
   const at=(u:number,v:number)=>({
@@ -37,7 +38,9 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
  const [history,setHistory]=useState(emptyMaskHistory),[ready,setReady]=useState(false);
  const [showOriginal,setShowOriginal]=useState(false),[message,setMessage]=useState("Choose a local photo, then mark four corners of one wall clockwise.");
  const points=history.points,valid=validWallMask(points);
- useEffect(()=>()=>{if(url.current)URL.revokeObjectURL(url.current)},[]);
+ function openRoom(){openPhoto("/images/studio/paint-room.webp",[{x:.098,y:.122},{x:.885,y:.13},{x:.885,y:.576},{x:.098,y:.576}])}
+ function openFacade(){openPhoto("/images/studio/finished.webp",[{x:.645,y:.494},{x:.771,y:.494},{x:.771,y:.606},{x:.645,y:.606}])}
+ useEffect(()=>{openRoom();return ()=>{if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null}},[]);
  useEffect(()=>{
   const el=canvas.current,img=image.current;if(!el||!img||!ready)return;
   const ctx=el.getContext("2d");if(!ctx)return;const {width:w,height:h}=el;
@@ -65,7 +68,7 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   }
   openPhoto(URL.createObjectURL(f));
  }
- function openPhoto(next:string){
+ function openPhoto(next:string, preset?:MaskCorner[]){
   if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);
   setWalls([]);setEditing(null);url.current=next;image.current=null;setReady(false);
   setHistory(emptyMaskHistory());setShowOriginal(false);
@@ -77,6 +80,7 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
    el.width=Math.max(1,Math.round(img.naturalWidth*scale));
    el.height=Math.max(1,Math.round(img.naturalHeight*scale));
    image.current=img;setReady(true);
+   if(preset){setHistory({points:preset,redo:[]});setMessage("Wall selected. Try a colour or pattern below.");return}
    setMessage("Tap the top-left corner first, then top-right, bottom-right and bottom-left. Avoid windows or doors if possible.");
   };
   img.onerror=()=>{if(url.current!==next)return;image.current=null;setReady(false);setMessage("Image could not be opened. Try another photo.")};
@@ -97,8 +101,10 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   },"image/png");
  }
  return <section className="nbd-photo" aria-label="Private wall colour preview">
-  <h2>Preview colour on your own wall</h2>
-  <p>Preview a wall finish below, then mark four corners on a room photo. Keep each wall to see the combination across the room.</p>
+  <div className="nbd-buttons"><button type="button" onClick={openRoom}>Sample room</button><button type="button" onClick={openFacade}>Sample house exterior</button><label>Use my home photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label></div>
+  <p role="status">{points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
+  <canvas ref={canvas} role="img" aria-label="Photo of your wall. Tap its four corners clockwise, starting top-left, to choose a painting region" onPointerDown={addPoint}
+    style={{display:ready?"block":"none",width:"100%",height:"auto",cursor:points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   <label>Wall design <select value={pattern} onChange={e=>setPattern(e.target.value as Pattern)}>
    {patternKeys.map(key=><option key={key} value={key}>{finishes[key].name}</option>)}
   </select></label>
@@ -110,11 +116,6 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
     </svg><span>{finishes[key].name}</span>
    </button>)}
   </div>
-  <button type="button" onClick={()=>openPhoto("/images/studio/daylight-living-room.webp")}>Try a furnished living room</button>
-  <label>Choose a photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label>
-  <p role="status">{points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
-  <canvas ref={canvas} role="img" aria-label="Photo of your wall. Tap its four corners clockwise, starting top-left, to choose a painting region" onPointerDown={addPoint}
-    style={{display:ready?"block":"none",width:"100%",height:"auto",cursor:points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   {ready&&<div className="nbd-buttons" style={{flexWrap:"wrap"}}>
    <button type="button" disabled={!valid||showOriginal} onClick={()=>{
     const wall={points,colour:base,pattern,accent};
@@ -138,4 +139,5 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   <p className="nbd-disclaimer">Tip: select a single flat wall rather than the whole house. Manual polygon preview preserves much of the existing light and texture; edge accuracy and screen shades are approximate. Verify physical shade cards and measured wall area before buying.</p>
  </section>;
 }
+
 
