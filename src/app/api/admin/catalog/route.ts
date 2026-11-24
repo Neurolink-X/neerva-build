@@ -14,7 +14,7 @@ export async function GET(request:Request){
  try{const [a,b,c]=await Promise.all([
   auth.client.from("categories").select("id,slug,name_en,name_hi,pricing_mode,status").order("name_en"),
   auth.client.from("brands").select("id,name,slug,authorized_source,status").order("name"),
-  auth.client.from("products").select("id,slug,name,description,attributes,status,category:categories(id,slug,name_en,pricing_mode),brand:brands(id,name),variants:product_variants(id,sku,unit,attributes,status)").order("created_at",{ascending:false}).limit(100)
+  auth.client.from("products").select("id,slug,name,description,attributes,status,category:categories(id,slug,name_en,name_hi,pricing_mode,status),brand:brands(id,name,slug,status,authorized_source),variants:product_variants(id,sku,unit,attributes,status)").order("created_at",{ascending:false}).limit(100)
  ]);if(a.error||b.error||c.error)return apiFailed();
  return apiData({categories:a.data??[],brands:b.data??[],products:c.data??[]});}catch{return apiFailed();}
 }
