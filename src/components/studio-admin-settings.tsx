@@ -21,7 +21,7 @@ export function StudioAdminSettings(){
   setMessage("Changes publish to the server instantly. Existing orders keep their saved price.");
  }
  useEffect(()=>{
-  let disposed=false,client=createNeervaBrowserClient();if(!client)return;
+  let disposed=false;const client=createNeervaBrowserClient();if(!client)return;
   void client.auth.getSession().then(async result=>{
    if(disposed||!result.data.session?.access_token)return;
    const bearer=result.data.session.access_token;setJwt(bearer);await load(bearer);
