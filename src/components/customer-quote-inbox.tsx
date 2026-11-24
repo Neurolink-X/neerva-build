@@ -4,7 +4,7 @@ import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 
 type Offer={
- id:string;tenant_id:string;subtotal_paise:number;tax_paise:number;
+ id:string;tenant_id:string;revision:number;subtotal_paise:number;tax_paise:number;
  freight_paise:number;unloading_paise:number;total_paise:number;
  valid_until:string;terms:string
 };
@@ -82,12 +82,19 @@ export function CustomerQuoteInbox(){
   <div style={{display:"grid",gap:18}}>
    {requests.map(quote=>{
     const active=["open","quoted"].includes(quote.status);
+    // One offer per approved dealer: older revisions cannot be accepted.
+    const latest=new Map<string,Offer>();
+    for(const proposal of quote.offers??[]){
+     const previous=latest.get(proposal.tenant_id);
+     if(!previous||proposal.revision>previous.revision)latest.set(proposal.tenant_id,proposal);
+    }
+    const offers=[...latest.values()];
     return <article key={quote.id} style={{background:"#fffefa",padding:18,border:"1px solid #d9e4d8",borderRadius:15}}>
      <h3 style={{fontSize:20,margin:"0 0 8px"}}>{quote.material_description}</h3>
      <p>{quote.quantity} {quote.unit} · {quote.city} {quote.pincode} · Status: <strong>{quote.status.replaceAll("_"," ")}</strong></p>
      <p style={{fontSize:12}}>Created {new Date(quote.created_at).toLocaleString("en-IN")} · Reference {quote.id.slice(0,8)}</p>
-     {!(quote.offers??[]).length&&<p>No eligible dealer has submitted an offer yet. The admin sourcing queue may review your request. No order exists at this stage.</p>}
-     {(quote.offers??[]).map(offer=>{
+     {!offers.length&&<p>No eligible dealer has submitted an offer yet. The admin sourcing queue may review your request. No order exists at this stage.</p>}
+     {offers.map(offer=>{
       const valid=active&&Number.isFinite(Date.parse(offer.valid_until))&&Date.parse(offer.valid_until)>Date.now();
       return <section key={offer.id} style={{borderTop:"1px solid #e4e9e0",paddingTop:14,marginTop:14}}>
        <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:12,flexWrap:"wrap"}}>
