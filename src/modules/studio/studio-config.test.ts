@@ -30,5 +30,5 @@ test("per-service published price changes only future checkout, not any existing
  const order={pricePaise:14900,orderId:"order-1"},published={...baseStudioConfig("home_studio"),pricePaise:19900};
  assert.equal(order.pricePaise,14900);
  assert.equal(published.pricePaise,19900);
- assert.equal(order.pricePaise!==published.pricePaise,true);
+ assert.notEqual(Number(order.pricePaise),Number(published.pricePaise));
 });
