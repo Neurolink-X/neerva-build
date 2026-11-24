@@ -108,6 +108,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <p>{str("Try G+1, fewer bedrooms, or review parking and setbacks. We do not shrink rooms below minimums to fabricate a fit.",
        "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>
     </section>:<>
+     <p className="nroad-jump"><a href="#selected-plan-drawing">Jump to the selected exact 2D + 3D plan ↓</a></p>
      <div className="nroad-head nroad-choices"><h2>{str("Room-layout options checked for your plot","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} room-layout options, same plot</span></div>
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=><button key={v.id} type="button" aria-pressed={v.id===plan.id}
        onClick={()=>{setChosen(i);document.getElementById("selected-plan-drawing")?.scrollIntoView({block:"start"})}}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${v.plot.widthFt+2} ${v.plot.depthFt+2}`} role="img" aria-label={`Ground layout preview ${i+1}: ${v.plot.widthFt} by ${v.plot.depthFt} feet, road ${v.plot.roadSide}`}>
