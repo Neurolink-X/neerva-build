@@ -189,6 +189,7 @@ async function main(){
     // A gallery deep link must choose the SAME plan for both 2D geometry and 3D.
     await page.goto(base+"/design-studio/portfolio?width=18&depth=50&road=N&floors=2&bedrooms=3&parking=true&option=5",{waitUntil:"load"});
     const chosenLayout=page.locator(".nroad-variants button[aria-pressed=true]");
+    await chosenLayout.first().waitFor({state:"visible",timeout:20000});
     assert.equal(await chosenLayout.count(),1,"exactly one linked gallery option selected");
     assert.match((await chosenLayout.innerText()),/^6\./,"gallery card #6 opens option #6, not the default plan");
     await page.getByRole("button",{name:"Ground floor"}).click();
