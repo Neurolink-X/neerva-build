@@ -1,6 +1,6 @@
 "use client";
 import {useCallback,useEffect,useState,type FormEvent} from "react";
-import Image from "next/image";
+import {StudioUpiQr} from "@/components/studio-upi-qr";
 import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {studioProducts,studioPayee,studioUpiUrl,type StudioProduct} from "@/modules/studio/paid-products";
@@ -86,7 +86,8 @@ export function StudioCheckout({product}:{product:StudioProduct}){
     <p>Order ID: <code>{pending.id}</code></p>
     <p><strong>Amount fixed for this order: {money.format(pending.amount_paise/100)}</strong></p>
     {pending.amount_paise!==config.pricePaise&&<p className="studio-upgrade-warning">The admin price changed after this order was created. The existing amount remains unchanged. Cancel an unpaid order to request the new price.</p>}
-    {pending.amount_paise===14900?<div className="studio-upgrade-qr"><Image src={product==="home_studio"?"/images/studio-149-home-studio.svg":"/images/studio-149-colour-studio.svg"} width={220} height={220} alt={"UPI QR for ₹149 "+studioProducts[product].short}/></div>:<p className="studio-upgrade-warning">For this customised price, use the exact-amount UPI payment link below. No mismatched fixed-price QR will be shown.</p>}
+    <div className="studio-upgrade-qr"><StudioUpiQr uri={studioUpiUrl(product,pending.id,pending.amount_paise)}
+     amount={money.format(pending.amount_paise/100)}/></div>
     <p>Beneficiary: <strong>{studioPayee.name}</strong> · UPI: <code>{studioPayee.id}</code></p>
     <a className="studio-upgrade-btn" href={studioUpiUrl(product,pending.id,pending.amount_paise)}>Open UPI app · {money.format(pending.amount_paise/100)}</a>
     <p className="studio-upgrade-warning">Check the receiver and amount in your UPI app. A receipt or UTR does not automatically unlock access. Never pay twice for the same order.</p>
