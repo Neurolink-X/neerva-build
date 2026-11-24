@@ -6,6 +6,7 @@ type Rate={category:string;slug:string;sku:string;unit:string;paise:number;city:
 const listeners=new Set<()=>void>();
 let rates=new Map<string,Rate>(),request:Promise<void>|undefined,lastLoaded=0;
 const rateKey=(category:string,slug:string,sku?:string)=>category+"|"+slug+"|"+(sku??"");
+let channel:BroadcastChannel|undefined;
 function refresh(){
  if(request||document.visibilityState==="hidden")return;
  request=fetch("/api/catalog/prices",{cache:"no-cache"}).then(async response=>{
@@ -22,8 +23,8 @@ let timer:ReturnType<typeof setInterval>|undefined;
 function onVisible(){if(document.visibilityState==="visible"){for(const notify of listeners)notify();if(Date.now()-lastLoaded>=30000)refresh()}}
 function subscribe(notify:()=>void){
  listeners.add(notify);
- if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);timer=setInterval(refresh,30000)}
- return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);timer=undefined;document.removeEventListener("visibilitychange",onVisible)}};
+ if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);window.addEventListener("neerva-price-changed",refresh);if(typeof BroadcastChannel!=="undefined"){channel=new BroadcastChannel("neerva-public-price");channel.onmessage=()=>refresh()}timer=setInterval(refresh,15000)}
+ return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);timer=undefined;document.removeEventListener("visibilitychange",onVisible);window.removeEventListener("neerva-price-changed",refresh);channel?.close();channel=undefined}};
 }
 const noRate=()=>undefined;
 function currentRate(category:string,slug:string,sku?:string){
