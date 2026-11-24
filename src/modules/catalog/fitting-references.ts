@@ -1,5 +1,5 @@
 import type {DemoProduct} from "./marketplace.ts";
-export type FittingRef={slug:string;name:string;hi:string;group:"tank"|"pump";material:string;sizes:string[];use:string;compat:string;price:number|null;priceSize:string|null;source:string|null;image?:string;legacy?:string;brand?:string;legacySlug?:string;aliases?:string[];priceMarket?:string};
+export type FittingRef={slug:string;name:string;hi:string;group:"tank"|"pump";material:string;sizes:string[];use:string;compat:string;price:number|null;priceSize:string|null;source:string|null;image?:string;imageSource?:string;legacy?:string;brand?:string;legacySlug?:string;aliases?:string[];priceMarket?:string};
 export const fittingReferences:FittingRef[]=[
   {
     "slug": "fitting-tank-nipple",
@@ -19,11 +19,13 @@ export const fittingReferences:FittingRef[]=[
     "price": 52,
     "priceSize": "¾ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Threaded_Tank_Nipple_655af1b3-cae7-4d0b-90d1-2b4055cd385d.webp?v=1741000160&width=533",
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Tank-nipple-with-one-side-pipe-fitment.png",
     "aliases": [
       "tank connector",
       "bulkhead tank fitting"
-    ]
+    ],
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-elbow90",
@@ -44,8 +46,10 @@ export const fittingReferences:FittingRef[]=[
     "price": 16,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/1_Ashirvad_Flowguard_Plus_CPVC_90_Elbow_main_image_95de15a1-707a-4234-a50c-4f9be06c6a0e.webp?v=1779343906&width=533",
-    "legacy": "generic-plumbing-fitting"
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Elbow-90%E2%81%B0.png",
+    "legacy": "generic-plumbing-fitting",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-tee",
@@ -66,8 +70,8 @@ export const fittingReferences:FittingRef[]=[
     "price": 23,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Tee_92e95243-97c9-40f5-84fd-2e8b55d5d639.webp?v=1740984175&width=533",
-    "legacy": "generic-tee"
+    "legacy": "generic-tee",
+    "brand": "Ashirvad"
   },
   {
     "slug": "fitting-socket",
@@ -88,8 +92,8 @@ export const fittingReferences:FittingRef[]=[
     "price": 13,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Coupler.webp?v=1740995844&width=533",
-    "legacy": "generic-coupler"
+    "legacy": "generic-coupler",
+    "brand": "Ashirvad"
   },
   {
     "slug": "fitting-reducer",
@@ -107,8 +111,8 @@ export const fittingReferences:FittingRef[]=[
     "price": 24,
     "priceSize": "¾ × ½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Reducer_Coupler_62d502b9-d759-4038-ac1c-10da68c5a4b3.webp?v=1741001149&width=533",
-    "legacy": "generic-reducer"
+    "legacy": "generic-reducer",
+    "brand": "Ashirvad"
   },
   {
     "slug": "fitting-union",
@@ -129,11 +133,11 @@ export const fittingReferences:FittingRef[]=[
     "price": 54,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Union.webp?v=1740998905&width=533",
     "legacy": "generic-union",
     "aliases": [
       "PVC CPVC tank union"
-    ]
+    ],
+    "brand": "Ashirvad"
   },
   {
     "slug": "fitting-ball-valve",
@@ -154,8 +158,10 @@ export const fittingReferences:FittingRef[]=[
     "price": 97,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Ball_Valve.webp?v=1740999831&width=533",
-    "legacy": "generic-ball-valve"
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Ball-Valve.png",
+    "legacy": "generic-ball-valve",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-pipe-strap",
@@ -176,8 +182,10 @@ export const fittingReferences:FittingRef[]=[
     "price": 8,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/ashirvad_metal_clamp_for_cpvc_pipe.jpg?v=1743075839&width=533",
-    "legacy": "generic-pipe-clamp"
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Powder-coated-clamp.png",
+    "legacy": "generic-pipe-clamp",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-solvent",
@@ -193,8 +201,10 @@ export const fittingReferences:FittingRef[]=[
     "price": null,
     "priceSize": null,
     "source": "https://home-run.co/collections/plumbing",
-    "image": "https://home-run.co/cdn/shop/files/1000267354.png?v=1760184846&width=533",
-    "legacy": "generic-solvent"
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/1-Step-CPVC-Solvent-Cement-Yellow-Coloured.png",
+    "legacy": "generic-solvent",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-ptfe",
@@ -210,11 +220,11 @@ export const fittingReferences:FittingRef[]=[
     "price": 30,
     "priceSize": "12 mm × 10 m",
     "source": "https://home-run.co/collections/plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Viking_PTFE_Teflon_Thread_Seal_Tape_12mm_X_10m_2649efb4-5205-45b8-84fe-603b812cb5d5.webp?v=1740999098&width=533",
     "aliases": [
       "thread seal tape",
       "teflon tape"
-    ]
+    ],
+    "brand": "Viking"
   },
   {
     "slug": "fitting-reducer-tee",
@@ -232,7 +242,9 @@ export const fittingReferences:FittingRef[]=[
     "price": 48,
     "priceSize": "¾ × ¾ × ½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_FlowGuard_Plus_CPVC_Reducer_Tee_f60756df-6884-40b7-bb47-a627cba79f22.webp?v=1741001266&width=533"
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Reducer-TEE.png",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-end-cap",
@@ -253,7 +265,7 @@ export const fittingReferences:FittingRef[]=[
     "price": 11,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_CPVC_Fitting_End-cap.png?v=1732628968&width=533"
+    "brand": "Ashirvad"
   },
   {
     "slug": "fitting-brass-elbow",
@@ -271,7 +283,7 @@ export const fittingReferences:FittingRef[]=[
     "price": 69,
     "priceSize": "½ × ½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_90_Elbow_Brass_77b159f3-1529-4b84-a266-86d3d49c1563.webp?v=1741002339&width=533"
+    "brand": "Ashirvad"
   },
   {
     "slug": "fitting-sweep",
@@ -291,7 +303,9 @@ export const fittingReferences:FittingRef[]=[
     "price": 46,
     "priceSize": "¾ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Sweep_Bend_Long_Radius_Bend_f0cc028c-f47c-4607-b3f6-0d709c769cc2.webp?v=1741001319&width=533"
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Sweep-bend-Socket-at-both-sides.png",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-plug",
@@ -308,7 +322,9 @@ export const fittingReferences:FittingRef[]=[
     "price": 8,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_Threaded_End_Plug.webp?v=1741003079&width=533"
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CP-Valves-_-Accessories_Spare_Concealed-valve_Threaded-end-plug.png",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-male-brass",
@@ -329,7 +345,9 @@ export const fittingReferences:FittingRef[]=[
     "price": 160,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_Male_Adapter_Brass_Threaded_-_MABT.webp?v=1741000609&width=533"
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_MABT.png",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-male-plastic",
@@ -349,11 +367,13 @@ export const fittingReferences:FittingRef[]=[
     "price": 23,
     "priceSize": "¾ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Male_Adapter_Plastic_Threaded_-_MAPT_5ed66bbf-5a5a-46e5-bf0b-34816667939e.webp?v=1740999986&width=533",
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Male-Adaptor-Plastic-Threaded.png",
     "aliases": [
       "MTA",
       "male threaded adaptor"
-    ]
+    ],
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-female-plastic",
@@ -374,11 +394,13 @@ export const fittingReferences:FittingRef[]=[
     "price": 20,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Female_Adapter_Plastic_Threaded_-_FAPT_8d0c55e0-472d-4938-bfa4-0eaa40750376.webp?v=1741000083&width=533",
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Female-Adaptor-Plastic-Threaded-FAPT.png",
     "aliases": [
       "FTA",
       "female threaded adaptor"
-    ]
+    ],
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-float-valve",
@@ -447,7 +469,10 @@ export const fittingReferences:FittingRef[]=[
     "compat": "Match pressure and pipe series",
     "price": null,
     "priceSize": null,
-    "source": null
+    "source": null,
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Cross-Tee-1.png",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-gate-valve",
@@ -536,7 +561,7 @@ export const fittingReferences:FittingRef[]=[
     "name": "Inline non-return valve (NRV)",
     "hi": "नॉन रिटर्न वाल्व",
     "group": "pump",
-    "material": "Brass / GI / uPVC",
+    "material": "CPVC",
     "sizes": [
       "½ inch",
       "¾ inch",
@@ -553,7 +578,10 @@ export const fittingReferences:FittingRef[]=[
     "aliases": [
       "check valve",
       "non return valve"
-    ]
+    ],
+    "image": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Non-Return-Valve.png",
+    "brand": "Ashirvad",
+    "imageSource": "https://www.ashirvad.com/solution/ashirvad-flowguard-plus-cpvc-piping-system/"
   },
   {
     "slug": "fitting-foot-valve",
@@ -668,21 +696,18 @@ export const fittingReferences:FittingRef[]=[
   },
   {
     "slug": "fitting-pressure-switch",
-    "name": "PM 5G pressure switch",
+    "name": "Pump pressure switch",
     "hi": "प्रेशर स्विच",
     "group": "pump",
     "material": "Electrical",
     "sizes": [
-      "PM 5G"
+      "Rating to confirm"
     ],
     "use": "Control compatible pressure pump",
     "compat": "Electrician to verify motor rating and controller",
-    "price": 648,
-    "priceSize": "PM 5G",
-    "source": "https://www.industrybuying.com/float-switch-ganpati-apollo-PUM.FLO.78524975",
-    "image": "https://static1.industrybuying.com/products/pumps/pump-accessories/float-switch/PUM.FLO.78524975_1680066264782.webp",
-    "brand": "Ganpati Apollo",
-    "priceMarket": "Industrybuying retailer reference"
+    "price": null,
+    "priceSize": null,
+    "source": null
   },
   {
     "slug": "fitting-float-switch",

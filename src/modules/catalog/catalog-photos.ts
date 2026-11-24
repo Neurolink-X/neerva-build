@@ -1,3 +1,4 @@
+import {usableMediaSource} from "./failed-media-sources.ts";
 import {fittingReference} from "./fitting-references.ts";
 import type {DemoProduct} from "./marketplace.ts";
 import {aggregateReference,aggregatePhotoSources} from "./aggregate-references.ts";
@@ -38,7 +39,7 @@ function approvedSkuImage(path:string):boolean{return /^\/images\/catalog\/sku\/
 export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
  const entries:CatalogPhoto[]=[];
  const append=(src:string|undefined|null,label:string,kind:CatalogPhoto["kind"],alt:string)=>{
-  if(src&&!entries.some(x=>x.src===src))entries.push({src,label,kind,alt});
+  if(src&&usableMediaSource(src)&&!entries.some(x=>x.src===src))entries.push({src,label,kind,alt});
  };
  if(product.verification==="merchant_verified"&&product.imageVerified)
   for(const src of product.images??[])if(approvedSkuImage(src))
@@ -47,7 +48,7 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   product.familyKey?"Product range":"Product photo",
   "listing","Reference photo of "+product.name+"; exact physical variant unverified");
  const fitting=fittingReference(product.slug);
- if(fitting){if(fitting.image)append(localBrandAsset(fitting.image),"Retailer fitting reference","listing",product.name+" product family photo");return entries;}
+ if(fitting){if(fitting.image)append(localBrandAsset(fitting.image),fitting.imageSource?"Manufacturer fitting reference":"Retailer fitting reference","listing",product.name+" product family photo");return entries;}
  if(product.category==="aggregates"){
   const ref=aggregateReference(product.slug);
   if(ref){const photo=aggregatePhotoSources[ref.group];append(photo.src,"Representative material photo · not exact SKU","editorial",photo.alt);}
