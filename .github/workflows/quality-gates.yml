@@ -1,0 +1,95 @@
+name: Neerva authenticated QA and performance
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_authenticated:
+        description: Run real isolated staging accounts (requires approved QA environment)
+        type: boolean
+        default: false
+      run_production:
+        description: Benchmark public production without writes
+        type: boolean
+        default: true
+permissions:
+  contents: read
+concurrency:
+  group: quality-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  candidate-performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm install --no-save --package-lock=false playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Benchmark candidate build (public lab routes)
+        run: |
+          npm run start > /tmp/neerva-qa-server.log 2>&1 &
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:3000/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:3000/ >/dev/null
+          node scripts/e2e/performance.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: candidate-performance
+          path: test-results/performance/report.json
+  production-performance:
+    if: github.event_name == 'pull_request' || inputs.run_production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --no-audit --no-fund
+      - run: npm install --no-save --package-lock=false playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - name: Measure existing public production baseline
+        env:
+          PERF_BASE_URL: https://neerva-build.vercel.app
+        run: node scripts/e2e/performance.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-performance
+          path: test-results/performance/report.json
+  authenticated-staging:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_authenticated
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: neerva-isolated-qa
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --no-audit --no-fund
+      - run: npm install --no-save --package-lock=false playwright@1.58.2
+      - run: npx playwright install --with-deps chromium
+      - name: Real isolated staging login, authorization and CRUD
+        env:
+          QA_BASE_URL: ${{ vars.QA_BASE_URL }}
+          QA_ALLOWED_ORIGIN: ${{ vars.QA_ALLOWED_ORIGIN }}
+          QA_SUPABASE_REF: ${{ vars.QA_SUPABASE_REF }}
+          QA_ISOLATED_STAGING: ${{ vars.QA_ISOLATED_STAGING }}
+          QA_ADMIN_EMAIL: ${{ secrets.QA_ADMIN_EMAIL }}
+          QA_ADMIN_PASSWORD: ${{ secrets.QA_ADMIN_PASSWORD }}
+          QA_CUSTOMER_EMAIL: ${{ secrets.QA_CUSTOMER_EMAIL }}
+          QA_CUSTOMER_PASSWORD: ${{ secrets.QA_CUSTOMER_PASSWORD }}
+          QA_DEALER_EMAIL: ${{ secrets.QA_DEALER_EMAIL }}
+          QA_DEALER_PASSWORD: ${{ secrets.QA_DEALER_PASSWORD }}
+        run: node scripts/e2e/authenticated.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: authenticated-qa
+          path: test-results/authenticated/report.json
