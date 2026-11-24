@@ -1,0 +1,50 @@
+[
+  {
+    "category": "aggregates",
+    "family": "gitti-10mm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/e/e6/10mm-aggregate.jpg",
+    "sha1": "aa62c9beb8b92cefccb97ce6d99e8235aee712b0",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:10mm-aggregate.jpg",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+    "credit": "Bill Bradley (Billbeee)",
+    "alt": "Small angular crushed stone held in a hand, photographed as 10 mm aggregate; supplier grading not verified",
+    "view": "close-up"
+  },
+  {
+    "category": "aggregates",
+    "family": "gitti-20mm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/09/20mm-aggregate.jpg",
+    "sha1": "db3291a64bed708bb3657555cd018924da04d3cd",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:20mm-aggregate.jpg",
+    "license": "CC BY 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/",
+    "credit": "Bill Bradley (Billbeee)",
+    "alt": "Larger angular dark crushed stone held in a hand, photographed as 20 mm aggregate; supplier grading not verified",
+    "view": "close-up"
+  },
+  {
+    "category": "aggregates",
+    "family": "fine-plaster-sand",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Sand_heap.JPG",
+    "sha1": "011c558e037fd5b0e72f293ee3bf65a70e27a0e4",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Sand_heap.JPG",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "credit": "Bhaskaranaidu",
+    "alt": "Fine-looking natural sand surface, illustrative texture only; plaster suitability and source not verified",
+    "view": "close-up"
+  },
+  {
+    "category": "electrical",
+    "family": "generic-conduit",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/2/23/Plastic_tubing.jpg",
+    "sha1": "800b8abcebf5ebab9bfc1ca6ee12ba6e8c83053b",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Plastic_tubing.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "credit": "Paul Goyette",
+    "alt": "Grey Schedule 40 PVC electrical conduits with open ends; illustrative conduit family, not a selected Indian specification",
+    "view": "close-up"
+  }
+]

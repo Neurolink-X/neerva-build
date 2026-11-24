@@ -10,7 +10,7 @@ import {categoryImage} from "./public-products.ts";
 
 import {curatedPhotoPaths} from "./curated-photo-paths.ts";
 import {approvedFamilyMedia} from "./media-integrity.ts";
-export type CatalogPhoto={src:string;label:string;alt:string;kind:"sku"|"listing"|"editorial"|"manufacturer"|"category"};
+export type CatalogPhoto={src:string;label:string;alt:string;sourceUrl?:string;license?:string;licenseUrl?:string;credit?:string;kind:"sku"|"listing"|"editorial"|"manufacturer"|"category"};
 const curated:Record<string,string[]>={
 
 
@@ -37,13 +37,13 @@ function editorialKeys(p:DemoProduct):string[]{return curated[p.category+":"+p.s
 function approvedSkuImage(path:string):boolean{return /^\/images\/catalog\/sku\/[a-z0-9][a-z0-9/_-]{3,160}\.(?:webp|avif|png|jpe?g)$/i.test(path)&&!path.includes("..");}
 export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
  const entries:CatalogPhoto[]=[];
- const append=(src:string|undefined|null,label:string,kind:CatalogPhoto["kind"],alt:string)=>{
-  if(src&&usableMediaSource(src)&&!entries.some(x=>x.src===src))entries.push({src,label,kind,alt});
+ const append=(src:string|undefined|null,label:string,kind:CatalogPhoto["kind"],alt:string,credit?:Pick<CatalogPhoto,"sourceUrl"|"license"|"licenseUrl"|"credit">)=>{
+  if(src&&usableMediaSource(src)&&!entries.some(x=>x.src===src))entries.push({src,label,kind,alt,...credit});
  };
  if(product.verification==="merchant_verified"&&product.imageVerified)
   for(const src of product.images??[])if(approvedSkuImage(src))
    append(src,"Verified seller photo","sku","Seller-reviewed photo of "+product.name);
- for(const m of approvedFamilyMedia(product))append(m.path,m.scope==="sku"?"Reviewed product photo":"Reviewed material photo · not exact SKU",m.scope==="sku"?"manufacturer":"editorial",m.alt);
+ for(const m of approvedFamilyMedia(product))append(m.path,m.scope==="sku"?"Reviewed product photo":"Reviewed material photo · not exact SKU",m.scope==="sku"?"manufacturer":"editorial",m.alt,{sourceUrl:m.sourceUrl,license:m.license,licenseUrl:m.licenseUrl,credit:m.credit});
  if(product.referenceImage)append(product.referenceImage,
   product.familyKey?"Product range":"Product photo",
   "listing","Reference photo of "+product.name+"; exact physical variant unverified");

@@ -23,7 +23,7 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{cate
   {safeSrc?<Image src={safeSrc} alt={compact?"":current?.alt??name} fill sizes="(max-width:680px) 100vw, (max-width:1100px) 50vw, 33vw"
    quality={75} loading="lazy" unoptimized={safeSrc.startsWith("https://")} referrerPolicy="no-referrer" onError={()=>setFailed(previous=>previous.includes(safeSrc)?previous:[...previous,safeSrc])}/>:
    <MaterialIdentity name={name} category={category} brand={product?.brand} product={product}/>}
-  {!compact&&safeSrc&&<span className="catalog-image-note">{current?.label}</span>}
+  {!compact&&safeSrc&&<span className="catalog-image-note">{current?.label}{current?.sourceUrl&&<> · <a href={current.sourceUrl} target="_blank" rel="noopener noreferrer">{current.credit}</a> · <a href={current.licenseUrl} target="_blank" rel="noopener noreferrer">{current.license}</a> · resized/WebP</>}</span>}
  </div>;
 }
 
