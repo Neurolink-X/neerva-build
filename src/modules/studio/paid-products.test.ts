@@ -27,5 +27,10 @@ test("UPI intent fills exact beneficiary, INR 149 and selected service without c
   assert.equal(params.get("cu"),"INR");
   assert.ok(params.get("tn")?.includes(product==="home_studio"?"Home Studio":"Colour Studio"));
   assert.equal(params.get("tr"),null,"do not invent a verified payment processor reference");
+  const discounted=studioUpiUrl(product,"12345678-bbbb-4444-aaaa-123456789000",9900);
+  const d=new URLSearchParams(discounted.split("?")[1]);
+  assert.equal(d.get("am"),"99.00","admin-set price must fill exact UPI order amount");
+  assert.ok(d.get("tn")?.includes("INR99.00"),"service note must match actual order amount");
+  assert.throws(()=>studioUpiUrl(product,"id",-1),/INVALID_STUDIO_PRICE/);
  }
 });
