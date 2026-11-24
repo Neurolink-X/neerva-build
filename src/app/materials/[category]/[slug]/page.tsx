@@ -1,3 +1,4 @@
+import {CatalogOffer} from "@/components/catalog-offer";
 import {ProductPrice} from "@/components/product-price";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -20,6 +21,7 @@ export default async function MaterialDetailPage({ params }: Props) {
  <strong style={{display:"block"}}>Get a delivered quote</strong>
  <span>Share your quantity and pincode to confirm stock, freight and delivery.</span>
 </div>
+<CatalogOffer category={product.category} slug={product.slug}/>
 {product.manufacturerReference&&<a href={product.manufacturerReference} target="_blank" rel="noopener noreferrer">Manufacturer details ↗</a>}<div className="detail-specs"><h2>Product details</h2>{product.specifications.map((spec) => <div key={spec.label}><strong>{spec.label}</strong><span>{spec.value}</span></div>)}</div>{siblings.length>0&&<section className="product-variant-panel"><h2>Other sizes in this material family</h2><p>Each size is a separate specification request; the image may depict only the general material.</p><div className="catalog-variant-links">{siblings.map(item=><Link key={item.slug} href={`/materials/${item.category}/${item.slug}`}>{rangeVariantLabel(item)}</Link>)}</div></section>}<ProductDetailTools product={product} /><Link className="button button-orange" href={quoteHref}>{product.quoteOnly ? "Request private quotation" : "Ask for current dealer quote"} →</Link><p className="professional-note">Confirm the manufacturer SKU, product markings, batch, actual image, applicable documents, taxes, freight, unloading and delivery time in writing. A request is not an accepted order.</p></div></section><section className="category-guidance"><h2>How a Neerva material request should work</h2><ol><li>Tell us your quantity, delivery pincode and needed date.</li><li>Eligible dealers respond with an itemized private offer.</li><li>Review the final amount and schedule before accepting.</li></ol><Link href={`/materials/${category}`} className="text-link">Explore more {parent.title} examples <span>→</span></Link></section></div><SiteFooter /></main>;
 }
 

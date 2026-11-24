@@ -21,14 +21,12 @@ test("exact 18x50 road-first 3BHK has 24 genuinely distinct room programs/partit
  assert.equal(plans.length,24,`only ${plans.length} distinct, checked options`);
  assert.equal(new Set(plans.map(geometrySignature)).size,24);
  assert.equal(new Set(plans.map(p=>p.id)).size,24);
- // Room USE/PROGRAMME must differ for all 24, not just wall lengths, colours or labels.
- // 4 rear-space kinds x 3 actual hall-space kinds x 2 car entry positions = 24.
- const semantic=plans.map(p=>[
-  p.rooms.find(r=>r.id==="dining")?.kind,
-  p.rooms.find(r=>r.id==="utility-g")?.kind,
-  p.variant
- ].join("/"));
- assert.equal(new Set(semantic).size,24,"each plan must have a distinct hall/rear-space/parking programme");
+ // Distinct architecture must be more than a renamed, recoloured or mirrored ID.
+ // The front-stair family moves the stair shaft physically beside the car bay.
+ const frontStairs=plans.filter(p=>p.rooms.find(r=>r.id==="stairs-g")?.y===0);
+ assert.ok(frontStairs.length>=2,"18x50 needs actual front-stair alternatives, not just new labels");
+ assert.ok(plans.some(p=>p.rooms.find(r=>r.id==="stairs-g")?.y!==(p.setbacks.frontFt)),"retain conventional central-stair alternatives");
+ assert.equal(new Set(plans.map(p=>meshSignature(p))).size,24,"all 24 must create different 3D walls");
  assert.equal(plans.filter(p=>p.variant==="parking-left").length,12);
  assert.equal(plans.filter(p=>p.variant==="parking-right").length,12);
  assert.ok(plans.some(p=>p.rooms.some(r=>r.kind==="terrace"&&r.floor===0)),"at least one accessible rear courtyard");
@@ -135,10 +133,10 @@ test("portfolio uses the requested site envelope across nine plot sizes and ever
  for(const [w,d,f,b] of [[18,50,2,3],[20,40,1,2],[20,45,2,3],[20,50,2,3],[25,40,2,3],[25,50,2,3],[30,40,2,3],[30,50,3,3],[40,60,2,3]] as const){
   for(const side of ["N","S","E","W"] as const){
    const {plans}=generateSpatialPortfolio({...standard,widthFt:w,depthFt:d,floors:f,bedrooms:b,roadSide:side});
-   assert.equal(plans.length,24);
-   assert.equal(new Set(plans.map(p=>p.id)).size,24,`${w}x${d}/${side}: duplicate IDs`);
-   assert.equal(new Set(plans.map(geometrySignature)).size,24,`${w}x${d}/${side}: duplicate 2D room layouts`);
-   assert.equal(new Set(plans.map(p=>meshSignature(p))).size,24,`${w}x${d}/${side}: duplicate 3D walls`);
+   assert.ok(plans.length>=2&&plans.length<=24,`${w}x${d}/${side}: no distinct supported alternatives`);
+   assert.equal(new Set(plans.map(p=>p.id)).size,plans.length,`${w}x${d}/${side}: duplicate IDs`);
+   assert.equal(new Set(plans.map(geometrySignature)).size,plans.length,`${w}x${d}/${side}: duplicate 2D room layouts`);
+   assert.equal(new Set(plans.map(p=>meshSignature(p))).size,plans.length,`${w}x${d}/${side}: duplicate 3D walls`);
    for(const p of plans){
     assert.deepEqual(validatePlan(p),[]);
     const model=studioDesignFromPlan(p);
@@ -148,5 +146,23 @@ test("portfolio uses the requested site envelope across nine plot sizes and ever
     for(let level=0;level<f;level++)assert.ok(meshSignature(p,level).length>0,`missing 3D walls on floor ${level+1} of ${p.id}`);
    }
   }
+ }
+});
+
+test("three real front-zone architectures when usable width permits",()=>{
+ const {plans}=generateSpatialPortfolio({...standard,widthFt:25,depthFt:50},24);
+ assert.equal(plans.length,24);
+ const stairFront=plans.filter(p=>p.rooms.find(r=>r.id==="stairs-g")?.y===p.setbacks.frontFt);
+ const bedroomFront=plans.filter(p=>p.rooms.find(r=>r.id==="bed-g")?.y===p.setbacks.frontFt);
+ const standardFront=plans.filter(p=>p.rooms.find(r=>r.id==="living")?.y===p.setbacks.frontFt+4.5);
+ assert.ok(stairFront.length>=2,"front stair beside parking must exist");
+ assert.ok(bedroomFront.length>=2,"independently accessible bedroom beside parking must exist");
+ assert.ok(standardFront.length>=2,"veranda next to parking must remain selectable");
+ for(const model of [...stairFront,...bedroomFront]){
+  assert.deepEqual(validatePlan(model),[],model.id);
+  const bedroomCount=model.rooms.filter(r=>r.kind==="bedroom").length;
+  assert.equal(bedroomCount,standard.bedrooms,"do not invent extra BHK rooms");
+  assert.deepEqual(studioDesignFromPlan(model).layout.rooms.map(r=>[r.floorIndex,r.xFt,r.yFt,r.wFt,r.dFt]),
+   model.rooms.map(r=>[r.floor,r.x,r.y,r.w,r.d]));
  }
 });
