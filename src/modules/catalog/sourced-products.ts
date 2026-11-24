@@ -106,3 +106,130 @@ sourcedProducts.push({
   manufacturerReference:"https://www.jkcement.com/grey-cement/jk-super-cement-ppc/",
   specifications:[{label:"Type",value:"Portland Pozzolana Cement"},{label:"Range",value:"JK Super Cement"},{label:"Confirm with dealer",value:"Bag weight, batch and packing date"}]
 });
+
+// Manufacturer range references; exact dimensions, price and photo require SKU verification.
+const pipeRanges: [string,string,string,string,string,string][] = [
+  [
+    "astral-aquarius-upvc",
+    "plumbing",
+    "Astral",
+    "Aquarius uPVC plumbing system",
+    "Cold-water plumbing",
+    "https://www.astralpipes.com/plumbing-pipes-fittings/"
+  ],
+  [
+    "astral-drainmaster-swr",
+    "plumbing",
+    "Astral",
+    "Drainmaster PVC SWR system",
+    "Soil, waste and rainwater drainage",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "astral-hdpe-pro",
+    "plumbing",
+    "Astral",
+    "HDPE Pro pipe system",
+    "HDPE piping",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "astral-casewell",
+    "plumbing",
+    "Astral",
+    "Case-Well uPVC casing pipes",
+    "Borewell casing",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "astral-wireguard",
+    "electrical",
+    "Astral",
+    "Wire Guard PVC electrical conduit",
+    "Concealed wiring protection",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "astral-telerex",
+    "electrical",
+    "Astral",
+    "TeleRex cable protection duct",
+    "Cable protection",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "supreme-aquagold",
+    "plumbing",
+    "Supreme",
+    "Aqua Gold uPVC pipes and fittings",
+    "Water supply",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-lifeline",
+    "plumbing",
+    "Supreme",
+    "Lifeline CPVC hot and cold water system",
+    "Hot/cold water plumbing",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-indogreen",
+    "plumbing",
+    "Supreme",
+    "Indo Green PPR piping system",
+    "Hot/cold water plumbing",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-swr",
+    "plumbing",
+    "Supreme",
+    "SWR pipe and drainage system",
+    "Soil, waste and rainwater drainage",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-cableshield",
+    "electrical",
+    "Supreme",
+    "Cableshield electrical conduit",
+    "Electrical wiring protection",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-cableguard",
+    "electrical",
+    "Supreme",
+    "Cableguard DWC HDPE cable duct",
+    "Underground cable protection",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "finolex-cpvc-range",
+    "plumbing",
+    "Finolex",
+    "CPVC plumbing pipes and fittings",
+    "Hot/cold water plumbing",
+    "https://www.finolexpipes.com/plumbing-products/"
+  ],
+  [
+    "finolex-swr-range",
+    "plumbing",
+    "Finolex",
+    "SWR pipes and fittings",
+    "Soil, waste and rainwater drainage",
+    "https://www.finolexpipes.com/plumbing-products/"
+  ],
+  [
+    "finolex-astm-upvc",
+    "plumbing",
+    "Finolex",
+    "ASTM uPVC pipes and fittings",
+    "Water supply",
+    "https://www.finolexpipes.com/plumbing-products/"
+  ]
+];
+for(const [slug,category,brand,name,application,manufacturerReference] of pipeRanges){
+ sourcedProducts.push({slug,category,brand,name,manufacturerReference,verification:"reference",description:"Manufacturer range reference for "+application.toLowerCase()+". Confirm the exact model and size with the dealer.", specifications:[{label:"Product family",value:name},{label:"Application",value:application},{label:"Nominal size",value:"Confirm manufacturer variant"},{label:"Confirm with dealer",value:"Rating, length, compatible fittings and exact SKU"}]});
+}
