@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useEffect,useState,type FormEvent} from "react";
+import {useEffect,useRef,useState,type FormEvent} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import styles from "./admin-command-centre.module.css";
 
@@ -30,20 +30,20 @@ export function AdminCommandCentre({marketing=false}:{marketing?:boolean}){
  const [campaigns,setCampaigns]=useState<Campaign[]>([]);
  const [snapshotTime,setSnapshotTime]=useState(0);
  const [prices,setPrices]=useState<Price[]>([]);
- const [busy,setBusy]=useState(false);
+ const [busy,setBusy]=useState(false);const lock=useRef(false);const [selected,setSelected]=useState("");const [query,setQuery]=useState("");const [filter,setFilter]=useState("all");
  const [revision,setRevision]=useState(0);
  useEffect(()=>{
   const controller=new AbortController();
   async function load(){
    try{
-    const result=await request("/api/admin/catalog/campaigns","GET",undefined,controller.signal);
+    const [result,pricing]=await Promise.all([request("/api/admin/catalog/campaigns","GET",undefined,controller.signal),marketing?request("/api/admin/pricing","GET",undefined,controller.signal):Promise.resolve(null)]);
     if(controller.signal.aborted)return;
     setCampaigns(result.campaigns??[]);
     setSnapshotTime(Date.now());
     if(marketing){
-     const pricing=await request("/api/admin/pricing","GET",undefined,controller.signal);
+     
      if(controller.signal.aborted)return;
-     setPrices((pricing.prices??[]).filter((p:Price)=>p.status==="published"&&p.visibility==="public"&&p.amount_paise>0&&(!p.valid_to||Date.parse(p.valid_to)>Date.now())));
+     setPrices((pricing.prices??[]).filter((p:Price)=>p.status==="published"&&p.visibility==="public"&&p.amount_paise>0&&Date.parse(p.valid_from)<=Date.now()&&(!p.valid_to||Date.parse(p.valid_to)>Date.now())));
     }
     setAccess("ready");setError("");
    }catch(e){if(!controller.signal.aborted){setAccess("denied");setError(e instanceof Error?e.message:"Access check failed.");}}
@@ -52,16 +52,16 @@ export function AdminCommandCentre({marketing=false}:{marketing?:boolean}){
   return()=>controller.abort();
  },[marketing,revision]);
  async function mutate(method:string,body:unknown){
-  if(busy)return;
-  setBusy(true);setError("");setNotice("");
+  if(lock.current)return;
+  lock.current=true;setBusy(true);setError("");setNotice("");
   try{await request("/api/admin/catalog/campaigns",method,body);setNotice(method==="POST"?"Draft saved. Review before publishing.":"Campaign status updated.");setRevision(v=>v+1);}
   catch(e){setError(e instanceof Error?e.message:"Unable to save.");}
-  finally{setBusy(false);}
+  finally{lock.current=false;setBusy(false);}
  }
  function create(e:FormEvent<HTMLFormElement>){
   e.preventDefault();const f=new FormData(e.currentTarget);
-  const amount=Number(f.get("amount"));const start=new Date(String(f.get("start")));const end=new Date(String(f.get("end")));
-  if(!Number.isFinite(amount)||amount<=0||!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start){setError("Enter a positive amount and valid start and end dates.");return;}
+  const price=prices.find(p=>p.id===String(f.get("price")));const amount=Number(f.get("amount"));const start=new Date(String(f.get("start")));const end=new Date(String(f.get("end")));
+  if(!price||Math.round(amount*100)>=price.amount_paise||!Number.isFinite(amount)||amount<=0||!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start){setError("Enter an offer below its verified base price and valid start/end dates.");return;}
   void mutate("POST",{pricingRuleId:f.get("price"),title:f.get("title"),terms:f.get("terms"),offerPaise:Math.round(amount*100),startsAt:start.toISOString(),endsAt:end.toISOString()});
  }
  return <main className={styles.shell+" admin-embedded"}>
@@ -73,13 +73,13 @@ export function AdminCommandCentre({marketing=false}:{marketing?:boolean}){
     <p className={styles.kicker}>NEERVA OPERATIONS / {marketing?"GROWTH":"OVERVIEW"}</p>
     <h1>{marketing?"Marketing & offers":"Business command centre"}</h1>
     <p>{marketing?"Create offers against real published prices. Review and publish only valid campaigns.":"Manage marketplace operations, growth, Studio services and platform access in one workspace."}</p>
-    {marketing?<><section className={styles.panel}><h2>Create an offer</h2>{prices.length===0?<p>No eligible published public prices yet. <Link href="/admin/pricing">Publish a genuine price first.</Link></p>:<form onSubmit={create} className={styles.form}>
-     <label>Published price<select name="price" required defaultValue=""><option value="" disabled>Select a price</option>{prices.map(p=><option key={p.id} value={p.id}>{p.city} · {money(p.amount_paise)}/{p.unit} · SKU {p.variant_id.slice(0,8)} · rule {p.id.slice(0,8)}</option>)}</select></label>
-     <label>Campaign title<input name="title" required minLength={8} maxLength={90}/></label><label>Offer amount (₹)<input name="amount" type="number" min="0.01" step="0.01" required/></label>
+    {marketing?<><section className={styles.panel}><h2>Create an offer</h2>{prices.length===0?<p>No eligible published public prices yet. Complete these steps: <Link href="/admin/catalog">1. Create and publish product + SKU</Link> · <Link href="/admin/pricing">2. Publish genuine selling price</Link> · 3. Return to create an offer.</p>:<form onSubmit={create} className={styles.form}>
+     <label>Published price<select name="price" required value={selected} onChange={e=>setSelected(e.target.value)}><option value="" disabled>Select a price</option>{prices.map(p=><option key={p.id} value={p.id}>{p.city} · {money(p.amount_paise)}/{p.unit} · SKU {p.variant_id.slice(0,8)} · rule {p.id.slice(0,8)}</option>)}</select></label>
+     <label>Campaign title<input name="title" required minLength={8} maxLength={90}/></label><label>Offer amount (₹)<input name="amount" type="number" min="0.01" max={selected?((prices.find(p=>p.id===selected)?.amount_paise??1)-1)/100:undefined} step="0.01" required/></label>
      <label>Starts (local time)<input name="start" type="datetime-local" required/></label><label>Ends (local time)<input name="end" type="datetime-local" required/></label>
      <label>Offer terms<textarea name="terms" required minLength={12} maxLength={400}/></label><button disabled={busy}>Save campaign draft</button></form>}</section>
      {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
-     <section className={styles.panel}><h2>Campaigns</h2>{campaigns.length===0?<p>No campaigns have been created.</p>:<div className={styles.cards}>{campaigns.map(c=><article key={c.id} className={styles.card}><small>{c.status}</small><h3>{c.title}</h3><p>{money(c.offer_amount_paise)} · base {money(c.base_amount_paise)}</p><p>{new Date(c.starts_at).toLocaleString()} – {new Date(c.ends_at).toLocaleString()}</p><p>{c.terms}</p>{(c.status==="draft"||c.status==="published")&&<button disabled={busy} onClick={()=>void mutate("PATCH",{id:c.id,status:c.status==="draft"?"published":"expired"})}>{c.status==="draft"?"Publish reviewed offer":"Expire offer"}</button>}</article>)}</div>}</section></>:<><section className={styles.panel}><h2>Marketing snapshot</h2><p>{campaigns.length} recent campaigns returned by the protected API · {campaigns.filter(c=>c.status==="published"&&Date.parse(c.starts_at)<=snapshotTime&&Date.parse(c.ends_at)>snapshotTime).length} within published offer windows at last refresh.</p><Link href="/admin/marketing">Manage marketing →</Link></section>{groups.map(g=><section key={g.title}><h2>{g.title}</h2><div className={styles.cards}>{g.items.map(([label,desc,href])=><Link className={styles.card} key={href} href={href}><h3>{label} ↗</h3><p>{desc}</p></Link>)}</div></section>)}</>}
+     <section className={styles.panel}><h2>Campaigns</h2><div className="admin-inline"><label>Search campaigns<input value={query} onChange={e=>setQuery(e.target.value)}/></label><label>Status<select value={filter} onChange={e=>setFilter(e.target.value)}>{["all","draft","published","expired"].map(s=><option key={s}>{s}</option>)}</select></label><button type="button" disabled={busy} onClick={()=>setRevision(v=>v+1)}>Refresh</button></div>{campaigns.length===0?<p>No campaigns have been created.</p>:<div className={styles.cards}>{campaigns.filter(c=>(filter==="all"||c.status===filter)&&c.title.toLowerCase().includes(query.toLowerCase())).map(c=><article key={c.id} className={styles.card}><small>{c.status}</small><h3>{c.title}</h3><p>{money(c.offer_amount_paise)} · base {money(c.base_amount_paise)}</p><p>{new Date(c.starts_at).toLocaleString()} – {new Date(c.ends_at).toLocaleString()}</p><p>{c.terms}</p>{(c.status==="draft"||c.status==="published")&&<button disabled={busy} onClick={()=>void mutate("PATCH",{id:c.id,status:c.status==="draft"?"published":"expired"})}>{c.status==="draft"?"Publish reviewed offer":"Expire offer"}</button>}</article>)}</div>}</section></>:<><section className={styles.panel}><h2>Marketing snapshot</h2><p>{campaigns.length} recent campaigns returned by the protected API · {campaigns.filter(c=>c.status==="published"&&Date.parse(c.starts_at)<=snapshotTime&&Date.parse(c.ends_at)>snapshotTime).length} within published offer windows at last refresh.</p><Link href="/admin/marketing">Manage marketing →</Link></section>{groups.map(g=><section key={g.title}><h2>{g.title}</h2><div className={styles.cards}>{g.items.map(([label,desc,href])=><Link className={styles.card} key={href} href={href}><h3>{label} ↗</h3><p>{desc}</p></Link>)}</div></section>)}</>}
    </section>
   </div>}
  </main>;
