@@ -185,5 +185,55 @@
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
     "target": "electrical:generic-conduit",
     "note": "Installed underground conduit; verify material and intended family before approval."
+  },
+  {
+    "key": "sail-corporate-mark",
+    "filename": "Steel_Authority_of_India_logo.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Steel_Authority_of_India_logo.svg",
+    "credit": "Steel Authority of India",
+    "license": "PD-textlogo; trademark restrictions apply",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-textlogo",
+    "target": "steel:SAIL",
+    "note": "Manufacturer-origin corporate mark from 2009 document; compare with current official SAIL identity before public use."
+  },
+  {
+    "key": "notched-adhesive-trowel",
+    "filename": "Knickzahnkelle.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File:Knickzahnkelle.JPG",
+    "credit": "Carolin Heuckmann",
+    "license": "CC BY-SA 3.0 DE",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/de/",
+    "target": "hardware:notched-trowel",
+    "note": "Manufacturer-origin square notched adhesive trowel with VRT permission; check watermark and exact geometry."
+  },
+  {
+    "key": "float-switch-generic",
+    "filename": "Float_switch.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Float_switch.jpg",
+    "credit": "TankunCha",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "plumbing:fitting-float-switch",
+    "note": "Check cable and float switch type before mapping; never infer electrical rating."
+  },
+  {
+    "key": "sealant-gun-generic",
+    "filename": "Silikonpistole_(fcm).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Silikonpistole_(fcm).jpg",
+    "credit": "Frank C. Müller",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "hardware:sealant-gun",
+    "note": "Manual cartridge gun with nozzle; review actual photo before publishing."
+  },
+  {
+    "key": "pump-impeller-range",
+    "filename": "Pump_Impellers-1.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Pump_Impellers-1.jpg",
+    "credit": "Meisam",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-impeller",
+    "note": "Multiple impeller types; review suitability for representative pump spare only, not exact model."
   }
 ]
