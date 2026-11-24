@@ -218,8 +218,62 @@
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
       "target": "plumbing:fitting-pressure-gauge",
       "note": "Review dial units and use; no claim of pump rating",
+      "status": "visual-review-required",
+      "file": "a01fab011150e080e33c089a.webp",
+      "width": 900,
+      "height": 1200,
+      "bytes": 39762,
+      "originalSha256": "e8a47d1ecd0215af3f4ad53cd6b7eeb9d5e6dcf813b8b83cd2c0a39ac04929c6",
+      "sha256": "a01fab011150e080e33c089abf517dcb7252358d3ce2b02623ed1f64d9e68aea"
+    },
+    {
+      "key": "river-sand-close",
+      "filename": "A_close-up_of_river_sand.JPG",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/6/64/A_close-up_of_river_sand.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:A_close-up_of_river_sand.JPG",
+      "credit": "Thamizhpparithi Maari",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "target": "aggregates:river-sand-bulk",
+      "note": "Visually reviewed river sand close-up; local origin, grading and supplier not verified",
       "status": "failed",
-      "reason": "Error: HTTP 429"
+      "reason": "Error: Invalid image dimensions or size"
+    },
+    {
+      "key": "garden-hose-coil",
+      "filename": "Garden_hose.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/c/cd/Garden_hose.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Garden_hose.jpg",
+      "credit": "Nandhp",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "target": "plumbing:generic-garden-hose",
+      "note": "Visually reviewed coiled green garden hose; not pump suction hose or verified size",
+      "status": "visual-review-required",
+      "file": "03b503783fe52f8e5345acf9.webp",
+      "width": 1200,
+      "height": 900,
+      "bytes": 290910,
+      "originalSha256": "ee80cbc4b9d0131a408785cb5560d1fc99afc2f8c3d7a4149a1997ee9863bec0",
+      "sha256": "03b503783fe52f8e5345acf93dc24b6c46e92e91357497a81e815b2ab39602ca"
+    },
+    {
+      "key": "spirit-level-tool",
+      "filename": "Tool-level.jpg",
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Tool-level.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Tool-level.jpg",
+      "credit": "Evan-Amos",
+      "license": "Public domain dedication",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-self",
+      "target": "hardware:spirit-level",
+      "note": "Visually reviewed spirit level; generic, not an exact manufacturer model",
+      "status": "visual-review-required",
+      "file": "b13185127f5c233b4d08cf36.webp",
+      "width": 1200,
+      "height": 427,
+      "bytes": 31846,
+      "originalSha256": "e635cf3092c35c7490e4d03632923116734400a32dc6b9943d00cd513c111a14",
+      "sha256": "b13185127f5c233b4d08cf3604605177b35aa0586d85997db75489f702c7faa0"
     }
   ]
 }
