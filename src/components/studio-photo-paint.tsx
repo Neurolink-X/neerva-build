@@ -49,8 +49,12 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
  const base=override?.source===colour?override.value:colour;
  const canvas=useRef<HTMLCanvasElement>(null),image=useRef<HTMLImageElement|null>(null),url=useRef<string|null>(null);
  const [history,setHistory]=useState(emptyMaskHistory),[ready,setReady]=useState(false);
+ const [closeUp,setCloseUp]=useState(false);
  const [showOriginal,setShowOriginal]=useState(false),[message,setMessage]=useState("Choose a local photo, then mark four corners of one wall clockwise.");
  const points=history.points,valid=validWallMask(points);
+ const wallCentre=valid?`${points.reduce((sum,p)=>sum+p.x,0)*25}% ${points.reduce((sum,p)=>sum+p.y,0)*25}%`:undefined;
+ const wallWidth=valid?Math.max(...points.map(p=>p.x))-Math.min(...points.map(p=>p.x)):1;
+ const wallZoom=closeUp&&valid?`scale(${Math.min(4,Math.max(1.6,.94/wallWidth))})`:undefined;
  const [preset,setPreset]=useState<{points:MaskCorner[];mask:PhotoMask}|null>(null);
  const currentMask=editing!==null?walls[editing]?.mask:preset?.points===points?preset.mask:undefined;
  useEffect(()=>{
@@ -74,7 +78,7 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   }
  },[points,base,accent,pattern,walls,editing,ready,showOriginal,valid,currentMask]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask)=>{
-  setPreset(corners&&mask?{points:corners,mask}:null);
+  setCloseUp(false);setPreset(corners&&mask?{points:corners,mask}:null);
   if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);
   setWalls([]);setEditing(null);url.current=next;image.current=null;setReady(false);
   setHistory(emptyMaskHistory());setShowOriginal(false);
@@ -119,8 +123,11 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
  return <section className="nbd-photo" aria-label="Private wall colour preview">
   <div className="nbd-buttons"><button type="button" onClick={openRoom}>Sample room</button><button type="button" onClick={openFacade}>Sample house exterior</button><label>Use my home photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label></div>
   <p role="status">{points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
+  {ready&&valid&&<button type="button" aria-pressed={closeUp} onClick={()=>setCloseUp(v=>!v)}>{closeUp?"See whole scene":"Inspect selected wall"}</button>}
+  <div style={{overflow:"hidden",borderRadius:12}}>
   <canvas ref={canvas} role="img" aria-label="Photo of your wall. Tap its four corners clockwise, starting top-left, to choose a painting region" onPointerDown={addPoint}
-    style={{display:ready?"block":"none",width:"100%",height:"auto",cursor:points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
+    style={{transform:wallZoom,transformOrigin:wallCentre,display:ready?"block":"none",width:"100%",height:"auto",cursor:points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
+  </div>
   <label>Wall design <select value={pattern} onChange={e=>setPattern(e.target.value as Pattern)}>
    {patternKeys.map(key=><option key={key} value={key}>{finishes[key].name}</option>)}
   </select></label>
