@@ -240,7 +240,7 @@ function buildArchitecturalFamily(
    add("terrace-"+level,"Rear terrace","terrace",level,0,37,W,D-37);
   }
  }else{
-  const porchW=3.5,roomW=W-parkW-porchW;
+  const stairsW=5.5,porchW=3.5,roomW=W-parkW-porchW;
   add("verandah","Independent entry veranda","verandah",0,parkW,0,porchW,16);
   add("bed-g","Street-facing bedroom","bedroom",0,parkW+porchW,0,roomW,16);
   add("stairs-g","Central stair bay","stairs",0,0,16,stairsW,10);
