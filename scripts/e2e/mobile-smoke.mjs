@@ -188,11 +188,27 @@ async function main(){
     assert.equal(await page.locator(".product-gallery-caption").count(),1,"gallery has a single truthful caption below the photo");
     assert.equal(await page.locator(".product-gallery-stage .catalog-image-note").count(),0,"no duplicate overlaid labels in product photo");
     assert.equal(await page.locator(".city-select").count(),0,"header does not show a fake location picker");
+    // CPVC has no identity-reviewed manufacturer photo yet. Do not require
+    // unrelated generic pipe images to satisfy the gallery regression.
+    const cpvcStage=page.locator(".product-gallery-stage");
+    if(await cpvcStage.locator("img").count()===0){
+      assert.match(await page.locator(".product-gallery-caption").innerText(),/Product specifications/);
+      assert.equal(await page.locator(".product-gallery-thumbs button").count(),0);
+    }else{
+      assert.ok(await cpvcStage.locator("img").getAttribute("alt"),"CPVC photo has a meaningful description");
+    }
+    // The approved 20 mm aggregate family has two distinct bundled photos.
+    // Keep the real multi-view gallery test, including local decoding.
+    await page.goto(base+"/materials/aggregates/gitti-20mm",{waitUntil:"load"});
+    const hero=page.locator(".product-gallery-stage img");
+    await hero.scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>{const img=document.querySelector(".product-gallery-stage img");return !!img&&img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin;},null,{timeout:15000});
     const photoThumbs=page.locator(".product-gallery-thumbs button");
     assert.ok(await photoThumbs.count()>=2,"catalog product has distinct locally cached material photo views");
     const firstHeroSource=await page.locator(".product-gallery-stage img").getAttribute("src");
     await photoThumbs.nth(1).click();
     assert.notEqual(await page.locator(".product-gallery-stage img").getAttribute("src"),firstHeroSource,"second thumbnail displays different image");
+    await page.waitForFunction(()=>{const img=document.querySelector(".product-gallery-stage img");return !!img&&img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin;},null,{timeout:15000});
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     const pack=page.locator(".product-gallery-stage img");
     // load does not guarantee deferred/lazy product images have decoded on mobile.
