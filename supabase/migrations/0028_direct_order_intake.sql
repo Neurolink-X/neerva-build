@@ -1,7 +1,13 @@
 -- Versioned admin-only marketplace fee policy. No charge before an explicit policy is published.
 create table public.marketplace_fee_versions(
  id bigint generated always as identity primary key,
+ category_slug text check(category_slug in ('cement','steel','bricks-blocks','plumbing','electrical','paint','tiles','hardware','aggregates')),
+ pincode_prefix text check(pincode_prefix ~ '^[1-9][0-9]{0,5}$'),
  fixed_paise bigint not null check(fixed_paise between 0 and 1000000),
+ discount_fixed_paise bigint not null default 0 check(discount_fixed_paise between 0 and 1000000),
+ discount_rate_bps integer not null default 0 check(discount_rate_bps between 0 and 3000),
+ discount_cap_paise bigint not null default 0 check(discount_cap_paise between 0 and 10000000),
+ discount_minimum_paise bigint not null default 0 check(discount_minimum_paise between 0 and 5000000000),
  rate_bps integer not null check(rate_bps between 0 and 2000),
  cap_paise bigint not null check(cap_paise between 0 and 10000000),
  commission_bps integer not null check(commission_bps between 0 and 3000),
@@ -12,9 +18,34 @@ create table public.marketplace_fee_versions(
 alter table public.marketplace_fee_versions enable row level security;
 revoke all on public.marketplace_fee_versions from public,anon,authenticated;
 grant select on public.marketplace_fee_versions to authenticated;
-grant insert(fixed_paise,rate_bps,cap_paise,commission_bps,reason) on public.marketplace_fee_versions to authenticated;
+grant insert(category_slug,pincode_prefix,fixed_paise,rate_bps,cap_paise,commission_bps,discount_fixed_paise,discount_rate_bps,discount_cap_paise,discount_minimum_paise,reason) on public.marketplace_fee_versions to authenticated;
 create policy marketplace_fee_read on public.marketplace_fee_versions for select to authenticated using ((select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
 create policy marketplace_fee_publish on public.marketplace_fee_versions for insert to authenticated with check (created_by=auth.uid() and (select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
+-- A single deterministic rule selector for direct pricing and dealer estimates.
+-- Exact category beats global; longer matching PIN prefix beats broader coverage.
+-- Mixed-category direct carts use global-category policies only.
+create index marketplace_fee_scope on public.marketplace_fee_versions(category_slug,pincode_prefix,id desc);
+create function public.neerva_effective_fee(p_category text,p_pin text)
+returns public.marketplace_fee_versions language sql stable security invoker set search_path=pg_catalog,public as $$
+ select f from public.marketplace_fee_versions f
+ where (f.category_slug is null or f.category_slug=p_category) and (f.pincode_prefix is null or p_pin like f.pincode_prefix||'%')
+ order by (f.category_slug is not null) desc,length(coalesce(f.pincode_prefix,'')) desc,f.id desc limit 1
+$$;
+revoke all on function public.neerva_effective_fee(text,text) from public,anon,authenticated;
+grant execute on function public.neerva_effective_fee(text,text) to authenticated;
+create function public.neerva_fee_amount(p_material bigint,p_fixed bigint,p_bps integer,p_cap bigint)
+returns bigint language sql immutable security invoker set search_path=pg_catalog as $$
+ select least(coalesce(p_cap,0),coalesce(p_fixed,0)+round(p_material::numeric*coalesce(p_bps,0)/10000)::bigint)
+$$;
+revoke all on function public.neerva_fee_amount(bigint,bigint,integer,bigint) from public,anon,authenticated;
+grant execute on function public.neerva_fee_amount(bigint,bigint,integer,bigint) to authenticated;
+create function public.neerva_discount_amount(p_material bigint,p_fixed bigint,p_bps integer,p_cap bigint,p_minimum bigint)
+returns bigint language sql immutable security invoker set search_path=pg_catalog,public as $$
+ select case when p_material<coalesce(p_minimum,0) then 0::bigint else least(greatest(p_material-1,0),public.neerva_fee_amount(p_material,p_fixed,p_bps,p_cap)) end
+$$;
+revoke all on function public.neerva_discount_amount(bigint,bigint,integer,bigint,bigint) from public,anon,authenticated;
+grant execute on function public.neerva_discount_amount(bigint,bigint,integer,bigint,bigint) to authenticated;
+
 -- Dealer-independent order intake. Existing accepted RFQ orders are unchanged.
 -- Direct orders have no payment or confirmed rate until the customer approves the delivered total.
 create table public.direct_orders (
@@ -37,6 +68,7 @@ create table public.direct_orders (
  status text not null default 'received' check(status in ('received','sourcing','price_ready','confirmed','preparing','out_for_delivery','delivered','cancelled')),
  total_paise bigint check(total_paise between 1 and 20010000000),
  platform_fee_paise bigint not null default 0 check(platform_fee_paise between 0 and 10000000),
+ discount_paise bigint not null default 0 check(discount_paise between 0 and 10000000),
  fee_version_id bigint references public.marketplace_fee_versions(id),
  material_paise bigint check(material_paise between 1 and 5000000000),
  tax_paise bigint check(tax_paise between 0 and 5000000000),
@@ -45,7 +77,7 @@ create table public.direct_orders (
  customer_terms text check(char_length(customer_terms) between 10 and 500),
  procurement_note text check(char_length(procurement_note)<=500),
  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
- check((total_paise is null and material_paise is null and tax_paise is null and freight_paise is null and unloading_paise is null) or (total_paise is not null and material_paise is not null and tax_paise is not null and freight_paise is not null and unloading_paise is not null and total_paise=material_paise+tax_paise+freight_paise+unloading_paise+platform_fee_paise)),
+ check((total_paise is null and material_paise is null and tax_paise is null and freight_paise is null and unloading_paise is null) or (total_paise is not null and material_paise is not null and tax_paise is not null and freight_paise is not null and unloading_paise is not null and total_paise=material_paise+tax_paise+freight_paise+unloading_paise+platform_fee_paise-discount_paise and discount_paise<material_paise)),
  unique(customer_id,idempotency_key)
 );
 create index direct_orders_customer_created on public.direct_orders(customer_id,created_at desc);
@@ -53,7 +85,7 @@ create index direct_orders_status_created on public.direct_orders(status,created
 alter table public.direct_orders enable row level security;
 revoke all on public.direct_orders from public,anon,authenticated;
 -- Procurement notes are intentionally not exposed to the customer or browser.
-grant select(id,code,customer_id,idempotency_key,category,product_slug,product_name,quantity,unit,line_items,contact_name,phone,city,pincode,delivery_address,notes,status,total_paise,platform_fee_paise,fee_version_id,material_paise,tax_paise,freight_paise,unloading_paise,customer_terms,created_at,updated_at) on public.direct_orders to authenticated;
+grant select(id,code,customer_id,idempotency_key,category,product_slug,product_name,quantity,unit,line_items,contact_name,phone,city,pincode,delivery_address,notes,status,total_paise,platform_fee_paise,discount_paise,fee_version_id,material_paise,tax_paise,freight_paise,unloading_paise,customer_terms,created_at,updated_at) on public.direct_orders to authenticated;
 grant insert(idempotency_key,category,product_slug,product_name,quantity,unit,line_items,contact_name,phone,city,pincode,delivery_address,notes) on public.direct_orders to authenticated;
 grant update(status,total_paise,material_paise,tax_paise,freight_paise,unloading_paise,customer_terms) on public.direct_orders to authenticated;
 create policy direct_orders_read on public.direct_orders for select to authenticated using (
@@ -67,6 +99,7 @@ create function public.neerva_direct_order_guard() returns trigger language plpg
 declare admin boolean:=coalesce(public.has_platform_role(array['admin','super_admin']::public.platform_role[]),false);
  fee public.marketplace_fee_versions%rowtype;
  item jsonb;
+ policy_category text;
 begin
  if auth.uid() is null or not coalesce(public.neerva_account_access_allowed(),false) then raise exception using errcode='42501',message='AUTH_REQUIRED'; end if;
  if tg_op='INSERT' then
@@ -87,10 +120,12 @@ begin
  end if;
  if not ((admin and ((old.status='received' and new.status='sourcing') or (old.status in ('received','sourcing') and new.status='price_ready' and new.total_paise is not null and new.customer_terms is not null) or (old.status='confirmed' and new.status='preparing') or (old.status='preparing' and new.status='out_for_delivery') or (old.status in ('received','sourcing','price_ready','confirmed','preparing','out_for_delivery') and new.status='cancelled'))) or (old.customer_id=auth.uid() and ((old.status='price_ready' and new.status='confirmed') or (old.status in ('received','sourcing','price_ready') and new.status='cancelled') or (old.status='out_for_delivery' and new.status='delivered')))) then raise exception using errcode='42501',message='TRANSITION_DENIED'; end if;
  if new.status='price_ready' and old.status in ('received','sourcing') then
-  select * into fee from public.marketplace_fee_versions order by id desc limit 1;
-  new.platform_fee_paise:=case when fee.id is null then 0 else least(fee.cap_paise,fee.fixed_paise+round(new.material_paise::numeric*fee.rate_bps/10000)::bigint) end;
+  select case when count(distinct x->>'category')=1 then min(x->>'category') else null end into policy_category from jsonb_array_elements(new.line_items) x;
+  select * into fee from public.neerva_effective_fee(policy_category,new.pincode);
+  new.platform_fee_paise:=public.neerva_fee_amount(new.material_paise,fee.fixed_paise,fee.rate_bps,fee.cap_paise);
+  new.discount_paise:=public.neerva_discount_amount(new.material_paise,fee.discount_fixed_paise,fee.discount_rate_bps,fee.discount_cap_paise,fee.discount_minimum_paise);
   new.fee_version_id:=fee.id;
-  new.total_paise:=new.material_paise+new.tax_paise+new.freight_paise+new.unloading_paise+new.platform_fee_paise;
+  new.total_paise:=new.material_paise+new.tax_paise+new.freight_paise+new.unloading_paise+new.platform_fee_paise-new.discount_paise;
  end if;
  new.updated_at=statement_timestamp();return new;
 end $$;
@@ -229,13 +264,13 @@ create trigger dealer_listing_stamp before update on public.dealer_listing_contr
 -- Authenticated entry point delegates to a non-exposed schema.
 grant usage on schema neerva_private to authenticated;
 create function neerva_private.compare_dealer_prices(p_category text,p_slug text,p_pin text,p_qty numeric)
-returns table(seller text,branch text,sku text,unit text,unit_paise bigint,material_paise bigint,fee_paise bigint,valid_to timestamptz,branch_id uuid,freight_paise bigint,unloading_paise bigint,tax_paise bigint,estimated_total_paise bigint,lead_days integer)
+returns table(seller text,branch text,sku text,unit text,unit_paise bigint,material_paise bigint,fee_paise bigint,valid_to timestamptz,branch_id uuid,freight_paise bigint,unloading_paise bigint,tax_paise bigint,estimated_total_paise bigint,lead_days integer,discount_paise bigint)
 language plpgsql stable security definer set search_path=pg_catalog,public,auth as $$
 begin
  if auth.uid() is null or not coalesce(public.neerva_account_access_allowed(),false) then raise exception using errcode='42501',message='AUTH_REQUIRED'; end if;
  if p_pin !~ '^[1-9][0-9]{5}$' or p_qty is null or p_qty<=0 or p_qty>1000000 or length(p_slug)>100 or length(p_category)>40 then raise exception using errcode='22023',message='INVALID_SEARCH'; end if;
  return query
- with fee as (select f.fixed_paise,f.rate_bps,f.cap_paise from public.marketplace_fee_versions f order by id desc limit 1),
+ with fee as (select * from public.neerva_effective_fee(p_category,p_pin)),
  candidates as (
  select distinct on (r.tenant_id,v.id) t.business_name::text seller,b.name::text branch,v.sku::text sku,v.unit::text unit,r.amount_paise,
  round(r.amount_paise*p_qty)::bigint subtotal,r.valid_to,b.id bid,d.freight_paise freight,d.unloading_paise unloading,d.lead_days days,case when tx.id is null then null when tx.price_includes_tax then 0::bigint else round(round(r.amount_paise*p_qty)*tx.rate_bps/10000)::bigint end extra_tax
@@ -253,14 +288,14 @@ begin
  order by r.tenant_id,v.id,(d.id is not null) desc,length(coalesce(r.pincode_prefix,'')) desc,r.minimum_quantity desc,r.valid_from desc,r.version desc,r.id
  )
  select q.seller,q.branch,q.sku,q.unit,q.amount_paise,q.subtotal,fv.amount,q.valid_to,q.bid,q.freight,q.unloading,q.extra_tax,
- case when q.freight is not null and q.unloading is not null and q.extra_tax is not null then q.subtotal+fv.amount+q.freight+q.unloading+q.extra_tax else null end,q.days
- from candidates q cross join lateral (select coalesce((select least(f.cap_paise,f.fixed_paise+round(q.subtotal::numeric*f.rate_bps/10000)::bigint) from fee f),0) amount) fv
- order by q.sku,(case when q.freight is not null and q.unloading is not null and q.extra_tax is not null then q.subtotal+fv.amount+q.freight+q.unloading+q.extra_tax else null end) nulls last,q.subtotal,q.seller limit 50;
+ case when q.freight is not null and q.unloading is not null and q.extra_tax is not null then q.subtotal+fv.amount+q.freight+q.unloading+q.extra_tax-fv.discount else null end,q.days,fv.discount
+ from candidates q cross join lateral (select coalesce((select public.neerva_fee_amount(q.subtotal,f.fixed_paise,f.rate_bps,f.cap_paise) from fee f),0) amount,coalesce((select public.neerva_discount_amount(q.subtotal,f.discount_fixed_paise,f.discount_rate_bps,f.discount_cap_paise,f.discount_minimum_paise) from fee f),0) discount) fv
+ order by q.sku,(case when q.freight is not null and q.unloading is not null and q.extra_tax is not null then q.subtotal+fv.amount+q.freight+q.unloading+q.extra_tax-fv.discount else null end) nulls last,q.subtotal,q.seller limit 50;
 end $$;
 revoke all on function neerva_private.compare_dealer_prices(text,text,text,numeric) from public,anon,authenticated;
 grant execute on function neerva_private.compare_dealer_prices(text,text,text,numeric) to authenticated;
 create function public.neerva_compare_dealer_prices(p_category text,p_slug text,p_pin text,p_qty numeric)
-returns table(seller text,branch text,sku text,unit text,unit_paise bigint,material_paise bigint,fee_paise bigint,valid_to timestamptz,branch_id uuid,freight_paise bigint,unloading_paise bigint,tax_paise bigint,estimated_total_paise bigint,lead_days integer)
+returns table(seller text,branch text,sku text,unit text,unit_paise bigint,material_paise bigint,fee_paise bigint,valid_to timestamptz,branch_id uuid,freight_paise bigint,unloading_paise bigint,tax_paise bigint,estimated_total_paise bigint,lead_days integer,discount_paise bigint)
 language sql stable security invoker set search_path=pg_catalog,neerva_private as $$ select * from neerva_private.compare_dealer_prices(p_category,p_slug,p_pin,p_qty) $$;
 revoke all on function public.neerva_compare_dealer_prices(text,text,text,numeric) from public,anon,authenticated;
 grant execute on function public.neerva_compare_dealer_prices(text,text,text,numeric) to authenticated;
@@ -327,7 +362,7 @@ create function neerva_private.snapshot_dealer_settlement() returns trigger lang
 declare fee public.marketplace_fee_versions%rowtype; commission bigint;
 begin
  if auth.uid() is null or new.customer_id<>auth.uid() or not coalesce(public.neerva_account_access_allowed(),false) then raise exception using errcode='42501',message='SETTLEMENT_ORDER_AUTH_REQUIRED';end if;
- select * into fee from public.marketplace_fee_versions order by id desc limit 1;
+ select * into fee from public.neerva_effective_fee(null,new.pincode);
  commission:=least(new.total_paise,round(new.subtotal_paise::numeric*coalesce(fee.commission_bps,0)/10000)::bigint);
  insert into public.dealer_order_settlements(order_id,tenant_id,order_code,fee_version_id,subtotal_paise,order_total_paise,commission_bps,commission_paise,payable_paise)
  values(new.id,new.tenant_id,new.code,fee.id,new.subtotal_paise,new.total_paise,coalesce(fee.commission_bps,0),commission,new.total_paise-commission);
