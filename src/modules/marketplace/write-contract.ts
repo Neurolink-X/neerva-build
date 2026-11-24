@@ -3,7 +3,8 @@ import {allMaterialUnits} from "../catalog/category-units.ts";
 const uuid=z.string().uuid();
 const slug=z.string().trim().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(90);
 const text=(max:number)=>z.string().trim().min(2).max(max);
-const attributes=z.record(z.string().max(48),z.union([z.string().max(200),z.number().finite(),z.boolean()])).default({});
+const attributeValues=z.record(z.string().trim().min(1).max(48),z.union([z.string().max(200),z.number().finite(),z.boolean()])).refine(v=>Object.keys(v).length<=30,"Up to 30 specifications allowed");
+const attributes=attributeValues.default({});
 const state=z.enum(["draft","published","archived"]);
 const addBase=z.object({action:z.literal("create"),status:z.never().optional()});
 export const catalogCommand=z.discriminatedUnion("kind",[
@@ -14,9 +15,9 @@ export const catalogCommand=z.discriminatedUnion("kind",[
 ]);
 export const catalogUpdate=z.discriminatedUnion("kind",[
  z.object({kind:z.literal("category"),id:uuid,status:state,nameEn:text(120).optional(),nameHi:text(120).optional(),pricingMode:z.enum(["public","quote_only"]).optional()}).strict(),
- z.object({kind:z.literal("brand"),id:uuid,status:state,authorizedSource:z.string().url().max(500).optional()}).strict(),
- z.object({kind:z.literal("product"),id:uuid,status:state,description:z.string().trim().max(2000).optional()}).strict(),
- z.object({kind:z.literal("variant"),id:uuid,status:state}).strict()
+ z.object({kind:z.literal("brand"),id:uuid,status:state,name:text(120).optional(),authorizedSource:z.string().url().max(500).optional()}).strict(),
+ z.object({kind:z.literal("product"),id:uuid,status:state,name:text(180).optional(),description:z.string().trim().max(2000).optional(),attributes:attributeValues.optional()}).strict(),
+ z.object({kind:z.literal("variant"),id:uuid,status:state,attributes:attributeValues.optional()}).strict()
 ]);
 export const inventoryWrite=z.object({
  branchId:uuid,variantId:uuid,quantity:z.number().finite().min(0).max(1_000_000),unit:z.enum(allMaterialUnits as [string,...string[]])
