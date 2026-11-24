@@ -2,6 +2,7 @@ import {z} from "zod";
 import {requireAuth,apiFailed} from "@/modules/identity/server-auth";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
 import {planMetrics} from "@/modules/studio/plan-model";
+import {parseStudioConfig,permittedStudioReport} from "@/modules/studio/studio-config";
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const hdr={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const fail=(code:number,error:string)=>Response.json({error},{status:code,headers:hdr});
@@ -29,10 +30,18 @@ export async function POST(req:Request){
  let raw:unknown;try{const x=await req.text();raw=x.length<=3500?JSON.parse(x):null}catch{return fail(400,"Invalid request.");}
  const parsed=request.safeParse(raw);if(!parsed.success)return fail(400,"Invalid room plan or colour specification.");
  const p=parsed.data;
- const {data:access,error}=await auth.client.from("studio_paid_access")
-  .select("order_id").eq("user_id",auth.userId).eq("product_code",p.product).is("revoked_at",null).maybeSingle();
- if(error)return apiFailed();
- if(!access)return fail(403,"Verified ₹149 purchase required. Free previews remain available.");
+ const [settings,access]=await Promise.all([
+  auth.client.from("studio_feature_settings").select(
+   "product_code,access_mode,price_paise,checkout_enabled,is_published,free_preview_count,version"
+  ).eq("product_code",p.product).maybeSingle(),
+  auth.client.from("studio_paid_access").select("order_id").eq("user_id",auth.userId)
+   .eq("product_code",p.product).is("revoked_at",null).maybeSingle()
+ ]);
+ if(settings.error||access.error)return apiFailed();
+ const config=parseStudioConfig(settings.data);
+ if(!config||!config.published)return fail(503,"Studio access settings are temporarily unavailable.");
+ if(!permittedStudioReport(config,!!access.data))
+  return fail(403,"This report requires a bank-verified purchase. Free 2D/3D and colour previews remain available.");
  if(p.product==="colour_studio"){
   return Response.json({product:p.product,room:p.room,swatches:palette(p.base,p.accent),
    disclaimer:"Digital shades are approximate. Compare real manufacturer shade cards and lighting before purchase."},{headers:hdr});
