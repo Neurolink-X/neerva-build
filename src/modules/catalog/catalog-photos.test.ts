@@ -64,3 +64,6 @@ test("bulk stockpile references never masquerade as river or nominal-size stone"
 
 
 test("PVC elbow photographs stay separate from branded CPVC fittings",()=>{const generic=demoProducts.find(p=>p.familyKey==="generic-pvc-elbow90")!;const cpvc=demoProducts.find(p=>p.slug==="fitting-elbow90")!;assert.ok(catalogPhotos(generic).some(m=>m.sourceUrl?.includes("PvcElbows")));assert.ok(catalogPhotos(cpvc).every(m=>!m.sourceUrl?.includes("PvcElbows")));assert.ok(catalogPhotos(demoProducts.find(p=>p.slug==="fitting-float-valve")!).some(m=>m.sourceUrl?.includes("Ball_valve_cold_water_tank")));});
+
+
+test("generic pump parts retain correct image identity without guessed brands",()=>{for(const [slug,source] of [["fitting-hose-clamp","Hoseclamps.screw.agr"],["fitting-mechanical-seal","Mechanical_seal_part01"]]){const p=demoProducts.find(p=>p.slug===slug)!;assert.equal(p.brand,"Local supplier");assert.ok(catalogPhotos(p).some(m=>m.sourceUrl?.includes(source)));}});
