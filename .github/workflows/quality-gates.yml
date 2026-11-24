@@ -27,15 +27,20 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: npm install --no-save --package-lock=false playwright@1.58.2
-      - run: npx playwright install --with-deps chromium
+      - run: npm install --prefix "$RUNNER_TEMP/neerva-browser" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.2
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-1.58.2
+      - run: '"$RUNNER_TEMP/neerva-browser/node_modules/.bin/playwright" install --with-deps chromium'
       - run: npm run build
       - name: Benchmark candidate build (public lab routes)
         run: |
           npm run start > /tmp/neerva-qa-server.log 2>&1 &
           for i in $(seq 1 60); do curl -fsS http://127.0.0.1:3000/ >/dev/null && break; sleep 1; done
           curl -fsS http://127.0.0.1:3000/ >/dev/null
-          node scripts/e2e/performance.mjs
+          cp scripts/e2e/performance.mjs "$RUNNER_TEMP/neerva-browser/performance.mjs"
+          node "$RUNNER_TEMP/neerva-browser/performance.mjs"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -51,12 +56,18 @@ jobs:
         with:
           node-version: 24
       - run: npm ci --no-audit --no-fund
-      - run: npm install --no-save --package-lock=false playwright@1.58.2
-      - run: npx playwright install --with-deps chromium
+      - run: npm install --prefix "$RUNNER_TEMP/neerva-browser" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.2
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-1.58.2
+      - run: '"$RUNNER_TEMP/neerva-browser/node_modules/.bin/playwright" install --with-deps chromium'
       - name: Measure existing public production baseline
         env:
           PERF_BASE_URL: https://neerva-build.vercel.app
-        run: node scripts/e2e/performance.mjs
+        run: |
+          cp scripts/e2e/performance.mjs "$RUNNER_TEMP/neerva-browser/performance.mjs"
+          node "$RUNNER_TEMP/neerva-browser/performance.mjs"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -73,8 +84,12 @@ jobs:
         with:
           node-version: 24
       - run: npm ci --no-audit --no-fund
-      - run: npm install --no-save --package-lock=false playwright@1.58.2
-      - run: npx playwright install --with-deps chromium
+      - run: npm install --prefix "$RUNNER_TEMP/neerva-browser" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.2
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-1.58.2
+      - run: '"$RUNNER_TEMP/neerva-browser/node_modules/.bin/playwright" install --with-deps chromium'
       - name: Real isolated staging login, authorization and CRUD
         env:
           QA_BASE_URL: ${{ vars.QA_BASE_URL }}
@@ -87,9 +102,77 @@ jobs:
           QA_CUSTOMER_PASSWORD: ${{ secrets.QA_CUSTOMER_PASSWORD }}
           QA_DEALER_EMAIL: ${{ secrets.QA_DEALER_EMAIL }}
           QA_DEALER_PASSWORD: ${{ secrets.QA_DEALER_PASSWORD }}
-        run: node scripts/e2e/authenticated.mjs
+        run: |
+          cp scripts/e2e/authenticated.mjs "$RUNNER_TEMP/neerva-browser/authenticated.mjs"
+          node "$RUNNER_TEMP/neerva-browser/authenticated.mjs"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: authenticated-qa
           path: test-results/authenticated/report.json
+  authenticated-local:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.79.0
+      - name: Start disposable Supabase (real Auth, RLS, PostgREST and Realtime)
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase init
+          supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor
+          status="$(supabase status -o env)"
+          # Parse only known environment variable names; never evaluate shell from tool output.
+          for name in API_URL ANON_KEY SERVICE_ROLE_KEY; do
+            value="$(printf '%s\n' "$status" | sed -n "s/^$name=\"\(.*\)\"$/\1/p")"
+            test -n "$value"
+            case "$name" in
+              API_URL) test "$value" = "http://127.0.0.1:54321"; echo "NEXT_PUBLIC_SUPABASE_URL=$value" >> "$GITHUB_ENV";;
+              ANON_KEY) echo "::add-mask::$value"; echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$value" >> "$GITHUB_ENV";;
+              SERVICE_ROLE_KEY) echo "::add-mask::$value"; echo "QA_LOCAL_SERVICE_ROLE_KEY=$value" >> "$GITHUB_ENV";;
+            esac
+          done
+      - name: Seed disposable accounts only
+        env:
+          QA_LOCAL_DISPOSABLE: "true"
+        run: node scripts/e2e/seed-local.mjs
+      - run: npm install --prefix "$RUNNER_TEMP/neerva-browser" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.2
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-1.58.2
+      - run: '"$RUNNER_TEMP/neerva-browser/node_modules/.bin/playwright" install --with-deps chromium'
+      - name: Build with disposable backend
+        run: npm run build
+      - name: Authenticated browser E2E against real disposable backend
+        env:
+          QA_BASE_URL: http://127.0.0.1:3000
+          QA_ALLOWED_ORIGIN: http://127.0.0.1:3000
+          QA_ISOLATED_STAGING: "true"
+          QA_LOCAL_DISPOSABLE: "true"
+        run: |
+          set -euo pipefail
+          npm run start -- -p 3000 > "$RUNNER_TEMP/neerva-local-qa.log" 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:3000/ >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:3000/ >/dev/null
+          cp scripts/e2e/authenticated.mjs "$RUNNER_TEMP/neerva-browser/authenticated.mjs"
+          node "$RUNNER_TEMP/neerva-browser/authenticated.mjs"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: disposable-authenticated-qa
+          path: test-results/authenticated/report.json
+          retention-days: 7
+      - name: Destroy local containers
+        if: always()
+        run: supabase stop --no-backup
