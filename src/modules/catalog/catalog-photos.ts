@@ -40,6 +40,11 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   product.familyKey?"Product range":"Product photo",
   "listing","Reference photo of "+product.name+"; exact physical variant unverified");
  if(entries.length)return entries;
+ if(product.familyKey==="generic-hollow"||product.slug==="aac-block-600x200"){
+  const hollow=product.familyKey==="generic-hollow";
+  append("/images/catalog/material/"+(hollow?"hollow":"aac")+".webp","Material illustration","category",hollow?"Hollow concrete masonry block with open cores":"Solid aerated concrete masonry block");
+  return entries;
+ }
  if(product.familyKey==="generic-fly-ash"){
   append("/images/catalog/material/fly-ash.webp","Fly-ash brick · illustrative view","category","Illustrative solid grey fly-ash masonry bricks");
   return entries;
