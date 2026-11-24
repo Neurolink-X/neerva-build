@@ -46,5 +46,19 @@
     "credit": "Paul Goyette",
     "alt": "Grey Schedule 40 PVC electrical conduits with open ends; illustrative conduit family, not a selected Indian specification",
     "view": "close-up"
+  },
+  {
+    "category": "aggregates",
+    "family": "gitti-20mm",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Gravels_for_road_construction.jpg",
+    "sha1": "90c07b129a7e9edbb206ebfff273f0553ab6ce11",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gravels_for_road_construction.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "credit": "Suyash Dwivedi",
+    "alt": "Separate sample of angular 20 mm aggregate photographed on a light surface; source describes road construction aggregate",
+    "view": "front",
+    "primary": false,
+    "sortOrder": 1
   }
 ]

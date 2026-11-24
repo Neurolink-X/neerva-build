@@ -27,7 +27,7 @@ for(const r of reviewed){
  const sha256=createHash("sha256").update(data).digest("hex");if(rows.some(m=>m.sha256===sha256))throw Error("Duplicate image");
  const path="/images/catalog/approved/"+sha256.slice(0,24)+".webp";
  const {url,sha1,...metadata}=r;
- rows.push({...metadata,scope:"family",sourceType:"curated",verified:true,primary:true,path,width:info.width,height:info.height,bytes:data.length,sha256,sortOrder:0});
+ rows.push({...metadata,scope:"family",sourceType:"curated",verified:true,primary:r.primary??true,path,width:info.width,height:info.height,bytes:data.length,sha256,sortOrder:r.sortOrder??0});
  await fs.mkdir("public/images/catalog/approved",{recursive:true});
  await fs.writeFile("public"+path,data);
  console.log("Imported",r.family,info.width,info.height,data.length,sha256);
