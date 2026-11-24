@@ -1,14 +1,17 @@
 "use client";
+import {subscribePublicRefresh,publicRefreshConnected} from "./public-refresh";
 import {useSyncExternalStore} from "react";
 import {baseStudioConfig,parseStudioConfig,type StudioSetting} from "@/modules/studio/studio-config";
 import type {StudioProduct} from "@/modules/studio/paid-products";
 type Catalog={ready:boolean;products:StudioSetting[]};
 const failed:Catalog={ready:false,products:[baseStudioConfig("home_studio"),baseStudioConfig("colour_studio")]};
-let snapshot:Catalog=failed,active:Promise<void>|null=null;
+let snapshot:Catalog=failed,active:Promise<void>|null=null,pendingRefresh=false,lastLoaded=0;
+let unsubscribeRefresh:(()=>void)|undefined;
 const listeners=new Set<()=>void>();
 const notify=()=>{for(const f of listeners)f()};
 async function fetchSettings(){
- if(active)return active;
+ if(document.hidden)return;
+ if(active){pendingRefresh=true;return active;}
  active=fetch("/api/studio/config",{cache:"no-store"})
  .then(async r=>{
   if(!r.ok)throw Error("Studio settings temporarily unavailable");
@@ -21,9 +24,9 @@ async function fetchSettings(){
       price_paise:r.pricePaise,checkout_enabled:r.checkoutEnabled,is_published:r.published,
       free_preview_count:r.freePreviewCount,version:r.version});
    }).filter((x:StudioSetting|null):x is StudioSetting=>x!==null):[];
-  snapshot=payload.ready&&products.length===2?{ready:true,products}:failed;
+  snapshot=payload.ready&&products.length===2?{ready:true,products}:failed;lastLoaded=Date.now();
  }).catch(()=>{snapshot=failed})
- .finally(()=>{active=null;notify()});
+ .finally(()=>{active=null;notify();if(pendingRefresh){pendingRefresh=false;if(listeners.size)void fetchSettings()}});
  return active;
 }
 function subscribe(listener:()=>void){
@@ -32,15 +35,17 @@ function subscribe(listener:()=>void){
   void fetchSettings();
   window.addEventListener("focus",refresh);
   window.addEventListener("studio-config-changed",refresh);
-  window.addEventListener("visibilitychange",onVisibility);
-  polling=window.setInterval(()=>void fetchSettings(),60000);
+  document.addEventListener("visibilitychange",onVisibility);
+  unsubscribeRefresh=subscribePublicRefresh("studio",refresh);
+  polling=window.setInterval(()=>{if(!publicRefreshConnected()||Date.now()-lastLoaded>=60000)void fetchSettings()},15000);
  }
  return ()=>{
   listeners.delete(listener);
   if(!listeners.size){
    window.removeEventListener("focus",refresh);
    window.removeEventListener("studio-config-changed",refresh);
-   window.removeEventListener("visibilitychange",onVisibility);
+   document.removeEventListener("visibilitychange",onVisibility);
+   unsubscribeRefresh?.();unsubscribeRefresh=undefined;
    if(polling!==null)window.clearInterval(polling);
    polling=null;
   }
