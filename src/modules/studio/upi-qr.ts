@@ -44,7 +44,8 @@ function payload(content:string){
  for(let i=0;i<Math.min(4,DATA_BYTES*8-bits.length);i++)bits.push(0);
  while(bits.length%8)bits.push(0);
  const words=new Uint8Array(DATA_BYTES);for(let i=0;i<bits.length;i++)words[i>>>3]|=bits[i]<<(7-(i&7));
- for(let i=Math.ceil(bits.length/8);i<DATA_BYTES;i++)words[i]=i%2===0?0xec:0x11;
+ const firstPad=Math.ceil(bits.length/8);
+ for(let i=firstPad;i<DATA_BYTES;i++)words[i]=(i-firstPad)%2===0?0xec:0x11;
  return words;
 }
 function codewords(content:string){
