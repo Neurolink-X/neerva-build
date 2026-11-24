@@ -198,6 +198,13 @@ async function main(){
     await plotInputs.nth(1).fill("50");
     await page.getByRole("img",{name:/Road on E side/}).waitFor();
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
+    await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=1&bedrooms=1&road=W&parking=false",{waitUntil:"networkidle"});
+    await page.getByRole("img",{name:/Road on W side/}).waitFor();
+    assert.equal(await page.locator(".nroad-variants button").count(),2,"compact 1 BHK has two genuine kitchen orientations");
+    await page.locator(".nroad-variants button").last().click();
+    assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
+    assert.equal(await page.getByRole("button",{name:"First floor"}).count(),0);
+    await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"networkidle"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");

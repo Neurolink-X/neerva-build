@@ -68,7 +68,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      </select></label>
      <div className="nroad-road-help" role="status">
        <strong>{str("Road on "+({N:"North",S:"South",E:"East",W:"West"} as const)[brief.roadSide]+" edge","सड़क "+({N:"उत्तर",S:"दक्षिण",E:"पूर्व",W:"पश्चिम"} as const)[brief.roadSide]+" दिशा में है")}</strong>
-       <p>{str("Car gate and house entry face the selected road edge. Changing sides rotates the whole 2D plan and 3D house; it never places parking at the back of a front-road plot.","मुख्य गेट और पार्किंग चुनी गई सड़क की तरफ हैं। दिशा बदलने पर 2D नक्शा और 3D घर दोनों घूमते हैं।")}</p>
+       <p>{!brief.parking?str("Pedestrian entry faces the selected road.","पैदल प्रवेश चुनी गई सड़क पर है।"):str("Car gate and house entry face the selected road edge. Changing sides rotates the whole 2D plan and 3D house; it never places parking at the back of a front-road plot.","मुख्य गेट और पार्किंग चुनी गई सड़क की तरफ हैं। दिशा बदलने पर 2D नक्शा और 3D घर दोनों घूमते हैं।")}</p>
        <button type="button" onClick={()=>update("roadSide",oppositeRoadSide(brief.roadSide))}>{str("Road actually on opposite side? Switch","सड़क दूसरी तरफ है? दिशा बदलें")}</button>
      </div>
      <details className="nroad-advanced nroad-site-shape"><summary>{str("Plot shape: rectangle or L-shaped land","प्लॉट का आकार: चौकोर या L शेप")}</summary>
