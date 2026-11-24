@@ -28,6 +28,7 @@ export function AdminCommandCentre({marketing=false}:{marketing?:boolean}){
  const [error,setError]=useState("");
  const [notice,setNotice]=useState("");
  const [campaigns,setCampaigns]=useState<Campaign[]>([]);
+ const [snapshotTime,setSnapshotTime]=useState(0);
  const [prices,setPrices]=useState<Price[]>([]);
  const [busy,setBusy]=useState(false);
  const [revision,setRevision]=useState(0);
@@ -38,6 +39,7 @@ export function AdminCommandCentre({marketing=false}:{marketing?:boolean}){
     const result=await request("/api/admin/catalog/campaigns","GET",undefined,controller.signal);
     if(controller.signal.aborted)return;
     setCampaigns(result.campaigns??[]);
+    setSnapshotTime(Date.now());
     if(marketing){
      const pricing=await request("/api/admin/pricing","GET",undefined,controller.signal);
      if(controller.signal.aborted)return;
@@ -77,7 +79,7 @@ export function AdminCommandCentre({marketing=false}:{marketing?:boolean}){
      <label>Starts (local time)<input name="start" type="datetime-local" required/></label><label>Ends (local time)<input name="end" type="datetime-local" required/></label>
      <label>Offer terms<textarea name="terms" required minLength={12} maxLength={400}/></label><button disabled={busy}>Save campaign draft</button></form>}</section>
      {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
-     <section className={styles.panel}><h2>Campaigns</h2>{campaigns.length===0?<p>No campaigns have been created.</p>:<div className={styles.cards}>{campaigns.map(c=><article key={c.id} className={styles.card}><small>{c.status}</small><h3>{c.title}</h3><p>{money(c.offer_amount_paise)} · base {money(c.base_amount_paise)}</p><p>{new Date(c.starts_at).toLocaleString()} – {new Date(c.ends_at).toLocaleString()}</p><p>{c.terms}</p>{(c.status==="draft"||c.status==="published")&&<button disabled={busy} onClick={()=>void mutate("PATCH",{id:c.id,status:c.status==="draft"?"published":"expired"})}>{c.status==="draft"?"Publish reviewed offer":"Expire offer"}</button>}</article>)}</div>}</section></>:<><section className={styles.panel}><h2>Marketing snapshot</h2><p>{campaigns.length} recent campaigns returned by the protected API · {campaigns.filter(c=>c.status==="published"&&Date.parse(c.starts_at)<=Date.now()&&Date.parse(c.ends_at)>Date.now()).length} currently within published offer windows.</p><Link href="/admin/marketing">Manage marketing →</Link></section>{groups.map(g=><section key={g.title}><h2>{g.title}</h2><div className={styles.cards}>{g.items.map(([label,desc,href])=><Link className={styles.card} key={href} href={href}><h3>{label} ↗</h3><p>{desc}</p></Link>)}</div></section>)}</>}
+     <section className={styles.panel}><h2>Campaigns</h2>{campaigns.length===0?<p>No campaigns have been created.</p>:<div className={styles.cards}>{campaigns.map(c=><article key={c.id} className={styles.card}><small>{c.status}</small><h3>{c.title}</h3><p>{money(c.offer_amount_paise)} · base {money(c.base_amount_paise)}</p><p>{new Date(c.starts_at).toLocaleString()} – {new Date(c.ends_at).toLocaleString()}</p><p>{c.terms}</p>{(c.status==="draft"||c.status==="published")&&<button disabled={busy} onClick={()=>void mutate("PATCH",{id:c.id,status:c.status==="draft"?"published":"expired"})}>{c.status==="draft"?"Publish reviewed offer":"Expire offer"}</button>}</article>)}</div>}</section></>:<><section className={styles.panel}><h2>Marketing snapshot</h2><p>{campaigns.length} recent campaigns returned by the protected API · {campaigns.filter(c=>c.status==="published"&&Date.parse(c.starts_at)<=snapshotTime&&Date.parse(c.ends_at)>snapshotTime).length} within published offer windows at last refresh.</p><Link href="/admin/marketing">Manage marketing →</Link></section>{groups.map(g=><section key={g.title}><h2>{g.title}</h2><div className={styles.cards}>{g.items.map(([label,desc,href])=><Link className={styles.card} key={href} href={href}><h3>{label} ↗</h3><p>{desc}</p></Link>)}</div></section>)}</>}
    </section>
   </div>}
  </main>;
