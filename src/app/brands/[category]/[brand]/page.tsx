@@ -4,6 +4,7 @@ import Link from "next/link";
 import {notFound} from "next/navigation";
 import {SiteHeader,SiteFooter} from "@/components/site-chrome";
 import {PublishedMaterials} from "@/components/published-materials";
+import {BrandMark} from "@/components/brand-mark";
 import {catalogCategories} from "@/modules/catalog/catalog";
 import {getCategory,getProductsByCategory} from "@/modules/catalog/marketplace";
 import {brandSlug,directoryCards,categoryCover,buyingDetails,brandPath,dealerPath} from "@/modules/catalog/brand-pages";
@@ -44,8 +45,8 @@ export default async function BrandSelection({params}:Props){
   return <main className="catalog-page"><SiteHeader/><div className="br-wrap">
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(breadcrumb).replace(/</g,"\\u003c")}}/>
     <nav className="br-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link> / <Link href="/brands">Brands</Link> / <span>{title}</span></nav>
-    <header className="br-hero"><div><h1>{title}</h1><p>{buyingDetails[material.slug]}</p><Link href={quote}>Prepare {card?card.name+" ":""}material enquiry →</Link></div>
-    {image&&<div className={"br-cover"+(card?.image?" br-product":"")}><Image src={image} fill priority sizes="(max-width:620px) 95vw, 45vw" alt={card?.image?card.alt:material.title+" category example"}/></div>}</header>
+    <header className="br-hero"><div>{card&&<BrandMark name={card.name}/>}<h1>{title}</h1><p>{buyingDetails[material.slug]}</p><div className="br-hero-actions"><Link className="br-card-action" href={quote}>Request a {card?card.name+" ":""}quote →</Link><Link className="br-quote-action" href={card?dealerPath(material.slug):`/materials/${material.slug}`}>{card?"Browse dealer listings":"Compare material specifications"}</Link></div><p className="br-stock-note">Local price, stock and delivery subject to dealer confirmation.</p></div>
+    {image&&<div className={"br-cover"+(card?.image?" br-product":"")}><Image src={image} fill priority sizes="(max-width:620px) 95vw, 45vw" alt={card?.image?card.alt:material.title+" category example"}/><span className="br-photo-label">{card?.image?"Product reference":"Representative material photo · not brand packaging"}</span></div>}</header>
     {card?<section className="br-group"><div className="br-heading"><h2>{products.length?"Product ranges":"Request a local quotation"}</h2><Link href={dealerPath(material.slug)}>Check dealer-listed options →</Link></div>
     {products.length?<div className="br-grid">{groupCatalogByPhoto(products).map(({primary:p,variants})=><article className="br-card" key={p.slug}>
       {p.referenceImage&&<div className="br-pack"><Image src={p.referenceImage} fill sizes="(max-width:620px) 45vw, 235px" alt={p.name}/></div>}
@@ -54,6 +55,6 @@ export default async function BrandSelection({params}:Props){
       {variants.length>1?<div className="catalog-variant-links">{variants.map(v=><Link key={v.slug} href={`/materials/${material.slug}/${v.slug}`}>{rangeVariantLabel(v)}</Link>)}</div>:<Link href={`/materials/${material.slug}/${p.slug}`}>Specifications and pricing →</Link>}</div></article>)}</div>:
     <p>We have no catalogued {card.name} product in this category yet. Include the grade, quantity and pincode in your enquiry so a dealer can confirm the exact item and delivery charges.</p>}</section>
     :<section className="br-group"><h2>Published products and variants</h2><p>Choose a listed SKU to carry its name and unit into your enquiry.</p><PublishedMaterials category={material.slug} initiallyOpen/></section>}
-    <Link className="text-link" href={`/materials/${material.slug}`}>Compare all {material.title.toLowerCase()} →</Link>
+    <section className="br-group br-buying-guide"><h2>Before you order</h2><p>{buyingDetails[material.slug]}</p><div className="br-steps"><div><strong>01 · Choose specifications</strong><p>Check the exact product, grade, dimensions and unit.</p></div><div><strong>02 · Share site details</strong><p>Provide your quantity and delivery pincode for an itemized quote.</p></div><div><strong>03 · Confirm final cost</strong><p>Review stock, GST, freight, unloading and delivery schedule before accepting.</p></div></div><Link className="br-card-action" href={quote}>Prepare an itemized quote →</Link></section><Link className="text-link" href={`/materials/${material.slug}`}>Compare all {material.title.toLowerCase()} →</Link>
   </div><SiteFooter/></main>;
 }
