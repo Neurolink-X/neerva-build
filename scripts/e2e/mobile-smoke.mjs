@@ -128,6 +128,15 @@ async function main(){
     assert.notEqual(await page.locator(".product-gallery-stage img").getAttribute("src"),firstHeroSource,"second thumbnail displays different image");
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     const pack=page.locator(".product-gallery-stage img");
+    // load does not guarantee deferred/lazy product images have decoded on mobile.
+    // Wait for the actual first-party image to finish rather than sleeping or
+    // switching the whole page to networkidle (which can hang on long polling).
+    await pack.scrollIntoViewIfNeeded();
+    await pack.evaluate(async img=>{if(!img.complete)await img.decode().catch(()=>undefined);});
+    await page.waitForFunction(()=>{
+      const img=document.querySelector(".product-gallery-stage img");
+      return !!img&&img.complete&&img.naturalWidth>0;
+    },null,{timeout:15000});
     assert.ok(await pack.evaluate(img=>img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin),"pack photo must load locally");
     await page.goto(base+"/design-studio/fit",{waitUntil:"load"});
     const floorsSelect=page.locator("#nfit-floors");
