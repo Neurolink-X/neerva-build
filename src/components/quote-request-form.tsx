@@ -2,18 +2,18 @@
 import Link from "next/link";
 import {useEffect,useRef,useState,type FormEvent} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
-import {categoryUnits,defaultCategoryUnit,categoryMaterialHints,quantityUnitLabels,isMaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
+import {categoryUnits,defaultCategoryUnit,categoryMaterialHints,quantityUnitLabels,isAllowedCategoryUnit,isMaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
 
 const supabase=createNeervaBrowserClient();
 const intakeEnabled=process.env.NEXT_PUBLIC_RFQ_INTAKE_ENABLED==="true";
 type Message={kind:"success"|"error";text:string;reference?:string;details?:string[]};
-export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defaultMaterial="",defaultPincode="",defaultQuantity=""}:{defaultCity:string;defaultCategory?:string;defaultMaterial?:string;defaultPincode?:string;defaultQuantity?:string}){
+export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defaultMaterial="",defaultPincode="",defaultQuantity="",defaultUnit=""}:{defaultCity:string;defaultCategory?:string;defaultMaterial?:string;defaultPincode?:string;defaultQuantity?:string;defaultUnit?:string}){
  const requestKey=useRef<string|null>(null);
  const [verified,setVerified]=useState(false),[ready,setReady]=useState(false),[busy,setBusy]=useState(false);
  const [message,setMessage]=useState<Message|null>(null);
  const [draftCopied,setDraftCopied]=useState(false);
  const [category,setCategory]=useState(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates");
- const [unit,setUnit]=useState<MaterialQuantityUnit>(defaultCategoryUnit(defaultCategory));
+ const [unit,setUnit]=useState<MaterialQuantityUnit>(isAllowedCategoryUnit(defaultCategory,defaultUnit)?defaultUnit:defaultCategoryUnit(defaultCategory));
  const selectedUnits=categoryUnits(category);
  function changeCategory(value:string){if(!isMaterialCategory(value))return;setCategory(value);setUnit(defaultCategoryUnit(value));setMessage(null);}
  async function copyDraft(){

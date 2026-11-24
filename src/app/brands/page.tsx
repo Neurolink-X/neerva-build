@@ -1,9 +1,19 @@
-import type { Metadata } from "next";
-import Link from "next/link";
-import {BrandMark} from "@/components/brand-mark";
-import { SiteFooter, SiteHeader } from "@/components/site-chrome";
-import { catalogCategories } from "@/modules/catalog/catalog";
-import { brandDirectory, brandDestination, demoProducts } from "@/modules/catalog/marketplace";
+import type {Metadata} from "next";
+import Image from "next/image";
+import {SiteHeader,SiteFooter} from "@/components/site-chrome";
+import {BrandDirectory} from "@/components/brand-directory";
+import {catalogCategories} from "@/modules/catalog/catalog";
+import {directoryCards,dealerPath} from "@/modules/catalog/brand-pages";
+import "./brands.css";
 
-export const metadata: Metadata = { title: "Construction Material Brands", description: "Explore construction material brand options by category. Neerva preview does not imply dealer authorization, stock, or live pricing.", alternates: { canonical: "/brands" } };
-export default function BrandsPage() { return <main className="catalog-page"><SiteHeader /><section className="page-hero page-hero-compact"><span className="eyebrow">BRAND DIRECTORY</span><h1>Compare by brand.<br /><em>Verify every listing.</em></h1><p>These names help you navigate examples by product category. Their presence here is not an authorization, verification or availability claim.</p></section><section className="section brand-directory"><div className="catalog-demo-note"><strong>Brand accuracy matters.</strong> Verify the supplier, exact product range, technical documents and current availability before purchase.</div>{catalogCategories.filter((category) => category.slug !== "aggregates").map((category) => <section className="brand-group" key={category.slug}><div><span className="eyebrow">{category.title}</span><h2>Brand options</h2></div><div className="brand-directory-grid">{brandDirectory.filter((brand) => brand.category === category.slug).map((brand) => <Link className="brand-directory-card" href={brandDestination(brand.name,category.slug)} key={brand.name}><BrandMark name={brand.name}/><strong>{brand.name}</strong><small>{brand.note}</small><span className="arrow">{demoProducts.some(p=>p.brand===brand.name && p.category===category.slug)?"View products":"Request this brand"} ↗</span></Link>)}{!brandDirectory.some((brand) => brand.category === category.slug) && <Link className="brand-directory-card" href={`/materials/${category.slug}`}><span className="brand-letter">+</span><strong>Dealer-listed options</strong><small>Brand and supplier documents need review.</small><span className="arrow">View category ↗</span></Link>}</div></section>)}<Link className="button button-orange" href="/quotes">Request a dealer quote →</Link></section><SiteFooter /></main>; }
+const title="Construction material brands by category";
+const description="Explore cement, steel, tiles, plumbing and finishing brands. Compare pack sizes and specifications, browse published dealer listings and prepare an itemized quote.";
+export const metadata:Metadata={title,description,alternates:{canonical:"/brands"},openGraph:{title,description,url:"/brands",images:["/images/studio/shell.webp"]},twitter:{card:"summary_large_image",title,description,images:["/images/studio/shell.webp"]}};
+
+export default function BrandsPage(){
+  const sections=catalogCategories.map(c=>({...c,dealer:dealerPath(c.slug),cards:directoryCards(c.slug)}));
+  return <main className="catalog-page"><SiteHeader/><div className="br-wrap">
+    <header className="br-hero"><div><h1>Find the right brand for your build.</h1><p>Start with a material. Compare grades, pack sizes and finishes, then ask for a delivered price for your site.</p><a href="#brand-finder">Explore brands ↓</a></div><div className="br-cover"><Image priority src="/images/studio/shell.webp" alt="House under construction" fill sizes="(max-width:620px) 100vw, 48vw"/></div></header>
+    <div id="brand-finder"><BrandDirectory sections={sections}/></div>
+  </div><SiteFooter/></main>;
+}

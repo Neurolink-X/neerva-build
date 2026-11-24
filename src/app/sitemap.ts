@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import {publicIndexingEnabled} from "@/modules/seo/indexing";
 import { articles } from "@/modules/blog/articles";
 import { catalogCategories } from "@/modules/catalog/catalog";
+import {brandPath,directoryCards} from "@/modules/catalog/brand-pages";
 import { demoProducts } from "@/modules/catalog/marketplace";
 import { studioDesigns } from "@/modules/studio/library";
 
@@ -22,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteUrl}/brands`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${siteUrl}/calculators`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${siteUrl}/design-studio/library`, changeFrequency: "monthly", priority: 0.6 },
+    ...catalogCategories.flatMap(c=>directoryCards(c.slug).filter(b=>b.count>0).map(b=>({url:siteUrl+brandPath(c.slug,b.name),changeFrequency:"weekly" as const,priority:0.6}))),
     ...studioDesigns.map((design) => ({ url: `${siteUrl}/design-studio/library/${design.slug}`, changeFrequency: "monthly" as const, priority: 0.45 })),
     ...catalogCategories.map((category) => ({ url: `${siteUrl}/materials/${category.slug}`, changeFrequency: "weekly" as const, priority: 0.7 })),
     ...demoProducts.map((product) => ({ url: `${siteUrl}/materials/${product.category}/${product.slug}`, changeFrequency: "monthly" as const, priority: 0.5 })),

@@ -98,3 +98,11 @@ for (const [slug,model,size,material,handle,mrp] of tileReferences) {
       ...(mrp?[{label:"Manufacturer MRP",value:`₹${mrp} / sq ft`}]:[]),{label:"Finish",value:"Matte"}]
   });
 }
+
+sourcedProducts.push({
+  slug:"jk-super-ppc", category:"cement", name:"JK Super Cement PPC", brand:"JK Cement", verification:"reference",
+  description:"Compare this Portland Pozzolana cement with other PPC options. Ask for pack weight, packing date and a delivered quote for your site.",
+  referenceImage:"/images/catalog/reference/jk-super-ppc.webp",
+  manufacturerReference:"https://www.jkcement.com/grey-cement/jk-super-cement-ppc/",
+  specifications:[{label:"Type",value:"Portland Pozzolana Cement"},{label:"Range",value:"JK Super Cement"},{label:"Confirm with dealer",value:"Bag weight, batch and packing date"}]
+});

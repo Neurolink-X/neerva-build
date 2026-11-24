@@ -51,3 +51,16 @@ test("sourced brands open their catalog and unlisted brands prefill a quote",asy
  assert.equal(pipes.length,4);
  assert.equal(new Set(pipes.map(p=>p.specifications.find(s=>s.label==="Nominal size")?.value)).size,4);
 });
+
+test("brand directory paths resolve uniquely within every category and use the matching product image",async()=>{
+ const {directoryCards,dealerPath}=await import("./brand-pages.ts");
+ const paths=new Set<string>();
+ for(const category of catalogCategories){
+  for(const card of directoryCards(category.slug)){
+   assert.ok(!paths.has(card.href));
+   paths.add(card.href);
+   assert.notEqual(card.href,dealerPath(category.slug));
+   if(card.image)assert.ok(demoProducts.some(p=>p.category===category.slug&&p.brand===card.name&&p.referenceImage===card.image&&p.name===card.alt));
+  }
+ }
+});
