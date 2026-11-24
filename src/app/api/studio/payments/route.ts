@@ -18,8 +18,13 @@ export async function GET(request:Request){
   auth.client.from("studio_paid_orders").select("id,status,created_at").eq("user_id",auth.userId).eq("product_code",product).order("created_at",{ascending:false}).limit(5)
  ]);
  if(access.error||orders.error)return apiFailed();
+ const ids=(orders.data??[]).map(o=>o.id);
+ const claims=ids.length?await auth.client.from("studio_payment_claims").select("order_id")
+  .eq("user_id",auth.userId).in("order_id",ids):{data:[],error:null};
+ if(claims.error)return apiFailed();
  return Response.json({product,enabled:studioPaymentEnabled(process.env),paid:!!access.data,
-  orders:orders.data??[],pricePaise:studioProducts[product].pricePaise},{headers:hdr});
+  orders:orders.data??[],claimedOrderIds:(claims.data??[]).map(c=>c.order_id),
+  pricePaise:studioProducts[product].pricePaise},{headers:hdr});
 }
 export async function POST(request:Request){
  const auth=await requireAuth(request);if(auth instanceof Response)return auth;
