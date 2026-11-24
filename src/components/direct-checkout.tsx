@@ -7,7 +7,7 @@ import {safeCheckoutReturn} from "@/modules/orders/checkout-return";
 import {categoryUnits,quantityUnitLabels} from "@/modules/catalog/category-units";
 const client=createNeervaBrowserClient();
 export function DirectCheckout({category,slug,name,cart,preferredSeller,initialQuantity,initialUnit,initialPin,onReceived}:{category:string;slug:string;name:string;cart?:CartItem[];preferredSeller?:string;initialQuantity?:string;initialUnit?:string;initialPin?:string;onReceived?:()=>void}){
- const key=useRef<string|null>(null),lock=useRef(false);
+ const retryKeys=useRef(new Map<string,string>()),lock=useRef(false);
  const [signedIn,setSignedIn]=useState<boolean|null>(null);useEffect(()=>{if(!client){setTimeout(()=>setSignedIn(false),0);return;}let active=true;void client.auth.getSession().then(({data})=>{if(active)setSignedIn(Boolean(data.session));}).catch(()=>{if(active)setSignedIn(false)});const {data:listener}=client.auth.onAuthStateChange((_event,session)=>{if(active)setSignedIn(Boolean(session));});return()=>{active=false;listener.subscription.unsubscribe()};},[]);
  const returnPath=safeCheckoutReturn(cart?"/checkout?cart=1":"/checkout?"+new URLSearchParams({category,product:slug,qty:initialQuantity??"",unit:initialUnit??"",pin:initialPin??""}))??"/checkout?cart=1";const accountHref="/account?"+new URLSearchParams({next:returnPath});
  const [busy,setBusy]=useState(false),[error,setError]=useState(""),[receipt,setReceipt]=useState<{code:string;message:string}|null>(null);
@@ -18,9 +18,9 @@ export function DirectCheckout({category,slug,name,cart,preferredSeller,initialQ
  const items=(cart??[{category,productSlug:slug,productName:name,quantity:Number(val("quantity")),unit:val("unit")}]).map(({category,productSlug,quantity,unit})=>({category,productSlug,quantity,unit}));const first=items[0];if(!first){setError("Cart is empty.");return;}
  const fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify([session?.data.session?.user.id,items,val("name"),val("phone"),val("city"),val("pin"),val("address"),val("notes")]))))).map(x=>x.toString(16).padStart(2,"0")).join("");
  const storageKey="neerva-order-retry:"+fingerprint;
- try{key.current=sessionStorage.getItem(storageKey)??crypto.randomUUID();sessionStorage.setItem(storageKey,key.current);}catch{key.current??=crypto.randomUUID();}
- const result=await fetch("/api/direct-orders",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({idempotencyKey:key.current,...first,items,contactName:val("name"),phone:val("phone"),city:val("city"),pincode:val("pin"),deliveryAddress:val("address"),notes:val("notes"),consent:form.get("consent")==="yes"})});
- const body=await result.json();if(!result.ok||!body.order?.code){setError(body.error??"Order not confirmed. Check My Orders.");return;}setReceipt({code:body.order.code,message:body.message});onReceived?.();try{sessionStorage.removeItem(storageKey);if(cart)localStorage.removeItem(DIRECT_CART_KEY);}catch{/* receipt is authoritative */}
+ let retryKey=retryKeys.current.get(storageKey);try{retryKey=sessionStorage.getItem(storageKey)??retryKey??crypto.randomUUID();sessionStorage.setItem(storageKey,retryKey);}catch{retryKey??=crypto.randomUUID();}retryKeys.current.set(storageKey,retryKey);
+ const result=await fetch("/api/direct-orders",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({idempotencyKey:retryKey,...first,items,contactName:val("name"),phone:val("phone"),city:val("city"),pincode:val("pin"),deliveryAddress:val("address"),notes:val("notes"),consent:form.get("consent")==="yes"})});
+ const body=await result.json();if(!result.ok||!body.order?.code){setError(body.error??"Order not confirmed. Check My Orders.");return;}setReceipt({code:body.order.code,message:body.message});onReceived?.();retryKeys.current.delete(storageKey);try{sessionStorage.removeItem(storageKey);if(cart)localStorage.removeItem(DIRECT_CART_KEY);}catch{/* receipt is authoritative */}
  }catch{setError("Connection interrupted. Retry the same details or check My Orders before starting another order.");}
  finally{lock.current=false;setBusy(false);}
  }
