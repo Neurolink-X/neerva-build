@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useState} from "react";
+import {useEffect,useState,useCallback} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
@@ -11,24 +11,24 @@ export function StudioCheckout({product}:{product:StudioProduct}){
  const [orderId,setOrderId]=useState(""),[utr,setUtr]=useState(""),[paidAt,setPaidAt]=useState("");
  const [message,setMessage]=useState("Please sign in to check your access."),[busy,setBusy]=useState(false);
  const config=studioProducts[product],currency=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0});
- async function refresh(jwt:string){
+ const refresh=useCallback(async(jwt:string)=>{
   const res=await fetch("/api/studio/payments?product="+product,{cache:"no-store",headers:{Authorization:"Bearer "+jwt}});
   if(!res.ok){setMessage("Unable to verify your saved purchases. Retry after sign-in.");return;}
   const body=await res.json() as Status;
   setStatus(body);const requested=body.orders.find(v=>v.status==="requested");
   setOrderId(requested?.id??"");
   setMessage(body.paid?"Your paid studio access has been confirmed.":requested&&body.claimedOrderIds?.includes(requested.id)?"Payment reference received; waiting for independent bank verification.":requested?"Payment order is ready. Confirm payment details before proceeding.":"Free preview is ready.");
- }
+ },[product]);
  useEffect(()=>{
   let canceled=false;const client=createNeervaBrowserClient();
-  if(!client){setMessage("Secure customer accounts are not configured.");return;}
+  if(!client)return;
   void client.auth.getSession().then(async x=>{
    if(canceled)return;const jwt=x.data.session?.access_token;
    if(!jwt){setMessage("Sign in to purchase or review your paid access.");return;}
    setToken(jwt);await refresh(jwt);
   }).catch(()=>{if(!canceled)setMessage("Session check failed. No payment was created.")});
   return ()=>{canceled=true};
- },[product]);
+ },[product,refresh]);
  async function createOrder(){
   if(!token||busy)return;setBusy(true);
   try{
