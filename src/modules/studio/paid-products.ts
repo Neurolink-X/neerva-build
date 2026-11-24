@@ -7,7 +7,7 @@ export const studioProducts={
 export type StudioProduct=keyof typeof studioProducts;
 export const isStudioProduct=(s:unknown):s is StudioProduct=>typeof s==="string"&&Object.hasOwn(studioProducts,s);
 export const studioPayee={id:"arjunchaurasiya1254-2@oksbi",name:"ARJUN CHAURASIYA"} as const;
-export function studioPaymentEnabled(env:{NEERVA_STUDIO_PAYMENTS_ENABLED?:string;NEERVA_OPERATOR_TERMS_VERIFIED?:string}):boolean{
+export function studioPaymentEnabled(env:Record<string,string|undefined>):boolean{
  return env.NEERVA_STUDIO_PAYMENTS_ENABLED==="true"&&env.NEERVA_OPERATOR_TERMS_VERIFIED==="true";
 }
 export function studioUpiUrl(product:StudioProduct,orderId?:string,pricePaise:number=studioProducts[product].pricePaise):string{
