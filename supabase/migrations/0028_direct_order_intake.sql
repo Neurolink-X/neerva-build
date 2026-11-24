@@ -348,3 +348,42 @@ returns table(seller text,branch text,sku text,unit text,unit_paise bigint,mater
 language sql stable security invoker set search_path=pg_catalog,neerva_private as $$ select * from neerva_private.compare_dealer_prices(p_category,p_slug,p_pin,p_qty) $$;
 revoke all on function public.neerva_compare_dealer_prices(text,text,text,numeric) from public,anon,authenticated;
 grant execute on function public.neerva_compare_dealer_prices(text,text,text,numeric) to authenticated;
+
+-- Append-only admin operational records. No funds are moved by these entries.
+create table public.direct_order_operations(
+ id bigint generated always as identity primary key,
+ order_id uuid not null references public.direct_orders(id) on delete restrict,
+ kind text not null check(kind in ('procurement','delivery_cost','unloading_cost','cod_received','bank_received','refund_paid')),
+ amount_paise bigint not null check(amount_paise between 1 and 20010000000),
+ evidence_ref text not null check(char_length(btrim(evidence_ref)) between 3 and 150),
+ note text not null check(char_length(btrim(note)) between 3 and 300),
+ actor uuid not null default auth.uid() references auth.users(id),
+ created_at timestamptz not null default now(),
+ unique(order_id,kind,evidence_ref)
+);
+create index direct_order_operations_order on public.direct_order_operations(order_id,id);
+alter table public.direct_order_operations enable row level security;
+revoke all on public.direct_order_operations from public,anon,authenticated;
+grant select on public.direct_order_operations to authenticated;
+grant insert(order_id,kind,amount_paise,evidence_ref,note) on public.direct_order_operations to authenticated;
+create policy direct_operations_read on public.direct_order_operations for select to authenticated using ((select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
+create policy direct_operations_write on public.direct_order_operations for insert to authenticated with check (actor=auth.uid() and (select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
+create function public.neerva_direct_operations_guard() returns trigger language plpgsql security invoker set search_path=pg_catalog,public,auth as $$
+declare order_status text; due bigint; received numeric; refunded numeric;
+begin
+ if auth.uid() is null or not coalesce(public.neerva_account_access_allowed(),false) or not coalesce(public.has_platform_role(array['admin','super_admin']::public.platform_role[]),false) then raise exception using errcode='42501',message='ADMIN_REQUIRED';end if;
+ perform pg_advisory_xact_lock(hashtextextended(new.order_id::text,9));
+ select o.status,o.total_paise into order_status,due from public.direct_orders o where o.id=new.order_id for update;
+ if not found then raise exception using errcode='23503',message='ORDER_NOT_FOUND';end if;
+ if new.kind in ('procurement','delivery_cost','unloading_cost') then
+  if order_status not in ('confirmed','preparing','out_for_delivery','delivered','cancelled') or due is null then raise exception using errcode='23514',message='ORDER_NOT_CONFIRMED';end if;
+ else
+  select coalesce(sum(case when e.kind in ('cod_received','bank_received') then e.amount_paise else 0 end),0),coalesce(sum(case when e.kind='refund_paid' then e.amount_paise else 0 end),0) into received,refunded from public.direct_order_operations e where e.order_id=new.order_id;
+  if new.kind in ('cod_received','bank_received') then
+   if due is null or (new.kind='cod_received' and order_status not in ('out_for_delivery','delivered')) or (new.kind='bank_received' and order_status not in ('confirmed','preparing','out_for_delivery','delivered')) or received-refunded+new.amount_paise>due then raise exception using errcode='23514',message='INVALID_COLLECTION';end if;
+  elsif refunded+new.amount_paise>received then raise exception using errcode='23514',message='REFUND_EXCEEDS_COLLECTION';end if;
+ end if;
+ return new;
+end $$;
+revoke all on function public.neerva_direct_operations_guard() from public,anon,authenticated;
+create trigger direct_operations_guard before insert on public.direct_order_operations for each row execute function public.neerva_direct_operations_guard();

@@ -55,6 +55,7 @@ const manifest={
  "/api/admin/fulfilment":["GET","PATCH"],
  "/api/admin/orders":["GET","PATCH"],
  "/api/admin/direct-orders":["GET","PATCH"],
+ "/api/admin/direct-order-operations":["GET","POST"],
  "/api/admin/pricing":["GET","POST","PATCH"],
  "/api/admin/marketplace-fees":["GET","POST"],
  "/api/admin/delivery-settings":["GET","PATCH"],
