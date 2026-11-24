@@ -39,7 +39,7 @@ export function ProductPrice({category,slug,sku,quoteOnly}:{sku?:string;category
  const rate=useSyncExternalStore(subscribe,()=>currentRate(category,slug,sku),noRate);
  const budget=quoteOnly?null:planningRate(category,slug);
  const fitting=category==="plumbing"&&!quoteOnly?fittingPrice(slug):null;
- if(!rate&&fitting)return <span><strong>{format.format(fitting.rupees)}</strong> / listed piece<br/>{fitting.size} · Bengaluru historical retailer reference, checked 24 Nov 2026. <a href={fitting.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
+ if(!rate&&fitting)return <span><strong>{format.format(fitting.rupees)}</strong> / listed piece<br/>{fitting.size} · {fitting.market}, checked 24 Nov 2026. <a href={fitting.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  const hardware=category==="hardware"&&!quoteOnly?hardwarePrice(slug):null;
  if(!rate&&hardware)return <span><strong>{format.format(hardware.rupees)}</strong> / listed variant<br/>{hardware.pack} · Bengaluru retailer reference, {hardware.checked}; historical listing, not Neerva selling price. <a href={hardware.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  const paint=category==="paint"&&!quoteOnly?paintReferencePrice(slug):null;

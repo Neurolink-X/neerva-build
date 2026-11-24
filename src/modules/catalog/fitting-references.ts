@@ -1,5 +1,5 @@
 import type {DemoProduct} from "./marketplace.ts";
-export type FittingRef={slug:string;name:string;hi:string;group:"tank"|"pump";material:string;sizes:string[];use:string;compat:string;price:number|null;priceSize:string|null;source:string|null;image?:string;legacy?:string};
+export type FittingRef={slug:string;name:string;hi:string;group:"tank"|"pump";material:string;sizes:string[];use:string;compat:string;price:number|null;priceSize:string|null;source:string|null;image?:string;legacy?:string;brand?:string;legacySlug?:string;aliases?:string[];priceMarket?:string};
 export const fittingReferences:FittingRef[]=[
   {
     "slug": "fitting-tank-nipple",
@@ -19,7 +19,11 @@ export const fittingReferences:FittingRef[]=[
     "price": 52,
     "priceSize": "¾ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Threaded_Tank_Nipple_655af1b3-cae7-4d0b-90d1-2b4055cd385d.webp?v=1741000160&width=533"
+    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Threaded_Tank_Nipple_655af1b3-cae7-4d0b-90d1-2b4055cd385d.webp?v=1741000160&width=533",
+    "aliases": [
+      "tank connector",
+      "bulkhead tank fitting"
+    ]
   },
   {
     "slug": "fitting-elbow90",
@@ -126,7 +130,10 @@ export const fittingReferences:FittingRef[]=[
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
     "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Union.webp?v=1740998905&width=533",
-    "legacy": "generic-union"
+    "legacy": "generic-union",
+    "aliases": [
+      "PVC CPVC tank union"
+    ]
   },
   {
     "slug": "fitting-ball-valve",
@@ -203,7 +210,11 @@ export const fittingReferences:FittingRef[]=[
     "price": 30,
     "priceSize": "12 mm × 10 m",
     "source": "https://home-run.co/collections/plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Viking_PTFE_Teflon_Thread_Seal_Tape_12mm_X_10m_2649efb4-5205-45b8-84fe-603b812cb5d5.webp?v=1740999098&width=533"
+    "image": "https://home-run.co/cdn/shop/files/Viking_PTFE_Teflon_Thread_Seal_Tape_12mm_X_10m_2649efb4-5205-45b8-84fe-603b812cb5d5.webp?v=1740999098&width=533",
+    "aliases": [
+      "thread seal tape",
+      "teflon tape"
+    ]
   },
   {
     "slug": "fitting-reducer-tee",
@@ -338,7 +349,11 @@ export const fittingReferences:FittingRef[]=[
     "price": 23,
     "priceSize": "¾ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Male_Adapter_Plastic_Threaded_-_MAPT_5ed66bbf-5a5a-46e5-bf0b-34816667939e.webp?v=1740999986&width=533"
+    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Male_Adapter_Plastic_Threaded_-_MAPT_5ed66bbf-5a5a-46e5-bf0b-34816667939e.webp?v=1740999986&width=533",
+    "aliases": [
+      "MTA",
+      "male threaded adaptor"
+    ]
   },
   {
     "slug": "fitting-female-plastic",
@@ -359,7 +374,11 @@ export const fittingReferences:FittingRef[]=[
     "price": 20,
     "priceSize": "½ inch",
     "source": "https://home-run.co/pages/price-list/pipes-plumbing",
-    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Female_Adapter_Plastic_Threaded_-_FAPT_8d0c55e0-472d-4938-bfa4-0eaa40750376.webp?v=1741000083&width=533"
+    "image": "https://home-run.co/cdn/shop/files/Ashirvad_Flowguard_Plus_CPVC_Female_Adapter_Plastic_Threaded_-_FAPT_8d0c55e0-472d-4938-bfa4-0eaa40750376.webp?v=1741000083&width=533",
+    "aliases": [
+      "FTA",
+      "female threaded adaptor"
+    ]
   },
   {
     "slug": "fitting-float-valve",
@@ -376,7 +395,7 @@ export const fittingReferences:FittingRef[]=[
     "compat": "Match inlet thread and pressure",
     "price": null,
     "priceSize": null,
-    "source": null
+    "source": "https://www.bajajvalve.com/float-valve.html"
   },
   {
     "slug": "fitting-overflow",
@@ -530,7 +549,11 @@ export const fittingReferences:FittingRef[]=[
     "compat": "Match direction, pressure and connection",
     "price": null,
     "priceSize": null,
-    "source": null
+    "source": null,
+    "aliases": [
+      "check valve",
+      "non return valve"
+    ]
   },
   {
     "slug": "fitting-foot-valve",
@@ -548,7 +571,11 @@ export const fittingReferences:FittingRef[]=[
     "compat": "Match pump suction size",
     "price": null,
     "priceSize": null,
-    "source": null
+    "source": "https://www.industrybuying.com/pumps-1160/pump-fittings-accessories-4002",
+    "aliases": [
+      "foot valve",
+      "foot valve with strainer"
+    ]
   },
   {
     "slug": "fitting-delivery-hose",
@@ -641,18 +668,21 @@ export const fittingReferences:FittingRef[]=[
   },
   {
     "slug": "fitting-pressure-switch",
-    "name": "Pump pressure switch",
+    "name": "PM 5G pressure switch",
     "hi": "प्रेशर स्विच",
     "group": "pump",
     "material": "Electrical",
     "sizes": [
-      "Rating to confirm"
+      "PM 5G"
     ],
     "use": "Control compatible pressure pump",
     "compat": "Electrician to verify motor rating and controller",
-    "price": null,
-    "priceSize": null,
-    "source": null
+    "price": 648,
+    "priceSize": "PM 5G",
+    "source": "https://www.industrybuying.com/float-switch-ganpati-apollo-PUM.FLO.78524975",
+    "image": "https://static1.industrybuying.com/products/pumps/pump-accessories/float-switch/PUM.FLO.78524975_1680066264782.webp",
+    "brand": "Ganpati Apollo",
+    "priceMarket": "Industrybuying retailer reference"
   },
   {
     "slug": "fitting-float-switch",
@@ -667,7 +697,7 @@ export const fittingReferences:FittingRef[]=[
     "compat": "Electrician to verify control rating",
     "price": null,
     "priceSize": null,
-    "source": null
+    "source": "https://www.moglix.com/damor-float-switch-with-2m-pvc-cable/mp/msn457mwmz2q9j"
   },
   {
     "slug": "fitting-pump-union",
@@ -721,7 +751,10 @@ export const fittingReferences:FittingRef[]=[
     "compat": "Match pump model and shaft diameter",
     "price": null,
     "priceSize": null,
-    "source": null
+    "source": null,
+    "aliases": [
+      "shaft seal"
+    ]
   },
   {
     "slug": "fitting-impeller",
@@ -736,7 +769,10 @@ export const fittingReferences:FittingRef[]=[
     "compat": "Match model and rotation",
     "price": null,
     "priceSize": null,
-    "source": null
+    "source": null,
+    "aliases": [
+      "impeller spare"
+    ]
   },
   {
     "slug": "fitting-suction-hose",
@@ -773,9 +809,273 @@ export const fittingReferences:FittingRef[]=[
     "price": null,
     "priceSize": null,
     "source": null
+  },
+  {
+    "slug": "fitting-tank-lid",
+    "name": "Tank lid clamp / retaining accessory",
+    "hi": "टंकी ढक्कन क्लैंप",
+    "group": "tank",
+    "material": "Plastic / SS",
+    "sizes": [
+      "Model to confirm"
+    ],
+    "use": "Secure compatible tank cover",
+    "compat": "Match manufacturer lid profile and attachment; do not drill tank without approval",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-tank-inlet",
+    "name": "Tank inlet adapter",
+    "hi": "टंकी इनलेट अडैप्टर",
+    "group": "tank",
+    "material": "PVC / uPVC / Brass",
+    "sizes": [
+      "½ inch",
+      "¾ inch",
+      "1 inch"
+    ],
+    "use": "Connect fill line to tank inlet",
+    "compat": "Match tank port, thread and float valve",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-tank-outlet",
+    "name": "Tank outlet adapter",
+    "hi": "टंकी आउटलेट अडैप्टर",
+    "group": "tank",
+    "material": "PVC / uPVC / Brass",
+    "sizes": [
+      "¾ inch",
+      "1 inch",
+      "1½ inch",
+      "2 inch"
+    ],
+    "use": "Connect outlet to distribution line",
+    "compat": "Match tank connector and outlet thread; not the tank-wall bulkhead itself",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-tank-drain",
+    "name": "Tank cleaning drain fitting",
+    "hi": "टंकी सफाई ड्रेन",
+    "group": "tank",
+    "material": "PVC / uPVC",
+    "sizes": [
+      "1 inch",
+      "1½ inch",
+      "2 inch"
+    ],
+    "use": "Drain tank for cleaning",
+    "compat": "Confirm designated drain port, valve and discharge route",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-threaded-reducer",
+    "name": "Threaded reducing bush",
+    "hi": "थ्रेड रिड्यूसर बुश",
+    "group": "tank",
+    "material": "Brass / PVC / CPVC",
+    "sizes": [
+      "¾ × ½ inch",
+      "1 × ¾ inch",
+      "1½ × 1 inch"
+    ],
+    "use": "Reduce a threaded outlet",
+    "compat": "Match male and female thread standard; not a solvent reducer coupler",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-saddle-clamp",
+    "name": "Saddle pipe support clamp",
+    "hi": "सैडल क्लैंप",
+    "group": "tank",
+    "material": "SS / PVC",
+    "sizes": [
+      "20 mm",
+      "25 mm",
+      "32 mm",
+      "50 mm"
+    ],
+    "use": "Support pipe against a surface",
+    "compat": "Match outside diameter; not a tapping service saddle",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-u-clamp",
+    "name": "U-shaped pipe support clamp",
+    "hi": "यू क्लैंप",
+    "group": "tank",
+    "material": "GI / SS",
+    "sizes": [
+      "25 mm",
+      "32 mm",
+      "50 mm"
+    ],
+    "use": "Support pipe on bracket",
+    "compat": "Match outside diameter and load",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-flex-connector",
+    "name": "Flexible braided water connector",
+    "hi": "फ्लेक्सिबल कनेक्टर",
+    "group": "tank",
+    "material": "SS / Rubber",
+    "sizes": [
+      "½ inch",
+      "¾ inch"
+    ],
+    "use": "Connect compatible fixture or supply",
+    "compat": "Match end thread, pressure and temperature",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-pump-adapter",
+    "name": "Pump threaded pipe adapter",
+    "hi": "पंप अडैप्टर",
+    "group": "pump",
+    "material": "Brass / GI / uPVC",
+    "sizes": [
+      "¾ inch",
+      "1 inch",
+      "1¼ inch",
+      "1½ inch",
+      "2 inch"
+    ],
+    "use": "Adapt pump port to compatible pipe",
+    "compat": "Match pump inlet or outlet thread and pressure",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-motor-starter",
+    "name": "Pump motor starter / overload protection",
+    "hi": "मोटर स्टार्टर",
+    "group": "pump",
+    "material": "Electrical",
+    "sizes": [
+      "Rating to confirm"
+    ],
+    "use": "Switch and protect motor",
+    "compat": "Qualified electrician must match supply, motor nameplate and protection",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-pump-cable",
+    "name": "Pump cable joint connector kit",
+    "hi": "पंप केबल जॉइंट",
+    "group": "pump",
+    "material": "Electrical",
+    "sizes": [
+      "Rating to confirm"
+    ],
+    "use": "Connect compatible pump cable",
+    "compat": "Qualified electrician must match cable, voltage, immersion rating and approved joint system",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-anti-vibration",
+    "name": "Flexible pump anti-vibration connector",
+    "hi": "वाइब्रेशन कनेक्टर",
+    "group": "pump",
+    "material": "Rubber / SS",
+    "sizes": [
+      "Size to confirm"
+    ],
+    "use": "Reduce transmitted vibration",
+    "compat": "Match pressure, movement and connection; not a structural support",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-base-pad",
+    "name": "Pump anti-vibration mounting pad",
+    "hi": "मोटर रबर पैड",
+    "group": "pump",
+    "material": "Rubber",
+    "sizes": [
+      "Size to confirm"
+    ],
+    "use": "Isolate pump base vibration",
+    "compat": "Match load and mounting design",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-gland-seal",
+    "name": "Pump gland packing / seal",
+    "hi": "ग्लैंड पैकिंग",
+    "group": "pump",
+    "material": "Model-specific",
+    "sizes": [
+      "Model to confirm"
+    ],
+    "use": "Replace packing on compatible gland-type pump",
+    "compat": "Confirm pump uses packed gland rather than mechanical seal",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-hose-collar",
+    "name": "Hose ferrule / crimp collar",
+    "hi": "होज़ कॉलर",
+    "group": "pump",
+    "material": "SS / Metal",
+    "sizes": [
+      "Size to confirm"
+    ],
+    "use": "Retain hose on matching crimp fitting",
+    "compat": "Match hose, ferrule and rated crimp system; not a worm-drive clamp",
+    "price": null,
+    "priceSize": null,
+    "source": null
+  },
+  {
+    "slug": "fitting-elbow45",
+    "name": "45° elbow",
+    "hi": "45 डिग्री एल्बो",
+    "group": "tank",
+    "material": "CPVC",
+    "sizes": [
+      "½ inch",
+      "¾ inch",
+      "1 inch"
+    ],
+    "use": "Change direction by 45 degrees",
+    "compat": "Match pipe series and socket",
+    "price": 19,
+    "priceSize": "½ inch",
+    "source": "https://home-run.co/pages/price-list/pipes-plumbing",
+    "image": "/images/catalog/reference/ashirvad-elbow.webp",
+    "brand": "Ashirvad",
+    "legacySlug": "ashirvad-elbow-half"
   }
 ];
 export const fittingReference=(slug:string)=>fittingReferences.find(r=>r.slug===slug);
-export const fittingProducts:DemoProduct[]=fittingReferences.map(r=>({slug:r.slug,category:"plumbing",brand:r.image?(r.slug==="fitting-ptfe"?"Viking":"Ashirvad"):"Local supplier",name:(r.image?(r.slug==="fitting-ptfe"?"Viking ":"Ashirvad "):"")+r.name,verification:"reference",description:r.use+". "+r.compat+". Confirm actual supplier variant.",...(r.source?{referenceSource:r.source}:{}),specifications:[{label:"Hindi name",value:r.hi},{label:"Material / options",value:r.material},{label:"Requested sizes",value:r.sizes.join(", ")},{label:"Application",value:r.use},{label:"Compatibility",value:r.compat}]}));
-export function fittingPrice(slug:string){const r=fittingReference(slug);return r?.price&&r.priceSize&&r.source?{rupees:r.price,size:r.priceSize,source:r.source}:null;}
-export function isLegacyFitting(p:DemoProduct){return p.category==="plumbing"&&Boolean(p.familyKey&&fittingReferences.some(r=>r.legacy===p.familyKey));}
+export const fittingProducts:DemoProduct[]=fittingReferences.map(r=>({slug:r.slug,category:"plumbing",brand:r.brand??(r.image?(r.slug==="fitting-ptfe"?"Viking":"Ashirvad"):"Local supplier"),name:(r.brand?r.brand+" ":r.image?(r.slug==="fitting-ptfe"?"Viking ":"Ashirvad "):"")+r.name,verification:"reference",description:r.use+". "+r.compat+". Confirm actual supplier variant.",...(r.source?{referenceSource:r.source}:{}),specifications:[{label:"Hindi name",value:r.hi},{label:"Material / options",value:r.material},{label:"Requested sizes",value:r.sizes.join(", ")},{label:"Application",value:r.use},{label:"Compatibility",value:r.compat}]}));
+export function fittingPrice(slug:string){const r=fittingReference(slug);return r?.price&&r.priceSize&&r.source?{rupees:r.price,size:r.priceSize,source:r.source,market:r.priceMarket??"Bengaluru historical retailer reference"}:null;}
+export function isLegacyFitting(p:DemoProduct){return p.category==="plumbing"&&fittingReferences.some(r=>r.legacySlug===p.slug||Boolean(p.familyKey&&r.legacy===p.familyKey));}
