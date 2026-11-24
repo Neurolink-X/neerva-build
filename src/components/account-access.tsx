@@ -157,7 +157,7 @@ export function AccountAccess() {
       <div className="account-mode-switch"><button type="button" className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setMessage(null); }}>Sign in</button><button type="button" className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setMessage(null); }}>Create account</button></div>
       <h2>{mode === "signin" ? "Welcome back." : "Create your customer account."}</h2><p>{mode === "signin" ? "Manage your project and material requests." : "Save projects, addresses and dealer quotations in one account."}</p>
       <form className="account-auth-form" onSubmit={submit}>{mode === "signup" && <label>Your name<input name="displayName" required minLength={2} maxLength={100} autoComplete="name" /></label>}<label>Email address<input name="email" type="email" required maxLength={254} autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={128} autoComplete={mode === "signin" ? "current-password" : "new-password"} /></label>{mode==="signup"&&<label className="neerva-account-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to the <Link href="/privacy">privacy notice</Link> for creating an account.</span></label>}<button className="button button-dark" disabled={busy||(mode==="signup"&&secondsLeft>0)}>{busy ? "Please wait…" : mode === "signin" ? "Sign in securely →" : secondsLeft>0 ? `Try again in ${secondsLeft}s` : "Create customer account →"}</button></form>
-      {message && <p className={`account-feedback ${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>{message.text}</p>
+      {message && <p className={`account-feedback ${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>{message.text}</p>}
       <form className="account-auth-form" onSubmit={sendMagicLink} style={{marginTop:23}}>
         <strong>Email verification and account recovery</strong><label>What do you need?<select value={emailAction} onChange={e=>{const value=e.target.value;if(value==="link"||value==="reset"||value==="resend")setEmailAction(value)}}><option value="link">Password-free sign-in</option><option value="resend">Resend verification email</option><option value="reset">Forgot password</option></select></label>
         <label>Your registered email<input type="email" value={magicEmail} onChange={e=>setMagicEmail(e.target.value)} required autoComplete="email" maxLength={254}/></label>
@@ -169,7 +169,7 @@ export function AccountAccess() {
         {phoneChallengeSent&&<label>SMS verification code<input inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required value={otp} onChange={e=>setOtp(e.target.value)}/></label>}
         <button className="button button-outline" disabled={busy}>{phoneChallengeSent?"Verify SMS code →":"Request phone OTP →"}</button>
       </form>:<p style={{fontSize:13,color:"#5e7063",marginTop:18}}>Phone OTP sign-in is not enabled yet. An approved SMS provider must be configured first; no SMS is sent from this page.</p>}
-      {message && <p className={`account-feedback ${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>{message.text}</p>}
+
       <small>Dealer staff and platform administrators need an approved role or tenant membership. Creating a customer account does not grant staff access.</small>
     </>}
   </div>;
