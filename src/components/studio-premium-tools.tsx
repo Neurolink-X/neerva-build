@@ -3,6 +3,7 @@ import {useState} from "react";
 import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import type {PlanBrief} from "@/modules/studio/plan-model";
+import "@/app/studio-pricing/pricing.css";
 import type {StudioProduct} from "@/modules/studio/paid-products";
 const esc=(s:unknown)=>String(s??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]??ch));
 type Props={product:StudioProduct;brief?:PlanBrief;option?:number;base?:string;accent?:string;room?:string};
