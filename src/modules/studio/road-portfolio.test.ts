@@ -3,11 +3,17 @@ import assert from "node:assert/strict";
 import {generateSpatialPortfolio} from "./road-generator.ts";
 import {validatePlan,type PlanBrief} from "./plan-model.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
+import {buildingWallCells} from "./geometry.ts";
 import {roadPoint,oppositeRoadSide} from "./plan-coordinate.ts";
 const standard:PlanBrief={widthFt:18,depthFt:50,roadSide:"N",floors:2,bedrooms:3,parking:true,
  setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
 function geometrySignature(p:ReturnType<typeof generateSpatialPortfolio>["plans"][number]){
  return p.rooms.map(r=>[r.floor,r.kind,r.x,r.y,r.w,r.d].join(":")).sort().join("|");
+}
+function meshSignature(p:ReturnType<typeof generateSpatialPortfolio>["plans"][number],floor?:number){
+ return buildingWallCells(studioDesignFromPlan(p))
+  .filter(c=>floor===undefined||c.floorIndex===floor)
+  .map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
 }
 test("exact 18x50 road-first 3BHK has 24 genuinely distinct room programs/partitions",()=>{
  const {plans,blockers}=generateSpatialPortfolio(standard,24);
@@ -115,6 +121,8 @@ test("pedestrian plans retain requested bedrooms, floor geometry and independent
  for(const [w,d,f,b,count] of [[15,30,1,1,2],[16,35,1,1,2],[18,50,2,3,24],[30,50,3,3,24]] as const){
   const {plans}=generateSpatialPortfolio({...standard,widthFt:w,depthFt:d,floors:f,bedrooms:b,parking:false});
   assert.equal(plans.length,count);
+  assert.equal(new Set(plans.map(geometrySignature)).size,count,"compact and no-parking options must have distinct actual rooms");
+  assert.equal(new Set(plans.map(p=>meshSignature(p))).size,count,"compact and no-parking 3D walls must be different");
   for(const p of plans){
    assert.deepEqual(validatePlan(p),[]);assert.equal(p.parking,null);assert.equal(p.gate.widthFt,0);
    assert.equal(p.rooms.some(r=>r.kind==="parking"),false);
@@ -128,12 +136,16 @@ test("portfolio uses the requested site envelope across nine plot sizes and ever
   for(const side of ["N","S","E","W"] as const){
    const {plans}=generateSpatialPortfolio({...standard,widthFt:w,depthFt:d,floors:f,bedrooms:b,roadSide:side});
    assert.equal(plans.length,24);
+   assert.equal(new Set(plans.map(p=>p.id)).size,24,`${w}x${d}/${side}: duplicate IDs`);
+   assert.equal(new Set(plans.map(geometrySignature)).size,24,`${w}x${d}/${side}: duplicate 2D room layouts`);
+   assert.equal(new Set(plans.map(p=>meshSignature(p))).size,24,`${w}x${d}/${side}: duplicate 3D walls`);
    for(const p of plans){
     assert.deepEqual(validatePlan(p),[]);
     const model=studioDesignFromPlan(p);
     assert.equal(model.bedrooms,b);assert.equal(model.floors,f);
     assert.deepEqual([model.plot.widthFt,model.plot.depthFt],[w,d]);
     assert.deepEqual(model.layout.rooms.map(r=>[r.floorIndex,r.xFt,r.yFt,r.wFt,r.dFt]),p.rooms.map(r=>[r.floor,r.x,r.y,r.w,r.d]));
+    for(let level=0;level<f;level++)assert.ok(meshSignature(p,level).length>0,`missing 3D walls on floor ${level+1} of ${p.id}`);
    }
   }
  }
