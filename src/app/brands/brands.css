@@ -11,3 +11,25 @@
 .br-card{display:flex;flex-direction:column;justify-content:flex-end;background:#fff;border:1px solid #d8ded6;border-radius:12px;overflow:hidden;text-decoration:none;color:inherit}
 .br-card:hover,.br-card:focus-visible{border-color:#49715a}.br-card-copy{padding:1rem}.br-card h3{margin:0;font-size:1.1rem}.br-card p{font-size:.92rem}.br-breadcrumb{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem}.br-wrap :focus-visible{outline:3px solid #865120;outline-offset:2px}
 @media(max-width:620px){.br-hero{grid-template-columns:1fr}.br-cover{min-height:155px}.br-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.br-pack{height:112px;min-height:0}.br-card-copy{padding:.75rem;overflow-wrap:anywhere}.br-heading a{padding:.4rem 0}.br-filters{gap:.6rem}}
+
+/* Shared card anatomy: stable image area, brand identification and separate actions. */
+.br-result{color:#45574b;font-size:.9rem;margin:1rem 0}
+.br-card{justify-content:flex-start;min-width:0;transition:border-color .15s ease,box-shadow .15s ease}
+.br-card:hover,.br-card:focus-within{box-shadow:0 4px 18px #20372c12;border-color:#49715a}
+.br-brand-header{min-height:60px;display:flex;align-items:center;justify-content:center;padding:10px 12px;border-bottom:1px solid #eef1ec}
+.br-brand-header .nb-brand-name{font-weight:700}
+.br-media-link{display:block;text-decoration:none;color:inherit}
+.br-pack{height:176px;background:#fafbf8;overflow:hidden}
+.br-pack img{padding:12px 12px 27px}
+.br-photo-label{position:absolute;bottom:5px;left:8px;font-size:.68rem;color:#526155;background:#fafbf8;padding:2px 5px;border-radius:4px}
+.br-no-photo{height:176px;display:grid;place-items:center;text-align:center;padding:12px;background:#f2f4ef;color:#526155;line-height:1.45}
+.br-card-copy{display:flex;flex:1;flex-direction:column;gap:8px;min-width:0}
+.br-card-copy h3 a{color:inherit;text-decoration:none}
+.br-card-copy p{margin:0;overflow-wrap:anywhere}
+.br-stock-note{font-size:.76rem;color:#526155;line-height:1.45;margin-top:auto}
+.br-card-action,.br-quote-action{display:flex;align-items:center;justify-content:center;text-align:center;min-height:44px;border:1px solid #21513c;border-radius:7px;font-size:.85rem;font-weight:650;text-decoration:none;line-height:1.3;padding:6px}
+.br-card-action{background:#21513c;color:#fff}
+.br-quote-action{background:#fff;color:#21513c}
+@media(max-width:620px){.br-brand-header{min-height:52px;padding:8px}.br-pack,.br-no-photo{height:126px}.br-card-copy{gap:7px}.br-card-action,.br-quote-action{font-size:.78rem}.br-stock-note{font-size:.71rem}}
+@media(max-width:340px){.br-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.br-card{transition:none}}
