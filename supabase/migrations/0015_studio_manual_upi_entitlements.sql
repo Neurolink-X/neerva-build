@@ -101,3 +101,33 @@ revoke all on function public.neerva_review_studio_payment(uuid,text) from publi
 grant execute on function public.neerva_review_studio_payment(uuid,text) to authenticated;
 comment on function public.neerva_review_studio_payment(uuid,text) is
  'Use only after independent bank statement verification; UTR and self-report cannot validate payment.';
+
+-- Protected customer support ticket / refund request inbox (no photos of bank statements).
+create table if not exists public.studio_support_tickets (
+ id uuid primary key default gen_random_uuid(),
+ user_id uuid not null references auth.users(id) on delete cascade,
+ order_id uuid references public.studio_paid_orders(id),
+ issue text not null check(issue in ('payment_not_verified','duplicate_payment','refund_request','studio_access','other')),
+ message text not null check(char_length(message) between 15 and 1000),
+ status text not null default 'open' check(status in ('open','in_review','resolved')),
+ admin_reply text check(admin_reply is null or char_length(admin_reply)<=1000),
+ created_at timestamptz not null default now(),
+ resolved_at timestamptz
+);
+create index if not exists studio_support_user_idx on public.studio_support_tickets(user_id,created_at desc);
+create index if not exists studio_support_queue_idx on public.studio_support_tickets(status,created_at desc);
+alter table public.studio_support_tickets enable row level security;
+revoke all on public.studio_support_tickets from anon,authenticated;
+grant select,insert,update on public.studio_support_tickets to authenticated;
+drop policy if exists studio_support_read on public.studio_support_tickets;
+create policy studio_support_read on public.studio_support_tickets for select to authenticated
+using(user_id=auth.uid() or public.has_platform_role(array['admin','super_admin']::public.platform_role[]));
+drop policy if exists studio_support_create on public.studio_support_tickets;
+create policy studio_support_create on public.studio_support_tickets for insert to authenticated
+with check(user_id=auth.uid() and status='open' and admin_reply is null and resolved_at is null
+ and (order_id is null or exists(select 1 from public.studio_paid_orders o
+      where o.id=order_id and o.user_id=auth.uid())));
+drop policy if exists studio_support_admin_update on public.studio_support_tickets;
+create policy studio_support_admin_update on public.studio_support_tickets for update to authenticated
+using(public.has_platform_role(array['admin','super_admin']::public.platform_role[]))
+with check(public.has_platform_role(array['admin','super_admin']::public.platform_role[]));
