@@ -148,3 +148,68 @@
 @media(max-width:960px){.nbh-nav{display:none}.nbh-mobile-menu{display:block;order:2;flex:none}.nbh-header{gap:12px}.nbh-mobile-menu summary{display:flex;align-items:center;justify-content:center;min-height:44px;padding:9px 13px;cursor:pointer;border:1px solid #cadacb;border-radius:10px;background:#fff;color:#244b37;font-size:13px;font-weight:850;list-style:none}.nbh-mobile-menu summary::-webkit-details-marker{display:none}.nbh-mobile-menu nav{position:absolute;right:10px;top:calc(100% - 1px);z-index:50;width:min(90vw,340px);max-height:75vh;overflow:auto;background:#fffefa;box-shadow:0 18px 42px #16342437;border:1px solid #cadbcc;border-radius:15px;padding:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.nbh-mobile-menu nav a{display:flex;align-items:center;min-height:46px;min-width:0;white-space:normal;padding:10px;font-size:13px;font-weight:750;border-radius:7px;background:#f7f9f5}.nbh-cost-trust{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.nbh-header{justify-content:space-between;gap:7px}.nbh-logo{margin-right:auto}.nbh-mobile-menu{order:2}.nbh-header-actions{order:1;flex:none}.nbh-header-actions>a[aria-label="Material list"]{display:none}.nbh-mobile-menu summary{padding:9px 10px;font-size:12px}.nbh-quick-fields{grid-template-columns:repeat(2,minmax(0,1fr))}.nbh-quick-fields label:first-child{grid-column:auto}}
 @media(max-width:390px){.nbh-header{padding-inline:9px}.nbh-logo{font-size:10px}.nbh-header-actions .nbh-icon-link{min-width:33px}.nbh-header-actions{gap:0}.nbh-mobile-menu summary{font-size:11px;padding:8px}.nbh-cost-trust{grid-template-columns:1fr 1fr;gap:6px}.nbh-cost-trust span{font-size:11px;padding:9px;min-height:56px}.nbh-quick-fields{grid-template-columns:1fr}.nbh-quick-fields label:first-child{grid-column:1/-1}}
+
+
+/* Home Studio: single plot-first action, clear visual distinction between real photography and matched 2D/3D plans. */
+.nbh-studio-redesign{padding-block:clamp(38px,5vw,72px);background:#edf1eb}
+.nbh-studio-layout{max-width:1360px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.07fr) minmax(0,.93fr);grid-template-rows:auto minmax(190px,1fr);grid-template-areas:"intro planner" "photo planner";gap:22px clamp(22px,4.5vw,70px);align-items:stretch}
+.nbh-studio-story{grid-area:intro;min-width:0;align-self:start}
+.nbh-studio-story h2{font-size:clamp(35px,3.8vw,55px);line-height:1.09;letter-spacing:-.038em;margin:12px 0 15px;color:#1f3d2c}
+.nbh-studio-description{color:#506759;font-size:clamp(14px,1.4vw,17px);line-height:1.7;margin:0;max-width:57ch}
+.nbh-studio-benefits{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.nbh-studio-benefits span{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:99px;background:#fff;border:1px solid #d2ded2;color:#355742;font-size:12px;font-weight:650}
+.nbh-studio-benefits span::before{content:"✓";font-weight:900;color:#427454}
+.nbh-studio-photo{grid-area:photo;position:relative;overflow:hidden;min-height:220px;border-radius:18px;background:#d3ded4;isolation:isolate}
+.nbh-studio-photo img{object-fit:cover;object-position:center 52%}
+.nbh-studio-photo::after{content:"";position:absolute;inset:40% 0 0;background:linear-gradient(transparent,#13271de0);pointer-events:none}
+.nbh-studio-photo-caption{position:absolute;z-index:1;bottom:16px;left:20px;right:20px;display:flex;flex-direction:column;gap:5px;color:#fff}
+.nbh-studio-photo-caption strong{font-size:16px}
+.nbh-studio-photo-caption span{font-size:12px;line-height:1.4;color:#e6f0e7}
+.nbh-studio-planner{grid-area:planner;min-width:0;background:#fffefa;border:1px solid #d4e0d2;border-radius:22px;box-shadow:0 16px 45px #172c1b12;padding:clamp(20px,3.2vw,38px);display:flex;flex-direction:column;align-self:stretch}
+.nbh-studio-planner-head{padding-bottom:19px;border-bottom:1px solid #e5ebe3;margin-bottom:20px}
+.nbh-studio-planner-head>span{font-size:11px;letter-spacing:.12em;color:#a4573c;font-weight:800}
+.nbh-studio-planner-head h3{font:400 clamp(25px,2.8vw,35px)/1.14 Georgia,"Noto Serif Devanagari",serif;color:#233f2e;margin:9px 0}
+.nbh-studio-planner-head p{color:#64766a;font-size:13px;line-height:1.65;margin:0}
+.nbh-studio-primary-label{font-size:13px;font-weight:800;color:#2d4835;margin-bottom:10px}
+.nbh-studio-preset,.nbh-studio-custom-fields input,.nbh-studio-option-grid select{height:52px;min-width:0;max-width:100%;width:100%;background:#fff;border:1px solid #b8cabb;border-radius:11px;padding:0 15px;color:#233b2c;font-size:16px;font-weight:600}
+.nbh-studio-preset:focus-visible,.nbh-studio-custom-fields input:focus-visible,.nbh-studio-option-grid select:focus-visible{outline:3px solid #b7d5c1;outline-offset:2px}
+.nbh-studio-custom-fields,.nbh-studio-option-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}
+.nbh-studio-custom-fields label,.nbh-studio-option-grid label{display:flex;flex-direction:column;gap:7px;font-size:12px;color:#425a48;font-weight:700;min-width:0}
+.nbh-studio-error{font-size:12px;color:#ae392d;margin:9px 0 0}
+.nbh-studio-options{border-bottom:1px solid #e3e9e0;padding:15px 0;margin-bottom:16px}
+.nbh-studio-options summary{cursor:pointer;color:#355c41;font-size:13px;font-weight:700;min-height:34px;display:list-item;list-style-position:inside}
+.nbh-studio-option-grid{margin:4px 0 8px}
+.nbh-studio-result{display:flex;align-items:baseline;gap:5px 12px;flex-wrap:wrap;margin:0 0 17px;padding:13px 14px;border-radius:12px;background:#f1f6ef;color:#284631}
+.nbh-studio-result span{font-size:10px;font-weight:800;letter-spacing:.11em;color:#6e8672;width:100%}
+.nbh-studio-result strong{font-size:23px;line-height:1.2}
+.nbh-studio-result small{font-size:12px;color:#597362}
+.nbh-studio-generate{min-height:55px;width:100%;border-radius:11px;display:flex;align-items:center;justify-content:center;gap:12px;background:#1c4934;color:white!important;font-size:14px;font-weight:800;line-height:1.4;text-align:center;padding:12px 14px;transition:background .15s,transform .15s}
+.nbh-studio-generate:hover{background:#123825;transform:translateY(-1px)}
+.nbh-studio-generate svg{width:18px;height:18px;flex:none}
+.nbh-studio-disabled{background:#d6dfd7;color:#6b776e!important;cursor:not-allowed}
+.nbh-studio-disabled:hover{background:#d6dfd7;transform:none}
+.nbh-studio-trust{color:#6a7b70;font-size:12px;line-height:1.5;margin:13px 0 0}
+.nbh-studio-more{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:auto;padding-top:20px}
+.nbh-studio-more a{font-size:12px;min-height:36px;display:inline-flex;align-items:center;color:#905037;text-decoration:underline;text-underline-offset:3px;font-weight:700}
+.nbh-studio-more a:hover{color:#642d1c}
+@media(max-width:980px){
+ .nbh-studio-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;grid-template-areas:"intro" "planner" "photo";gap:18px}
+ .nbh-studio-planner{max-width:720px;width:100%}
+ .nbh-studio-photo{min-height:230px;max-width:720px;width:100%}
+ .nbh-studio-story h2{max-width:580px}
+}
+@media(max-width:540px){
+ .nbh-studio-redesign{padding:37px 16px 48px}
+ .nbh-studio-story h2{font-size:clamp(32px,9vw,41px)}
+ .nbh-studio-description{font-size:14px}
+ .nbh-studio-benefits{gap:6px}
+ .nbh-studio-benefits span{font-size:11px;padding:7px 9px}
+ .nbh-studio-planner{padding:20px 16px;border-radius:16px}
+ .nbh-studio-custom-fields,.nbh-studio-option-grid{gap:9px}
+ .nbh-studio-custom-fields input,.nbh-studio-option-grid select{padding-inline:9px;font-size:14px}
+ .nbh-studio-photo{min-height:190px}
+ .nbh-studio-result strong{font-size:21px}
+ .nbh-studio-generate{font-size:13px}
+ .nbh-studio-more{gap:6px 12px}
+}
+@media(prefers-reduced-motion:reduce){.nbh-studio-generate{transition:none}}
