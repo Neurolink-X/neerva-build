@@ -62,6 +62,8 @@ const manifest={
  "/api/admin/sku-tax":["GET","POST"],
  "/api/dealer/delivery-settings":["GET","POST"],
  "/api/dealer/pricing":["GET","POST"],
+ "/api/dealer/listings":["GET","POST","PATCH"],
+ "/api/admin/product-requests":["GET","PATCH"],
  "/api/customer/dealer-comparison":["GET"],
  "/api/admin/rfqs":["GET","POST"],
  "/api/admin/studio-payments":["GET","PATCH"],

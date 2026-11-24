@@ -170,6 +170,57 @@ grant select on public.sku_tax_versions to authenticated;
 grant insert(variant_id,hsn,rate_bps,price_includes_tax,reason) on public.sku_tax_versions to authenticated;
 create policy sku_tax_admin_read on public.sku_tax_versions for select to authenticated using ((select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
 create policy sku_tax_admin_publish on public.sku_tax_versions for insert to authenticated with check(created_by=auth.uid() and (select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
+
+-- Dealer catalog proposals are private; approval never creates an unverified global SKU.
+create table public.dealer_product_requests(
+ id uuid primary key default gen_random_uuid(),
+ tenant_id uuid not null references public.tenants(id),
+ branch_id uuid not null references public.merchant_branches(id),
+ category_slug text not null check(category_slug in ('cement','steel','bricks-blocks','plumbing','electrical','paint','tiles','hardware','aggregates')),
+ product_name text not null check(char_length(btrim(product_name)) between 2 and 160),
+ brand_name text not null check(char_length(btrim(brand_name)) between 1 and 100),
+ model_details text not null check(char_length(btrim(model_details)) between 5 and 400),
+ source_url text check(char_length(source_url)<=500 and source_url ~ '^https://'),
+ status text not null default 'pending' check(status in ('pending','accepted','rejected')),
+ review_note text check(char_length(btrim(review_note)) between 3 and 300),
+ created_by uuid not null default auth.uid() references auth.users(id),
+ created_at timestamptz not null default now(),
+ reviewed_by uuid references auth.users(id),reviewed_at timestamptz,
+ foreign key(branch_id,tenant_id) references public.merchant_branches(id,tenant_id)
+);
+create index dealer_product_request_scope on public.dealer_product_requests(tenant_id,created_at desc);
+create unique index dealer_product_request_pending_unique on public.dealer_product_requests(branch_id,category_slug,lower(btrim(product_name)),lower(btrim(brand_name)),lower(btrim(model_details))) where status='pending';
+alter table public.dealer_product_requests enable row level security;
+revoke all on public.dealer_product_requests from public,anon,authenticated;
+grant select on public.dealer_product_requests to authenticated;
+grant insert(tenant_id,branch_id,category_slug,product_name,brand_name,model_details,source_url) on public.dealer_product_requests to authenticated;
+grant update(status,review_note) on public.dealer_product_requests to authenticated;
+create policy dealer_product_request_read on public.dealer_product_requests for select to authenticated using ((select public.neerva_account_access_allowed()) and (public.is_tenant_member(tenant_id,array['owner','manager']::text[]) or (select public.has_platform_role(array['admin','super_admin']::public.platform_role[]))));
+create policy dealer_product_request_create on public.dealer_product_requests for insert to authenticated with check (
+ created_by=auth.uid() and status='pending' and reviewed_at is null and reviewed_by is null and review_note is null and (select public.neerva_account_access_allowed()) and public.is_tenant_member(tenant_id,array['owner','manager']::text[]) and exists(select 1 from public.tenants t where t.id=dealer_product_requests.tenant_id and t.status='active') and exists(select 1 from public.merchant_branches b where b.id=branch_id and b.tenant_id=dealer_product_requests.tenant_id and b.approved));
+create policy dealer_product_request_review on public.dealer_product_requests for update to authenticated using(status='pending' and (select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[]))) with check(status in ('accepted','rejected') and review_note is not null and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
+create trigger dealer_product_request_stamp before update on public.dealer_product_requests for each row execute function public.neerva_delivery_review_stamp();
+-- Separate stock from availability: pausing a SKU never destroys inventory or approved prices.
+create table public.dealer_listing_controls(
+ branch_id uuid not null references public.merchant_branches(id),
+ variant_id uuid not null references public.product_variants(id),
+ tenant_id uuid not null references public.tenants(id),
+ active boolean not null default true,
+ updated_at timestamptz not null default now(),
+ primary key(branch_id,variant_id),
+ foreign key(branch_id,tenant_id) references public.merchant_branches(id,tenant_id)
+);
+alter table public.dealer_listing_controls enable row level security;
+revoke all on public.dealer_listing_controls from public,anon,authenticated;
+grant select on public.dealer_listing_controls to authenticated;
+grant insert(branch_id,variant_id,tenant_id,active) on public.dealer_listing_controls to authenticated;
+grant update(active) on public.dealer_listing_controls to authenticated;
+create policy dealer_listing_read on public.dealer_listing_controls for select to authenticated using ((select public.neerva_account_access_allowed()) and (public.is_tenant_member(tenant_id,array['owner','manager']::text[]) or (select public.has_platform_role(array['admin','super_admin']::public.platform_role[]))));
+create policy dealer_listing_insert on public.dealer_listing_controls for insert to authenticated with check ((select public.neerva_account_access_allowed()) and public.is_tenant_member(tenant_id,array['owner','manager']::text[]) and exists(select 1 from public.tenants t where t.id=dealer_listing_controls.tenant_id and t.status='active') and exists(select 1 from public.merchant_branches b where b.id=branch_id and b.tenant_id=dealer_listing_controls.tenant_id and b.approved) and exists(select 1 from public.product_variants v where v.id=variant_id and v.status='published'));
+create policy dealer_listing_update on public.dealer_listing_controls for update to authenticated using ((select public.neerva_account_access_allowed()) and public.is_tenant_member(tenant_id,array['owner','manager']::text[])) with check ((select public.neerva_account_access_allowed()) and public.is_tenant_member(tenant_id,array['owner','manager']::text[]) and exists(select 1 from public.tenants t where t.id=dealer_listing_controls.tenant_id and t.status='active') and exists(select 1 from public.merchant_branches b where b.id=branch_id and b.tenant_id=dealer_listing_controls.tenant_id and b.approved));
+create function public.neerva_listing_stamp() returns trigger language plpgsql security invoker set search_path=pg_catalog,public as $$ begin new.updated_at:=statement_timestamp();return new;end $$;
+revoke all on function public.neerva_listing_stamp() from public,anon,authenticated;
+create trigger dealer_listing_stamp before update on public.dealer_listing_controls for each row execute function public.neerva_listing_stamp();
 -- Read-only, narrow seller comparison. Does not expose exact stock, private rates, KYC or contact details.
 -- Authenticated entry point delegates to a non-exposed schema.
 grant usage on schema neerva_private to authenticated;
@@ -193,7 +244,7 @@ begin
  join public.inventory i on i.branch_id=b.id and i.variant_id=v.id and i.unit=v.unit and i.available_quantity>=p_qty
  left join lateral (select dv.* from public.dealer_delivery_versions dv where dv.branch_id=b.id and dv.pincode=p_pin and dv.status='approved' order by dv.id desc limit 1) d on true
  left join lateral (select tv.* from public.sku_tax_versions tv where tv.variant_id=v.id order by tv.id desc limit 1) tx on true
- where (d.id is null or (d.accepting_orders and round(r.amount_paise*p_qty)>=d.minimum_material_paise)) and c.slug=p_category and p.slug=p_slug and c.slug<>'aggregates' and r.status='published' and r.visibility='public' and r.currency='INR' and r.amount_paise>0 and r.minimum_quantity<=p_qty and r.valid_from<=now() and (r.valid_to is null or r.valid_to>now()) and (r.pincode_prefix is null or p_pin like r.pincode_prefix||'%')
+ where not exists(select 1 from public.dealer_listing_controls lc where lc.branch_id=b.id and lc.variant_id=v.id and not lc.active) and (d.id is null or (d.accepting_orders and round(r.amount_paise*p_qty)>=d.minimum_material_paise)) and c.slug=p_category and p.slug=p_slug and c.slug<>'aggregates' and r.status='published' and r.visibility='public' and r.currency='INR' and r.amount_paise>0 and r.minimum_quantity<=p_qty and r.valid_from<=now() and (r.valid_to is null or r.valid_to>now()) and (r.pincode_prefix is null or p_pin like r.pincode_prefix||'%')
  and exists(select 1 from public.dealer_applications a join public.dealer_service_pincodes sp on sp.application_id=a.id where a.tenant_id=t.id and a.status='approved' and a.gstin_verification='verified' and sp.pincode=p_pin)
  order by r.tenant_id,v.id,(d.id is not null) desc,length(coalesce(r.pincode_prefix,'')) desc,r.minimum_quantity desc,r.valid_from desc,r.version desc,r.id
  )
