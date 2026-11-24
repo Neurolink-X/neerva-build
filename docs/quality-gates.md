@@ -1,0 +1,13 @@
+# Neerva release quality gates
+
+The workflow **Neerva authenticated QA and performance** adds candidate and existing production lab measurements and an explicit isolated-staging authenticated suite. It uses free/open-source Chromium Playwright; GitHub-hosted minutes are subject to account quotas. No third-party paid monitoring.
+
+## Setup once for authenticated testing
+Create an isolated staging Supabase project with the repository migrations and published cement category, and a matching staging deployment. Do not point staging at production. Create three verified dedicated fixture accounts (admin, customer without staff/dealer grants, approved dealer owner with active tenant and approved branch). Configure GitHub environment `neerva-isolated-qa`, restrict it to trusted branches and reviewers; set these environment variables: QA_BASE_URL, QA_ALLOWED_ORIGIN (exact same HTTPS origin), QA_SUPABASE_REF (staging ref), QA_ISOLATED_STAGING=true. Set environment secrets QA_ADMIN_EMAIL, QA_ADMIN_PASSWORD, QA_CUSTOMER_EMAIL, QA_CUSTOMER_PASSWORD, QA_DEALER_EMAIL, QA_DEALER_PASSWORD. Never commit credentials. Run workflow_dispatch with run_authenticated=true after deploying the exact candidate to staging. A skipped job is **not a pass**.
+
+Tests use actual browser sign-in and JWT-backed API calls, check role access, read workflows, draft catalog create/edit/archive, negative authorization, and sign-out. Staging fixtures are archived in finally; no real payments, stock, dealer offers, or customer orders are created. Full customer quote-to-order, payment reconciliation, image upload and multi-device realtime delivery still require additional isolated fixtures and tests.
+
+## Performance
+Candidate production build and existing public production run separately. Reports contain actual 3 cold mobile samples per route (4x CPU, throttled network), p75 LCP/CLS/TTFB, sampled interaction duration when available, long-task duration, transfer bytes, and 5 samples of public API latency. Budgets: LCP 2500ms, CLS 0.1, TTFB 800ms, sampled interaction 200ms, public API p95 600ms. These are laboratory results, not field INP or Lighthouse score. Missing LCP or failed requests fail the run. Production report is the currently deployed baseline, not proof the candidate is live. API latency is unthrottled runner round trip. Actual authenticated endpoints need a separately provisioned staging run. Inspect artifacts; require passing candidate and staging tests before claiming full release verification.
+
+For manual execution after workflow is on the default branch: Actions > Neerva authenticated QA and performance > Run workflow. Keep any real payment gate closed unless separately approved.
