@@ -6,6 +6,7 @@ import type {PlanBrief,RoadSide,PlanModel} from "@/modules/studio/plan-model";
 
 const fill:Record<string,string>={parking:"#bcd8d1",verandah:"#e9e3c0",living:"#d1e2d5",dining:"#e2e6c6",kitchen:"#edd8bb",bedroom:"#d8dfed",bath:"#c3dce8",stairs:"#d0d6cf",utility:"#e8d5bf",lounge:"#cce3ce",terrace:"#d7e9d8",corridor:"#eee8d5",balcony:"#dce8dc"};
 function planLabel(plan:PlanModel,index:number){
+ if(!plan.parking&&!plan.stairs.roomIds.length)return "Plan "+(index+1)+" · Compact 1 BHK · "+(plan.variant==="parking-left"?"left kitchen":"right kitchen");
  const rear=plan.rooms.find(r=>r.id==="utility-g");
  const family=plan.rooms.find(r=>r.id==="dining");
  const rearName=rear?.kind==="terrace"?"Courtyard":rear?.kind==="lounge"?"Rear gallery":rear?.kind==="living"?"Rear veranda":"Utility";
@@ -52,10 +53,11 @@ export function SpatialPlanGallery(){
     <div className="nbd-spatial-image"><MiniSpatialPlan plan={plan}/><span>ACTUAL ROOM PARTITIONS</span></div>
     <div className="nbd-spatial-copy">
      <h3>{planLabel(plan,i)}</h3>
-     <p>{plan.variant==="parking-left"?"Car at left":"Car at right"} · {floors===1?"Ground only":"G+"+(floors-1)} · {bedrooms} BHK</p>
+     <p>{!plan.parking?"Pedestrian entrance":plan.variant==="parking-left"?"Car at left":"Car at right"} · {floors===1?"Ground only":"G+"+(floors-1)} · {bedrooms} BHK</p>
      <Link href={"/design-studio/portfolio?"+new URLSearchParams({...baseParams,option:String(i)}).toString()}>Explore this exact 2D + 3D →</Link>
     </div>
    </article>)}</div>}
   <p className="nbd-spatial-note">Illustrative planning models only; not measured construction drawings. Setbacks, circulation, structure and legal approvals require a licensed architect. Unsupported inputs do not generate made-up designs.</p>
  </section>;
 }
+

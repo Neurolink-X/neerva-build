@@ -116,7 +116,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    const gates=planModel?[
     {start:planModel.gate.xFt,width:planModel.gate.widthFt},
     {start:planModel.pedestrianGate.xFt,width:planModel.pedestrianGate.widthFt}
-   ].sort((a,b)=>a.start-b.start):[{start:(design.plot.widthFt-Math.min(3,width*.65)/FT)/2,width:Math.min(3,width*.65)/FT}];
+   ].filter(g=>g.width>0).sort((a,b)=>a.start-b.start):[{start:(design.plot.widthFt-Math.min(3,width*.65)/FT)/2,width:Math.min(3,width*.65)/FT}];
    let fenceCursor=0;
    for(const gate of gates){
     if(gate.start>fenceCursor+.01){

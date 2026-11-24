@@ -64,7 +64,7 @@ test("changing plot dimensions and road side recomputes models, doors, car entry
  }
 });
 test("impossible plot constraints never produce duplicate fake plans",()=>{
- for(const input of [{...standard,widthFt:15,depthFt:30},{...standard,parking:false},
+ for(const input of [{...standard,widthFt:15,depthFt:30},{...standard,parking:false,widthFt:12,depthFt:26},
   {...standard,setbacks:{frontFt:8,rearFt:7,leftFt:3,rightFt:3}}]){
   const generated=generateSpatialPortfolio(input);
   assert.equal(generated.plans.length,0);
@@ -108,4 +108,33 @@ test("different option indices lead to different PlanModel room geometry, all fl
  const ground=generateSpatialPortfolio({...standard,widthFt:20,depthFt:40,bedrooms:2,floors:1},24).plans;
  assert.ok(ground.length>0);
  assert.ok(ground.every(p=>p.floors===1&&p.rooms.every(r=>r.floor===0)));
+});
+
+
+test("pedestrian plans retain requested bedrooms, floor geometry and independent entry",()=>{
+ for(const [w,d,f,b,count] of [[15,30,1,1,2],[16,35,1,1,2],[18,50,2,3,24],[30,50,3,3,24]] as const){
+  const {plans}=generateSpatialPortfolio({...standard,widthFt:w,depthFt:d,floors:f,bedrooms:b,parking:false});
+  assert.equal(plans.length,count);
+  for(const p of plans){
+   assert.deepEqual(validatePlan(p),[]);assert.equal(p.parking,null);assert.equal(p.gate.widthFt,0);
+   assert.equal(p.rooms.some(r=>r.kind==="parking"),false);
+   assert.equal(studioDesignFromPlan(p).bedrooms,b);
+  }
+ }
+});
+
+test("portfolio uses the requested site envelope across nine plot sizes and every road side",()=>{
+ for(const [w,d,f,b] of [[18,50,2,3],[20,40,1,2],[20,45,2,3],[20,50,2,3],[25,40,2,3],[25,50,2,3],[30,40,2,3],[30,50,3,3],[40,60,2,3]] as const){
+  for(const side of ["N","S","E","W"] as const){
+   const {plans}=generateSpatialPortfolio({...standard,widthFt:w,depthFt:d,floors:f,bedrooms:b,roadSide:side});
+   assert.equal(plans.length,24);
+   for(const p of plans){
+    assert.deepEqual(validatePlan(p),[]);
+    const model=studioDesignFromPlan(p);
+    assert.equal(model.bedrooms,b);assert.equal(model.floors,f);
+    assert.deepEqual([model.plot.widthFt,model.plot.depthFt],[w,d]);
+    assert.deepEqual(model.layout.rooms.map(r=>[r.floorIndex,r.xFt,r.yFt,r.wFt,r.dFt]),p.rooms.map(r=>[r.floor,r.x,r.y,r.w,r.d]));
+   }
+  }
+ }
 });

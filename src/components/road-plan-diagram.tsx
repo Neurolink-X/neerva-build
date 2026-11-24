@@ -31,8 +31,8 @@ export function RoadPlanDiagram({plan,floor=0}:{plan:PlanModel;floor?:number}){
     return <g key={o.id}><line {...l} stroke={o.kind==="door"?"#b66b42":"#3186a0"} strokeWidth={o.kind==="door"?".65":".38"}/></g>;
    })}
    {floor===0&&<g>
-    <line x1={plan.gate.xFt} y1="0" x2={plan.gate.xFt+plan.gate.widthFt} y2="0" stroke="#ba7748" strokeWidth=".85"/>
-    <text x={plan.gate.xFt+plan.gate.widthFt/2} y={-0.65} fontSize=".8" fontWeight="800" textAnchor="middle">CAR GATE</text>
+    {plan.parking&&<g><line x1={plan.gate.xFt} y1="0" x2={plan.gate.xFt+plan.gate.widthFt} y2="0" stroke="#ba7748" strokeWidth=".85"/>
+    <text x={plan.gate.xFt+plan.gate.widthFt/2} y={-0.65} fontSize=".8" fontWeight="800" textAnchor="middle">CAR GATE</text></g>}
     <line x1={plan.pedestrianGate.xFt} y1="0" x2={plan.pedestrianGate.xFt+plan.pedestrianGate.widthFt} y2="0" stroke="#2c7657" strokeWidth=".8"/>
     <text x={plan.pedestrianGate.xFt+plan.pedestrianGate.widthFt/2} y={-0.65} fontSize=".7" fontWeight="800" textAnchor="middle">ENTRY</text>
    </g>}
@@ -67,8 +67,9 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
     {plan.facade.kit==="jali-screen"&&Array.from({length:8},(_,i)=><rect key={i} x={x(r.x+(i+.5)*r.w/24)} y={y((r.floor+1)*storeyFt)} width={.26*scale} height={storeyFt*scale} fill={accent}/>)}
     {plan.facade.kit==="pergola"&&Array.from({length:6},(_,i)=><rect key={i} x={x(r.x+(i+.5)*r.w/6)} y={y((r.floor+1)*storeyFt)} width={.4*scale} height={.5*scale} fill={accent}/>)}
    </g>)}
-   {[plan.gate,plan.pedestrianGate].map(g=><rect key={g.xFt} x={x(g.xFt)} y={y(4)} width={g.widthFt*scale} height={4*scale} fill="#485d50" stroke="#304739"/>)}
+   {[plan.gate,plan.pedestrianGate].filter(g=>g.widthFt>0).map(g=><rect key={g.xFt} x={x(g.xFt)} y={y(4)} width={g.widthFt*scale} height={4*scale} fill="#485d50" stroke="#304739"/>)}
    <text x="350" y="395" fontSize="15" textAnchor="middle" fill="#314e3e">{widthFt} ft frontage · Road {roadSide} · Concept elevation</text>
   </svg>
  </section>;
 }
+

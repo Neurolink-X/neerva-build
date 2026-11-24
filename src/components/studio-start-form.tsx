@@ -23,11 +23,12 @@ export function StudioStartForm(){
    <label>Road on which side?<select value={road} onChange={e=>setRoad(e.target.value)}><option value="N">North</option><option value="E">East</option><option value="S">South</option><option value="W">West</option></select></label>
    <label>Bedrooms<select value={bedrooms} onChange={e=>setBedrooms(e.target.value)}>{[1,2,3].map(x=><option key={x} value={x}>{x} BHK</option>)}</select></label>
    <label>Floors<select value={floors} onChange={e=>setFloors(e.target.value)}><option value="1">Ground</option><option value="2">Ground + first</option><option value="3">Ground + two floors</option></select></label>
-   <label>Car parking<select value={parking} onChange={e=>setParking(e.target.value)}><option value="true">Needed</option><option value="false">Not needed (limited support)</option></select></label>
+   <label>Car parking<select value={parking} onChange={e=>setParking(e.target.value)}><option value="true">Needed</option><option value="false">No car parking</option></select></label>
   </div>
   {error&&<p role="alert" className="nstudio-error">{error}</p>}
   <button type="submit">Create room layouts for my plot →</button>
   <small>Draft concepts, not construction drawings. The system shows only layouts that pass its current circulation checks. Small or unusual plots may have no valid layouts.</small>
  </form>;
 }
+
 

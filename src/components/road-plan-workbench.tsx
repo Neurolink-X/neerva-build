@@ -115,8 +115,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
        {v.rooms.filter(r=>r.floor===0).map(r=><rect key={r.id} x={r.x} y={r.y} width={r.w} height={r.d}
         fill={({parking:"#d4e6e0",verandah:"#fff3d9",living:"#e0ead9",dining:"#e8ebd7",kitchen:"#f0dfcc",bedroom:"#dce2f1",bath:"#c7e3f0",stairs:"#d4d4d4",corridor:"#f4efd9",utility:"#e5d5c4",lounge:"#d9e8cd",terrace:"#dce8df"} as Record<string,string>)[r.kind]??"#e7e4da"} stroke="#496452" strokeWidth=".18"/>)}
        <line x1="0" x2={v.plot.widthFt} y1="0" y2="0" stroke="#be6740" strokeWidth="1.1"/>
-      </svg><strong>{i+1}. {v.rooms.some(r=>r.id==="bed-g2")?"Two rear bedrooms":v.notes[0]?.includes("family-gallery")?"Gallery / family seating":v.notes[0]?.includes("rear-courtyard")?"Open rear courtyard":v.notes[0]?.includes("rear-baranda")?"Rear baranda / veranda":"Utility & wash"}</strong>
-       <span>{v.variant==="parking-left"?"Car at left":"Car at right"} · {v.notes[0]?.includes("family hall")?"Family hall":v.notes[0]?.includes("lounge / drawing")?"Drawing lounge":"Dining + hall"}</span>
+      </svg><strong>{i+1}. {!v.parking&&!v.stairs.roomIds.length?"Compact 1 BHK":v.rooms.some(r=>r.id==="bed-g2")?"Two rear bedrooms":v.notes[0]?.includes("family-gallery")?"Gallery / family seating":v.notes[0]?.includes("rear-courtyard")?"Open rear courtyard":v.notes[0]?.includes("rear-baranda")?"Rear baranda / veranda":"Utility & wash"}</strong>
+       <span>{!v.parking?"Pedestrian entrance":v.variant==="parking-left"?"Car at left":"Car at right"} · {!v.parking&&!v.stairs.roomIds.length?"Living + dining":v.notes[0]?.includes("family hall")?"Family hall":v.notes[0]?.includes("lounge / drawing")?"Drawing lounge":"Dining + hall"}</span>
        <small>Kitchen {v.rooms.find(r=>r.id==="kitchen")!.x < v.plot.widthFt/2 ? "left" : "right"} · {v.plot.widthFt} × {v.plot.depthFt} ft</small></button>)}</div>
      {result.plans.length<3&&<p className="nroad-small" role="status">Only {result.plans.length} spatially valid options fit this brief. Narrow or irregular plots can have fewer than 24; no false layouts are added to reach a marketing count.</p>}
      <div className="nroad-save"><button type="button" disabled={saving} onClick={()=>void saveDraft()}>{saving?"Saving…":str("Save this plot-specific concept privately","अपना नक्शा सुरक्षित सेव करें")}</button>{saveInfo&&<p role="status">{saveInfo} {saveInfo.startsWith("Sign in")&&<Link href="/account">Sign in →</Link>}</p>}</div>
@@ -138,7 +138,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      </div>
      {metrics&&<section className="nroad-metrics"><h2>{str("Preliminary quantities — not a BOQ","प्रारंभिक अनुमान — अंतिम BOQ नहीं")}</h2>
       <div><span><strong>{metrics.roomFloorSqFt.toFixed(0)} ft²</strong><small>Room-floor rectangles, all levels</small></span>
-       <span><strong>{metrics.parkingSqFt.toFixed(0)} ft²</strong><small>Car bay rectangle</small></span>
+       {plan.parking&&<span><strong>{metrics.parkingSqFt.toFixed(0)} ft²</strong><small>Car bay rectangle</small></span>}
        <span><strong>{metrics.netPaintSqM.toFixed(1)} m²</strong><small>Room-facing painted area</small></span>
        <span><strong>{metrics.paintLitres} L</strong><small>Illustrative 2 coats, 10 m²/L</small></span></div>
       <p className="nroad-small">{metrics.note}</p>

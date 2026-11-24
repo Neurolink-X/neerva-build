@@ -19,7 +19,7 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
  const gates=(g:{xFt:number;widthFt:number})=>[point(g.xFt,0),point(g.xFt+g.widthFt,0)];
  const roadLabel={x:mid.x+(side==="E"?2.6:side==="W"?-2.6:0),y:mid.y+(side==="N"?-1.7:side==="S"?2.2:0)};
  return <section className="nroad-diagram" aria-label="Single-source geographical floor plan">
-  <svg role="img" aria-label={`Road on ${side} side. Floor ${floor+1} with matching doors, rooms and parking.`} viewBox={[-6,-6,dim.w+12,dim.d+12].join(" ")}>
+  <svg role="img" aria-label={`Road on ${side} side. Floor ${floor+1} with matching doors and rooms.`} viewBox={[-6,-6,dim.w+12,dim.d+12].join(" ")}>
    <rect width={dim.w} height={dim.d} fill="#f1eee6" stroke="#b0b0a7" strokeDasharray=".6 .3" strokeWidth=".15"/>
    <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#fdfcf7" stroke="#516552" strokeWidth=".4"/>
    <line x1={road.start.x} y1={road.start.y} x2={road.end.x} y2={road.end.y} stroke="#a96743" strokeWidth="1.25"/>
@@ -42,7 +42,7 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
    })}
    {floor===0&&[plan.gate,plan.pedestrianGate].map((g,i)=>{const [a,b]=gates(g);return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={i===0?"#a86643":"#23764d"} strokeWidth=".9"/>})}
   </svg>
-  <div className="nroad-legend"><span>Road {side} · {plan.plot.siteShape&&plan.plot.siteShape.kind!=="rectangle"?"measured L-site outline, conservative no-build strip":"true compass orientation"}</span><span>Brown: doors & car gate</span><span>Blue: windows</span><span>Green: pedestrian gate</span></div>
+  <div className="nroad-legend"><span>Road {side} · {plan.plot.siteShape&&plan.plot.siteShape.kind!=="rectangle"?"measured L-site outline, conservative no-build strip":"true compass orientation"}</span><span>{plan.parking?"Brown: doors & car gate":"Brown: doors"}</span><span>Blue: windows</span><span>Green: pedestrian gate</span></div>
   <details><summary>Room dimensions & opening list</summary><ul>{rooms.map(r=><li key={r.id}><strong>{r.label}</strong> — {r.w.toFixed(1)} × {r.d.toFixed(1)} ft · {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="door").length} doors / {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="window").length} windows</li>)}</ul></details>
   <p className="nroad-small">Concept only. Verify with a licensed architect/engineer and local authority approval. Stairs, turning and legal setbacks remain unchecked.</p>
  </section>;
