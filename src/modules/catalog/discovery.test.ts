@@ -64,3 +64,18 @@ test("brand directory paths resolve uniquely within every category and use the m
   }
  }
 });
+
+test("cement directory includes matching local product references for sourced brands",async()=>{
+ const {directoryCards}=await import("./brand-pages.ts");
+ const {existsSync}=await import("node:fs");
+ const cards=directoryCards("cement");
+ for(const name of ["ACC","UltraTech","JK Cement","Priya","Maha","Ramco","Birla Super"]){
+  const card=cards.find(c=>c.name===name);
+  assert.ok(card?.image,name+" needs a local product reference");
+  assert.ok(existsSync("public"+card.image),name+" local product media");
+  assert.ok(card.count>0);
+ }
+ for(const card of cards){
+  if(card.image)assert.ok(demoProducts.some(p=>p.brand===card.name&&p.category==="cement"&&p.referenceImage===card.image));
+ }
+});
