@@ -1,4 +1,5 @@
 "use client";
+import {DIRECT_CART_KEY,addDirectCart,safeDirectCart} from "@/modules/orders/direct-cart";
 
 import { useState, useRef } from "react";
 import Image from "next/image";
@@ -41,6 +42,7 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const [notice, setNotice] = useState("");
+  function addToOrderCart(){try{if(!Number.isFinite(quantity)||quantity<.001||quantity>1000000){setNotice('Enter a valid quantity.');return;}const old=safeDirectCart(JSON.parse(localStorage.getItem(DIRECT_CART_KEY)??'[]'));const next=addDirectCart(old,{category:product.category,productSlug:product.slug,productName:product.name,unit,quantity});if(JSON.stringify(old)===JSON.stringify(next)){setNotice('Cart limit reached or invalid item.');return;}localStorage.setItem(DIRECT_CART_KEY,JSON.stringify(next));setNotice('Added to order cart. Review before submitting.');}catch{setNotice('Cart storage unavailable; use direct order instead.');}}
   function saveMaterial() {
     try {
       if(!Number.isFinite(quantity)||quantity<=0||quantity>1000000){setNotice("Enter a quantity above zero and up to 1,000,000.");return;}
@@ -64,7 +66,7 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
         </label>
       </div>
       <p className="option-confirmation-note">Options describe your requirement; the dealer will confirm whether this brand supplies that exact variant, its current stock and the final rate.</p>
-      <button type="button" className="button button-orange product-add-button" onClick={saveMaterial}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
+      <button type="button" className="button button-dark" onClick={addToOrderCart}>Add to order cart</button> <Link href="/checkout?cart=1" className="button button-outline">View order cart →</Link><button type="button" className="button button-orange product-add-button" onClick={saveMaterial}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
     </div>
   );
 }
