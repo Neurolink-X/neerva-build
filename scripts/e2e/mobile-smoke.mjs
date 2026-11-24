@@ -6,7 +6,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
+const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/admin/analytics","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -391,7 +391,7 @@ async function main(){
   // Negative authorization checks for EVERY protected role API and exposed verb.
   // These are guest-only probes; none may persist an order, payment, offer or role change.
   const protectedMatrix={
-   GET:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
+   GET:["/api/admin/analytics","/api/admin/design-reviews","/api/admin/overview","/api/admin/audit","/api/dealer/overview","/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
     "/api/admin/orders","/api/admin/pricing","/api/admin/rfqs",
     "/api/admin/studio-payments","/api/admin/studio-settings","/api/admin/studio-support",
     "/api/admin/system-incidents","/api/admin/users","/api/customer/quotes",
@@ -401,7 +401,7 @@ async function main(){
     "/api/admin/rfqs","/api/admin/users","/api/dealer/inventory","/api/dealer/quotes",
     "/api/orders","/api/rfqs","/api/studio/payments","/api/studio/payments/claim",
     "/api/studio/premium-report","/api/studio/projects","/api/studio/support"],
-   PATCH:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
+   PATCH:["/api/admin/design-reviews","/api/admin/system-incidents","/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
     "/api/admin/pricing","/api/admin/studio-payments","/api/admin/studio-settings",
     "/api/admin/studio-support","/api/admin/users","/api/admin/orders","/api/dealer/orders","/api/orders"],
    DELETE:["/api/studio/payments"]
