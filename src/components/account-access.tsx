@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createNeervaBrowserClient } from "@/modules/supabase/browser";
 
@@ -9,6 +9,8 @@ const supabase = createNeervaBrowserClient();
 
 function friendlyAuthError(message: string) {
   const normalized = message.toLowerCase();
+  if (/rate.limit|too many requests|only request this after|over_email_send_rate_limit/.test(normalized)) return "Too many email requests. Wait at least 60 seconds before requesting another email. Check your inbox and spam first.";
+  if (/expired|otp_expired|invalid.*token/.test(normalized)) return "This email link or code is invalid or expired. Request a fresh one.";
   if (normalized.includes("privacy consent required")) return "Read the privacy notice and agree before creating an account.";
   if (normalized.includes("invalid login credentials")) return "Email or password is incorrect. Check both and try again.";
   if (normalized.includes("email not confirmed")) return "Verify your email using the link we sent, then sign in.";
@@ -24,6 +26,13 @@ export function AccountAccess() {
   const admin = Boolean(user && roleData?.userId === user.id && roleData.admin);
   const dealer = Boolean(user && roleData?.userId === user.id && roleData.dealer);
   const [magicEmail,setMagicEmail]=useState("");
+  const [recovery,setRecovery]=useState(false);
+  const [emailAction,setEmailAction]=useState<"link"|"resend"|"reset">("link");
+  const [cooldownUntil,setCooldownUntil]=useState(0);
+  const [secondsLeft,setSecondsLeft]=useState(0);
+  const submissionLock=useRef(false);
+  useEffect(()=>{if(!cooldownUntil)return;const timer=window.setInterval(()=>setSecondsLeft(Math.max(0,Math.ceil((cooldownUntil-Date.now())/1000))),1000);return()=>window.clearInterval(timer)},[cooldownUntil]);
+  function startEmailCooldown(){setSecondsLeft(60);setCooldownUntil(Date.now()+60000)}
   const [phone,setPhone]=useState(""),[otp,setOtp]=useState(""),[phoneChallengeSent,setPhoneChallengeSent]=useState(false);
   const phoneOtpEnabled=process.env.NEXT_PUBLIC_PHONE_OTP_ENABLED==="true";
   const [busy, setBusy] = useState(false);
@@ -33,7 +42,7 @@ export function AccountAccess() {
     if (!supabase) return;
     let active = true;
     void supabase.auth.getSession().then(({ data }) => { if (active) setUser(data.session?.user ?? null); });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => { if (active) setUser(session?.user ?? null); });
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => { if (active) { setUser(session?.user ?? null); if(event==="PASSWORD_RECOVERY")setRecovery(true); if(event==="SIGNED_OUT")setRecovery(false); } });
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, []);
 
@@ -51,7 +60,8 @@ export function AccountAccess() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!supabase) return;
+    if (!supabase || submissionLock.current || (mode==="signup"&&Date.now()<cooldownUntil)) return;
+    submissionLock.current=true;
     setBusy(true); setMessage(null);
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "").trim().toLowerCase();
@@ -64,29 +74,59 @@ export function AccountAccess() {
       } else {
         if(form.get("privacyAccepted")!=="yes")throw new Error("Privacy consent required");
         const displayName = String(form.get("displayName") ?? "").trim();
-        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
+        setMagicEmail(email);
+        setEmailAction("resend");
+        startEmailCooldown();
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo:window.location.origin+"/account", data: { display_name: displayName } } });
         if (error) throw error;
         setMessage({ kind: "success", text: data.session?.user.email_confirmed_at ? "Your verified account is ready." : "Check your email for verification. Private quotation requests require a verified email." });
       }
     } catch (error) {
       setMessage({ kind: "error", text: friendlyAuthError(error instanceof Error ? error.message : "") });
-    } finally { setBusy(false); }
+    } finally { submissionLock.current=false;setBusy(false); }
   }
 
 
   async function sendMagicLink(event:FormEvent<HTMLFormElement>){
     event.preventDefault();
-    if(!supabase||busy)return;
+    if(!supabase||submissionLock.current||busy||Date.now()<cooldownUntil)return;
+    submissionLock.current=true;
     setBusy(true);setMessage(null);
+    const email=magicEmail.trim().toLowerCase();
+    const redirectTo=window.location.origin+"/account";
+    startEmailCooldown();
     try{
-      const {error}=await supabase.auth.signInWithOtp({
-        email:magicEmail.trim().toLowerCase(),
-        options:{emailRedirectTo:window.location.origin+"/account",shouldCreateUser:false}
-      });
-      if(error)throw error;
-      setMessage({kind:"success",text:"If an account exists, a sign-in link has been requested. Delivery depends on your email provider. Check spam if needed."});
+      if(emailAction==="reset"){
+        const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo});
+        if(error)throw error;
+      }else if(emailAction==="resend"){
+        const {error}=await supabase.auth.resend({type:"signup",email,options:{emailRedirectTo:redirectTo}});
+        if(error)throw error;
+      }else{
+        const {error}=await supabase.auth.signInWithOtp({email,options:{emailRedirectTo:redirectTo,shouldCreateUser:false}});
+        if(error)throw error;
+      }
+      setMessage({kind:"success",text:"If this email is eligible, a link has been requested. Check your inbox and spam. Use the newest link."});
     }catch(error){setMessage({kind:"error",text:friendlyAuthError(error instanceof Error?error.message:"")})}
-    finally{setBusy(false)}
+    finally{submissionLock.current=false;setBusy(false)}
+  }
+  async function updatePassword(event:FormEvent<HTMLFormElement>){
+    event.preventDefault();
+    if(!supabase||!user||!recovery||submissionLock.current)return;
+    const data=new FormData(event.currentTarget);
+    const password=String(data.get("newPassword")??"");
+    if(password.length<12||password!==data.get("confirmPassword")){
+      setMessage({kind:"error",text:"Use at least 12 characters and enter the same password twice."});return;
+    }
+    submissionLock.current=true;setBusy(true);setMessage(null);
+    try{
+      const {error}=await supabase.auth.updateUser({password});
+      if(error)throw error;
+      const {error:signOutError}=await supabase.auth.signOut({scope:"global"});
+      if(signOutError)throw signOutError;
+      setRecovery(false);setUser(null);setMode("signin");setMessage({kind:"success",text:"Password changed. Sign in with your new password."});
+    }catch(error){setMessage({kind:"error",text:friendlyAuthError(error instanceof Error?error.message:"")})}
+    finally{submissionLock.current=false;setBusy(false)}
   }
   async function beginPhoneOtp(event:FormEvent<HTMLFormElement>){
     event.preventDefault();
@@ -113,14 +153,15 @@ export function AccountAccess() {
     finally{setBusy(false)}
   }
   return <div className="account-access-card">
-    {!supabase ? <><span className="eyebrow">ACCOUNT SETUP</span><h2>Sign-in will open here.</h2><p>Customer and dealer accounts use NEERVA BUILD’s separate Supabase project. The account service is not configured yet, so no password field is shown and no credentials are collected.</p><div className="account-service-state"><span aria-hidden="true">○</span><span><strong>Waiting for backend setup</strong><small>Separate auth URL and public key are missing.</small></span></div></> : user ? <><span className="eyebrow">YOUR ACCOUNT</span><h2>You’re signed in.</h2><p>{user.email}</p><div className="account-dashboard-links">{admin && <Link href="/admin/catalog">Manage platform catalog →</Link>}{dealer && <Link href="/dealer/inventory">Open dealer inventory →</Link>}<Link href="/basket">Review your material list →</Link></div><button className="button button-outline" onClick={() => void supabase.auth.signOut()}>Sign out</button></> : <>
+    {!supabase ? <><span className="eyebrow">ACCOUNT SETUP</span><h2>Sign-in will open here.</h2><p>Customer and dealer accounts use NEERVA BUILD’s separate Supabase project. The account service is not configured yet, so no password field is shown and no credentials are collected.</p><div className="account-service-state"><span aria-hidden="true">○</span><span><strong>Waiting for backend setup</strong><small>Separate auth URL and public key are missing.</small></span></div></> : recovery && user ? <><h2>Set a new password.</h2><form className="account-auth-form" onSubmit={updatePassword}><label>New password<input name="newPassword" type="password" minLength={12} maxLength={128} required autoComplete="new-password"/></label><label>Confirm password<input name="confirmPassword" type="password" minLength={12} maxLength={128} required autoComplete="new-password"/></label><button className="button button-dark" disabled={busy}>Update password</button></form>{message&&<p role={message.kind==="error"?"alert":"status"} className={`account-feedback ${message.kind}`}>{message.text}</p>}</> : user ? <><span className="eyebrow">YOUR ACCOUNT</span><h2>You’re signed in.</h2><p>{user.email}</p><div className="account-dashboard-links">{admin && <Link href="/admin/catalog">Manage platform catalog →</Link>}{dealer && <Link href="/dealer/inventory">Open dealer inventory →</Link>}<Link href="/basket">Review your material list →</Link></div><button className="button button-outline" onClick={() => void supabase.auth.signOut()}>Sign out</button></> : <>
       <div className="account-mode-switch"><button type="button" className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setMessage(null); }}>Sign in</button><button type="button" className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setMessage(null); }}>Create account</button></div>
       <h2>{mode === "signin" ? "Welcome back." : "Create your customer account."}</h2><p>{mode === "signin" ? "Manage your project and material requests." : "Save projects, addresses and dealer quotations in one account."}</p>
-      <form className="account-auth-form" onSubmit={submit}>{mode === "signup" && <label>Your name<input name="displayName" required minLength={2} maxLength={100} autoComplete="name" /></label>}<label>Email address<input name="email" type="email" required maxLength={254} autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={128} autoComplete={mode === "signin" ? "current-password" : "new-password"} /></label>{mode==="signup"&&<label className="neerva-account-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> I agree to the <Link href="/privacy">privacy notice</Link> for creating an account.</label>}<button className="button button-dark" disabled={busy}>{busy ? "Please wait…" : mode === "signin" ? "Sign in securely →" : "Create customer account →"}</button></form>
+      <form className="account-auth-form" onSubmit={submit}>{mode === "signup" && <label>Your name<input name="displayName" required minLength={2} maxLength={100} autoComplete="name" /></label>}<label>Email address<input name="email" type="email" required maxLength={254} autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={128} autoComplete={mode === "signin" ? "current-password" : "new-password"} /></label>{mode==="signup"&&<label className="neerva-account-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to the <Link href="/privacy">privacy notice</Link> for creating an account.</span></label>}<button className="button button-dark" disabled={busy||(mode==="signup"&&secondsLeft>0)}>{busy ? "Please wait…" : mode === "signin" ? "Sign in securely →" : secondsLeft>0 ? `Try again in ${secondsLeft}s` : "Create customer account →"}</button></form>
+      {message && <p className={`account-feedback ${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>{message.text}</p>
       <form className="account-auth-form" onSubmit={sendMagicLink} style={{marginTop:23}}>
-        <strong>Prefer a password-free email sign-in?</strong>
+        <strong>Email verification and account recovery</strong><label>What do you need?<select value={emailAction} onChange={e=>{const value=e.target.value;if(value==="link"||value==="reset"||value==="resend")setEmailAction(value)}}><option value="link">Password-free sign-in</option><option value="resend">Resend verification email</option><option value="reset">Forgot password</option></select></label>
         <label>Your registered email<input type="email" value={magicEmail} onChange={e=>setMagicEmail(e.target.value)} required autoComplete="email" maxLength={254}/></label>
-        <button className="button button-outline" disabled={busy}>Send secure email link →</button>
+        <button className="button button-outline" disabled={busy||secondsLeft>0}>{secondsLeft>0?`Resend available in ${secondsLeft}s`:emailAction==="reset"?"Send password reset link →":emailAction==="resend"?"Resend verification email →":"Send secure email link →"}</button>
       </form>
       {phoneOtpEnabled?<form className="account-auth-form" onSubmit={phoneChallengeSent?verifyPhoneOtp:beginPhoneOtp} style={{marginTop:23}}>
         <strong>Phone OTP</strong>
