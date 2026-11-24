@@ -6,13 +6,14 @@ export async function springOrders(
   const base = process.env.ORDER_SERVICE_URL;
   if (!base) return null;
   try {
+    const method = request.method === "POST" ? "POST" : "GET";
     const upstream = await fetch(new URL("/v1/orders" + path, base), {
-      method: body ? "POST" : "GET",
+      method,
       headers: {
         "Content-Type": "application/json",
         Authorization: request.headers.get("authorization") ?? "",
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: method === "POST" ? JSON.stringify(body) : undefined,
       cache: "no-store",
       redirect: "error",
       signal: AbortSignal.timeout(10000),
