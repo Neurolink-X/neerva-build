@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {type StudioDesign} from "@/modules/studio/library";
@@ -13,6 +13,8 @@ type Mode="exterior"|"dollhouse"|"walkthrough";
 export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design:StudioDesign;colour:string;planModel?:PlanModel;selectedFloor?:number}){
  const host=useRef<HTMLDivElement>(null),wallMat=useRef<THREE.MeshStandardMaterial|null>(null),refresh=useRef<(()=>void)|null>(null),colourRef=useRef(colour);
  const [mode,setMode]=useState<Mode>(selectedFloor===undefined?"exterior":"dollhouse"),[fallback,setFallback]=useState(false);
+ // The same wall cells feed the WebGL meshes and the cross-view regression contract.
+ const wallCells=useMemo(()=>buildingWallCells(design).filter(c=>mode==="exterior"||selectedFloor===undefined||c.floorIndex===selectedFloor),[design,mode,selectedFloor]);
  useEffect(()=>{colourRef.current=colour;if(wallMat.current){wallMat.current.color.set(colour);refresh.current?.()}},[colour]);
  useEffect(()=>{
   const target=host.current;if(!target)return;
@@ -55,7 +57,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
      box(xCoord(r.x+r.w/2),r.floor*height,zCoord(r.y+r.d/2),r.w*FT,.14,r.d*FT,concrete,false);
     }
    }else for(let f=0;f<design.floors;f++)box(cx,f*height,cz,W,.14,D,concrete,false);
-   const wallCells=buildingWallCells(design).filter(c=>visible(c.floorIndex)),instances=new THREE.InstancedMesh(shared,wall,wallCells.length),dummy=new THREE.Object3D();
+   const instances=new THREE.InstancedMesh(shared,wall,wallCells.length),dummy=new THREE.Object3D();
    wallCells.forEach((cell,index)=>{const length=(cell.endFt-cell.startFt)*FT,mid=(cell.startFt+cell.endFt)/2;
     dummy.position.set(cell.axis==="x"?xCoord(cell.planeFt):xCoord(mid),cell.floorIndex*height+(cell.bottomFt+cell.topFt)/2*FT,cell.axis==="z"?zCoord(cell.planeFt):zCoord(mid));
     const external=planModel&&(cell.axis==="x"
@@ -146,7 +148,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    observer=new ResizeObserver(resize);observer.observe(target);resize();
   }catch{failedTimer=window.setTimeout(()=>setFallback(true),0)}
   return()=>{window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();scene.traverse(o=>{if(o instanceof THREE.InstancedMesh)o.dispose()});renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
- },[design,mode,planModel,selectedFloor]);
- return <section className="nbd-building"><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>{selectedFloor===undefined?"Full building":mode==="exterior"?"Full building · all floors":`${["Ground floor","First floor","Second floor"][selectedFloor]??`Floor ${selectedFloor+1}`} only`} · touch to rotate</span></div><div className="nbd-buttons">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Selected floor cutaway":"Full exterior · all floors"}</button>)}</div>{fallback?<div><p role="status">Interactive rotation is unavailable on this device.</p>{planModel?<PlanAxonometric plan={planModel} design={design} floor={mode==="exterior"?undefined:selectedFloor}/>:<DesignPlanArt design={design} floor={selectedFloor??0}/>}</div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}<p className="nbd-disclaimer">{selectedFloor!==undefined?"Floor tabs show that level only by default. Choose Full exterior to inspect all selected storeys. ":""}Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Slabs and roofs are simplified; parapet details are not modeled for PlanModel mode. HDRI, phototextures and photoreal renders are not yet bundled. Eye-level beta is not a measured walkthrough.</p></section>;
+ },[design,mode,planModel,selectedFloor,wallCells]);
+ return <section className="nbd-building" data-plan-id={design.id} data-selected-floor={mode==="exterior"?"all":selectedFloor??"all"} data-wall-cells={wallCells.length}><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>{selectedFloor===undefined?"Full building":mode==="exterior"?"Full building · all floors":`${["Ground floor","First floor","Second floor"][selectedFloor]??`Floor ${selectedFloor+1}`} only`} · touch to rotate</span></div><div className="nbd-buttons">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Selected floor cutaway":"Full exterior · all floors"}</button>)}</div>{fallback?<div><p role="status">Interactive rotation is unavailable on this device.</p>{planModel?<PlanAxonometric plan={planModel} design={design} floor={mode==="exterior"?undefined:selectedFloor}/>:<DesignPlanArt design={design} floor={selectedFloor??0}/>}</div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}<p className="nbd-disclaimer">{selectedFloor!==undefined?"Floor tabs show that level only by default. Choose Full exterior to inspect all selected storeys. ":""}Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Slabs and roofs are simplified; parapet details are not modeled for PlanModel mode. HDRI, phototextures and photoreal renders are not yet bundled. Eye-level beta is not a measured walkthrough.</p></section>;
 }
 
