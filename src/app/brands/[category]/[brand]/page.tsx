@@ -25,7 +25,7 @@ function selection({category,brand}:Params){
   const card=dealer?undefined:directoryCards(category).find(b=>brandSlug(b.name)===brand);
   if(!dealer&&!card)notFound();
   const title=card?`${card.name} · ${material.title}`:`${material.title} dealer listings`;
-  const image=card?.image??categoryCover(category);
+  const image=card?.image??card?.rangeImage??categoryCover(category);
   const path=card?brandPath(category,card.name):dealerPath(category);
   const products=card?getProductsByCategory(category).filter(p=>p.brand===card.name):[];
   const description=card?`${title}. ${products.length?"Explore "+products.map(p=>p.name).slice(0,2).join(" and ")+".":"Prepare a brand-specific enquiry."} Review specifications and request local pricing.`:`Browse published ${material.title.toLowerCase()} variants by SKU and unit. Prepare a dealer enquiry with your quantity and delivery pincode.`;
@@ -46,7 +46,7 @@ export default async function BrandSelection({params}:Props){
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(breadcrumb).replace(/</g,"\\u003c")}}/>
     <nav className="br-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link> / <Link href="/brands">Brands</Link> / <span>{title}</span></nav>
     <header className="br-hero"><div>{card&&<BrandMark name={card.name}/>}<h1>{title}</h1><p>{buyingDetails[material.slug]}</p><div className="br-hero-actions"><Link className="br-card-action" href={quote}>Request a {card?card.name+" ":""}quote →</Link><Link className="br-quote-action" href={card?dealerPath(material.slug):`/materials/${material.slug}`}>{card?"Browse dealer listings":"Compare material specifications"}</Link></div><p className="br-stock-note">Local price, stock and delivery subject to dealer confirmation.</p></div>
-    {image&&<div className={"br-cover"+(card?.image?" br-product":"")}><Image src={image} fill priority sizes="(max-width:620px) 95vw, 45vw" alt={card?.image?card.alt:material.title+" category example"}/><span className="br-photo-label">{card?.image?"Product reference":"Representative material photo · not brand packaging"}</span></div>}</header>
+    {image&&<div className={"br-cover"+(card?.image||card?.rangeImage?" br-product":"")}><Image src={image} fill priority sizes="(max-width:620px) 95vw, 45vw" unoptimized={image.startsWith("https://")} referrerPolicy="no-referrer" alt={card?.image?card.alt:card?.rangeImage?card.rangeAlt:material.title+" category example"}/><span className="br-photo-label">{card?.image?"Product reference":card?.rangeImage?"Brand range photograph":"Representative material photo · not brand packaging"}</span></div>}</header>{card?.rangeSource&&<p className="br-source"><a href={card.rangeSource} target="_blank" rel="noopener noreferrer">Range image source ↗</a></p>}
     {card?<section className="br-group"><div className="br-heading"><h2>{products.length?"Product ranges":"Request a local quotation"}</h2><Link href={dealerPath(material.slug)}>Check dealer-listed options →</Link></div>
     {products.length?<div className="br-grid">{groupCatalogByPhoto(products).map(({primary:p,variants})=><article className="br-card" key={p.slug}>
       {p.referenceImage&&<div className="br-pack"><Image src={p.referenceImage} fill sizes="(max-width:620px) 45vw, 235px" alt={p.name}/></div>}
