@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import {SecureOperationsList} from "./secure-operations-list";
 export function AdminRfqPanel(){
  return <div style={{display:"grid",gap:22}}>
@@ -10,8 +11,6 @@ export function AdminRfqPanel(){
   <SecureOperationsList endpoint="/api/admin/rfqs" title="Customer quotation & sourcing queue"
    description="No dealer offers → admin sourcing needed. Verified dealer invited → awaiting response. A request is not an order, invoice or delivery."
    arrays={[{key:"requests",label:"Verified customer RFQs",fields:["category_slug","material_description","quantity","unit","city","pincode","sourcing_status","fulfilment_status","created_at"]}]}/>
-  <SecureOperationsList endpoint="/api/admin/orders" title="Confirmed orders — backend status"
-   description="Read only from the real protected order service. If the order backend is not configured, no orders are invented. Implement /v1/orders/admin with persistent manual-sourcing status and admin RBAC before enabling checkout."
-   arrays={[{key:"orders",label:"Persisted orders",fields:["code","city","pincode","status","fulfilment_status","created_at"]}]}/>
+  <p><Link href="/admin/orders" className="button button-outline">Open verified order fulfillment queue →</Link> Only customer-accepted offers become orders; this RFQ list does not create deliveries or invoices.</p>
  </div>;
 }
