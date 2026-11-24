@@ -223,6 +223,7 @@ async function main(){
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"1","return to cutaway follows the same 2D floor");
     await page.goto(base+"/design-studio/road-planner",{waitUntil:"load"});
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
+    await roadPlan.waitFor({state:"visible",timeout:15000});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
     assert.equal(await page.locator(".nroad-variants button").count(),24,"supported exact-plot 24 checked architectural variations");
     await page.getByRole("button",{name:/Car at right/}).first().click();
