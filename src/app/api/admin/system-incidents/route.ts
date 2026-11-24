@@ -33,3 +33,8 @@ export async function GET(request: Request) {
 
   return NextResponse.json({ incidents: data ?? [] }, { headers: { "Cache-Control": "private, no-store" } });
 }
+
+import {z} from "zod";
+import {requireAdmin,apiData,apiFailed} from "@/modules/identity/server-auth";
+const review=z.object({id:z.string().uuid(),expected:z.enum(["open","investigating","resolved","ignored"]),status:z.enum(["open","investigating","resolved","ignored"]),reason:z.string().trim().min(10).max(500)}).strict();
+export async function PATCH(request:Request){const auth=await requireAdmin(request);if(auth instanceof Response)return auth;try{const raw=await request.text();const v=review.safeParse(raw.length<=3000?JSON.parse(raw):null);if(!v.success)return Response.json({error:"Invalid incident decision."},{status:400});const d=v.data;const r=await auth.client.rpc("neerva_admin_review_incident",{p_id:d.id,p_expected:d.expected,p_status:d.status,p_note:d.reason});if(r.error)return Response.json({error:r.error.code==="40001"?"Incident changed; refresh.":"Incident review failed."},{status:r.error.code==="40001"?409:r.error.code==="42501"?403:503});return apiData({changed:r.data===true})}catch{return apiFailed()}}
