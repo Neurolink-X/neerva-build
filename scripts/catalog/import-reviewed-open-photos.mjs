@@ -11,6 +11,8 @@ const existing=JSON.parse(text.slice(text.indexOf("[]=")+3).trim().replace(/;$/,
 for(const r of reviewed){
  const u=new URL(r.url);
  if(u.protocol!=="https:"||u.hostname!=="upload.wikimedia.org"||!u.pathname.startsWith("/wikipedia/commons/"))throw Error("Unexpected source");
+ const cached=existing.find(m=>m.category===r.category&&m.family===r.family&&m.scope==="family"&&m.view===r.view&&m.sourceUrl===r.sourceUrl&&m.alt===r.alt&&m.credit===r.credit&&m.license===r.license&&m.licenseUrl===r.licenseUrl&&m.primary===(r.primary??true)&&m.sortOrder===(r.sortOrder??0));
+ if(cached){try{const bytes=await fs.readFile("public"+cached.path);if(createHash("sha256").update(bytes).digest("hex")===cached.sha256&&bytes.length===cached.bytes){rows.push(cached);console.log("Reusing checked local asset",r.family,r.view);continue;}}catch{/* reimport if local asset is missing */}}
  let response;
  for(let attempt=0;attempt<2;attempt++){
   try{response=await fetch(r.url,{redirect:"error",signal:AbortSignal.timeout(20000),headers:{"User-Agent":"NeervaBuildCatalogMedia/1.0 (https://github.com/Neurolink-X/neerva-build)"} });if(response.ok)break;}catch(e){console.warn(String(e));}
@@ -22,7 +24,8 @@ for(const r of reviewed){
  while(true){const part=await reader.read();if(part.done)break;size+=part.value.length;if(size>8000000){await reader.cancel();throw Error("Source exceeds 8 MB");}chunks.push(Buffer.from(part.value));}
  const original=Buffer.concat(chunks);
  if(createHash("sha1").update(original).digest("hex")!==r.sha1)throw Error("Original checksum mismatch: "+r.family);
- const {data,info}=await sharp(original,{limitInputPixels:25000000}).rotate().resize({width:1200,height:1200,fit:"inside",withoutEnlargement:true}).webp({quality:78}).toBuffer({resolveWithObject:true});
+ let encoded;for(const edge of [1200,1000,800,640]){for(const quality of [78,68,58]){encoded=await sharp(original,{limitInputPixels:25000000}).rotate().resize({width:edge,height:edge,fit:"inside",withoutEnlargement:true}).webp({quality}).toBuffer({resolveWithObject:true});if(encoded.data.length<=350000)break;}if(encoded.data.length<=350000)break;}
+ const {data,info}=encoded;
  if(info.width<320||info.height<240||data.length>350000)throw Error("Image dimensions or size invalid: "+r.family);
  const sha256=createHash("sha256").update(data).digest("hex");if(rows.some(m=>m.sha256===sha256))throw Error("Duplicate image");
  const path="/images/catalog/approved/"+sha256.slice(0,24)+".webp";
