@@ -1,4 +1,5 @@
 "use client";
+import {subscribePublicRefresh,publicRefreshConnected} from "./public-refresh";
 import {planningRate} from "@/modules/catalog/planning-rate";
 import {useSyncExternalStore} from "react";
 
@@ -6,9 +7,11 @@ type Rate={category:string;slug:string;sku:string;unit:string;paise:number;city:
 const listeners=new Set<()=>void>();
 let rates=new Map<string,Rate>(),request:Promise<void>|undefined,lastLoaded=0;
 const rateKey=(category:string,slug:string,sku?:string)=>category+"|"+slug+"|"+(sku??"");
-let channel:BroadcastChannel|undefined;
+let channel:BroadcastChannel|undefined,unsubscribeRefresh:(()=>void)|undefined;
+let pendingRefresh=false;
 function refresh(){
- if(request||document.visibilityState==="hidden")return;
+ if(document.visibilityState==="hidden")return;
+ if(request){pendingRefresh=true;return;}
  request=fetch("/api/catalog/prices",{cache:"no-cache"}).then(async response=>{
   const body=response.ok?await response.json():null;
   const next=new Map<string,Rate>();
@@ -17,14 +20,14 @@ function refresh(){
    for(const key of [rateKey(r.category,r.slug,r.sku),rateKey(r.category,r.slug)])if(!next.has(key))next.set(key,r);
   }
   rates=next;lastLoaded=Date.now();
- }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{request=undefined;for(const notify of listeners)notify()});
+ }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{request=undefined;for(const notify of listeners)notify();if(pendingRefresh){pendingRefresh=false;if(listeners.size)refresh()}});
 }
 let timer:ReturnType<typeof setInterval>|undefined;
 function onVisible(){if(document.visibilityState==="visible"){for(const notify of listeners)notify();if(Date.now()-lastLoaded>=30000)refresh()}}
 function subscribe(notify:()=>void){
  listeners.add(notify);
- if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);window.addEventListener("neerva-price-changed",refresh);if(typeof BroadcastChannel!=="undefined"){channel=new BroadcastChannel("neerva-public-price");channel.onmessage=()=>refresh()}timer=setInterval(refresh,15000)}
- return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);timer=undefined;document.removeEventListener("visibilitychange",onVisible);window.removeEventListener("neerva-price-changed",refresh);channel?.close();channel=undefined}};
+ if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);window.addEventListener("neerva-price-changed",refresh);if(typeof BroadcastChannel!=="undefined"){channel=new BroadcastChannel("neerva-public-price");channel.onmessage=()=>refresh()}unsubscribeRefresh=subscribePublicRefresh("catalog",refresh);timer=setInterval(()=>{if(!publicRefreshConnected()||Date.now()-lastLoaded>=60000)refresh()},15000)}
+ return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);timer=undefined;document.removeEventListener("visibilitychange",onVisible);window.removeEventListener("neerva-price-changed",refresh);channel?.close();channel=undefined;unsubscribeRefresh?.();unsubscribeRefresh=undefined}};
 }
 const noRate=()=>undefined;
 function currentRate(category:string,slug:string,sku?:string){
