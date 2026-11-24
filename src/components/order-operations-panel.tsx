@@ -66,12 +66,12 @@ export function OrderOperationsPanel({role}:{role:Role}){
   finally{lock.current=false;setBusy(null);}
  }
  return <section aria-label={role==="admin"?"Admin accepted orders":"Dealer accepted orders"} style={{maxWidth:1120}}>
-  <div className="admin-metrics">{["pending_confirmation","confirmed","preparing","out_for_delivery","completed"].map(s=><div key={s}><small>{s.replaceAll("_"," ")}</small><strong>{orders.filter(o=>o.status===s).length}</strong></div>)}</div><p>Latest loaded orders only. Status changes are transactional and audited.</p>
+  <div className="admin-metrics">{["pending_confirmation","confirmed","preparing","out_for_delivery","delivered"].map(s=><div key={s}><small>{s.replaceAll("_"," ")}</small><strong>{orders.filter(o=>o.status===s).length}</strong></div>)}</div><p>Latest loaded orders only. Status changes are transactional and audited.</p>
   <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center",margin:"14px 0"}}>
    <button className="button button-outline" type="button" disabled={!!busy} onClick={()=>void reload()}>Refresh order queue</button>
    <Link href={role==="admin"?"/admin/fulfilment":"/dealer/quotes"}>{role==="admin"?"Manual supplier sourcing":"Dealer quotation inbox"}</Link>
   </div>
-  <div className="admin-inline"><label>Search orders<input value={query} onChange={e=>{setQuery(e.target.value);setPage(0)}} placeholder="Order code, dealer, customer or city"/></label><label>Status<select value={filter} onChange={e=>{setFilter(e.target.value);setPage(0)}}>{["all","pending_confirmation","confirmed","preparing","out_for_delivery","completed","cancelled","declined"].map(s=><option key={s} value={s}>{s.replaceAll("_"," ")}</option>)}</select></label></div>
+  <div className="admin-inline"><label>Search orders<input value={query} onChange={e=>{setQuery(e.target.value);setPage(0)}} placeholder="Order code, dealer, customer or city"/></label><label>Status<select value={filter} onChange={e=>{setFilter(e.target.value);setPage(0)}}>{["all","pending_confirmation","confirmed","preparing","out_for_delivery","delivered","cancelled","declined"].map(s=><option key={s} value={s}>{s.replaceAll("_"," ")}</option>)}</select></label></div>
   {message&&<p role="status" style={{padding:12,borderRadius:10,background:"#fff2e2"}}>{message}</p>}
   {!message&&!orders.length&&<p>No accepted order is present for this {role==="admin"?"platform":"dealer"} account.</p>}
   <div style={{display:"grid",gap:14}}>
