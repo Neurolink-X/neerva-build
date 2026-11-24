@@ -49,7 +49,7 @@ export function AdminSourcingDesk(){
     <p>Nationwide manual sourcing can be considered. No dealer, price, delivery date or successful order is guaranteed.</p></div>
    <button type="button" className="button button-outline" disabled={busy} onClick={()=>void reload()}>Refresh</button>
   </div>
-  <p role="status">Order backend: {orderStatus==="not_configured"?"not connected — order fulfilment is OFF":"configuration detected; order API and delivery workflow not yet verified"}. This desk shows saved RFQs only, never invented orders.</p>
+  <p role="status">Order backend: {orderStatus==="typescript_postgres_ready"?"Neerva TypeScript + PostgreSQL connected; accepted orders live in the secured order queue":"database migration not ready — accepting orders is disabled"}. This desk only shows saved RFQs. <Link href="/admin/orders">Manage accepted orders</Link>.</p>
   {state&&<p role="status" style={{padding:12,background:"#fdf0df",borderRadius:10}}>{state}</p>}
   <p><strong>{rows.length} actual request(s)</strong> · <strong>{rows.filter(r=>r.invitationCount===0).length}</strong> without a recorded dealer invitation in the displayed data.</p>
   {!rows.length&&!state&&<p>No real quotation requests yet. Customer intake stays disabled until verified support/dealers are ready.</p>}
@@ -68,6 +68,6 @@ export function AdminSourcingDesk(){
    </div>}
   </article>)}
   </div>
-  <p style={{fontSize:13}}>Admin may investigate suppliers and contact customers through approved channels. Taking payment, confirming stock, assigning delivery, or marking an order fulfilled requires a separate verified transactional service. <Link href="/admin/rfqs">View RFQ records</Link>.</p>
+  <p style={{fontSize:13}}>Admin may investigate suppliers and contact customers through approved channels. Never accept online payment or claim dispatched stock from an unverified sourcing case. Customer acceptance is stored separately and a verified dealer or admin must explicitly confirm fulfillment. <Link href="/admin/rfqs">View RFQ records</Link>.</p>
  </section>;
 }
