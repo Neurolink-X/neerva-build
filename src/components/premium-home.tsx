@@ -23,7 +23,7 @@ const copy={
  step1:"Design",step1Desc:"Enter plot and room needs",step2:"Visualise",step2Desc:"Explore plans and colour ideas",step3:"Quote",step3Desc:"Prepare material requirements",step4:"Track",step4Desc:"Order tracking after service activation",
  offers:"Seasonal offers",offerEmpty:"No verified, scheduled offers are available right now. Prices are confirmed by dealers when the service is active.",
  pros:"Building professionally?",dealer:"For material dealers",dealerDesc:"Explore supplier participation. Applications open after identity verification is configured.",contractor:"For contractors",contractorDesc:"Plan repeat requirements and bulk material specifications.",learn:"See access status",prepare:"Prepare a quote",
- faq:"Questions, answered",faq1:"Are these ready-to-build plans?",ans1:"No. The gallery contains draft ideas, not construction-approved drawings. A licensed architect or engineer must check your plot, soil, structure and city bylaws.",faq2:"Are material prices live?",ans2:"Not yet. There is no confirmed dealer inventory or price feed. Product cards explain grades and units, but a quote becomes binding only after a verified dealer confirms all costs.",faq3:"Why is Submit Quote disabled?",ans3:"Real quotation intake is paused until approved dealers, support, privacy and admin sourcing are operational. Filling the form does not save or create an order.",faq4:"How do I install the app?",ans4:"Use the visible Install NEERVA BUILD help. Chrome may offer Install app; on iPhone Safari use Share then Add to Home Screen. Availability depends on the browser.",faq5:"Can I try paint on my own house photo?",ans5:"Yes. Open Exterior colour studio, choose Use my home photo, upload a JPG/PNG/WebP, tap four wall corners, choose a shade and save the local preview. No image is uploaded.",faq6:"How accurate are 3D views and the 24 designs?",ans6:"They are concept visualisations with limited geometry. Different exterior finishes do not count as distinct architectural floor plans. Always verify setbacks, measurements and structural drawings professionally.",faq7:"Is stock shown on a product guaranteed?",ans7:"No. Until a dealer publishes verified inventory, stock must be labelled unverified. Bulk sand, morang and aggregates require private location-specific freight and unloading terms.",
+ faq:"Questions, answered",faq1:"Are these ready-to-build plans?",ans1:"No. The gallery contains draft ideas, not construction-approved drawings. A licensed architect or engineer must check your plot, soil, structure and city bylaws.",faq2:"Are material prices live?",ans2:"Published rates show the applicable SKU, city, quantity and validity. Product cards explain grades and units, but a quote becomes binding only after a verified dealer confirms all costs.",faq3:"Why is Submit Quote disabled?",ans3:"Real quotation intake is paused until approved dealers, support, privacy and admin sourcing are operational. Filling the form does not save or create an order.",faq4:"How do I install the app?",ans4:"Use the visible Install NEERVA BUILD help. Chrome may offer Install app; on iPhone Safari use Share then Add to Home Screen. Availability depends on the browser.",faq5:"Can I try paint on my own house photo?",ans5:"Yes. Open Exterior colour studio, choose Use my home photo, upload a JPG/PNG/WebP, tap four wall corners, choose a shade and save the local preview. No image is uploaded.",faq6:"How accurate are 3D views and the 24 designs?",ans6:"They are concept visualisations with limited geometry. Different exterior finishes do not count as distinct architectural floor plans. Always verify setbacks, measurements and structural drawings professionally.",faq7:"Is stock shown on a product guaranteed?",ans7:"No. Until a dealer publishes verified inventory, stock must be labelled unverified. Bulk sand, morang and aggregates require private location-specific freight and unloading terms.",
  foot:"Concept designs only. No orders or dealer prices are presented as active until verified.",cityNote:"Coverage and delivery require dealer confirmation.",
  navDesign:"Home studio",navMaterials:"Materials",navQuote:"Quotes",navGuides:"Guides",
  recent:"Recent searches",noMatch:"No suggestions — see all materials",
@@ -87,6 +87,7 @@ const items=[
 const popular=[["cement","/materials/cement"],["TMT","/materials/steel"],["bricks","/materials/bricks-blocks"],["pipes","/materials/plumbing"]] as const;
 
 export function PremiumHome(){
+ const [reveal,setReveal]=useState(50);
  const [lang,setLang]=useState<Language>("en");
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
  const [plot,setPlot]=useState("all"),[designStyle,setDesignStyle]=useState("all");
@@ -148,12 +149,15 @@ export function PremiumHome(){
     {recent.length>0&&<div className="nbh-recent"><small>{t.recent}</small>{recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>)}</div>}
    </div>
    <div className="nbh-hero-visual">
-    <div className="nbh-house-frame nbh-photo-hero">
-     <Image src={homeVisuals.hero} fill priority sizes="(max-width:720px) 100vw, 48vw" alt="Real photograph of a premium contemporary residence, used as style inspiration, not a NEERVA-generated house or an exact plan render" className="nbh-house-photo"/>
-     <span className="nbh-photo-veil" aria-hidden="true"/>
-     <div className="nbh-photo-credit"><span className="nbh-photo-pill">REAL HOUSE PHOTOGRAPHY</span><strong>Contemporary homes. Build a plan for your own site.</strong><small>Exterior style inspiration · exact rooms, doors and gates appear in the matched 2D/3D studio</small></div>
+   <figure className="home-stage-comparison" style={{margin:0,alignSelf:"center",minWidth:0}}>
+    <div style={{position:"relative",aspectRatio:"3 / 1",overflow:"hidden",borderRadius:12}}>
+     <Image src="/images/studio/finished.webp" fill priority sizes="(max-width:760px) 100vw, 48vw" alt="Completed home concept"/>
+     <Image src="/images/studio/shell.webp" fill sizes="(max-width:760px) 100vw, 48vw" alt="Unfinished shell of the same home concept" style={{clipPath:`inset(0 ${100-reveal}% 0 0)`}}/>
+     <span aria-hidden="true" style={{position:"absolute",left:`${reveal}%`,top:0,height:"100%",borderLeft:"3px solid white",pointerEvents:"none"}}><b style={{position:"absolute",top:"45%",left:-17,borderRadius:20,padding:"4px 8px",background:"white",color:"#244737"}}>↔</b></span>
+     <input type="range" min="0" max="100" value={reveal} aria-label="Compare construction-stage views" onChange={e=>setReveal(Number(e.target.value))} style={{position:"absolute",inset:0,width:"100%",height:"100%",margin:0,opacity:0,cursor:"ew-resize",touchAction:"pan-y"}}/>
     </div>
-    <p className="nbh-image-note">Licensed residential photograph, not a NEERVA-built home or a visualisation of a selected floor plan. <Link href="/design-studio/fit">Find designs for your plot →</Link></p>
+    <figcaption>{lang==="hi"?"खींचकर देखें · निर्माणाधीन और तैयार घर":"Drag to compare · Under construction and finished home"} · Design simulation</figcaption>
+   </figure>
    </div>
   </section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
@@ -173,17 +177,18 @@ export function PremiumHome(){
    <p className="nbh-fineprint">{t.concept}. {t.disclaimer}</p>
   </section>
   <section className="nbh-colour nbh-build-section" id="construction">
-   <div className="nbh-build-visual nbh-construction-pair" aria-label="Two real photographs from different projects: construction work and a completed modern home">
-    <div className="nbh-real-construction"><Image src={homeVisuals.construction} fill sizes="(max-width:760px) 100vw, 22vw" loading="lazy" alt="Real photograph of structural construction and building activity, an unrelated editorial reference"/><span>01 · STRUCTURE / WORK SITE</span></div>
-    <div className="nbh-real-construction"><Image src={homeVisuals.hero} fill sizes="(max-width:760px) 100vw, 22vw" loading="lazy" alt="Real photograph of a completed contemporary home, a separate editorial reference"/><span>02 · COMPLETED HOME STYLE</span></div>
-    <p className="nbh-photo-disclaimer">Real reference photos of different properties · not a time-lapse, not a before/after claim</p>
-   </div>
+    <div><div className="nbh-house-frame nbh-photo-hero">
+     <Image src={homeVisuals.hero} fill loading="lazy" sizes="(max-width:720px) 100vw, 48vw" alt="Real photograph of a premium contemporary residence, used as style inspiration, not a NEERVA-generated house or an exact plan render" className="nbh-house-photo"/>
+     <span className="nbh-photo-veil" aria-hidden="true"/>
+     <div className="nbh-photo-credit"><span className="nbh-photo-pill">REAL HOUSE PHOTOGRAPHY</span><strong>Contemporary homes. Build a plan for your own site.</strong><small>Exterior style inspiration · exact rooms, doors and gates appear in the matched 2D/3D studio</small></div>
+    </div>
+    <p className="nbh-image-note">Licensed residential photograph, not a NEERVA-built home or a visualisation of a selected floor plan. <Link href="/design-studio/fit">Find designs for your plot →</Link></p></div>
    <div className="nbh-colour-copy">
     <p className="nbh-eyebrow">03 / FROM FOUNDATION TO FINISH</p>
     <h2>{lang==="hi"?"सामग्री से बनता घर":"See your construction stages"}</h2>
     <p>{lang==="hi"?"स्टील और सीमेंट से शुरुआत, फिर ईंट, पाइप और फिनिशिंग। हर चरण की सामग्री और नाप चुनें। अंतिम स्टॉक, कीमत और डिलीवरी की पुष्टि जरूरी है।":"From steel and cement to bricks, pipes and finishes: choose the right materials for each construction stage, then get a verified supplier quotation."}</p>
     <div className="nbh-build-steps"><span>01 · Structure</span><span>02 · Plumbing & masonry</span><span>03 · Finishes</span></div>
-    <p className="nbh-fineprint">Concept only. Verify with a licensed architect/engineer and local authority approval. Editorial photographs show different properties, not a single Neerva construction project.</p>
+    <p className="nbh-fineprint">Concept only. Verify with a licensed architect/engineer and local authority approval. The comparison shows a simulated transformation of one design.</p>
     <div className="nbh-build-actions"><Link className="nbh-outline-link" href="/materials">Explore construction materials <Icon name="arrow"/></Link><Link href="/design-studio/visualizer">{t.colourLink} →</Link></div>
    </div>
   </section>
@@ -194,3 +199,4 @@ export function PremiumHome(){
   <footer className="nbh-footer nbh-footer-expanded"><div className="nbh-footer-brand"><Link className="nbh-logo" href="/"><span className="nbh-logomark">N</span><span>NEERVA <i>BUILD</i></span></Link><p>Plan confidently. Compare materials. Build with clarity.</p><p className="nbh-fineprint">{t.foot}</p></div><nav aria-label="Footer design and planning"><strong>Plan a home</strong><Link href="/design-studio/fit">Custom plot fit</Link><Link href="/design-studio/library">Browse concepts</Link><Link href="/design-studio/workbench">Concept workbench</Link><Link href="/design-studio/visualizer">Exterior colour studio</Link></nav><nav aria-label="Footer marketplace"><strong>Materials & services</strong><Link href="/materials">Construction materials</Link><Link href="/basket">Material list</Link><Link href="/quotes">Prepare a quote</Link><Link href="/account">Dealer / professional access</Link></nav><nav aria-label="Footer resources"><strong>Resources</strong><Link href="/blog">Building guides</Link><Link href="/install">Install the app</Link><Link href="/privacy">Privacy policy</Link><Link href="/terms">Terms & limitations</Link><Link href="/returns">Returns & refunds</Link><Link href="/account">Account and help</Link><Link href="/design-studio/visualizer">Paint my own photo</Link></nav><div className="nbh-footer-bottom"><small>© 2026 NEERVA BUILD · Made for builders in India</small><small>Concept plans require local engineering review and approvals. Stock and offers subject to dealer confirmation.</small></div></footer>
  </main>;
 }
+

@@ -25,10 +25,9 @@ export function ProductGallery({product}:{product:DemoProduct}){
    {photos.slice(0,5).map((media,i)=><button type="button" key={media.src} aria-label={"Show photo "+(i+1)+": "+media.label}
      aria-pressed={current?.src===media.src} onClick={()=>setSelected(media.src)}>
      <span className="product-gallery-thumb-image"><Image src={media.src} alt="" fill sizes="90px" quality={60} onError={()=>setFailed(old=>old.includes(media.src)?old:[...old,media.src])}/></span>
-     <span>{media.kind==="sku"?"Seller photo":media.kind==="listing"?"Product listing":media.kind==="editorial"?"Material photo":media.kind==="manufacturer"?"Media kit":"Category view"}</span>
+     <span>{media.kind==="sku"?"Seller photo":media.kind==="listing"?"Product photo":media.kind==="editorial"?"Material photo":media.kind==="manufacturer"?"Media kit":"Category view"}</span>
     </button>)}
   </div>}
-  {product.referenceSource&&<p className="product-gallery-source"><a href={product.referenceSource} target="_blank" rel="noreferrer">Original product listing reference ↗</a></p>}
  </figure>;
 }
 export function ProductDetailTools({ product }: { product: DemoProduct }) {
@@ -64,3 +63,4 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
     </div>
   );
 }
+

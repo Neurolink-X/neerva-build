@@ -1,4 +1,5 @@
 "use client";
+import {ProductPrice} from "@/components/product-price";
 import Link from "next/link";
 import {useMemo,useState} from "react";
 import {CatalogMaterialImage} from "@/components/catalog-material-image";
@@ -45,7 +46,7 @@ export function MaterialsBrowser({products,categories,initialQuery=""}:{
      </div></>}
     <div className="catalog-spec-chips">{(variants.length>1?p.specifications.filter(s=>!/diameter|thickness|nominal mass/i.test(s.label)):p.specifications).slice(0,3).map(s=><span key={s.label}><b>{s.label}:</b> {s.value}</span>)}</div>
     <div className="catalog-sku-status"><span>Availability by pincode</span></div>
-    <div className="product-card-foot"><span>{p.quoteOnly?"Location-based quote only":"Price upon verified offer"}</span>
+    <div className="product-card-foot"><ProductPrice category={p.category} slug={p.slug} quoteOnly={p.quoteOnly}/>
      <Link href={`/materials/${p.category}/${p.slug}`}>{variants.length>1?"Review range →":"View details →"}</Link></div>
    </div>
   </article>)}</div>:<div className="catalog-empty">
@@ -54,3 +55,4 @@ export function MaterialsBrowser({products,categories,initialQuery=""}:{
   </div>}
  </section>;
 }
+
