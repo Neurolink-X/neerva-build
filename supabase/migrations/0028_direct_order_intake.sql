@@ -108,7 +108,7 @@ create trigger direct_order_events_write after insert or update of status on pub
 -- Dealer price submissions must not self-publish or edit a published price.
 create function public.neerva_guard_dealer_price() returns trigger language plpgsql security invoker set search_path=pg_catalog,public,auth as $$
 begin
- if coalesce(public.has_platform_role(array['admin','super_admin']::public.platform_role[]),false) then return case when tg_op='DELETE' then old else new end; end if;
+ if coalesce(public.has_platform_role(array['admin','super_admin']::public.platform_role[]),false) then if tg_op='DELETE' then return old; end if; return new; end if;
  if auth.uid() is null or not coalesce(public.neerva_account_access_allowed(),false) then raise exception using errcode='42501',message='AUTH_REQUIRED'; end if;
  if tg_op='DELETE' then raise exception using errcode='42501',message='PRICE_DELETE_DENIED'; end if;
  if new.tenant_id is null or new.branch_id is null or not public.is_tenant_member(new.tenant_id,array['owner','manager']::text[]) or not exists(select 1 from public.merchant_branches b where b.id=new.branch_id and b.tenant_id=new.tenant_id and b.approved) then raise exception using errcode='42501',message='DEALER_SCOPE_DENIED'; end if;
@@ -140,7 +140,7 @@ begin
  join public.tenants t on t.id=r.tenant_id and t.status='active'
  join public.merchant_branches b on b.id=r.branch_id and b.tenant_id=t.id and b.approved
  join public.inventory i on i.branch_id=b.id and i.variant_id=v.id and i.unit=v.unit and i.available_quantity>=p_qty
- where c.slug=p_category and p.slug=p_slug and r.status='published' and r.visibility='public' and r.currency='INR' and r.amount_paise>0 and r.minimum_quantity<=p_qty and r.valid_from<=now() and (r.valid_to is null or r.valid_to>now()) and (r.pincode_prefix is null or p_pin like r.pincode_prefix||'%')
+ where c.slug=p_category and p.slug=p_slug and c.slug<>'aggregates' and r.status='published' and r.visibility='public' and r.currency='INR' and r.amount_paise>0 and r.minimum_quantity<=p_qty and r.valid_from<=now() and (r.valid_to is null or r.valid_to>now()) and (r.pincode_prefix is null or p_pin like r.pincode_prefix||'%')
  and exists(select 1 from public.dealer_applications a join public.dealer_service_pincodes sp on sp.application_id=a.id where a.tenant_id=t.id and a.status='approved' and a.gstin_verification='verified' and sp.pincode=p_pin)
  order by r.tenant_id,v.id,length(coalesce(r.pincode_prefix,'')) desc,r.minimum_quantity desc,r.valid_from desc,r.version desc,r.id
  )
