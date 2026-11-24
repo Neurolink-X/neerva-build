@@ -63,6 +63,8 @@ const manifest={
  "/api/dealer/delivery-settings":["GET","POST"],
  "/api/dealer/pricing":["GET","POST"],
  "/api/dealer/listings":["GET","POST","PATCH"],
+ "/api/dealer/settlements":["GET"],
+ "/api/admin/dealer-settlements":["GET","POST"],
  "/api/admin/product-requests":["GET","PATCH"],
  "/api/customer/dealer-comparison":["GET"],
  "/api/admin/rfqs":["GET","POST"],

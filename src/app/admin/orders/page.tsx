@@ -14,7 +14,7 @@ export default function AdminOrdersPage(){
    <p>Manage direct orders requiring Neerva sourcing and existing dealer orders from one page. Confirm the final delivered amount before preparation.</p>
    <nav className="admin-page-links"><Link href="/admin/fulfilment">Supplier sourcing</Link><Link href="/admin/rfqs">RFQ queue</Link><Link href="/admin/system-health">System health</Link></nav>
   </section>
-  <section className="section ops-content"><DirectOrdersPanel role="admin"/><h2>Dealer offer orders</h2><OrderOperationsPanel role="admin"/></section>
+  <section className="section ops-content"><p><Link href="/admin/dealer-settlements">Dealer commissions & payouts →</Link></p><DirectOrdersPanel role="admin"/><h2>Dealer offer orders</h2><OrderOperationsPanel role="admin"/></section>
   <SiteFooter/>
  </main>;
 }

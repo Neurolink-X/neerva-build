@@ -303,3 +303,67 @@ begin
 end $$;
 revoke all on function public.neerva_direct_operations_guard() from public,anon,authenticated;
 create trigger direct_operations_guard before insert on public.direct_order_operations for each row execute function public.neerva_direct_operations_guard();
+
+-- Commission terms are frozen for new accepted dealer RFQ orders.
+-- Legacy orders are not charged retroactively. Direct/manual orders are not dealer settlements.
+create table public.dealer_order_settlements(
+ order_id uuid primary key references public.orders(id) on delete restrict,
+ tenant_id uuid not null references public.tenants(id) on delete restrict,
+ order_code text not null,
+ fee_version_id bigint references public.marketplace_fee_versions(id),
+ subtotal_paise bigint not null check(subtotal_paise>=0),
+ order_total_paise bigint not null check(order_total_paise>=0),
+ commission_bps integer not null check(commission_bps between 0 and 3000),
+ commission_paise bigint not null check(commission_paise>=0 and commission_paise<=order_total_paise),
+ payable_paise bigint not null check(payable_paise>=0 and payable_paise=order_total_paise-commission_paise),
+ created_at timestamptz not null default now()
+);
+create index dealer_settlement_tenant_time on public.dealer_order_settlements(tenant_id,created_at desc);
+alter table public.dealer_order_settlements enable row level security;
+revoke all on public.dealer_order_settlements from public,anon,authenticated;
+grant select on public.dealer_order_settlements to authenticated;
+create policy dealer_settlement_read on public.dealer_order_settlements for select to authenticated using ((select public.neerva_account_access_allowed()) and ((select public.has_platform_role(array['admin','super_admin']::public.platform_role[])) or public.is_tenant_member(tenant_id,array['owner','manager']::text[])));
+create function neerva_private.snapshot_dealer_settlement() returns trigger language plpgsql security definer set search_path=pg_catalog,public,auth as $$
+declare fee public.marketplace_fee_versions%rowtype; commission bigint;
+begin
+ if auth.uid() is null or new.customer_id<>auth.uid() or not coalesce(public.neerva_account_access_allowed(),false) then raise exception using errcode='42501',message='SETTLEMENT_ORDER_AUTH_REQUIRED';end if;
+ select * into fee from public.marketplace_fee_versions order by id desc limit 1;
+ commission:=least(new.total_paise,round(new.subtotal_paise::numeric*coalesce(fee.commission_bps,0)/10000)::bigint);
+ insert into public.dealer_order_settlements(order_id,tenant_id,order_code,fee_version_id,subtotal_paise,order_total_paise,commission_bps,commission_paise,payable_paise)
+ values(new.id,new.tenant_id,new.code,fee.id,new.subtotal_paise,new.total_paise,coalesce(fee.commission_bps,0),commission,new.total_paise-commission);
+ return new;
+end $$;
+revoke all on function neerva_private.snapshot_dealer_settlement() from public,anon,authenticated;
+create trigger dealer_settlement_snapshot after insert on public.orders for each row execute function neerva_private.snapshot_dealer_settlement();
+-- Only verified full collections and full external payouts are recorded in this initial ledger.
+create table public.dealer_settlement_events(
+ id bigint generated always as identity primary key,
+ order_id uuid not null references public.dealer_order_settlements(order_id) on delete restrict,
+ kind text not null check(kind in ('platform_collection','dealer_payout')),
+ amount_paise bigint not null check(amount_paise>=0),
+ evidence_ref text not null check(char_length(btrim(evidence_ref)) between 3 and 150),
+ actor uuid not null default auth.uid() references auth.users(id),
+ created_at timestamptz not null default now(),
+ unique(order_id,kind),unique(kind,evidence_ref)
+);
+alter table public.dealer_settlement_events enable row level security;
+revoke all on public.dealer_settlement_events from public,anon,authenticated;
+grant select(id,order_id,kind,amount_paise,evidence_ref,created_at) on public.dealer_settlement_events to authenticated;
+grant insert(order_id,kind,amount_paise,evidence_ref) on public.dealer_settlement_events to authenticated;
+create policy dealer_settlement_event_read on public.dealer_settlement_events for select to authenticated using (exists(select 1 from public.dealer_order_settlements s where s.order_id=dealer_settlement_events.order_id));
+create policy dealer_settlement_event_insert on public.dealer_settlement_events for insert to authenticated with check(actor=auth.uid() and (select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
+create function public.neerva_dealer_settlement_guard() returns trigger language plpgsql security invoker set search_path=pg_catalog,public,auth as $$
+declare s public.dealer_order_settlements%rowtype; order_status text;
+begin
+ if auth.uid() is null or not coalesce(public.neerva_account_access_allowed(),false) or not coalesce(public.has_platform_role(array['admin','super_admin']::public.platform_role[]),false) then raise exception using errcode='42501',message='ADMIN_REQUIRED';end if;
+ perform pg_advisory_xact_lock(hashtextextended(new.order_id::text,17));
+ select * into s from public.dealer_order_settlements where order_id=new.order_id;
+ if not found then raise exception using errcode='23503',message='SETTLEMENT_NOT_FOUND';end if;
+ select o.status into order_status from public.orders o where o.id=new.order_id;
+ if order_status is distinct from 'delivered' then raise exception using errcode='23514',message='DELIVERY_REQUIRED';end if;
+ if new.kind='platform_collection' and new.amount_paise<>s.order_total_paise then raise exception using errcode='23514',message='FULL_COLLECTION_REQUIRED';end if;
+ if new.kind='dealer_payout' and (new.amount_paise<>s.payable_paise or not exists(select 1 from public.dealer_settlement_events e where e.order_id=new.order_id and e.kind='platform_collection')) then raise exception using errcode='23514',message='COLLECTION_AND_EXACT_PAYOUT_REQUIRED';end if;
+ return new;
+end $$;
+revoke all on function public.neerva_dealer_settlement_guard() from public,anon,authenticated;
+create trigger dealer_settlement_guard before insert on public.dealer_settlement_events for each row execute function public.neerva_dealer_settlement_guard();
