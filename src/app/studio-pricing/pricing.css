@@ -41,3 +41,13 @@
 .studio-support-form form button{width:max-content;padding:11px 16px;min-height:45px;background:#26543c;border:0;border-radius:10px;color:#fff;font-weight:800}
 .studio-support-form article{border-top:1px solid #e1e8de;padding:15px 0;overflow-wrap:anywhere}
 .studio-support-form article small{font-size:12px;color:#61705f}.studio-support-form blockquote{margin:12px 0;padding:12px;background:#eef4ea;border-left:3px solid #578265}
+
+.studio-learning-grid{max-width:1160px;margin:25px auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;padding:0 18px}
+.studio-learning-grid article{background:#fff;border:1px solid #d8e4d7;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px}
+.studio-learning-grid h2{font:400 25px/1.18 Georgia,serif;margin:0}
+.studio-learning-grid article p{font-size:13px;line-height:1.65;color:#576b5a;flex:1}
+.studio-learning-grid article a{color:#205439;font-weight:750;text-decoration:underline;text-underline-offset:4px}
+.studio-guide-table{width:100%;border-collapse:collapse;font-size:13px;margin:18px 0}
+.studio-guide-table th,.studio-guide-table td{border:1px solid #d9e0d4;padding:10px;text-align:left}
+.studio-guide-table thead th{background:#edf4eb}
+@media(max-width:760px){.studio-learning-grid{grid-template-columns:1fr}.studio-guide-table{font-size:12px}}
