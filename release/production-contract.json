@@ -153,9 +153,10 @@
     "supabase/migrations/0003_dealer_onboarding.sql": "7ed8801bbcf3f2087411963630140faa5b97cafc",
     "supabase/migrations/0004_design_studio_phase_a.sql": "e0275af4d1ed3156a00e7ce1e8eefc6b143d3a77",
     "src/app/api/admin/orders/route.ts": "5f1da1df0384bd2730504f11546f1bec68d4e09f",
-    "src/app/api/dealer/orders/route.ts": "085f81dfab7e040f6f15c9ac6fe3364b72be24c0",
+    "src/app/api/dealer/orders/route.ts": "d2b979d6e0f9385ce987264e1391bc8de6105096",
     "src/modules/orders/order-contract.ts": "5189d31c51c41475f38c9bd7534e532558b87fef",
-    "supabase/migrations/0016_typescript_order_workflow.sql": "d27e7ef56e8f9060db855d432b3a6bf76b55bde5"
+    "supabase/migrations/0016_typescript_order_workflow.sql": "d27e7ef56e8f9060db855d432b3a6bf76b55bde5",
+    "supabase/migrations/0017_order_role_visibility_hardening.sql": "c82fa513da3ee2d8bff8a2c6a8da2085c84fab4d"
   },
   "reviewedProtectedChanges20261124": [
     {
@@ -202,6 +203,16 @@
       "path": "src/app/api/customer/quotes/route.ts",
       "reason": "Project dealer offer revision in the customer read model; prevent stale-price selection without weakening permissions.",
       "validation": "Customer offer revision filter + CI and mobile smoke"
+    },
+    {
+      "path": "src/app/api/dealer/orders/route.ts",
+      "reason": "Explicit owner/manager/dispatch staff role gate before returning private customer delivery addresses or updating status.",
+      "validation": "CI typecheck, contract test, RLS migration verification"
+    },
+    {
+      "path": "supabase/migrations/0017_order_role_visibility_hardening.sql",
+      "reason": "Restrict order privacy policy to only authorized dealer fulfillment roles and index offer foreign key.",
+      "validation": "PostgreSQL policy audit and security advisors"
     }
   ]
 }
