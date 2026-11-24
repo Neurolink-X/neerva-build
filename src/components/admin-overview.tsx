@@ -14,7 +14,7 @@ const modules=[
  {title:"Open incidents",key:"openIncidents",href:"/admin/system-health",desc:"Investigate unresolved platform errors"},
  {title:"Account profiles",key:"customers",href:"/admin/users",desc:"Review customer profiles and role grants"}
 ];
-const quick=[["Account recovery","/admin/account-recovery","Diagnose login and access problems"],["Supplier sourcing","/admin/fulfilment","Unassigned material requests"],["Pricing","/admin/pricing","Manage reviewed price rules"],["Marketing","/admin/marketing","Create verified offers"],["Studio library","/admin/studio","Design configuration"],["Payments","/admin/studio-payments","Reconciliation and payment support"],["System health","/admin/system-health","Review platform incidents"],["Activity audit","/admin/audit","Inspect administrative decisions"]];
+const quick=[["Business analytics","/admin/analytics","Order value and verified payment reporting"],["Account recovery","/admin/account-recovery","Diagnose login and access problems"],["Supplier sourcing","/admin/fulfilment","Unassigned material requests"],["Pricing","/admin/pricing","Manage reviewed price rules"],["Marketing","/admin/marketing","Create verified offers"],["Studio library","/admin/studio","Design configuration"],["Payments","/admin/studio-payments","Reconciliation and payment support"],["System health","/admin/system-health","Review platform incidents"],["Activity audit","/admin/audit","Inspect administrative decisions"]];
 export function AdminOverview(){
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[error,setError]=useState(""),[revision,setRevision]=useState(0),[loading,setLoading]=useState(true);
  useEffect(()=>{
