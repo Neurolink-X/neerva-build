@@ -20,7 +20,7 @@ export default function DesignStudioPage(){
    <div className="nstudio-photo"><Image src={homeReferencePhotos[1].src} fill priority sizes="(max-width:820px) 100vw, 45vw" alt="Real photograph of a premium house, shown as visual inspiration rather than a generated design"/><span>Real residential photography · style inspiration only</span></div>
   </section>
   <section className="nstudio-start" id="start"><div><p className="eyebrow">START HERE · ABOUT ONE MINUTE</p><h2>Tell us your plot size.</h2><p>We&apos;ll use the same dimensions when drawing room layouts and viewing the matching 3D building. Your road and car gate should face the same side.</p></div><StudioStartForm/></section>
-  <section className="nstudio-choices" aria-labelledby="nstudio-next"><p className="eyebrow">EXPLORE WITH CONFIDENCE</p><h2 id="nstudio-next">Choose what you want to do.</h2>
+  <section className="nstudio-choices" aria-labelledby="nstudio-next"><p className="eyebrow">EXPLORE WITH CONFIDENCE</p><h2 id="nstudio-next">Choose what you want to do.</h2><p>Try basic design and colour samples free. Optional one-time upgrades unlock detailed personal planning reports. <Link href="/studio-pricing">Compare Studio plans →</Link></p>
    <div className="nstudio-choice-grid">
     <article><span>01</span><h3>Find a plan for your plot</h3><p>See what may fit before selecting rooms. Get straight to the generator for validated drafts.</p><Link href="#start">Enter plot dimensions →</Link></article>
     <article><span>02</span><h3>Browse architectural inspiration</h3><p>Explore existing ideas and identify styles you like. Inspiration images are not exact approved plans.</p><Link href="/design-studio/library">View design ideas →</Link></article>

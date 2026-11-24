@@ -2,6 +2,7 @@
 
 import {useState} from "react";
 import {StudioPhotoPaint} from "@/components/studio-photo-paint";
+import {StudioPremiumTools} from "@/components/studio-premium-tools";
 
 const families = {
   Neutrals: ["#fffaf0","#f4eee5","#e9e5dc","#dfd6c7","#cec3af","#ad9e8b","#827869","#514c47"],
@@ -22,6 +23,6 @@ export function ExteriorVisualizer(){
    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,margin:"12px 0"}}>{families[family].map(hex=><button type="button" key={hex} aria-label={"Select "+hex} aria-pressed={colour===hex} style={{background:hex,minHeight:42,border:colour===hex?"3px solid #254e3d":"1px solid #aaa",borderRadius:8}} onClick={()=>setColour(hex)}/>)}</div>
    <label>Custom shade <input type="color" value={colour} onChange={e=>setColour(e.target.value)}/> {colour.toUpperCase()}</label>
    <label>Paint quality <select defaultValue="Emulsion"><option>Distemper</option><option>Emulsion</option><option>Premium emulsion</option></select></label>
-  </section></aside><section className="elevation-stage neerva-photo-stage"><StudioPhotoPaint colour={colour} onColourChange={setColour}/></section></div>
+  </section></aside><section className="elevation-stage neerva-photo-stage"><StudioPhotoPaint colour={colour} onColourChange={setColour}/></section></div><StudioPremiumTools product="colour_studio" base={colour} accent="#c4925f" room="Home colour concept"/>
  </main>;
 }

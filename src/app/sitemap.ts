@@ -12,6 +12,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: siteUrl, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${siteUrl}/design-studio`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${siteUrl}/studio-pricing`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${siteUrl}/learn`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${siteUrl}/learn/plot-size-in-gaj`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${siteUrl}/learn/2d-to-3d-house-layout`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${siteUrl}/learn/wall-paint-pattern-ideas`, changeFrequency: "monthly", priority: 0.65 },
     { url: `${siteUrl}/materials`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/brands`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${siteUrl}/calculators`, changeFrequency: "monthly", priority: 0.6 },

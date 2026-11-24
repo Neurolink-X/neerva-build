@@ -6,7 +6,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/terms","/returns"];
+const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/terms","/returns","/studio-pricing","/learn","/admin/studio-settings"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -18,7 +18,7 @@ async function main(){
    page.on("pageerror",error=>errors.push("uncaught at "+new URL(page.url()).pathname+": "+error.message));
    page.on("console",message=>{if(message.type()==="error")errors.push("console at "+new URL(page.url()).pathname+": "+message.text().slice(0,180))});
    for(const route of routes){
-    const res=await page.goto(base+route,{waitUntil:"networkidle",timeout:40000});
+    const res=await page.goto(base+route,{waitUntil:"load",timeout:60000});
     assert.equal(res?.status(),200,"HTTP "+route+" at "+v.w+"px");
     const issues=await page.evaluate(()=>{
      const root=document.documentElement,body=document.body;
@@ -59,7 +59,7 @@ async function main(){
     const offline=await page.request.get(base+"/offline.html");
     assert.equal(offline.status(),200,"safe offline page");
     assert.match(await offline.text(),/No order or payment has been submitted offline/);
-    await page.goto(base+"/install",{waitUntil:"networkidle"});
+    await page.goto(base+"/install",{waitUntil:"load"});
     assert.equal(await page.getByRole("heading",{name:"Install on this device"}).count(),1,"dedicated install page displays actual browser action");
     assert.equal(await page.locator(".neerva-install-banner").count(),0,"no duplicate global banner on install instructions");
     await page.evaluate(()=>{
@@ -70,7 +70,7 @@ async function main(){
     assert.equal(await page.getByRole("button",{name:"Install NEERVA BUILD now"}).count(),1,"real install-event listener must display browser prompt action");
     await page.getByRole("button",{name:"Install NEERVA BUILD now"}).click();
     await page.getByText("Installation was accepted. Check your home screen.").waitFor();
-    const account=await page.goto(base+"/account",{waitUntil:"networkidle"});
+    const account=await page.goto(base+"/account",{waitUntil:"load"});
     assert.equal(account?.status(),200,"authenticated account route");
     assert.equal(await page.getByRole("heading",{name:/Access your projects and requests/}).count(),1,"account page must not show prelaunch placeholder");
     if(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY){
@@ -81,14 +81,24 @@ async function main(){
     const unauth=await page.request.post(base+"/api/rfqs",{data:{idempotencyKey:"f1d3068d-3f5f-4e5c-a14e-2546fb9902ed"}});
     const expectedUnauth=process.env.NEERVA_RFQ_INTAKE_ENABLED==="true"&&process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?401:503;
     assert.equal(unauth.status(),expectedUnauth,"RFQ must fail closed: 401 only when intake and auth are enabled, otherwise 503");
-    await page.goto(base+"/",{waitUntil:"networkidle"});
+    await page.goto(base+"/",{waitUntil:"load"});
+    await page.locator(".neerva-install-banner").waitFor({state:"visible",timeout:15000});
     assert.equal(await page.locator(".neerva-install-banner").count(),1,"discoverable installation help is available on first visit without scroll");
      assert.equal(await page.getByRole("button",{name:/How to install|Install app/}).count(),1,"browser-specific install help entry is usable");
      await page.locator(".neerva-install-banner").getByRole("button",{name:"Not now"}).click();
      assert.equal(await page.locator(".neerva-install-banner").count(),0,"install assistance dismisses cleanly");
+    // Payment safety: public pricing is readable; unauthenticated users must not
+    // see a simulated paid QR or receive an entitlement from a bare POST.
+    await page.goto(base+"/studio-pricing",{waitUntil:"load"});
+    assert.equal(await page.getByRole("heading",{name:/Start with a real sample/i}).count(),1,"public Studio price page renders");
+    const guestPurchase=await page.request.post(base+"/api/studio/payments",{
+      data:{product:"home_studio"},headers:{"Content-Type":"application/json"}
+    });
+    assert.ok([401,403,503].includes(guestPurchase.status()),"unauthenticated payment cannot create an order");
+    assert.equal(await page.locator(".studio-upgrade-qr svg").count(),0,"no static guest payment QR or fake checkout success");
     // Authenticated role isolation needs live fixture accounts and cannot be simulated by guest screenshots.
     for(const roleRoute of ["/account/quotes","/dealer/quotes","/admin/catalog"]){
-      const response=await page.goto(base+roleRoute,{waitUntil:"networkidle"});
+      const response=await page.goto(base+roleRoute,{waitUntil:"load"});
       assert.equal(response?.status(),200,roleRoute+" public route shell");
       await page.screenshot({path:path.join("test-results/mobile","390-role-"+roleRoute.replaceAll("/","-")+".png"),fullPage:true,animations:"disabled"});
     }
@@ -96,7 +106,7 @@ async function main(){
    }
    if(v.w===390){
     // Business-flow smoke: category -> product -> local planning list -> quote.
-    await page.goto(base+"/quotes",{waitUntil:"networkidle"});
+    await page.goto(base+"/quotes",{waitUntil:"load"});
     assert.equal(await page.locator("#neerva-quote-form").count(),1,"quote form is available at all viewports");
     assert.equal(await page.getByRole("button",{name:"Copy material quote draft"}).count(),1,"local quote preparation must work even when RFQ submission is disabled");
     await page.evaluate(()=>Object.defineProperty(navigator,"clipboard",{configurable:true,
@@ -110,14 +120,14 @@ async function main(){
     assert.match(copied,/NOT sent/,"draft never implies actual dealer delivery");
     assert.match(copied,/Lucknow/);
     assert.doesNotMatch(copied,/contact mobile|phone number/i,"draft does not copy personal contact data");
-    await page.goto(base+"/design-studio",{waitUntil:"networkidle"});
+    await page.goto(base+"/design-studio",{waitUntil:"load"});
     assert.equal(await page.locator(".nstudio-start-form").count(),1,"home studio must start with plot fields, not an unscaled static concept");
     await page.locator(".nstudio-start-form input").nth(0).fill("18");
     await page.locator(".nstudio-start-form input").nth(1).fill("50");
     await page.getByRole("button",{name:/Create room layouts/}).click();
     await page.waitForURL("**/design-studio/portfolio?**");
     assert.match(new URL(page.url()).search,/width=18/);
-    await page.goto(base+"/materials/plumbing/cpvc-pipe-25mm",{waitUntil:"networkidle"});
+    await page.goto(base+"/materials/plumbing/cpvc-pipe-25mm",{waitUntil:"load"});
     assert.equal(await page.locator(".product-gallery-caption").count(),1,"gallery has a single truthful caption below the photo");
     assert.equal(await page.locator(".product-gallery-stage .catalog-image-note").count(),0,"no duplicate overlaid labels in product photo");
     assert.equal(await page.locator(".city-select").count(),0,"header does not show a fake location picker");
@@ -126,19 +136,28 @@ async function main(){
     const firstHeroSource=await page.locator(".product-gallery-stage img").getAttribute("src");
     await photoThumbs.nth(1).click();
     assert.notEqual(await page.locator(".product-gallery-stage img").getAttribute("src"),firstHeroSource,"second thumbnail displays different image");
-    await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"networkidle"});
+    await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     const pack=page.locator(".product-gallery-stage img");
+    // load does not guarantee deferred/lazy product images have decoded on mobile.
+    // Wait for the actual first-party image to finish rather than sleeping or
+    // switching the whole page to networkidle (which can hang on long polling).
+    await pack.scrollIntoViewIfNeeded();
+    await pack.evaluate(async img=>{if(!img.complete)await img.decode().catch(()=>undefined);});
+    await page.waitForFunction(()=>{
+      const img=document.querySelector(".product-gallery-stage img");
+      return !!img&&img.complete&&img.naturalWidth>0;
+    },null,{timeout:15000});
     assert.ok(await pack.evaluate(img=>img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin),"pack photo must load locally");
-    await page.goto(base+"/design-studio/fit",{waitUntil:"networkidle"});
+    await page.goto(base+"/design-studio/fit",{waitUntil:"load"});
     const floorsSelect=page.locator("#nfit-floors");
     assert.equal(await floorsSelect.count(),1,"plot-fit page must render a labelled floors selector");
     await floorsSelect.selectOption("1");
     assert.equal(await floorsSelect.inputValue(),"1","ground-floor selection must update the plot brief");
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
     assert.equal(await page.locator(".nroad-diagram svg").getByText("BEDROOM 2",{exact:true}).count(),1);
-    const cat=await page.goto(base+"/materials/steel",{waitUntil:"networkidle"});
+    const cat=await page.goto(base+"/materials/steel",{waitUntil:"load"});
     assert.equal(cat?.status(),200,"steel category route");
-    const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"networkidle"});
+    const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"load"});
     assert.equal(details?.status(),200,"specific material detail route");
     const add=page.getByRole("button",{name:"Add to material list"});
     assert.equal(await add.count(),1,"a product must provide an actionable add button");
@@ -151,7 +170,7 @@ async function main(){
     const prepareQuote=page.getByRole("link",{name:/Prepare dealer quote/});
     await prepareQuote.waitFor({timeout:15000});
     assert.match((await prepareQuote.getAttribute("href"))??"",/^\/quotes\?/,"list quote link should target quote preparation");
-    const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"networkidle"});
+    const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
     assert.equal(visual?.status(),200,"colour editor route");
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
@@ -169,8 +188,9 @@ async function main(){
  const download=page.waitForEvent("download");await page.getByRole("button",{name:"Save colour preview"}).click();assert.match((await download).suggestedFilename(),/png$/);
     // Tested road-correct 18x50 PlanModel: one source for geometry, 3D and paint quantities.
     // A gallery deep link must choose the SAME plan for both 2D geometry and 3D.
-    await page.goto(base+"/design-studio/portfolio?width=18&depth=50&road=N&floors=2&bedrooms=3&parking=true&option=5",{waitUntil:"networkidle"});
+    await page.goto(base+"/design-studio/portfolio?width=18&depth=50&road=N&floors=2&bedrooms=3&parking=true&option=5",{waitUntil:"load"});
     const chosenLayout=page.locator(".nroad-variants button[aria-pressed=true]");
+    await chosenLayout.first().waitFor({state:"visible",timeout:20000});
     assert.equal(await chosenLayout.count(),1,"exactly one linked gallery option selected");
     assert.match((await chosenLayout.innerText()),/^6\./,"gallery card #6 opens option #6, not the default plan");
     await page.getByRole("button",{name:"Ground floor"}).click();
@@ -201,8 +221,9 @@ async function main(){
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"all","full exterior intentionally displays both floors");
     await page.getByRole("button",{name:"Selected floor cutaway"}).click();
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"1","return to cutaway follows the same 2D floor");
-    await page.goto(base+"/design-studio/road-planner",{waitUntil:"networkidle"});
+    await page.goto(base+"/design-studio/road-planner",{waitUntil:"load"});
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
+    await roadPlan.waitFor({state:"visible",timeout:15000});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
     assert.equal(await page.locator(".nroad-variants button").count(),24,"supported exact-plot 24 checked architectural variations");
     await page.getByRole("button",{name:/Car at right/}).first().click();
@@ -223,7 +244,7 @@ async function main(){
     await plotInputs.nth(1).fill("50");
     await page.getByRole("img",{name:/Road on E side/}).waitFor();
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
-    await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=1&bedrooms=1&road=W&parking=false",{waitUntil:"networkidle"});
+    await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=1&bedrooms=1&road=W&parking=false",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
     assert.equal(await page.locator(".nroad-variants button").count(),2,"compact 1 BHK has two genuine kitchen orientations");
     const compactFirstId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
@@ -237,7 +258,7 @@ async function main(){
     assert.equal(await page.getByRole("button",{name:"First floor"}).count(),0);
     await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
     // Home construction comparison and arbitrary plot-size journey.
-    await page.goto(base+"/",{waitUntil:"networkidle"});
+    await page.goto(base+"/",{waitUntil:"load"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
      assert.equal(await page.locator(".home-stage-comparison img").count(),2,"paired construction-stage renders");
@@ -271,11 +292,11 @@ async function main(){
       await page.getByRole("img",{name:/Road on N side/}).waitFor();
       await page.waitForFunction(([w,d])=>document.querySelector(".nfit-primary-next a")?.href.includes("width="+w+"&depth="+d),[w,d]);
       assert.ok(await next.isVisible());
-      await page.goto(base+"/",{waitUntil:"networkidle"});
+      await page.goto(base+"/",{waitUntil:"load"});
     }
 
    }
-   await page.goto(base+"/",{waitUntil:"networkidle"});
+   await page.goto(base+"/",{waitUntil:"load"});
    const mainLink=page.locator(".nbh-journey.nbh-primary[href='/materials']").first();
    if(await mainLink.count()){
      const box=await mainLink.boundingBox();
