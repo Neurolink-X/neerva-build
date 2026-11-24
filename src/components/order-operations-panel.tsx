@@ -1,5 +1,5 @@
 "use client";
-import {useCallback,useEffect,useState} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 type Role="admin"|"dealer";
@@ -28,25 +28,30 @@ const currency=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR"});
 const supabase=createNeervaBrowserClient();
 export function OrderOperationsPanel({role}:{role:Role}){
  const [orders,setOrders]=useState<Order[]>([]),[message,setMessage]=useState("Loading verified orders…");
- const [busy,setBusy]=useState<string|null>(null);
+ const [busy,setBusy]=useState<string|null>(null),[query,setQuery]=useState(""),[filter,setFilter]=useState("all"),[page,setPage]=useState(0);
+ const requestRef=useRef<AbortController|null>(null),lock=useRef(false);
+ const visible=useMemo(()=>orders.filter(o=>(filter==="all"||filter===o.status)&&[o.code,o.business_name,o.contact_name,o.city,o.pincode].join(" ").toLowerCase().includes(query.trim().toLowerCase())),[orders,filter,query]);
+ const pages=Math.max(1,Math.ceil(visible.length/20)),currentPage=Math.min(page,pages-1);
  const reload=useCallback(async()=>{
   if(!supabase){setMessage("Neerva account authentication is not configured.");return;}
+  requestRef.current?.abort();const controller=new AbortController();requestRef.current=controller;
   try{
    const {data}=await supabase.auth.getSession();
    const jwt=data.session?.access_token;
    if(!jwt){setMessage("Sign in with your approved "+role+" account.");return;}
-   const result=await fetch(paths[role],{headers:{Authorization:"Bearer "+jwt},cache:"no-store"});
+   const result=await fetch(paths[role],{headers:{Authorization:"Bearer "+jwt},cache:"no-store",signal:controller.signal});
    const payload=await result.json().catch(()=>({error:"Order records unavailable."})) as Result;
+   if(controller.signal.aborted)return;
    if(!result.ok){setMessage(payload.error??"Orders could not be loaded.");return;}
    setOrders(payload.orders??[]);
    setMessage("");
-  }catch{setMessage("Connection issue. Refresh before taking any order action.");}
+  }catch{if(!controller.signal.aborted)setMessage("Connection issue. Refresh before taking any order action.");}
  },[role]);
- useEffect(()=>{const t=setTimeout(()=>void reload(),0);return()=>clearTimeout(t);},[reload]);
+ useEffect(()=>{const t=setTimeout(()=>void reload(),0);return()=>{clearTimeout(t);requestRef.current?.abort()};},[reload]);
  async function update(order:Order,nextStatus:string){
-  if(busy)return;
+  if(lock.current)return;
   if(!window.confirm("Only confirm real verified stock, delivery readiness or supplier failure. Continue with "+nextStatus.replaceAll("_"," ")+"?"))return;
-  setBusy(order.id);setMessage("");
+  lock.current=true;setBusy(order.id);setMessage("");
   try{
    const session=await supabase?.auth.getSession();
    const jwt=session?.data.session?.access_token;
@@ -58,18 +63,19 @@ export function OrderOperationsPanel({role}:{role:Role}){
    if(!result.ok){setMessage(payload.error??"Order status update was not saved.");return;}
    await reload();
   }catch{setMessage("Network issue. Refresh before retrying this status update.");}
-  finally{setBusy(null);}
+  finally{lock.current=false;setBusy(null);}
  }
  return <section aria-label={role==="admin"?"Admin accepted orders":"Dealer accepted orders"} style={{maxWidth:1120}}>
-  <p>Only customer-accepted, database-backed dealer offers appear here. Status changes are transactional and audited. No tax invoice or payment is fabricated.</p>
+  <div className="admin-metrics">{["pending_confirmation","confirmed","preparing","out_for_delivery","completed"].map(s=><div key={s}><small>{s.replaceAll("_"," ")}</small><strong>{orders.filter(o=>o.status===s).length}</strong></div>)}</div><p>Latest loaded orders only. Status changes are transactional and audited.</p>
   <div style={{display:"flex",gap:12,flexWrap:"wrap",alignItems:"center",margin:"14px 0"}}>
    <button className="button button-outline" type="button" disabled={!!busy} onClick={()=>void reload()}>Refresh order queue</button>
    <Link href={role==="admin"?"/admin/fulfilment":"/dealer/quotes"}>{role==="admin"?"Manual supplier sourcing":"Dealer quotation inbox"}</Link>
   </div>
+  <div className="admin-inline"><label>Search orders<input value={query} onChange={e=>{setQuery(e.target.value);setPage(0)}} placeholder="Order code, dealer, customer or city"/></label><label>Status<select value={filter} onChange={e=>{setFilter(e.target.value);setPage(0)}}>{["all","pending_confirmation","confirmed","preparing","out_for_delivery","completed","cancelled","declined"].map(s=><option key={s} value={s}>{s.replaceAll("_"," ")}</option>)}</select></label></div>
   {message&&<p role="status" style={{padding:12,borderRadius:10,background:"#fff2e2"}}>{message}</p>}
   {!message&&!orders.length&&<p>No accepted order is present for this {role==="admin"?"platform":"dealer"} account.</p>}
   <div style={{display:"grid",gap:14}}>
-   {orders.map(order=><article key={order.id} style={{border:"1px solid #d9e3d9",borderRadius:14,padding:18,background:"#fffefa"}}>
+   {!message&&orders.length>0&&!visible.length&&<p>No orders match these filters.</p>}{visible.slice(currentPage*20,currentPage*20+20).map(order=><article key={order.id} style={{border:"1px solid #d9e3d9",borderRadius:14,padding:18,background:"#fffefa"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:10,flexWrap:"wrap"}}>
      <strong style={{fontSize:19}}>{order.code}</strong>
      <strong>{currency.format(order.total_paise/100)}</strong>
@@ -85,6 +91,6 @@ export function OrderOperationsPanel({role}:{role:Role}){
     </div>
     {order.status==="out_for_delivery"&&<p style={{fontSize:13}}>Delivery completes only when the signed-in customer confirms receipt. Do not issue a GST invoice from this screen.</p>}
    </article>)}
-  </div>
+  </div><div className="admin-inline"><button disabled={currentPage===0} onClick={()=>setPage(currentPage-1)}>Previous</button><span>Page {currentPage+1} of {pages}</span><button disabled={currentPage+1>=pages} onClick={()=>setPage(currentPage+1)}>Next</button></div>
  </section>;
 }
