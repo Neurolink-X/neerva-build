@@ -137,7 +137,12 @@
     "src/components/admin-workspace.tsx",
     "src/app/admin/operations.css",
     "src/app/admin/dealers/page.tsx",
-    "src/app/api/admin/dealers/route.ts"
+    "src/app/api/admin/dealers/route.ts",
+    "src/components/admin-product-media.tsx",
+    "src/components/dealer-evidence.tsx",
+    "src/components/admin-audit-panel.tsx",
+    "src/app/admin/audit/page.tsx",
+    "src/app/api/admin/audit/route.ts"
   ],
   "protectedGitBlobs": {
     "src/app/api/orders/route.ts": "7f10d7ffc56e431ddcf87006b2bd782c160f10c6",
@@ -169,7 +174,8 @@
     "src/app/api/admin/dealers/route.ts": "cea7eddba4fe5655c5ba36019ece7e92203aa26a",
     "src/app/api/admin/users/route.ts": "7103b8ac1d22b15c37f1d6d5fb095974cfbf2bd9",
     "src/modules/marketplace/write-contract.ts": "91fbb77745d6fc925a631ddf2f4d503a905530e9",
-    "src/app/api/catalog/route.ts": "be21beec0fd473892bc13da4e03de0f476e205c9"
+    "src/app/api/catalog/route.ts": "be21beec0fd473892bc13da4e03de0f476e205c9",
+    "src/app/api/admin/audit/route.ts": "c06d6a90ee1a071876a6f08bc66c3b089720b43c"
   },
   "reviewedProtectedChanges20261124": [
     {
