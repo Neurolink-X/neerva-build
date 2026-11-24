@@ -235,9 +235,14 @@
       "license": "CC BY-SA 3.0",
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
       "target": "aggregates:river-sand-bulk",
-      "note": "Visually reviewed river sand close-up; local origin, grading and supplier not verified",
-      "status": "failed",
-      "reason": "Error: Invalid image dimensions or size"
+      "note": "Visually reviewed river sand close-up; local origin, grading and supplier not verified; retry with adaptive compression",
+      "status": "visual-review-required",
+      "file": "a979f7287e70ae70cffecae6.webp",
+      "width": 1000,
+      "height": 750,
+      "bytes": 315866,
+      "originalSha256": "e65d227fe501dfd5938df242d1e132c7febea75c3d99351c6ed38e12d22e72ae",
+      "sha256": "a979f7287e70ae70cffecae64922144ff8f52ba7cdcb381edaeac400ee087131"
     },
     {
       "key": "garden-hose-coil",
@@ -274,6 +279,40 @@
       "bytes": 31846,
       "originalSha256": "e635cf3092c35c7490e4d03632923116734400a32dc6b9943d00cd513c111a14",
       "sha256": "b13185127f5c233b4d08cf3604605177b35aa0586d85997db75489f702c7faa0"
+    },
+    {
+      "key": "pipe-nipple-reference",
+      "filename": "Pipe_nipple.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Pipe_nipple.jpg",
+      "credit": "Луносвет",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "target": "plumbing:fitting-gi-nipple",
+      "note": "Review material and threads before assigning; do not assume galvanized steel from image alone.",
+      "status": "visual-review-required",
+      "file": "99ab6ab3c5b8937cd9f176f8.webp",
+      "width": 500,
+      "height": 286,
+      "bytes": 5604,
+      "originalSha256": "ff577e89722dd7e7b31118b95f3db29f1d5ec0b5590b0ce28eb6fbe30596b7f5",
+      "sha256": "99ab6ab3c5b8937cd9f176f875f266b75836d9e8ab03f2e9d980db8cf8853625"
+    },
+    {
+      "key": "installed-conduit",
+      "filename": "Usage_of_electrical_counduit.JPG",
+      "source": "https://commons.wikimedia.org/wiki/File:Usage_of_electrical_counduit.JPG",
+      "credit": "Dmitry G",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "target": "electrical:generic-conduit",
+      "note": "Installed underground conduit; verify material and intended family before approval.",
+      "status": "visual-review-required",
+      "file": "3ea9f3e846b2739ac4f83841.webp",
+      "width": 900,
+      "height": 1200,
+      "bytes": 112684,
+      "originalSha256": "082e27699e035d46647464144ade634f2569cd7457d083a36b293ac3aed2aef4",
+      "sha256": "3ea9f3e846b2739ac4f838418b17ed6651c09350657933caa4592dadc127ab49"
     }
   ]
 }
