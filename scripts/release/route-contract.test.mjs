@@ -44,6 +44,9 @@ function normalize(path){
  catch{return null;}
 }
 const manifest={
+ "/api/admin/account-recovery":["POST"],
+ "/api/admin/dealer-members":["GET","POST"],
+ "/api/dealer/overview":["GET"],
  "/api/admin/audit":["GET"],
  "/api/admin/catalog/campaigns":["GET","POST","PATCH"],
  "/api/admin/catalog":["GET","POST","PATCH"],
@@ -56,7 +59,7 @@ const manifest={
  "/api/admin/studio-payments":["GET","PATCH"],
  "/api/admin/studio-settings":["GET","PATCH"],
  "/api/admin/studio-support":["GET","PATCH"],
- "/api/admin/system-incidents":["GET"],
+ "/api/admin/system-incidents":["GET","PATCH"],
  "/api/admin/users":["GET","POST","PATCH"],
  "/api/catalog/offers":["GET"],
  "/api/catalog/prices":["GET"],
