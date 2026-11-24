@@ -80,5 +80,25 @@ export const approvedMedia:readonly ApprovedMedia[]=[
     "bytes": 31006,
     "sha256": "25e4fd4de4887c15c5eb1a3284825cfebb8e43d37ed922c74be3678a38413d64",
     "sortOrder": 0
+  },
+  {
+    "category": "aggregates",
+    "family": "gitti-20mm",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Gravels_for_road_construction.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "credit": "Suyash Dwivedi",
+    "alt": "Separate sample of angular 20 mm aggregate photographed on a light surface; source describes road construction aggregate",
+    "view": "front",
+    "primary": false,
+    "sortOrder": 1,
+    "scope": "family",
+    "sourceType": "curated",
+    "verified": true,
+    "path": "/images/catalog/approved/63527a19997afb26405436cd.webp",
+    "width": 1200,
+    "height": 800,
+    "bytes": 76856,
+    "sha256": "63527a19997afb26405436cd7f1575fed9cdfc4b55d96cf1be498fce1265fafc"
   }
 ];
