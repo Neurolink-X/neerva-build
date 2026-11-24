@@ -17,7 +17,7 @@ export async function POST(request:Request){
  const {data:order,error}=await auth.client.from("studio_paid_orders")
   .select("id,status,created_at,amount_paise").eq("id",orderId).eq("user_id",auth.userId).maybeSingle();
  if(error)return apiFailed();
- if(!order||order.status!=="requested"||order.amount_paise!==14900)return fail(409,"No open ₹149 order belongs to this account.");
+ if(!order||order.status!=="requested"||!Number.isSafeInteger(order.amount_paise)||order.amount_paise<1000||order.amount_paise>2000000)return fail(409,"No valid pending Studio payment belongs to this account.");
  const {data:claim,error:write}=await auth.client.from("studio_payment_claims").insert({
   order_id:orderId,user_id:auth.userId,utr,reported_paid_at:paidAt
  }).select("id").single();
