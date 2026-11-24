@@ -41,6 +41,7 @@ create or replace function public.neerva_log_studio_settings()
 returns trigger language plpgsql security definer
 set search_path=pg_catalog,public,auth,pg_temp as $
 begin
+ if new.product_code is distinct from old.product_code then raise exception 'STUDIO_PRODUCT_CODE_IMMUTABLE' using errcode='23514'; end if;
  if not public.has_platform_role(array['admin','super_admin']::public.platform_role[]) then
   raise exception 'ADMIN_REQUIRED' using errcode='42501';
  end if;
