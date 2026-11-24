@@ -82,6 +82,7 @@ async function main(){
     const expectedUnauth=process.env.NEERVA_RFQ_INTAKE_ENABLED==="true"&&process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?401:503;
     assert.equal(unauth.status(),expectedUnauth,"RFQ must fail closed: 401 only when intake and auth are enabled, otherwise 503");
     await page.goto(base+"/",{waitUntil:"load"});
+    await page.locator(".neerva-install-banner").waitFor({state:"visible",timeout:15000});
     assert.equal(await page.locator(".neerva-install-banner").count(),1,"discoverable installation help is available on first visit without scroll");
      assert.equal(await page.getByRole("button",{name:/How to install|Install app/}).count(),1,"browser-specific install help entry is usable");
      await page.locator(".neerva-install-banner").getByRole("button",{name:"Not now"}).click();
