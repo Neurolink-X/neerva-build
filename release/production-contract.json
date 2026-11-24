@@ -141,7 +141,7 @@
     "src/app/api/admin/rfqs/route.ts": "d74ea8907d49353a9c29f86b53cd75732c4efde1",
     "src/app/api/dealer/inventory/route.ts": "82c0b90979d60300a743ba592dd7680b16282152",
     "src/app/api/dealer/quotes/route.ts": "4bdc8035e4ce273503abf8a5034e2da7433ffe6d",
-    "src/app/api/customer/quotes/route.ts": "aeced18facd09db13cb176873d63bc8563e6c2c5",
+    "src/app/api/customer/quotes/route.ts": "2a260727535f6128b0a445b6c43adaf91baa1433",
     "src/components/material-basket.tsx": "2064be2569dcc76da29b5a4b38ecc5e659758d85",
     "src/modules/catalog/basket.ts": "75b0a4c5f986adc706544788000f11db2df28aef",
     "src/modules/studio/room.ts": "e4dcb232a494a8f99a748a78ba5c5538ac708bd6",
@@ -197,6 +197,11 @@
       "path": "supabase/migrations/0016_typescript_order_workflow.sql",
       "reason": "Additive orders table with column-level grants, verified seller/pincode, quote row-lock, row-level tenancy isolation, immutable offer totals and audit events.",
       "validation": "SQL review + migration execution and audited role fixture tests before activation"
+    },
+    {
+      "path": "src/app/api/customer/quotes/route.ts",
+      "reason": "Project dealer offer revision in the customer read model; prevent stale-price selection without weakening permissions.",
+      "validation": "Customer offer revision filter + CI and mobile smoke"
     }
   ]
 }
