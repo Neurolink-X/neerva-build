@@ -86,6 +86,15 @@ async function main(){
      assert.equal(await page.getByRole("button",{name:/How to install|Install app/}).count(),1,"browser-specific install help entry is usable");
      await page.locator(".neerva-install-banner").getByRole("button",{name:"Not now"}).click();
      assert.equal(await page.locator(".neerva-install-banner").count(),0,"install assistance dismisses cleanly");
+    // Payment safety: public pricing is readable; unauthenticated users must not
+    // see a simulated paid QR or receive an entitlement from a bare POST.
+    await page.goto(base+"/studio-pricing",{waitUntil:"load"});
+    assert.equal(await page.getByRole("heading",{name:/Start with a real sample/i}).count(),1,"public Studio price page renders");
+    const guestPurchase=await page.request.post(base+"/api/studio/payments",{
+      data:{product:"home_studio"},headers:{"Content-Type":"application/json"}
+    });
+    assert.ok([401,403,503].includes(guestPurchase.status()),"unauthenticated payment cannot create an order");
+    assert.equal(await page.locator(".studio-upgrade-qr svg").count(),0,"no static guest payment QR or fake checkout success");
     // Authenticated role isolation needs live fixture accounts and cannot be simulated by guest screenshots.
     for(const roleRoute of ["/account/quotes","/dealer/quotes","/admin/catalog"]){
       const response=await page.goto(base+roleRoute,{waitUntil:"load"});
