@@ -44,6 +44,7 @@ function normalize(path){
  catch{return null;}
 }
 const manifest={
+ "/api/admin/audit":["GET"],
  "/api/admin/catalog/campaigns":["GET","POST","PATCH"],
  "/api/admin/catalog":["GET","POST","PATCH"],
  "/api/admin/dealers":["GET","PATCH"],
