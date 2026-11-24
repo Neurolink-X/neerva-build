@@ -174,6 +174,52 @@
       "bytes": 63152,
       "originalSha256": "9fcb87e820672050d0839a4b039e66383520ceda62ac0b6697f26cd534437649",
       "sha256": "68260a1fae231ae39b905aa8196f5ead0ad21b7c5594c9ab90d38a34a2f03b72"
+    },
+    {
+      "key": "hose-clamp",
+      "filename": "Hoseclamps.screw.agr.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Hoseclamps.screw.agr.jpg",
+      "credit": "ArnoldReinhold",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "target": "plumbing:fitting-hose-clamp",
+      "note": "Review screw-band clamps; no exact brand or diameter claim",
+      "status": "visual-review-required",
+      "file": "b8c05d7f4399350e6d329ffc.webp",
+      "width": 1057,
+      "height": 947,
+      "bytes": 96964,
+      "originalSha256": "649dd4d0ab93bfca97a7c4442c052f531b8bc294cfb93fde5a527c1fca4929d4",
+      "sha256": "b8c05d7f4399350e6d329ffc246d30a0c3d2e0c3ceb804a62dfd3ca8b62581ee"
+    },
+    {
+      "key": "seal-parts",
+      "filename": "Mechanical_seal_part01.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Mechanical_seal_part01.jpg",
+      "credit": "Miya.m",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "target": "plumbing:fitting-mechanical-seal",
+      "note": "Seal parts for water system; not complete pump assembly",
+      "status": "visual-review-required",
+      "file": "bfca013a5ecbbfea071bd33d.webp",
+      "width": 1200,
+      "height": 1200,
+      "bytes": 37722,
+      "originalSha256": "a298352af1c121ef0d6790a4995531d73e406a6e425ccb6269e33d5a8580e0de",
+      "sha256": "bfca013a5ecbbfea071bd33db1258f4e2ac955cc25b66c09d7df747482aef515"
+    },
+    {
+      "key": "pressure-gauge",
+      "filename": "Pressure_gauge.jpg",
+      "source": "https://commons.wikimedia.org/wiki/File:Pressure_gauge.jpg",
+      "credit": "Omnibus-Trip",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "target": "plumbing:fitting-pressure-gauge",
+      "note": "Review dial units and use; no claim of pump rating",
+      "status": "failed",
+      "reason": "Error: HTTP 429"
     }
   ]
 }
