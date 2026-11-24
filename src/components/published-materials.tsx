@@ -1,4 +1,5 @@
 "use client";
+import {subscribePublicRefresh} from "./public-refresh";
 import {useEffect,useMemo,useState} from "react";
 import {ProductPrice} from "@/components/product-price";
 import Link from "next/link";
@@ -11,18 +12,19 @@ type Product={id:string;slug:string;name:string;description:string;category:{slu
 export function PublishedMaterials({category}:{category?:string}){
  const [open,setOpen]=useState(false);
  const [products,setProducts]=useState<Product[]|null>(null);
- const [failed,setFailed]=useState(false);
+ const [failed,setFailed]=useState(false),[revision,setRevision]=useState(0);
  useEffect(()=>{
   if(!open)return;
   const controller=new AbortController();
-  fetch("/api/catalog",{signal:controller.signal}).then(async response=>{
+  fetch("/api/catalog",{signal:controller.signal,cache:"no-cache"}).then(async response=>{
    if(!response.ok)throw Error();
    const body=await response.json();
    if(body.source!=="published_database"||!Array.isArray(body.products))throw Error();
    if(!controller.signal.aborted){setProducts(body.products);setFailed(false);}
   }).catch(()=>{if(!controller.signal.aborted)setFailed(true)});
   return ()=>controller.abort();
- },[open]);
+ },[open,revision]);
+ useEffect(()=>{if(!open)return;const refresh=()=>setRevision(n=>n+1);const dispose=subscribePublicRefresh("catalog",refresh);const timer=window.setInterval(()=>{if(!document.hidden)refresh()},120000);return()=>{dispose();window.clearInterval(timer)}},[open]);
  const rows=useMemo(()=>(products??[]).filter(p=>(!category||p.category?.slug===category)&&p.category?.slug)
   .flatMap(p=>p.variants.filter(v=>v.status==="published").map(v=>({p,v}))),[products,category]);
  return <details className="category-guidance" onToggle={e=>{const next=e.currentTarget.open;setOpen(next);if(!next){setProducts(null);setFailed(false)}}}>
