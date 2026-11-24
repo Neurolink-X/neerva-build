@@ -22,5 +22,6 @@ jobs:
       - run: npm run release:verify
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run test:contracts
       - run: npm test
       - run: npm run build
