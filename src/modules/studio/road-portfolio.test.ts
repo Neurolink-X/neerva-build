@@ -26,7 +26,7 @@ test("exact 18x50 road-first 3BHK has 24 genuinely distinct room programs/partit
  const frontStairs=plans.filter(p=>p.rooms.find(r=>r.id==="stairs-g")?.y===0);
  assert.ok(frontStairs.length>=2,"18x50 needs actual front-stair alternatives, not just new labels");
  assert.ok(plans.some(p=>p.rooms.find(r=>r.id==="stairs-g")?.y!==(p.setbacks.frontFt)),"retain conventional central-stair alternatives");
- assert.equal(new Set(plans.map(meshSignature)).size,24,"all 24 must create different 3D walls");
+ assert.equal(new Set(plans.map(p=>meshSignature(p))).size,24,"all 24 must create different 3D walls");
  assert.equal(plans.filter(p=>p.variant==="parking-left").length,12);
  assert.equal(plans.filter(p=>p.variant==="parking-right").length,12);
  assert.ok(plans.some(p=>p.rooms.some(r=>r.kind==="terrace"&&r.floor===0)),"at least one accessible rear courtyard");
