@@ -1,0 +1,46 @@
+[
+  {
+    "key": "red-coarse-sand",
+    "filename": "A_Coarse_sand_typical_reddish_in_nature.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/bd/A_Coarse_sand_typical_reddish_in_nature.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:A_Coarse_sand_typical_reddish_in_nature.jpg",
+    "credit": "Liteekanem1",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "aggregates:morang-coarse-sand",
+    "note": "Red coarse sand candidate only, not proof of locally sourced morang"
+  },
+  {
+    "key": "crushed-stone-stockpile",
+    "filename": "Crushed_stones_gravel.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/72/Crushed_stones_gravel.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Crushed_stones_gravel.jpg",
+    "credit": "Microrao",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "aggregates:crushed-aggregate-bulk",
+    "note": "General stockpile; do not assign nominal size"
+  },
+  {
+    "key": "concrete-sand-stockpile",
+    "filename": "Concrete_sand_stockpile_(6256991062).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Concrete_sand_stockpile_(6256991062).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Concrete_sand_stockpile_(6256991062).jpg",
+    "credit": "Peter Craven",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "target": "aggregates:river-sand-bulk",
+    "note": "Concrete sand stockpile; river origin not demonstrated; map only after review"
+  },
+  {
+    "key": "godrej-historic-wordmark",
+    "filename": "Godrej_Logo.svg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Godrej_Logo.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Godrej_Logo.svg",
+    "credit": "Globus / Godrej press kit",
+    "license": "PD-textlogo; trademark restrictions apply",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-textlogo",
+    "target": "hardware:Godrej",
+    "note": "Historic brand mark; verify current locks brand identity and trademark use before approval"
+  }
+]

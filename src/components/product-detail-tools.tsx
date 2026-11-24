@@ -29,7 +29,7 @@ export function ProductGallery({product}:{product:DemoProduct}){
   <figcaption className="product-gallery-caption"><strong>{current?.label??"Product specifications"}</strong>
     <span>{!current?"Confirm exact model, dimensions and finish with your supplier.":current.kind==="sku"?"Uploaded and reviewed seller image.":"Photo is a reference, not proof of the quoted manufacturer SKU, size or availability."}</span>{current?.sourceUrl&&<small>Photo: <a href={current.sourceUrl} target="_blank" rel="noopener noreferrer">{current.credit}</a> · <a href={current.licenseUrl} target="_blank" rel="noopener noreferrer">{current.license}</a> · resized and encoded as WebP.</small>}</figcaption>
   {photos.length>1&&<div className="product-gallery-thumbs" role="group" aria-label="Choose material photographs">
-   {photos.slice(0,5).map((media,i)=><button type="button" key={media.src} aria-label={"Show photo "+(i+1)+": "+media.label}
+   {photos.map((media,i)=><button type="button" key={media.src} aria-label={"Show photo "+(i+1)+": "+media.label}
      aria-pressed={current?.src===media.src} onClick={()=>{setSelected(media.src);setZoom(false);}}>
      <span className="product-gallery-thumb-image"><Image src={media.src} alt="" fill sizes="90px" quality={60} unoptimized={media.src.startsWith("https://")} referrerPolicy="no-referrer" onError={()=>setFailed(old=>old.includes(media.src)?old:[...old,media.src])}/></span>
      <span>{media.kind==="sku"?"Seller photo":media.kind==="listing"?"Product photo":media.kind==="editorial"?"Material photo":media.kind==="manufacturer"?media.label:"Category view"}</span>

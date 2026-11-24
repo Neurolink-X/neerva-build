@@ -1,7 +1,6 @@
 import {usableMediaSource} from "./failed-media-sources.ts";
 import {fittingReference} from "./fitting-references.ts";
 import type {DemoProduct} from "./marketplace.ts";
-import {aggregateReference} from "./aggregate-references.ts";
 import {hardwareReference} from "./hardware-references.ts";
 import {localBrandAsset} from "./brand-media.ts";
 import {paintReference} from "./paint-references.ts";
@@ -50,10 +49,7 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
  const fitting=fittingReference(product.slug);
  if(fitting){if(fitting.image)append(localBrandAsset(fitting.image),fitting.imageSource?"Manufacturer fitting reference":"Retailer fitting reference","listing",product.name+" product family photo");return entries;}
  if(product.category==="aggregates"){
-  const ref=aggregateReference(product.slug);
-  // Never use the three broad group photos for every individual grade. 
-  // A reviewed material-specific asset is required; otherwise show the specification card.
-  void ref;
+  // Use only material-specific reviewed assets; never reuse one group image for a different grade.
   return entries;
  }
  if(product.category==="hardware"){
@@ -87,12 +83,12 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   append(src,"Real material photo · not exact SKU","editorial",
    "Real-world photograph of "+product.category.replaceAll("-"," ")+" materials, not the exact "+product.name);
  }
- if(!entries.length && product.category!=="bricks-blocks" && product.category!=="cement" && product.category!=="plumbing" && !(product.category==="electrical"&&/conduit|cable duct|casing and capping|cable protection|junction box/i.test(product.name)))
+ if(!entries.length && product.category==="steel" && /tmt|rebar|reinforcement/i.test(product.name))
   append(categoryImage(product.category),"Material example","category","Representative "+product.category+" material");
  return entries;
 }
 export function catalogCardPhoto(product:DemoProduct):CatalogPhoto|undefined{
  const all=catalogPhotos(product);
- return all.find(p=>p.kind==="sku")??all.find(p=>p.kind==="listing")??all.find(p=>p.kind==="editorial")??all[0];
+ return all[0];
 }
 
