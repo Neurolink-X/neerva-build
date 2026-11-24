@@ -1,0 +1,16 @@
+import type {Metadata} from "next";
+import Link from "next/link";
+import {SiteHeader,SiteFooter} from "@/components/site-chrome";
+import "@/app/studio-pricing/pricing.css";
+export const metadata:Metadata={title:"Wall Paint Design Ideas: Colour, Pattern & Room Combination",description:"Choose main and accent wall paints for bedrooms, living rooms and exteriors. Learn how light, surface finish, pattern scale and real shade cards affect the result.",alternates:{canonical:"/learn/wall-paint-pattern-ideas"}};
+export default function WallPaintGuide(){return <main className="catalog-page"><SiteHeader/><article className="studio-policy-document">
+<p className="eyebrow">INTERIOR COLOUR PLANNING · 24 NOVEMBER 2026</p><h1>Wall paint combinations that look right in your room</h1>
+<p>Choose colours using the space, daylight and furniture you already have. Digital previews are valuable for comparing alternatives, but they do not reproduce exact paint chemistry, wall texture or lighting.</p>
+<h2>Start with the main wall, not four competing patterns</h2><p>Give the larger wall area a calm base shade. Use a feature wall to introduce a second colour, box/grid motif, geometric pattern or textured look. A smaller room often feels less cluttered when one wall is the focus and remaining surfaces stay comparatively quiet.</p>
+<h2>Five useful directions to explore</h2>
+<ul><li><strong>Warm ivory and muted green:</strong> calm residential interiors, paired with wood or cane.</li><li><strong>Sand and terracotta:</strong> warm accent walls with a neutral supporting backdrop.</li><li><strong>Soft grey and deep blue:</strong> clear contrast on a single wall; consider daylight before committing.</li><li><strong>Cream and sage:</strong> understated bedrooms and family rooms.</li><li><strong>Minimal boxed geometry:</strong> intentional square/rectangular panels rather than repeated patterns across every wall.</li></ul>
+<h2>Match your paint tier to the space</h2><p>Distemper, standard emulsion and premium washable/low-odour options can differ in surface preparation, durability, washability and total installed cost. Confirm product-specific claims from the manufacturer's technical sheet. A decorative preview does not verify paint coverage.</p>
+<h2>How to use a wall-photo preview safely</h2><ol><li>Photograph one wall in neutral daylight with fixed exposure.</li><li>Mark its four corners, excluding doors and windows.</li><li>Test a plain colour first, then a single design.</li><li>Compare original and edited previews at the same exposure.</li><li>Check a real sample patch in morning and evening lighting before purchase.</li></ol>
+<h2>Estimate before ordering</h2><p>Measure actual wall surface, subtract large openings and review the manufacturer's stated coverage per coat, preparation requirements and number of coats. Final material quantities require measured site data.</p>
+<p><Link href="/design-studio/visualizer">Try Neerva Colour Studio samples →</Link> · <Link href="/studio-pricing">See optional ₹149 palette report</Link></p>
+</article><SiteFooter/></main>}
