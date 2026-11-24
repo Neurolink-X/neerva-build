@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {createHash} from "node:crypto";
 import {upiQrModules,upiQrSvgPath,UPI_QR_SIZE} from "./upi-qr.ts";
 import {studioUpiUrl} from "./paid-products.ts";
 test("generate error-corrected locally rendered QR for each admin-set INR amount",()=>{
@@ -21,4 +22,12 @@ test("generate error-corrected locally rendered QR for each admin-set INR amount
 test("reject unsafe or oversized QR payloads instead of rendering fake payment",()=>{
  assert.throws(()=>upiQrModules("https://example.com"),/INVALID_UPI_PAYLOAD/);
  assert.throws(()=>upiQrModules("upi://pay?pa=x&am=1&cu=INR&tn="+"x".repeat(400)),/QR_CONTENT_LENGTH_UNSUPPORTED/);
+});
+
+test("QR matches the independently checked ISO byte-mode reference matrix",()=>{
+ const uri=studioUpiUrl("home_studio","12345678-bbbb-4444-aaaa-123456789000",14900);
+ const matrix=upiQrModules(uri);
+ const binary=matrix.map(row=>row.map(v=>v?"1":"0").join("")).join("\n");
+ assert.equal(createHash("sha256").update(binary).digest("hex"),
+  "903121c7586981eaa98d581dbb4b71e09ccbe34c43382a3ce9ae0d3d4963eb07");
 });
