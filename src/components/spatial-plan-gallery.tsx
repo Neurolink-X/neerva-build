@@ -1,6 +1,7 @@
 "use client";
 import {useMemo,useState} from "react";
 import Link from "next/link";
+import {useStudioSettings} from "@/components/use-studio-settings";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
 import type {PlanBrief,RoadSide,PlanModel} from "@/modules/studio/plan-model";
 
@@ -26,6 +27,7 @@ function MiniSpatialPlan({plan}:{plan:PlanModel}){
   </svg>;
 }
 export function SpatialPlanGallery(){
+ const {ready:settingsReady,config:homeConfig}=useStudioSettings("home_studio");
  const [width,setWidth]=useState("18"),[depth,setDepth]=useState("50"),[floors,setFloors]=useState(2);
  const [bedrooms,setBedrooms]=useState(3),[road,setRoad]=useState<RoadSide>("N"),[parking,setParking]=useState(true);
  const brief:PlanBrief=useMemo(()=>({
@@ -48,8 +50,9 @@ export function SpatialPlanGallery(){
    <label className="nbd-spatial-parking"><input type="checkbox" checked={parking} onChange={e=>setParking(e.target.checked)}/> Car parking</label>
   </div>
   <p className="nbd-spatial-count" role="status"><strong>{result.plans.length}</strong> distinct checked concept layouts for {Number.isFinite(brief.widthFt)?brief.widthFt:"—"} × {Number.isFinite(brief.depthFt)?brief.depthFt:"—"} ft · {floors===1?"Ground only":"G + "+(floors-1)}</p>
+  {settingsReady&&homeConfig.published&&<p className="nbd-spatial-featured-note">Admin-curated featured samples: first {Math.min(homeConfig.freePreviewCount,result.plans.length)} layouts. All validated concepts remain free to inspect; paid access applies only to optional detailed downloadable reports. <Link href="/studio-pricing">See the live Studio price →</Link></p>}
   {result.plans.length===0?<div className="nbd-spatial-empty"><strong>No checked layout for these constraints.</strong><p>{result.blockers.slice(0,2).join(" ")}</p><Link href="/design-studio/portfolio">Review detailed constraints →</Link></div>:
-  <div className="nbd-spatial-grid">{result.plans.map((plan,i)=><article className="nbd-spatial-card" key={plan.id}>
+  <div className="nbd-spatial-grid">{result.plans.map((plan,i)=><article className={"nbd-spatial-card"+(settingsReady&&homeConfig.published&&i<homeConfig.freePreviewCount?" nbd-featured":"")} key={plan.id}>
     <div className="nbd-spatial-image"><MiniSpatialPlan plan={plan}/><span>ACTUAL ROOM PARTITIONS</span></div>
     <div className="nbd-spatial-copy">
      <h3>{planLabel(plan,i)}</h3>
