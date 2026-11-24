@@ -8,6 +8,6 @@ export default function StudioPaymentReviewPage(){
  return <main className="catalog-page"><SiteHeader/>
   <section className="page-hero page-hero-compact"><p className="eyebrow">ADMIN · PAYMENT RECONCILIATION</p>
    <h1>Protect every digital purchase.</h1><p>Release access only after independently matching the bank credit. Self-submitted UTR never unlocks features.</p>
-   <Link href="/admin/pricing">← Back to pricing</Link></section>
+   <Link href="/admin/pricing">← Back to pricing</Link> <Link href="/admin/studio-settings">Studio access & pricing →</Link></section>
   <section className="section" style={{maxWidth:1050,margin:"0 auto"}}><StudioPaymentReview/><StudioSupportReview/></section><SiteFooter/></main>
 }
