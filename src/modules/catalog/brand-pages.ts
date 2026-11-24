@@ -20,12 +20,20 @@ export const buyingDetails:Record<string,string>={
   "bricks-blocks":"Compare block material, face dimensions and thickness. Confirm the unit count, transport and breakage terms."
 };
 
+// Reviewed range photographs: representative only; not exact SKU or a stock claim.
+const rangeMedia:Record<string,{image:string;alt:string;source:string}>={
+ "plumbing:Astral":{image:"https://5.imimg.com/data5/SELLER/Default/2023/12/370425940/TZ/FL/AB/8521096/astral-cpvc-pro-1000x1000.png",alt:"Astral CPVC Pro pipe and fitting range",source:"https://www.krishnapipes.in/astral-pipes.html"},
+ "plumbing:Supreme":{image:"https://www.supreme.co.in/uploads/images/rYp2eJWqCU1H1V2HDsplxl8zEcIxNCcJcy7iH9dP.png",alt:"Supreme Lifeline CPVC pipes and fittings",source:"https://www.supreme.co.in/pipe/plumbing/products/lifeline-c-pvc-hot-cold-water-system-cts-series"},
+ "electrical:Finolex":{image:"https://madhukarpipesandelectricals.com/images/pipe7.png",alt:"Finolex electrical conduit range",source:"https://madhukarpipesandelectricals.com/electrical-wires-and-cables-supplier-in-madurai-tamilnadu"},
+ "electrical:Polycab":{image:"https://home-run.co/cdn/shop/files/w5.webp?v=1781092811&width=1024",alt:"Polycab FR-LSH single core wire range",source:"https://home-run.co/products/polycab-frls-h-single-core-wire"}
+};
 export function directoryCards(category:string){
   return brandDirectory.filter(b=>b.category===category).map(({name})=>{
     const products=getProductsByCategory(category).filter(p=>p.brand===name);
     const pictured=products.find(p=>p.referenceImage);
+    const range=rangeMedia[category+":"+name];
     return {name,category,href:brandPath(category,name),count:products.length,familyCount:groupCatalogByPhoto(products).length,
-      image:pictured?.referenceImage??null,alt:pictured?.name??"",
+      image:pictured?.referenceImage??null,alt:pictured?.name??"",rangeImage:range?.image??null,rangeAlt:range?.alt??"",rangeSource:range?.source??null,
       detail:pictured?.name??products[0]?.name??`Request ${name} ${getCategory(category)?.title.toLowerCase()}`};
   });
 }
