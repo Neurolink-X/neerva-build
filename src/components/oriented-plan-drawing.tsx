@@ -18,7 +18,7 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
  const mid={x:(road.start.x+road.end.x)/2,y:(road.start.y+road.end.y)/2};
  const gates=(g:{xFt:number;widthFt:number})=>[point(g.xFt,0),point(g.xFt+g.widthFt,0)];
  const roadLabel={x:mid.x+(side==="E"?2.6:side==="W"?-2.6:0),y:mid.y+(side==="N"?-1.7:side==="S"?2.2:0)};
- return <section className="nroad-diagram" aria-label="Single-source geographical floor plan">
+ return <section className="nroad-diagram" aria-label="Single-source geographical floor plan" data-plan-id={plan.id} data-selected-floor={floor} data-room-count={rooms.length}>
   <svg role="img" aria-label={`Road on ${side} side. Floor ${floor+1} with matching doors and rooms.`} viewBox={[-6,-6,dim.w+12,dim.d+12].join(" ")}>
    <rect width={dim.w} height={dim.d} fill="#f1eee6" stroke="#b0b0a7" strokeDasharray=".6 .3" strokeWidth=".15"/>
    <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#fdfcf7" stroke="#516552" strokeWidth=".4"/>
