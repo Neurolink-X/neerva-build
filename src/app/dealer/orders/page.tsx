@@ -10,7 +10,7 @@ export default function DealerOrdersPage(){
    <Link className="breadcrumb-link" href="/account">Account /</Link>
    <span className="eyebrow">DEALER · VERIFIED ORDERS</span>
    <h1>Prepare actual customer orders.</h1>
-   <p>Accept an accepted customer's payment status status only from verified records. Confirm stock, prepare materials and record actual dispatch. Customers acknowledge receipt on their own accounts.</p>
+   <p>Handle only customer-accepted, verified dealer offers. Confirm actual stock, prepare materials and record dispatch. The customer acknowledges receipt from their own account; this screen does not collect payment.</p>
    <nav className="admin-page-links"><Link href="/dealer/quotes">Quotation invitations</Link><Link href="/dealer/inventory">Stock</Link><Link href="/account">Account</Link></nav>
   </section>
   <section className="section ops-content"><OrderOperationsPanel role="dealer"/></section>
