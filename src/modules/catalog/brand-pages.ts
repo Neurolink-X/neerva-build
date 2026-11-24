@@ -1,4 +1,5 @@
 import {brandDirectory, getCategory, getProductsByCategory} from "./marketplace.ts";
+import {groupCatalogByPhoto} from "./media-usage.ts";
 import {categoryImage} from "./public-products.ts";
 
 export function brandSlug(name:string) {
@@ -23,7 +24,7 @@ export function directoryCards(category:string){
   return brandDirectory.filter(b=>b.category===category).map(({name})=>{
     const products=getProductsByCategory(category).filter(p=>p.brand===name);
     const pictured=products.find(p=>p.referenceImage);
-    return {name,category,href:brandPath(category,name),count:products.length,
+    return {name,category,href:brandPath(category,name),count:products.length,familyCount:groupCatalogByPhoto(products).length,
       image:pictured?.referenceImage??null,alt:pictured?.name??"",
       detail:pictured?.name??products[0]?.name??`Request ${name} ${getCategory(category)?.title.toLowerCase()}`};
   });
