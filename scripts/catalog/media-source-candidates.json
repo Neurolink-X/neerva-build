@@ -1,0 +1,41 @@
+{
+  "status": "candidate discovery only; no image rights or physical variant verification inferred",
+  "sources": [
+    {
+      "family": "morang-coarse-sand",
+      "category": "aggregates",
+      "source": "https://commons.wikimedia.org/wiki/File:Sand_as_building_materials.jpg",
+      "note": "Candidate construction sand only; check coarse texture and never label as authenticated morang source"
+    },
+    {
+      "family": "fine-plaster-sand",
+      "category": "aggregates",
+      "source": "https://commons.wikimedia.org/wiki/File:Heap_of_Fine_Construction_Sand.jpg",
+      "note": "Check visual grading before approval"
+    },
+    {
+      "family": "crushed-aggregate-bulk",
+      "category": "aggregates",
+      "source": "https://commons.wikimedia.org/wiki/File:Coarse_aggregate.jpg",
+      "note": "No nominal size evidence"
+    },
+    {
+      "family": "graded-aggregate",
+      "category": "aggregates",
+      "source": "https://commons.wikimedia.org/wiki/File:Coarse_Granite_Aggregate_Texture.jpg",
+      "note": "Review composition and rights"
+    },
+    {
+      "family": "generic-conduit",
+      "category": "electrical",
+      "source": "https://commons.wikimedia.org/wiki/File:Electrical_conduit.JPG",
+      "note": "Check material and installation type; do not use for flexible conduit"
+    },
+    {
+      "family": "roff-t01-nca",
+      "category": "hardware",
+      "source": "https://www.roff.in/products/roff-new-construction-adhesive-nca/",
+      "note": "Official product page; request reuse permission and verify pack identity"
+    }
+  ]
+}

@@ -2,6 +2,9 @@ import type {DemoProduct} from "./marketplace.ts";
 /** Specification-only choices: no authorised manufacturer, live inventory or public price claims. */
 type Row={category:string;familyKey:string;brand:string;kind:string;spec:string;values:string[];unit:string;note:string};
 const rows:Row[]=[
+ {category:"plumbing",familyKey:"generic-tank-inlet-pipe",brand:"Brand to confirm",kind:"Water tank inlet and outlet connection pipe",spec:"Nominal size",values:["20","25","32","40"],unit:"mm",note:"Match tank connector, pipe material and isolation valve; verify pressure rating"},
+ {category:"plumbing",familyKey:"generic-pump-delivery-pipe",brand:"Brand to confirm",kind:"Pump discharge / delivery pipe",spec:"Nominal size",values:["25","32","40","50"],unit:"mm",note:"Confirm pump outlet diameter, working pressure and compatible couplings"},
+ {category:"plumbing",familyKey:"generic-flex-pump-connector",brand:"Brand to confirm",kind:"Flexible pump connection hose",spec:"Nominal size",values:["25","32","40"],unit:"mm",note:"Confirm vacuum or discharge rating, end fittings and vibration isolation"},
  {"category":"plumbing","familyKey":"generic-upvc-pressure","brand":"Brand to confirm","kind":"uPVC cold water pressure pipe","spec":"Nominal size","values":["20","25","32","40","50"],"unit":"mm","note":"Confirm pressure class, potable-water suitability and compatible fittings"},
  {"category":"plumbing","familyKey":"generic-ppr","brand":"Brand to confirm","kind":"PPR hot/cold water pipe","spec":"Nominal size","values":["20","25","32"],"unit":"mm","note":"Confirm pressure and temperature ratings and fusion method"},
  {"category":"plumbing","familyKey":"generic-pex","brand":"Brand to confirm","kind":"PEX water supply tubing","spec":"Nominal size","values":["16","20","25"],"unit":"mm","note":"Confirm tubing standard and compatible connection system"},

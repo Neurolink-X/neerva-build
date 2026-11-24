@@ -1,5 +1,4 @@
 import type {Metadata} from "next";
-import Image from "next/image";
 import Link from "next/link";
 import {notFound} from "next/navigation";
 import {SiteHeader,SiteFooter} from "@/components/site-chrome";
@@ -27,8 +26,8 @@ function selection({category,brand}:Params){
   const dealer=brand==="dealer-listings";
   const card=dealer?undefined:directoryCards(category).find(b=>brandSlug(b.name)===brand);
   if(!dealer&&!card)notFound();
-  const title=card?`${card.name} · ${material.title}`:`${material.title} dealer listings`;
-  const image=card?.image??card?.rangeImage??categoryCover(category);
+  const title=card?`${card.name} · ${card.department??material.title}`:`${material.title} dealer listings`;
+  const image=card?(card.image??card.rangeImage??null):categoryCover(category);
   const path=card?brandPath(category,card.name):dealerPath(category);
   const products=card?getProductsByCategory(category).filter(p=>p.brand===card.name):[];
   const description=card?`${title}. ${products.length?"Explore "+products.map(p=>p.name).slice(0,2).join(" and ")+".":"Prepare a brand-specific enquiry."} Review specifications and request local pricing.`:`Browse published ${material.title.toLowerCase()} variants by SKU and unit. Prepare a dealer enquiry with your quantity and delivery pincode.`;
@@ -48,11 +47,11 @@ export default async function BrandSelection({params}:Props){
   return <main className="catalog-page"><SiteHeader/><div className="br-wrap">
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(breadcrumb).replace(/</g,"\\u003c")}}/>
     <nav className="br-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link> / <Link href="/brands">Brands</Link> / <span>{title}</span></nav>
-    <header className="br-hero"><div>{card&&<BrandMark name={card.name}/>}<h1>{title}</h1><p>{buyingDetails[material.slug]}</p>{card?.identity&&<p className="br-stock-note">Manufacturer listed by retailer: {card.identity.manufacturer}. <a href={card.identity.source} target="_blank" rel="noopener noreferrer">Product reference ↗</a></p>}<div className="br-hero-actions"><Link className="br-card-action" href={quote}>Request a {card?card.name+" ":""}quote →</Link><Link className="br-quote-action" href={card?dealerPath(material.slug):`/materials/${material.slug}`}>{card?"Browse dealer listings":"Compare material specifications"}</Link></div><p className="br-stock-note">Local price, stock and delivery subject to dealer confirmation.</p></div>
-    {image&&<BrandHeroPhoto image={image} alt={card?.image?card.alt:card?.rangeImage?card.rangeAlt:material.title+" category example"} label={card?.image?"Product reference":card?.rangeImage?"Brand range photograph":"Representative material photo · not brand packaging"} fallback={categoryCover(material.slug)} fallbackAlt={material.title+" representative material photo"} product={Boolean(card?.image||card?.rangeImage)}/>}</header>{card?.rangeSource&&<p className="br-source"><a href={card.rangeSource} target="_blank" rel="noopener noreferrer">Range image source ↗</a></p>}
+    <header className="br-hero"><div>{card&&<BrandMark name={card.name}/>}<h1>{title}</h1><p>{card?.buyingGuide??buyingDetails[material.slug]}</p>{card?.identity&&<p className="br-stock-note">Manufacturer listed by retailer: {card.identity.manufacturer}. <a href={card.identity.source} target="_blank" rel="noopener noreferrer">Product reference ↗</a></p>}<div className="br-hero-actions"><Link className="br-card-action" href={quote}>Request a {card?card.name+" ":""}quote →</Link><Link className="br-quote-action" href={card?dealerPath(material.slug):`/materials/${material.slug}`}>{card?"Browse dealer listings":"Compare material specifications"}</Link></div><p className="br-stock-note">Local price, stock and delivery subject to dealer confirmation.</p></div>
+    {<BrandHeroPhoto name={card?.name??material.title} category={material.slug} image={image} alt={card?.image?card.alt:card?.rangeImage?card.rangeAlt:material.title+" category example"} label={card?.image?"Product reference":card?.rangeImage?"Brand range photograph":"Representative material photo · not brand packaging"} fallback={card?null:categoryCover(material.slug)} fallbackAlt={material.title+" representative material photo"} product={Boolean(card?.image||card?.rangeImage)}/>}</header>{card?.rangeImage&&card.rangeSource&&<p className="br-source"><a href={card.rangeSource} target="_blank" rel="noopener noreferrer">Range image source ↗</a></p>}
     {card?<section className="br-group"><div className="br-heading"><h2>{products.length?"Product ranges":"Request a local quotation"}</h2><Link href={dealerPath(material.slug)}>Check dealer-listed options →</Link></div>
     {products.length?<div className="br-grid">{groupCatalogByPhoto(products).map(({primary:p,variants})=><article className="br-card" key={p.slug}>
-      {(material.slug==="tiles"||material.slug==="paint"||material.slug==="hardware")?<div className="tile-swatch"><CatalogMaterialImage category={material.slug} name={p.name} product={p}/></div>:p.referenceImage&&<div className="br-pack"><Image src={p.referenceImage} fill sizes="(max-width:620px) 45vw, 235px" alt={p.name}/></div>}
+      <div className="tile-swatch"><CatalogMaterialImage category={material.slug} name={p.name} product={p}/></div>
       <div className="br-card-copy"><h3><Link href={`/materials/${material.slug}/${p.slug}`}>{variants.length>1?p.specifications.find(s=>s.label==="Product family")?.value??p.name:p.name}</Link></h3>
       {(material.slug==="paint"||material.slug==="hardware")&&<ProductPrice category={p.category} slug={p.slug} quoteOnly={p.quoteOnly}/>} {p.specifications.slice(0,3).map(s=><p key={s.label}><b>{s.label}</b> {s.value}</p>)}
       {variants.length>1?<div className="catalog-variant-links">{variants.map(v=><Link key={v.slug} href={`/materials/${material.slug}/${v.slug}`}>{rangeVariantLabel(v)}</Link>)}</div>:<Link href={`/materials/${material.slug}/${p.slug}`}>Specifications and pricing →</Link>}</div></article>)}</div>:
