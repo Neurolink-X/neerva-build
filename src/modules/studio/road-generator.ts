@@ -205,7 +205,7 @@ function buildArchitecturalFamily(
  if(!b.parking)throw new Error("Pedestrian variants are handled separately");
  const sb=houseEnvelope(b),U={x:sb.leftFt,y:sb.frontFt,
   w:b.widthFt-sb.leftFt-sb.rightFt,d:b.depthFt-sb.frontFt-sb.rearFt};
- const W=U.w,D=U.d,parkW=8.5,stairsW=5.5;
+ const W=U.w,D=U.d,parkW=8.5;
  if(D<47||W<(family==="front-bedroom"?20:17.5)||b.bedrooms<b.floors||
     (b.floors===1&&b.bedrooms!==1))throw new Error("Footprint cannot fit this circulation family");
  const rooms:Room[]=[],openings:Opening[]=[];
