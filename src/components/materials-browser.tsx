@@ -1,5 +1,5 @@
-import {CatalogOffer} from "@/components/catalog-offer";
 "use client";
+import {CatalogOffer} from "@/components/catalog-offer";
 import {ProductPrice} from "@/components/product-price";
 import Link from "next/link";
 import {useMemo,useState} from "react";
