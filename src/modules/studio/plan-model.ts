@@ -130,7 +130,7 @@ export function validatePlan(p:PlanModel):string[]{
  if(Math.max(p.gate.xFt,p.pedestrianGate.xFt)<Math.min(p.gate.xFt+p.gate.widthFt,p.pedestrianGate.xFt+p.pedestrianGate.widthFt)-EPS)
   errors.push("Car and pedestrian gates overlap");
  if(p.parking){const park=byId.get(p.parking.roomId);if(!park||park.kind!=="parking"||park.floor!==0||!near(park.y,U.y)||p.parking.clearWidthFt<8||p.parking.clearDepthFt<16)errors.push("Road parking invalid");}
- if(p.stairs.roomIds.length!==p.floors||p.stairs.roomIds.some(id=>byId.get(id)?.kind!=="stairs"))errors.push("Stair circulation missing floor");
+ if((p.stairs.roomIds.length!==p.floors && !(p.floors===1&&!p.parking&&p.stairs.roomIds.length===0))||p.stairs.roomIds.some(id=>byId.get(id)?.kind!=="stairs"))errors.push("Stair circulation missing floor");
  // Connectivity graph uses actual reciprocal door coordinates; mere wall-touching is insufficient.
  const links=new Map<string,Set<string>>();
  for(const r of p.rooms)links.set(r.id,new Set());
@@ -187,4 +187,5 @@ export function recolorMasked(source:Uint8ClampedArray,mask:Uint8ClampedArray,ta
  }
  return out;
 }
+
 

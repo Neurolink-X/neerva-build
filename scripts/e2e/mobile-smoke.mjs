@@ -176,6 +176,31 @@ async function main(){
     await page.getByRole("button",{name:"Ground floor"}).click();
     await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
     assert.equal(await page.getByRole("button",{name:"Selected floor cutaway"}).getAttribute("aria-pressed"),"true","ground-floor 3D defaults to matching floor");
+    // The 3D mesh source must change with the actual selected 2D option, not only the highlighted card.
+    const plan2D=page.locator(".nroad-diagram"),plan3D=page.locator(".nbd-building");
+    await plan3D.waitFor();
+    const sixthId=await plan2D.getAttribute("data-plan-id");
+    assert.ok(sixthId,"2D must expose its exact source model");
+    assert.equal(await plan3D.getAttribute("data-plan-id"),sixthId,"3D must use the same PlanModel as selected 2D");
+    assert.equal(await plan2D.getAttribute("data-selected-floor"),"0");
+    assert.equal(await plan3D.getAttribute("data-selected-floor"),"0","3D cutaway must start on the selected ground floor");
+    assert.ok(Number(await plan3D.getAttribute("data-wall-cells"))>0,"3D selected floor must contain actual mesh walls");
+    await page.locator(".nroad-variants button").first().click();
+    await page.waitForFunction(previous=>{
+      const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");
+      return !!a&&!!b&&a.getAttribute("data-plan-id")!==previous
+        &&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id");
+    },sixthId);
+    await page.getByRole("button",{name:"First floor"}).click();
+    await page.waitForFunction(()=>{
+      const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");
+      return !!a&&!!b&&a.getAttribute("data-selected-floor")==="1"
+        &&b.getAttribute("data-selected-floor")==="1"&&Number(b.getAttribute("data-wall-cells"))>0;
+    });
+    await page.getByRole("button",{name:"Full exterior · all floors"}).click();
+    assert.equal(await plan3D.getAttribute("data-selected-floor"),"all","full exterior intentionally displays both floors");
+    await page.getByRole("button",{name:"Selected floor cutaway"}).click();
+    assert.equal(await plan3D.getAttribute("data-selected-floor"),"1","return to cutaway follows the same 2D floor");
     await page.goto(base+"/design-studio/road-planner",{waitUntil:"networkidle"});
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
@@ -198,6 +223,19 @@ async function main(){
     await plotInputs.nth(1).fill("50");
     await page.getByRole("img",{name:/Road on E side/}).waitFor();
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
+    await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=1&bedrooms=1&road=W&parking=false",{waitUntil:"networkidle"});
+    await page.getByRole("img",{name:/Road on W side/}).waitFor();
+    assert.equal(await page.locator(".nroad-variants button").count(),2,"compact 1 BHK has two genuine kitchen orientations");
+    const compactFirstId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
+    await page.locator(".nroad-variants button").last().click();
+    assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
+    await page.waitForFunction(previous=>{
+      const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");
+      return !!a&&!!b&&a.getAttribute("data-plan-id")!==previous
+        &&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id");
+    },compactFirstId);
+    assert.equal(await page.getByRole("button",{name:"First floor"}).count(),0);
+    await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"networkidle"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
