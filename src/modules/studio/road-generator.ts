@@ -1,6 +1,8 @@
 import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type RoomKind,
  type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
 import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
+import {buildingWallCells} from "./geometry.ts";
+import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;
@@ -386,7 +388,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
  const envelope=houseEnvelope(brief);
  const W=brief.widthFt-envelope.leftFt-envelope.rightFt;
  const baseParking=Math.max(8.5,Math.min(10,round(W*.46)));
- const plans:PlanModel[]=[],seen=new Set<string>();
+ const plans:PlanModel[]=[],seen=new Set<string>(),seenMeshes=new Set<string>();
  const normalized=Math.max(1,Math.min(24,Math.floor(limit)));
  for(const variant of ["parking-left","parking-right"] as const){
   const perSide=normalized===24?12:Math.ceil(normalized/2);
@@ -410,7 +412,12 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
     if(errors.length)continue;
     const geometry=p.rooms.map(r=>[r.floor,r.kind,r.x,r.y,r.w,r.d].join(":")).sort().join("|");
     if(seen.has(geometry))continue;
-    seen.add(geometry);
+    // Distinct room labels do not mean distinct buildings. Deduplicate the actual
+    // 3D wall mesh geometry, including doors/windows, before advertising a plan.
+    const mesh=buildingWallCells(studioDesignFromPlan(p)).map(cell=>
+      [cell.floorIndex,cell.axis,cell.planeFt,cell.startFt,cell.endFt,cell.bottomFt,cell.topFt].join(":")).sort().join("|");
+    if(!mesh||seenMeshes.has(mesh))continue;
+    seen.add(geometry);seenMeshes.add(mesh);
     plans.push(p);sideCount++;
    }catch{/* Invalid spatial combinations are discarded, not shown to customers. */}
   }
