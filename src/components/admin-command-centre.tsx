@@ -6,7 +6,7 @@ import styles from "./admin-command-centre.module.css";
 
 const groups=[
  {title:"Marketplace",items:[["Orders","Manage accepted orders and delivery exceptions","/admin/orders"],["RFQ desk","Review quotations and route eligible dealers","/admin/rfqs"],["Sourcing","Handle uncovered customer requests","/admin/fulfilment"]]},
- {title:"Commerce & growth",items:[["Catalog","Products, variants and publication","/admin/catalog"],["Pricing","Review and publish real prices","/admin/pricing"],["Marketing","Create and manage verified offers","/admin/marketing"]]},
+ {title:"Commerce & growth",items:[["Catalog","Products, variants and publication","/admin/catalog"],["Dealers","Review dealer records and branches","/admin/dealers"],["Pricing","Review and publish real prices","/admin/pricing"],["Marketing","Create and manage verified offers","/admin/marketing"]]},
  {title:"Design Studio",items:[["Studio settings","Paid access, preview limits and checkout","/admin/studio-settings"],["Payments","Bank reconciliation and support","/admin/studio-payments"],["Studio library","Manage design records and rules","/admin/studio"]]},
  {title:"Platform",items:[["Users & roles","Review account profiles and grants","/admin/users"],["System health","Review recorded errors and incidents","/admin/system-health"]]}
 ];
@@ -64,7 +64,7 @@ export function AdminCommandCentre({marketing=false}:{marketing?:boolean}){
   if(!Number.isFinite(amount)||amount<=0||!Number.isFinite(start.getTime())||!Number.isFinite(end.getTime())||end<=start){setError("Enter a positive amount and valid start and end dates.");return;}
   void mutate("POST",{pricingRuleId:f.get("price"),title:f.get("title"),terms:f.get("terms"),offerPaise:Math.round(amount*100),startsAt:start.toISOString(),endsAt:end.toISOString()});
  }
- return <main className={styles.shell}>
+ return <main className={styles.shell+" admin-embedded"}>
   <header className={styles.header}><Link href="/" className={styles.brand}>N / NEERVA BUILD</Link><span>Administration</span><Link href="/account">Account</Link></header>
   {access!=="ready"?<section className={styles.panel}><h1>{access==="loading"?"Checking access…":"Administrator access required"}</h1><p role="status">{error||"Checking your account against the protected server API."}</p><Link href="/account">Open account sign-in</Link> <button type="button" onClick={()=>{setRevision(v=>v+1)}}>Retry access check</button></section>:
   <div className={styles.workspace}>

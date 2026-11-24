@@ -1,16 +1,24 @@
 "use client";
 import Link from "next/link";
-import {SecureOperationsList} from "./secure-operations-list";
+import {useEffect,useState,useRef,type FormEvent} from "react";
+import {createNeervaBrowserClient} from "@/modules/supabase/browser";
+type Rfq={id:string;material_description:string;quantity:number;unit:string;city:string;pincode:string;status:string;sourcing_status:string};
+type Dealer={id:string;business_name:string;status:string};
+type Branch={tenant_id:string;pincode:string;approved:boolean};
+type Application={tenant_id:string;status:string};
+async function request(path:string,method="GET",body?:unknown){
+ const token=(await createNeervaBrowserClient()?.auth.getSession())?.data.session?.access_token;if(!token)throw Error("Sign in again.");
+ const r=await fetch(path,{method,cache:"no-store",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},...(body?{body:JSON.stringify(body)}:{})});const d=await r.json();if(!r.ok)throw Error(d.error??"Request failed.");return d;
+}
 export function AdminRfqPanel(){
- return <div style={{display:"grid",gap:22}}>
-  <section style={{background:"#edf4eb",border:"1px solid #cce0c9",padding:18,borderRadius:14,maxWidth:1100}}>
-   <h2 style={{fontSize:22,margin:"0 0 10px"}}>Nationwide procurement fallback</h2>
-   <p style={{fontSize:15,lineHeight:1.65}}>If a real customer enquiry has no eligible approved dealer, it remains visible in the admin sourcing queue for manual follow-up. There is no guaranteed India-wide dealer coverage, instant dispatch or 60-minute delivery claim. Confirm the supplier, final product SKU, total delivered cost and availability before accepting an order.</p>
-   <p style={{fontSize:13}}>This list contains real requests only; no customer contact information is exposed in the table.</p>
-  </section>
-  <SecureOperationsList endpoint="/api/admin/rfqs" title="Customer quotation & sourcing queue"
-   description="No dealer offers → admin sourcing needed. Verified dealer invited → awaiting response. A request is not an order, invoice or delivery."
-   arrays={[{key:"requests",label:"Verified customer RFQs",fields:["category_slug","material_description","quantity","unit","city","pincode","sourcing_status","fulfilment_status","created_at"]}]}/>
-  <p><Link href="/admin/orders" className="button button-outline">Open verified order fulfillment queue →</Link> Only customer-accepted offers become orders; this RFQ list does not create deliveries or invoices.</p>
- </div>;
+ const [rows,setRows]=useState<Rfq[]>([]),[dealers,setDealers]=useState<Dealer[]>([]),[branches,setBranches]=useState<Branch[]>([]),[query,setQuery]=useState(""),[filter,setFilter]=useState("all"),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[revision,setRevision]=useState(0);
+ const lock=useRef(false);
+ useEffect(()=>{let active=true;void Promise.all([request("/api/admin/rfqs"),request("/api/admin/dealers")]).then(([q,d])=>{if(active){setRows(q.requests??[]);const approved=new Set((d.applications as Application[]).filter(a=>a.status==="approved").map(a=>a.tenant_id));const b=(d.branches as Branch[]).filter(x=>x.approved);setBranches(b);setDealers((d.dealers as Dealer[]).filter(x=>x.status==="active"&&approved.has(x.id)&&b.some(y=>y.tenant_id===x.id)));setError("")}}).catch(e=>{if(active){setRows([]);setDealers([]);setError(String(e.message))}}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[revision]);
+ async function invite(e:FormEvent<HTMLFormElement>,row:Rfq){
+ e.preventDefault();if(lock.current)return;const tenantId=String(new FormData(e.currentTarget).get("dealer"));if(!window.confirm("Send a procurement invitation? This does not confirm delivery."))return;
+ lock.current=true;setBusy(true);setError("");setNotice("");
+ try{const d=await request("/api/admin/rfqs","POST",{requestId:row.id,tenantId});setNotice(d.coverage==="same_branch_pin"?"Invitation saved for matching branch PIN.":"Invitation saved; dealer must explicitly confirm coverage.");setLoading(true);setRevision(v=>v+1)}catch(e){setError(e instanceof Error?e.message:"Invitation failed.")}finally{lock.current=false;setBusy(false)}
+ }
+ const visible=rows.filter(r=>(filter==="all"||r.status===filter)&&[r.material_description,r.city,r.pincode,r.id].join(" ").toLowerCase().includes(query.toLowerCase()));
+ return <div className="admin-catalog-workbench"><section className="admin-box"><h2>Customer quotations and dealer invitations</h2><p>Invite only approved dealers. No invitation guarantees stock, price or delivery. Uncovered requests remain available for manual sourcing.</p><div className="admin-inline"><label>Search<input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Material, city, PIN or request ID"/></label><label>Status<select value={filter} onChange={e=>setFilter(e.target.value)}>{["all",...new Set(rows.map(r=>r.status))].map(s=><option key={s}>{s}</option>)}</select></label><button disabled={busy||loading} onClick={()=>{setLoading(true);setRevision(v=>v+1)}}>Refresh</button><Link href="/admin/fulfilment">Manual sourcing →</Link><Link href="/admin/orders">Accepted orders →</Link></div>{error&&<p role="alert" className="admin-error">{error}</p>}{notice&&<p role="status">{notice}</p>}</section><section className="admin-box">{loading?<p>Loading verified requests…</p>:!visible.length?<p>No matching requests.</p>:visible.map(r=><article className="admin-record" key={r.id}><h3>{r.material_description}</h3><p>{r.quantity} {r.unit} · {r.city} · {r.pincode}</p><p>{r.status} · {r.sourcing_status}</p>{r.status==="open"&&(dealers.length?<form className="catalog-admin-form" onSubmit={e=>void invite(e,r)}><label>Eligible dealer<select name="dealer" required defaultValue=""><option value="">Select dealer</option>{[...dealers].sort((a,b)=>Number(branches.some(x=>x.tenant_id===b.id&&x.pincode===r.pincode))-Number(branches.some(x=>x.tenant_id===a.id&&x.pincode===r.pincode))).map(d=><option key={d.id} value={d.id}>{d.business_name} · {branches.some(x=>x.tenant_id===d.id&&x.pincode===r.pincode)?"Matching PIN":"Confirm coverage"}</option>)}</select></label><button disabled={busy||loading}>Send dealer invitation</button></form>:<p>No eligible dealer loaded. Use manual sourcing.</p>)}</article>)}</section></div>
 }

@@ -1,4 +1,4 @@
 import type {Metadata} from "next";
-import {AdminCommandCentre} from "@/components/admin-command-centre";
+import {AdminOverview} from "@/components/admin-overview";
 export const metadata:Metadata={title:"Admin command centre | Neerva Build",robots:{index:false,follow:false}};
-export default function AdminPage(){return <AdminCommandCentre/>}
+export default function AdminPage(){return <AdminOverview/>}

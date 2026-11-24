@@ -35,3 +35,11 @@ test("offer uses paise integer sums; no client-provided total accepted",()=>{
  assert.equal(offerWrite.safeParse({...valid,lines:[]}).success,false);
  assert.equal(offerWrite.safeParse({...valid,validUntil:new Date(Date.now()-100_000).toISOString()}).success,false);
 });
+
+test("admin metadata updates preserve identity and bound specifications",()=>{
+ assert.equal(catalogUpdate.safeParse({kind:"product",id,status:"draft",name:"OPC cement",attributes:{grade:"53",weight:50}}).success,true);
+ assert.equal(catalogUpdate.safeParse({kind:"variant",id,status:"draft",attributes:{diameter:"12 mm"}}).success,true);
+ assert.equal(catalogUpdate.safeParse({kind:"variant",id,status:"draft",unit:"kg"}).success,false);
+ assert.equal(catalogUpdate.safeParse({kind:"product",id,status:"draft",attributes:{"":true}}).success,false);
+ assert.equal(catalogUpdate.safeParse({kind:"product",id,status:"draft",attributes:Object.fromEntries(Array.from({length:31},(_,i)=>["spec"+i,"value"]))}).success,false);
+});

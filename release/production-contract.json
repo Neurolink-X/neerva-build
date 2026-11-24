@@ -130,13 +130,20 @@
     "supabase/migrations/0016_typescript_order_workflow.sql",
     "src/components/customer-quote-inbox.tsx",
     "src/components/order-operations-panel.tsx",
-    "src/components/order-list.tsx"
+    "src/components/order-list.tsx",
+    "src/app/admin/layout.tsx",
+    "src/app/admin/page.tsx",
+    "src/components/admin-overview.tsx",
+    "src/components/admin-workspace.tsx",
+    "src/app/admin/operations.css",
+    "src/app/admin/dealers/page.tsx",
+    "src/app/api/admin/dealers/route.ts"
   ],
   "protectedGitBlobs": {
     "src/app/api/orders/route.ts": "7f10d7ffc56e431ddcf87006b2bd782c160f10c6",
     "src/modules/orders/backend.ts": "727869915623cbb664744b696e0637c9d9bd2488",
     "src/modules/identity/server-auth.ts": "de3afb321bdbb51fe51fe83a89523cc416e83674",
-    "src/app/api/admin/catalog/route.ts": "568ec700ae77ffb1837cd6a5c7985332c8cb62f9",
+    "src/app/api/admin/catalog/route.ts": "11657a7ecf0beeb112cabaae1839ab0131929570",
     "src/app/api/admin/pricing/route.ts": "2423a0a2bb9952b68d434a6d936ea5c768bb22f9",
     "src/app/api/admin/rfqs/route.ts": "d74ea8907d49353a9c29f86b53cd75732c4efde1",
     "src/app/api/dealer/inventory/route.ts": "82c0b90979d60300a743ba592dd7680b16282152",
@@ -157,7 +164,11 @@
     "src/modules/orders/order-contract.ts": "5189d31c51c41475f38c9bd7534e532558b87fef",
     "supabase/migrations/0016_typescript_order_workflow.sql": "d27e7ef56e8f9060db855d432b3a6bf76b55bde5",
     "supabase/migrations/0017_order_contact_role_scope.sql": "5c2c4fbeaa0f71e3db1227aada41c8cc43f7378d",
-    "supabase/migrations/0018_orders_offer_lookup_index.sql": "1de0750e0cbc18478e5d4f3262d26ee66e574ec1"
+    "supabase/migrations/0018_orders_offer_lookup_index.sql": "1de0750e0cbc18478e5d4f3262d26ee66e574ec1",
+    "src/app/api/admin/overview/route.ts": "d11063e69a5043cccd4890e1259d00f47131df69",
+    "src/app/api/admin/dealers/route.ts": "cea7eddba4fe5655c5ba36019ece7e92203aa26a",
+    "src/app/api/admin/users/route.ts": "71c5f127d07549f645338e87e421dd57b23b3f56",
+    "src/modules/marketplace/write-contract.ts": "91fbb77745d6fc925a631ddf2f4d503a905530e9"
   },
   "reviewedProtectedChanges20261124": [
     {

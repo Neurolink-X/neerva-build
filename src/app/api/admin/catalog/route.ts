@@ -14,7 +14,7 @@ export async function GET(request:Request){
  try{const [a,b,c]=await Promise.all([
   auth.client.from("categories").select("id,slug,name_en,name_hi,pricing_mode,status").order("name_en"),
   auth.client.from("brands").select("id,name,slug,authorized_source,status").order("name"),
-  auth.client.from("products").select("id,slug,name,description,attributes,status,category:categories(id,slug,name_en,pricing_mode),brand:brands(id,name),variants:product_variants(id,sku,unit,attributes,status)").order("created_at",{ascending:false}).limit(100)
+  auth.client.from("products").select("id,slug,name,description,attributes,status,category:categories(id,slug,name_en,name_hi,pricing_mode,status),brand:brands(id,name,slug,status,authorized_source),variants:product_variants(id,sku,unit,attributes,status)").order("created_at",{ascending:false}).limit(100)
  ]);if(a.error||b.error||c.error)return apiFailed();
  return apiData({categories:a.data??[],brands:b.data??[],products:c.data??[]});}catch{return apiFailed();}
 }
@@ -54,12 +54,20 @@ export async function PATCH(request:Request){
  const table=({category:"categories",brand:"brands",product:"products",variant:"product_variants"} as const)[data.kind];
  const row:Record<string,unknown>={status:data.status};
  if(data.kind==="category"){if(data.nameEn)row.name_en=data.nameEn;if(data.nameHi)row.name_hi=data.nameHi;if(data.pricingMode)row.pricing_mode=data.pricingMode;}
- if(data.kind==="brand"&&data.authorizedSource)row.authorized_source=data.authorizedSource;
- if(data.kind==="product"&&data.description!==undefined)row.description=data.description;
+ if(data.kind==="brand"){if(data.authorizedSource)row.authorized_source=data.authorizedSource;if(data.name)row.name=data.name;}
+ if(data.kind==="product"){if(data.description!==undefined)row.description=data.description;if(data.name)row.name=data.name;if(data.attributes!==undefined)row.attributes=data.attributes;}
+ if(data.kind==="variant"&&data.attributes!==undefined)row.attributes=data.attributes;
  if(data.status==="published"){
   if(data.kind==="brand"){
    const {data:brand}=await auth.client.from("brands").select("authorized_source").eq("id",data.id).maybeSingle();
    if(!(data.kind==="brand"&&(data.authorizedSource||brand?.authorized_source)))return err(409,"A manufacturer reference URL is required before publishing a brand; verify rights separately.");
+  }
+  if(data.kind==="product"){
+   const {data:product,error}=await auth.client.from("products").select("category_id,brand_id").eq("id",data.id).maybeSingle();
+   if(error)return apiFailed();if(!product)return err(404,"Product not found.");
+   const [cat,brand]=await Promise.all([auth.client.from("categories").select("status").eq("id",product.category_id).maybeSingle(),product.brand_id?auth.client.from("brands").select("status").eq("id",product.brand_id).maybeSingle():Promise.resolve({data:null,error:null})]);
+   if(cat.error||brand.error)return apiFailed();
+   if(cat.data?.status!=="published"||(product.brand_id&&brand.data?.status!=="published"))return err(409,"Publish the matching category and brand first.");
   }
   if(data.kind==="variant"){
    const {data:variant}=await auth.client.from("product_variants").select("product_id,unit").eq("id",data.id).maybeSingle();
@@ -71,6 +79,6 @@ export async function PATCH(request:Request){
   }
  }
  try{const {data:saved,error}=await auth.client.from(table).update(row).eq("id",data.id).select("*").maybeSingle();
- if(error)return err(503,"Catalog update failed.");if(!saved)return err(404,"Catalog record not found.");
+ if(error)return err(error.code==="23505"?409:503,error.code==="23505"?"This catalog identifier already exists.":"Catalog update failed.");if(!saved)return err(404,"Catalog record not found.");
  return apiData({item:saved,stored:true});}catch{return apiFailed()}
 }
