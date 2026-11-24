@@ -16,5 +16,5 @@ export default function GajGuide(){return <main className="catalog-page"><SiteHe
 <h2>Ground, G+1 and G+2 are not plot area</h2><p>Floor count does not multiply the legal plot area. The permitted built-up area depends on local floor-area ratio, setbacks, height limits, structural checks and municipality rules. A 150 gaj plot does not automatically allow 300 or 450 gaj of construction.</p>
 <h2>What to measure before opening a design</h2><ol><li>Frontage, depth and actual shape; note any non-right-angled boundary.</li><li>Which edge touches the public road, and entrance orientation.</li><li>Required setbacks, parking/vehicle movement and ventilation openings.</li><li>Ground-floor and upper-floor bedroom needs, elderly accessibility, stairs and bathroom count.</li></ol>
 <p><Link href="/design-studio">Enter your plot dimensions in Home Studio →</Link> · <Link href="/calculators">Open construction calculators</Link></p>
-<p><strong>Safety:</strong> Conceptual room layouts are not a licensed architect's sanctioned or structurally safe construction drawings. Verify dimensions on site before making decisions.</p>
+<p><strong>Safety:</strong> Conceptual room layouts are not a licensed architect&apos;s sanctioned or structurally safe construction drawings. Verify dimensions on site before making decisions.</p>
 </article><SiteFooter/></main>}
