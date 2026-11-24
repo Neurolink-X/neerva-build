@@ -45,9 +45,8 @@ export function StudioAdminSettings(){
      freePreviewCount:current.freePreviewCount,checkoutEnabled:current.mode==="paid"&&current.checkoutEnabled,
      published:current.published,expectedVersion:original.version})});
    const payload=await response.json();
-   setMessage(response.ok?String(payload.notice??"Studio settings published."):String(payload.error??"Settings not saved."));
-   await load(jwt);
-   window.dispatchEvent(new Event("studio-config-changed"));
+   if(response.ok){await load(jwt);setMessage(String(payload.notice??"Studio settings published."));window.dispatchEvent(new Event("studio-config-changed"));}
+   else setMessage(String(payload.error??"Settings not saved."));
   }catch{setMessage("Network error. Settings publication not confirmed.")}
   finally{setBusy(false)}
  }
