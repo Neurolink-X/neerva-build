@@ -23,7 +23,7 @@ async function main(){
     const issues=await page.evaluate(()=>{
      const root=document.documentElement,body=document.body;
      const contentWidth=Math.max(root.scrollWidth,body.scrollWidth);
-     return{width:innerWidth,contentWidth,h1:document.querySelectorAll("h1").length,title:document.title,lang:root.lang};
+     return{width:root.clientWidth,contentWidth,h1:document.querySelectorAll("h1").length,title:document.title,lang:root.lang};
     });
     if(issues.contentWidth>issues.width+2)failures.push(v.w+"px "+route+": horizontal overflow "+(issues.contentWidth-issues.width)+"px");
     if(!issues.title)failures.push(v.w+"px "+route+": missing document title");
@@ -41,6 +41,43 @@ async function main(){
     }
     if(v.w===360||v.w===430)await page.screenshot({path:path.join("test-results/mobile",v.w+"-"+(route.replaceAll("/","-")||"home")+".png"),fullPage:true,animations:"disabled"});
    }
+   if(v.w===390||v.w===1440){
+    const sizes=v.w===390?[[320,568],[360,800],[390,844],[412,915],[540,720],[768,1024],[844,390]]:[[1024,768],[1280,720],[1440,900],[1920,1080],[2560,1440]];
+    for(const route of ["/design-studio/road-planner","/design-studio/portfolio?width=18&depth=50&road=N&bedrooms=3&floors=2&parking=true"]){
+     await page.goto(base+route,{waitUntil:"load"});
+     await page.locator(".nbd-building canvas, .nbd-building svg").first().waitFor();
+     for(const [width,height] of sizes){
+      await page.setViewportSize({width,height});
+      for(const language of ["English","Hindi"]){
+       if(language==="Hindi")await page.locator(".nroad-nav button").click();
+       await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+       const issues=await page.evaluate(expected=>{
+        const root=document.documentElement;
+        const problems=[];
+        for(const selector of [".nroad",".nroad-nav",".nroad-main",".nroad-hero",".nroad-controls",".nroad-results",".site-footer"]){
+         const rect=document.querySelector(selector).getBoundingClientRect();
+         const column=selector===".nroad-controls"||selector===".nroad-results";
+         const minimum=column?(expected<=980?expected-84:selector===".nroad-controls"?230:400):Math.min(expected,selector===".nroad-main"?1370:selector===".nroad-hero"?1140:expected)-2;
+         if(rect.left< -1||rect.right>expected+1||rect.width<minimum)problems.push(selector+" "+Math.round(rect.left)+".."+Math.round(rect.right));
+        }
+        if(expected>980){
+         const controls=document.querySelector(".nroad-controls").getBoundingClientRect();
+         const results=document.querySelector(".nroad-results").getBoundingClientRect();
+         if(controls.right>=results.left)problems.push("Desktop columns overlap");
+        }
+        if(root.scrollWidth>expected+1||innerWidth>expected+1){
+         const outliers=[...document.querySelectorAll("body *")].filter(el=>el.getBoundingClientRect().right>expected+1).slice(0,8);
+         problems.push("Page width "+root.scrollWidth+"; "+outliers.map(el=>el.tagName+"."+el.getAttribute("class")).join(", "));
+        }
+        return problems;
+       },width);
+       assert.deepEqual(issues,[],route+" at "+width+"px in "+language);
+       if(language==="Hindi")await page.locator(".nroad-nav button").click();
+      }
+     }
+     await page.setViewportSize({width:v.w,height:v.h});
+    }
+   }
    if(v.w===390){
     // Verify role shells, legal/support destinations, and catalog routes not in the
     // repeated five-viewport sample. Status checks avoid creating fake test orders.
@@ -57,7 +94,7 @@ async function main(){
     for(const route of extraPages){
       const res=await page.goto(base+route,{waitUntil:"load",timeout:60000});
       if(res?.status()!==200)failures.push("390px role/footer/catalog route "+route+" returned "+String(res?.status()));
-      const overflow=await page.evaluate(()=>Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-innerWidth);
+      const overflow=await page.evaluate(()=>Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-document.documentElement.clientWidth);
       if(overflow>2)failures.push("390px "+route+": "+overflow+"px horizontal overflow");
     }
    }
