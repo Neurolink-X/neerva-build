@@ -243,6 +243,29 @@ async function main(){
     const prepareQuote=page.getByRole("link",{name:/Prepare dealer quote/});
     await prepareQuote.waitFor({timeout:15000});
     assert.match((await prepareQuote.getAttribute("href"))??"",/^\/quotes\?/,"list quote link should target quote preparation");
+    // Exercise a genuine guest order-cart journey, without creating a production order.
+    await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
+    await page.locator(".product-request-config input[type=number]").fill("3");
+    await page.getByRole("button",{name:"Add to order cart",exact:true}).click();
+    await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"load"});
+    await page.getByRole("button",{name:"Add to order cart",exact:true}).click();
+    await page.getByRole("link",{name:/View order cart/}).click();
+    await page.getByRole("heading",{name:"Order cart (2)"}).waitFor();
+    const firstCart=page.locator("article.admin-record").first();
+    await firstCart.locator("input[name=quantity]").fill("5");
+    await firstCart.getByRole("button",{name:"Update quantity"}).click();
+    await page.reload({waitUntil:"load"});
+    await page.getByRole("heading",{name:"Order cart (2)"}).waitFor();
+    assert.equal(await page.locator("article.admin-record input[name=quantity]").first().inputValue(),"5","quantity persists after reload");
+    await page.getByRole("button",{name:"Continue to checkout"}).click();
+    const signIn=page.getByRole("link",{name:/Sign in and continue/});
+    await signIn.waitFor();
+    assert.equal(new URL(await signIn.getAttribute("href"),base).searchParams.get("next"),"/checkout?cart=1","cart survives the sign-in return");
+    await page.getByRole("button",{name:/Edit cart/}).click();
+    await page.locator("article.admin-record").last().getByRole("button",{name:"Remove"}).click();
+    await page.getByRole("heading",{name:"Order cart (1)"}).waitFor();
+    await page.locator("article.admin-record").first().getByRole("button",{name:"Remove"}).click();
+    await page.getByText(/Your order cart is empty/).waitFor();
     const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
     assert.equal(visual?.status(),200,"colour editor route");
     await page.getByRole("button",{name:"Sample house exterior"}).click();
@@ -411,15 +434,15 @@ async function main(){
     "/api/admin/orders","/api/admin/pricing","/api/admin/rfqs",
     "/api/admin/studio-payments","/api/admin/studio-settings","/api/admin/studio-support",
     "/api/admin/system-incidents","/api/admin/users","/api/customer/quotes",
-    "/api/dealer/inventory","/api/dealer/quotes","/api/dealer/orders","/api/orders",
+    "/api/dealer/inventory","/api/dealer/quotes","/api/dealer/orders","/api/orders","/api/direct-orders",
     "/api/studio/payments","/api/studio/projects","/api/studio/support"],
    POST:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/pricing",
     "/api/admin/rfqs","/api/admin/users","/api/dealer/inventory","/api/dealer/quotes",
-    "/api/orders","/api/rfqs","/api/studio/payments","/api/studio/payments/claim",
+    "/api/orders","/api/direct-orders","/api/rfqs","/api/studio/payments","/api/studio/payments/claim",
     "/api/studio/premium-report","/api/studio/projects","/api/studio/support"],
    PATCH:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
     "/api/admin/pricing","/api/admin/studio-payments","/api/admin/studio-settings",
-    "/api/admin/studio-support","/api/admin/users","/api/admin/orders","/api/dealer/orders","/api/orders"],
+    "/api/admin/studio-support","/api/admin/users","/api/admin/orders","/api/dealer/orders","/api/orders","/api/direct-orders"],
    DELETE:["/api/studio/payments"]
   };
   for(const [method,routes] of Object.entries(protectedMatrix)){
