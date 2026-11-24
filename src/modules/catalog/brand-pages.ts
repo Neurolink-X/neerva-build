@@ -31,12 +31,17 @@ export const rangeMedia:Record<string,{image:string;alt:string;source:string}>={
  "electrical:Finolex":{image:"https://madhukarpipesandelectricals.com/images/pipe7.png",alt:"Finolex electrical conduit range",source:"https://madhukarpipesandelectricals.com/electrical-wires-and-cables-supplier-in-madurai-tamilnadu"},
  "electrical:Polycab":{image:"https://home-run.co/cdn/shop/files/w5.webp?v=1781092811&width=1024",alt:"Polycab FR-LSH single core wire range",source:"https://home-run.co/products/polycab-frls-h-single-core-wire"}
 };
+// Retailer identifies the product maker; this is not independent confirmation of a corporate logo.
+export const brandIdentityEvidence:Record<string,{manufacturer:string;source:string;logoStatus:"unconfirmed"}>={
+ "plumbing:Kohinoor":{manufacturer:"Kohinoor Impex",source:"https://www.home-run.co/products/kohinoor-waste-pvc-pipe-32mm",logoStatus:"unconfirmed"}
+};
 export function directoryCards(category:string){
   return brandDirectory.filter(b=>b.category===category).map(({name})=>{
     const products=getProductsByCategory(category).filter(p=>p.brand===name);
     const pictured=products.find(p=>p.referenceImage);
     const range=rangeMedia[category+":"+name];
-    return {name,category,href:brandPath(category,name),count:products.length,familyCount:groupCatalogByPhoto(products).length,
+    const identity=brandIdentityEvidence[category+":"+name]??null;
+    return {name,category,href:brandPath(category,name),count:products.length,familyCount:groupCatalogByPhoto(products).length,identity,
       image:pictured?.referenceImage??null,alt:pictured?.name??"",rangeImage:range?localBrandAsset(range.image):null,rangeAlt:range?.alt??"",rangeSource:range?.source??null,
       detail:pictured?.name??products[0]?.name??`Request ${name} ${getCategory(category)?.title.toLowerCase()}`};
   });

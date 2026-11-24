@@ -118,3 +118,9 @@ test("local media manifest points only to existing bundled WebP assets",async()=
   assert.match(source,/^https:\/\//);assert.match(path,/^\/images\/catalog\/brand-local\/[a-f0-9]{24}\.webp$/);assert.ok(existsSync("public"+path),path);
  }
 });
+
+
+test("Kohinoor keeps its actual local product reference without substituting a namesake logo",async()=>{
+ const {directoryCards}=await import("./brand-pages.ts");const {brandMediaFor}=await import("./brand-media.ts");const {existsSync}=await import("node:fs");
+ const card=directoryCards("plumbing").find(c=>c.name==="Kohinoor");assert.ok(card);assert.equal(card.identity?.manufacturer,"Kohinoor Impex");assert.equal(card.identity?.logoStatus,"unconfirmed");assert.equal(brandMediaFor("Kohinoor"),null);assert.ok(card.image&&existsSync("public"+card.image));
+});
