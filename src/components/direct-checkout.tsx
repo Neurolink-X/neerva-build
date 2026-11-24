@@ -11,9 +11,11 @@ export function DirectCheckout({category,slug,name}:{category:string;slug:string
  e.preventDefault();if(lock.current||receipt)return;lock.current=true;setBusy(true);setError("");
  const form=new FormData(e.currentTarget);const val=(n:string)=>String(form.get(n)??"").trim();
  try{const session=await client?.auth.getSession();const token=session?.data.session?.access_token;if(!token){setError("Please sign in before placing an order.");return;}
- key.current??=crypto.randomUUID();
+ const fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify([session?.data.session?.user.id,category,slug,val("quantity"),val("unit"),val("name"),val("phone"),val("city"),val("pin"),val("address"),val("notes")]))))).map(x=>x.toString(16).padStart(2,"0")).join("");
+ const storageKey="neerva-order-retry:"+fingerprint;
+ try{key.current=sessionStorage.getItem(storageKey)??crypto.randomUUID();sessionStorage.setItem(storageKey,key.current);}catch{key.current??=crypto.randomUUID();}
  const result=await fetch("/api/direct-orders",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({idempotencyKey:key.current,category,productSlug:slug,quantity:Number(val("quantity")),unit:val("unit"),contactName:val("name"),phone:val("phone"),city:val("city"),pincode:val("pin"),deliveryAddress:val("address"),notes:val("notes"),consent:form.get("consent")==="yes"})});
- const body=await result.json();if(!result.ok||!body.order?.code){setError(body.error??"Order not confirmed. Check My Orders.");return;}setReceipt({code:body.order.code,message:body.message});
+ const body=await result.json();if(!result.ok||!body.order?.code){setError(body.error??"Order not confirmed. Check My Orders.");return;}setReceipt({code:body.order.code,message:body.message});try{sessionStorage.removeItem(storageKey);}catch{/* receipt is authoritative */}
  }catch{setError("Connection interrupted. Retry the same details or check My Orders before starting another order.");}
  finally{lock.current=false;setBusy(false);}
  }
