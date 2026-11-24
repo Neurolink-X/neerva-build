@@ -142,7 +142,16 @@
     "src/components/dealer-evidence.tsx",
     "src/components/admin-audit-panel.tsx",
     "src/app/admin/audit/page.tsx",
-    "src/app/api/admin/audit/route.ts"
+    "src/app/api/admin/audit/route.ts",
+    "src/app/api/admin/account-recovery/route.ts",
+    "src/app/api/admin/dealer-members/route.ts",
+    "src/app/api/admin/system-incidents/route.ts",
+    "src/app/api/dealer/overview/route.ts",
+    "src/app/dealer/dashboard/page.tsx",
+    "src/app/dealer/layout.tsx",
+    "src/app/admin/account-recovery/page.tsx",
+    "src/components/platform-incident-monitor.tsx",
+    "supabase/migrations/20261124113117_neerva_operations_incident_recovery_and_dealer_roles.sql"
   ],
   "protectedGitBlobs": {
     "src/app/api/orders/route.ts": "7f10d7ffc56e431ddcf87006b2bd782c160f10c6",
@@ -175,7 +184,11 @@
     "src/app/api/admin/users/route.ts": "7103b8ac1d22b15c37f1d6d5fb095974cfbf2bd9",
     "src/modules/marketplace/write-contract.ts": "91fbb77745d6fc925a631ddf2f4d503a905530e9",
     "src/app/api/catalog/route.ts": "be21beec0fd473892bc13da4e03de0f476e205c9",
-    "src/app/api/admin/audit/route.ts": "c06d6a90ee1a071876a6f08bc66c3b089720b43c"
+    "src/app/api/admin/audit/route.ts": "c06d6a90ee1a071876a6f08bc66c3b089720b43c",
+    "src/app/api/admin/account-recovery/route.ts": "8eca1325c8b1f075e4afbe165f9a7aae30f1749d",
+    "src/app/api/admin/dealer-members/route.ts": "3610fc86c8edf76ec64a1ebdcb59e0514ef26e5f",
+    "src/app/api/admin/system-incidents/route.ts": "9806e2c7a0ff70a7e8d8ed369b3a21559e15266d",
+    "src/app/api/dealer/overview/route.ts": "27e60731cfd382ae6d17ab1d8fa144972b1822e4"
   },
   "reviewedProtectedChanges20261124": [
     {
