@@ -202,9 +202,9 @@ async function main(){
     await page.goto(base+"/",{waitUntil:"networkidle"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
-     assert.equal(await page.locator("#construction figure img").count(),2,"paired construction-stage renders");
+     assert.equal(await page.locator(".home-stage-comparison img").count(),2,"paired construction-stage renders");
     assert.equal(await page.getByRole("button",{name:/Replay illustration/}).count(),0,"do not fabricate manual state before dragging");
-    assert.equal(await page.locator("#construction figure").count(),1,"construction stages replace static colour mood");
+    assert.equal(await page.locator(".home-stage-comparison").count(),1,"construction stages replace static colour mood");
     const quick=page.locator(".nbh-quick-quote");
     await quick.locator("select[name=category]").selectOption("steel");
     await quick.locator("input[name=material]").fill("TMT 12 mm");

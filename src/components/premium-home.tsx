@@ -149,12 +149,15 @@ export function PremiumHome(){
     {recent.length>0&&<div className="nbh-recent"><small>{t.recent}</small>{recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>)}</div>}
    </div>
    <div className="nbh-hero-visual">
-    <div className="nbh-house-frame nbh-photo-hero">
-     <Image src={homeVisuals.hero} fill priority sizes="(max-width:720px) 100vw, 48vw" alt="Real photograph of a premium contemporary residence, used as style inspiration, not a NEERVA-generated house or an exact plan render" className="nbh-house-photo"/>
-     <span className="nbh-photo-veil" aria-hidden="true"/>
-     <div className="nbh-photo-credit"><span className="nbh-photo-pill">REAL HOUSE PHOTOGRAPHY</span><strong>Contemporary homes. Build a plan for your own site.</strong><small>Exterior style inspiration · exact rooms, doors and gates appear in the matched 2D/3D studio</small></div>
+   <figure className="home-stage-comparison" style={{margin:0,alignSelf:"center",minWidth:0}}>
+    <div style={{position:"relative",aspectRatio:"3 / 1",overflow:"hidden",borderRadius:12}}>
+     <Image src="/images/studio/finished.webp" fill priority sizes="(max-width:760px) 100vw, 48vw" alt="Completed home concept"/>
+     <Image src="/images/studio/shell.webp" fill sizes="(max-width:760px) 100vw, 48vw" alt="Unfinished shell of the same home concept" style={{clipPath:`inset(0 ${100-reveal}% 0 0)`}}/>
+     <span aria-hidden="true" style={{position:"absolute",left:`${reveal}%`,top:0,height:"100%",borderLeft:"3px solid white",pointerEvents:"none"}}><b style={{position:"absolute",top:"45%",left:-17,borderRadius:20,padding:"4px 8px",background:"white",color:"#244737"}}>↔</b></span>
+     <input type="range" min="0" max="100" value={reveal} aria-label="Compare construction-stage views" onChange={e=>setReveal(Number(e.target.value))} style={{position:"absolute",inset:0,width:"100%",height:"100%",margin:0,opacity:0,cursor:"ew-resize",touchAction:"pan-y"}}/>
     </div>
-    <p className="nbh-image-note">Licensed residential photograph, not a NEERVA-built home or a visualisation of a selected floor plan. <Link href="/design-studio/fit">Find designs for your plot →</Link></p>
+    <figcaption>{lang==="hi"?"खींचकर देखें · निर्माणाधीन और तैयार घर":"Drag to compare · Under construction and finished home"} · Design simulation</figcaption>
+   </figure>
    </div>
   </section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
@@ -174,15 +177,12 @@ export function PremiumHome(){
    <p className="nbh-fineprint">{t.concept}. {t.disclaimer}</p>
   </section>
   <section className="nbh-colour nbh-build-section" id="construction">
-   <figure style={{margin:0,alignSelf:"center",minWidth:0}}>
-    <div style={{position:"relative",aspectRatio:"3 / 1",overflow:"hidden",borderRadius:12}}>
-     <Image src="/images/studio/finished.webp" fill sizes="(max-width:760px) 100vw, 48vw" alt="Completed home concept"/>
-     <Image src="/images/studio/shell.webp" fill sizes="(max-width:760px) 100vw, 48vw" alt="Unfinished shell of the same home concept" style={{clipPath:`inset(0 ${100-reveal}% 0 0)`}}/>
-     <span aria-hidden="true" style={{position:"absolute",left:`${reveal}%`,top:0,height:"100%",borderLeft:"3px solid white",pointerEvents:"none"}}/>
-     <input type="range" min="0" max="100" value={reveal} aria-label="Compare construction-stage views" onChange={e=>setReveal(Number(e.target.value))} style={{position:"absolute",inset:0,width:"100%",height:"100%",margin:0,opacity:0,cursor:"ew-resize",touchAction:"pan-y"}}/>
+    <div><div className="nbh-house-frame nbh-photo-hero">
+     <Image src={homeVisuals.hero} fill loading="lazy" sizes="(max-width:720px) 100vw, 48vw" alt="Real photograph of a premium contemporary residence, used as style inspiration, not a NEERVA-generated house or an exact plan render" className="nbh-house-photo"/>
+     <span className="nbh-photo-veil" aria-hidden="true"/>
+     <div className="nbh-photo-credit"><span className="nbh-photo-pill">REAL HOUSE PHOTOGRAPHY</span><strong>Contemporary homes. Build a plan for your own site.</strong><small>Exterior style inspiration · exact rooms, doors and gates appear in the matched 2D/3D studio</small></div>
     </div>
-    <figcaption>{lang==="hi"?"खींचकर देखें · निर्माणाधीन और तैयार घर":"Drag to compare · Under construction and finished home"} · Design simulation</figcaption>
-   </figure>
+    <p className="nbh-image-note">Licensed residential photograph, not a NEERVA-built home or a visualisation of a selected floor plan. <Link href="/design-studio/fit">Find designs for your plot →</Link></p></div>
    <div className="nbh-colour-copy">
     <p className="nbh-eyebrow">03 / FROM FOUNDATION TO FINISH</p>
     <h2>{lang==="hi"?"सामग्री से बनता घर":"See your construction stages"}</h2>
