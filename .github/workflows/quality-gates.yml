@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   candidate-performance:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
           path: test-results/performance/report.json
   production-performance:
     if: github.event_name == 'pull_request' || inputs.run_production
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +64,7 @@ jobs:
           path: test-results/performance/report.json
   authenticated-staging:
     if: github.event_name == 'workflow_dispatch' && inputs.run_authenticated
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment: neerva-isolated-qa
     steps:
