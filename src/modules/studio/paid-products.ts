@@ -10,9 +10,10 @@ export const studioPayee={id:"arjunchaurasiya1254-2@oksbi",name:"ARJUN CHAURASIY
 export function studioPaymentEnabled(env:{NEERVA_STUDIO_PAYMENTS_ENABLED?:string;NEERVA_OPERATOR_TERMS_VERIFIED?:string}):boolean{
  return env.NEERVA_STUDIO_PAYMENTS_ENABLED==="true"&&env.NEERVA_OPERATOR_TERMS_VERIFIED==="true";
 }
-export function studioUpiUrl(product:StudioProduct,orderId?:string):string{
- const service=studioProducts[product];
- const note="Neerva "+service.short+(orderId?" "+orderId.slice(0,8):"")+" INR149";
- const q=new URLSearchParams({pa:studioPayee.id,pn:studioPayee.name,am:(service.pricePaise/100).toFixed(2),cu:"INR",tn:note});
+export function studioUpiUrl(product:StudioProduct,orderId?:string,pricePaise:number=studioProducts[product].pricePaise):string{
+ if(!Number.isSafeInteger(pricePaise)||pricePaise<1000||pricePaise>2000000)throw new Error("INVALID_STUDIO_PRICE");
+ const service=studioProducts[product],amount=(pricePaise/100).toFixed(2);
+ const note="Neerva "+service.short+(orderId?" "+orderId.slice(0,8):"")+" INR"+amount;
+ const q=new URLSearchParams({pa:studioPayee.id,pn:studioPayee.name,am:amount,cu:"INR",tn:note});
  return "upi://pay?"+q.toString();
 }
