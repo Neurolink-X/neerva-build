@@ -57,8 +57,8 @@ test("SQL order workflow has atomic offer ownership, RLS and payment safety guar
 });
 
 test("private order delivery addresses are denied to sales/inventory-only memberships",()=>{
- const ddl=readFileSync("supabase/migrations/0017_order_role_visibility_hardening.sql","utf8");
- assert.match(ddl,/alter policy neerva_orders_read on public\.orders/);
+ const ddl=readFileSync("supabase/migrations/0017_order_contact_role_scope.sql","utf8");
+ assert.match(ddl,/create policy neerva_orders_read on public\.orders/);
  assert.match(ddl,/is_tenant_member\(tenant_id,array\['owner','manager','dispatch'\]/);
  assert.doesNotMatch(ddl,/array\['inventory'|'sales','inventory'/);
  const dealerApi=readFileSync("src/app/api/dealer/orders/route.ts","utf8");
