@@ -5,7 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import {homeVisuals,homeReferencePhotos} from "@/modules/home/assets";
 import {HomeShowcase} from "@/components/home-showcase";
-import {brandPath} from "@/modules/catalog/brand-pages";
+import {brandPath,directoryCards} from "@/modules/catalog/brand-pages";
+import {brandMediaFor} from "@/modules/catalog/brand-media";
 import {BrandMark} from "@/components/brand-mark";
 
 type Language="en"|"hi";
@@ -148,7 +149,7 @@ export function PremiumHome(){
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
   <section className="nbh-brands-strip" aria-label="Construction manufacturer reference directory">
    <div><strong>{lang==="hi"?"निर्माण सामग्री के ब्रांड":"Explore established material brands"}</strong><p>{lang==="hi"?"ब्रांड लोगो केवल पहचान के लिए हैं। स्टॉक और अधिकृत डीलर की पुष्टि अलग जरूरी है।":"Original brand marks where source-verified; names are references, not authorised dealership or product stock."}</p></div>
-   <div className="nbh-brand-links">{([["ACC","cement"],["UltraTech","cement"],["Ambuja","cement"],["Ramco","cement"],["Priya","cement"],["Maha","cement"],["Birla Super","cement"],["JSW Neosteel","steel"],["Asian Paints","paint"],["Astral","plumbing"],["Supreme","plumbing"],["Polycab","electrical"]] as const).map(([name,category])=><Link href={brandPath(category,name)} key={name} aria-label={"Explore "+name+" materials"}><BrandMark name={name} small/></Link>)}</div>
+   <div className="nbh-brand-links">{([["ACC","cement"],["UltraTech","cement"],["Ambuja","cement"],["Ramco","cement"],["Priya","cement"],["Maha","cement"],["Birla Super","cement"],["JSW Neosteel","steel"],["Asian Paints","paint"],["Astral","plumbing"],["Supreme","plumbing"],["Polycab","electrical"]] as const).map(([name,category])=><Link href={brandPath(category,name)} key={name} aria-label={"Explore "+name+" materials"}>{!brandMediaFor(name)&&directoryCards(category).find(card=>card.name===name)?.image?<span style={{display:"inline-flex",alignItems:"center",gap:6}}><Image src={directoryCards(category).find(card=>card.name===name)!.image!} alt={name+" product reference, not logo"} width={40} height={48} style={{objectFit:"contain"}}/><span>{name}</span></span>:<BrandMark name={name} small/>}</Link>)}</div>
   </section>
   <section className="nbh-section nbh-materials" id="materials"><div className="nbh-section-head"><div><p className="nbh-eyebrow">01 / MATERIALS</p><h2>{t.category}</h2><p>{t.catDesc}</p></div><Link href="/materials" className="nbh-section-link">{t.navMaterials} <Icon name="arrow"/></Link></div>
    <div className="nbh-category-grid">{items.map(item=><Link href={item.href} className="nbh-material-card" key={item.id}><div className="nbh-material-image">{item.image?<Image src={item.image} fill sizes="(max-width:600px) 48vw, (max-width:1000px) 30vw, 16vw" alt={"Representative "+item.en+" category "+(item.image.endsWith(".svg")?"illustration":"material photo")+", not verified branded SKU"} loading="lazy"/>:<div className="nbh-photo-pending" role="img" aria-label="Representative category illustration pending">SKU photo pending review</div>}</div><div className="nbh-material-info"><h3>{lang==="hi"?item.hi:item.en}</h3><p>{lang==="hi"?item.descriptionHi:item.description}</p><span>{item.id==="paint"?t.paintLabel:t.options} <Icon name="arrow"/></span></div></Link>)}</div>
