@@ -3,7 +3,7 @@ import {useState} from "react";
 import Image from "next/image";
 import type {DemoProduct} from "@/modules/catalog/marketplace";
 import {categoryImage} from "@/modules/catalog/public-products";
-import {catalogPhotos} from "@/modules/catalog/catalog-photos";
+import {catalogPhotos,type CatalogPhoto} from "@/modules/catalog/catalog-photos";
 import {MaterialIdentity} from "./material-identity";
 /** Card image: one factual badge, local first. No fake SKU imagery or unnecessary overlays. */
 export function isApprovedSkuPhoto(path:string):boolean{
@@ -12,7 +12,8 @@ export function isApprovedSkuPhoto(path:string):boolean{
 export function CatalogMaterialImage({category,name,compact=false,product}:{category:string;name:string;compact?:boolean;product?:DemoProduct}){
  const [failed,setFailed]=useState<string[]>([]);
  const media=product?catalogPhotos(product):[];
- const sources=product?media:[{src:categoryImage(category),label:"Category photograph · not exact SKU",alt:"Representative "+category+" material photo",kind:"category" as const}];
+ const categorySrc=categoryImage(category);
+ const sources:CatalogPhoto[]=product?media:categorySrc?[{src:categorySrc,label:"Category photograph · not exact SKU",alt:"Representative "+category+" material photo",kind:"category"}]:[];
  const current=sources.find(x=>x.src&&!failed.includes(x.src));
  const src=current?.src;
  // A real editorial photo is useful if its identity is explicitly labeled. Never render a
