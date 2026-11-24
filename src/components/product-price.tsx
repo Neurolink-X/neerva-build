@@ -1,4 +1,5 @@
 "use client";
+import {hardwarePrice} from "@/modules/catalog/hardware-references";
 import {paintReferencePrice} from "@/modules/catalog/paint-references";
 import {tileReferencePrice} from "@/modules/catalog/tile-references";
 import {planningRate} from "@/modules/catalog/planning-rate";
@@ -36,6 +37,8 @@ const format=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maxi
 export function ProductPrice({category,slug,sku,quoteOnly}:{sku?:string;category:string;slug:string;quoteOnly?:boolean}){
  const rate=useSyncExternalStore(subscribe,()=>currentRate(category,slug,sku),noRate);
  const budget=quoteOnly?null:planningRate(category,slug);
+ const hardware=category==="hardware"&&!quoteOnly?hardwarePrice(slug):null;
+ if(!rate&&hardware)return <span><strong>{format.format(hardware.rupees)}</strong> / listed variant<br/>{hardware.pack} · Bengaluru retailer reference, {hardware.checked}; historical listing, not Neerva selling price. <a href={hardware.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  const paint=category==="paint"&&!quoteOnly?paintReferencePrice(slug):null;
  if(!rate&&paint)return <span><strong>₹{paint.rupees} / L</strong><br/>Manufacturer reference MRP, tax included, largest pack basis · {paint.checked}. Smaller packs and shade may differ. <a href={paint.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  const tile=category==="tiles"&&!quoteOnly?tileReferencePrice(slug):null;

@@ -83,7 +83,7 @@ const items=[
  {id:"electrical",en:"Electrical",hi:"इलेक्ट्रिकल",description:"Wires, rigid & flexible conduits, cable ducts",descriptionHi:"वायर, कंड्यूट और केबल डक्ट",image:homeVisuals.electrical,href:"/materials/electrical"},
  {id:"aggregates",en:"Morang, balu & gitti",hi:"मौरंग, बालू व गिट्टी",description:"Coarse & fine sand, M-sand, 10–63 mm gitti",descriptionHi:"मोटी व बारीक बालू, एम-सैंड, 10–63 मिमी गिट्टी",image:homeVisuals.aggregates,href:"/materials/aggregates"},
  {id:"tiles",en:"Tiles & flooring",hi:"टाइल्स व फ्लोरिंग",description:"Size, finish and pack",descriptionHi:"नाप, फिनिश और पैक",image:homeVisuals.tiles,href:"/materials/tiles"},
- {id:"hardware",en:"Hardware & adhesives",hi:"हार्डवेयर व एडहेसिव",description:"Fittings and fixings",descriptionHi:"फिटिंग और सामान",image:homeVisuals.hardware,href:"/materials/hardware"},
+ {id:"hardware",en:"Hardware & adhesives",hi:"हार्डवेयर व एडहेसिव",description:"Adhesives, locks, hinges, cabinet fittings & site tools",descriptionHi:"एडहेसिव, लॉक, कब्जे, फिटिंग और औज़ार",image:homeVisuals.hardware,href:"/materials/hardware"},
 ] as const;
 const popular=[["cement","/materials/cement"],["TMT","/materials/steel"],["bricks","/materials/bricks-blocks"],["pipes","/materials/plumbing"]] as const;
 

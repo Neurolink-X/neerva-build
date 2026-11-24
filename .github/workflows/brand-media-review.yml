@@ -5,6 +5,7 @@ on:
       - 'scripts/catalog/import-brand-media.mjs'
       - 'src/modules/catalog/brand-media.ts'
       - 'src/modules/catalog/brand-pages.ts'
+      - 'src/modules/catalog/hardware-references.ts'
       - '.github/workflows/brand-media-review.yml'
   workflow_dispatch:
 permissions:

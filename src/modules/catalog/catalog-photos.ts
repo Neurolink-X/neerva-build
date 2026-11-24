@@ -1,5 +1,7 @@
 import type {DemoProduct} from "./marketplace.ts";
 import {aggregateReference,aggregatePhotoSources} from "./aggregate-references.ts";
+import {hardwareReference} from "./hardware-references.ts";
+import {localBrandAsset} from "./brand-media.ts";
 import {paintReference} from "./paint-references.ts";
 import {tileReferenceMedia} from "./tile-references.ts";
 import {categoryImage} from "./public-products.ts";
@@ -47,6 +49,11 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   const ref=aggregateReference(product.slug);
   if(ref){const photo=aggregatePhotoSources[ref.group];append(photo.src,"Representative material photo · not exact SKU","editorial",photo.alt);}
   append(categoryImage("aggregates"),"Material samples · illustrative comparison","category","Illustrative samples of construction sand and stone aggregate");
+  return entries;
+ }
+ if(product.category==="hardware"){
+  const ref=hardwareReference(product.slug);
+  if(ref?.image)append(localBrandAsset(ref.image),"Retailer product reference","listing",product.name+" reference photograph");
   return entries;
  }
  if(product.category==="paint"){

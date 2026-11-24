@@ -3,12 +3,13 @@
 import {createHash} from "node:crypto";
 import {mkdir,writeFile,readFile} from "node:fs/promises";
 import {createRequire} from "node:module";
+import {hardwareReferences} from "../../src/modules/catalog/hardware-references.ts";
 import {brandMedia} from "../../src/modules/catalog/brand-media.ts";
 import {rangeMedia} from "../../src/modules/catalog/brand-pages.ts";
 import {localBrandAssets} from "../../src/modules/catalog/local-brand-assets.ts";
 const args=process.argv.slice(2);
 const review=args.includes("--review");
-const registry=new Set([...Object.values(brandMedia).map(x=>x.logo),...Object.values(rangeMedia).map(x=>x.image)]);
+const registry=new Set([...Object.values(brandMedia).map(x=>x.logo),...Object.values(rangeMedia).map(x=>x.image),...hardwareReferences.flatMap(x=>x.image?[x.image]:[])]);
 const approved=new Set(review?[...registry].filter(url=>url.startsWith("https://")):args.filter(x=>x.startsWith("https://")));
 if(!approved.size){console.error("Pass the exact reviewed HTTPS asset URLs to import; no automatic blanket copying.");process.exit(1);}
 const require=createRequire(import.meta.url);

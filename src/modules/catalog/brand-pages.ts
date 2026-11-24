@@ -1,6 +1,7 @@
 import {brandDirectory, getCategory, getProductsByCategory} from "./marketplace.ts";
 import {groupCatalogByPhoto} from "./media-usage.ts";
 import {categoryImage} from "./public-products.ts";
+import {hardwareReference} from "./hardware-references.ts";
 import {paintReference} from "./paint-references.ts";
 import {localBrandAsset} from "./brand-media.ts";
 
@@ -41,7 +42,8 @@ export function directoryCards(category:string){
     const products=getProductsByCategory(category).filter(p=>p.brand===name);
     const pictured=products.find(p=>p.referenceImage);
     const paint=category==="paint"?products.map(p=>paintReference(p.slug)).find(p=>p?.image):undefined;
-    const range=rangeMedia[category+":"+name]??(paint?.image?{image:paint.image,alt:name+" manufacturer product photograph",source:paint.source}:undefined);
+    const hardware=category==="hardware"?products.map(p=>hardwareReference(p.slug)).find(p=>p?.image):undefined;
+    const range=rangeMedia[category+":"+name]??(hardware?.image&&hardware.source?{image:hardware.image,alt:name+" retailer product reference",source:hardware.source}:undefined)??(paint?.image?{image:paint.image,alt:name+" manufacturer product photograph",source:paint.source}:undefined);
     const identity=brandIdentityEvidence[category+":"+name]??null;
     return {name,category,href:brandPath(category,name),count:products.length,familyCount:groupCatalogByPhoto(products).length,identity,
       image:pictured?.referenceImage??null,alt:pictured?.name??"",rangeImage:range?localBrandAsset(range.image):null,rangeAlt:range?.alt??"",rangeSource:range?.source??null,
