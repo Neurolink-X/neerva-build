@@ -35,3 +35,6 @@
 .nstudio-landing :is(input,select,button,a):focus-visible{outline:3px solid #b75f3a;outline-offset:3px}
 @media(max-width:920px){.nstudio-hero,.nstudio-start{grid-template-columns:1fr}.nstudio-photo{aspect-ratio:1.6;max-height:420px}.nstudio-choice-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){.nstudio-hero{padding:30px 16px 19px}.nstudio-start{padding:27px 16px}.nstudio-choices{padding:28px 16px}.nstudio-choice-grid{grid-template-columns:1fr}.nstudio-start-grid{grid-template-columns:1fr}.nstudio-intro h1{font-size:clamp(35px,10vw,52px)}.nstudio-photo{aspect-ratio:1.26}.nstudio-reality{border-radius:0;margin-bottom:0;padding:24px 18px}.nstudio-start-form{padding:17px}}
+
+.nstudio-start-grid .nstudio-area-apply{align-self:end;min-height:49px;padding:10px;border:1px solid #2c6644;border-radius:10px;background:#edf5ed;color:#275039;font-weight:800;cursor:pointer}
+.nstudio-area-note{font-size:12px;line-height:1.65;color:#617464;margin:12px 0}
