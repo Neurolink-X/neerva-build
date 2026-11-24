@@ -79,3 +79,17 @@ test("cement directory includes matching local product references for sourced br
   if(card.image)assert.ok(demoProducts.some(p=>p.brand===card.name&&p.category==="cement"&&p.referenceImage===card.image));
  }
 });
+
+
+test("pipe expansion has distinct families, valid routes and source-linked manufacturer ranges",async()=>{
+ const {getProduct, getProductsByCategory}=await import("./marketplace.ts");
+ const {groupCatalogByPhoto}=await import("./media-usage.ts");
+ for(const category of ["plumbing","electrical"]){
+  const products=getProductsByCategory(category);
+  const keys=new Set(products.map(p=>p.familyKey));
+  const required=category==="plumbing"?["generic-cpvc","generic-upvc-pressure","generic-ppr","generic-pex","generic-column","generic-casing","generic-tee","generic-trap"]:["generic-conduit","generic-heavy-conduit","generic-flex-conduit","generic-dwc-duct","generic-junction-box","generic-casing-capping"];
+  for(const key of required){assert.ok(keys.has(key),key);const variants=products.filter(p=>p.familyKey===key);assert.ok(variants.length>=2);for(const p of variants){assert.equal(getProduct(category,p.slug)?.slug,p.slug);assert.equal(productEvidence(p).inventoryVerified,false);}}
+  assert.equal(groupCatalogByPhoto(products).flatMap(g=>g.variants).length,products.length);
+ }
+ for(const slug of ["astral-wireguard","supreme-cableshield","supreme-cableguard"]){const p=getProduct("electrical",slug);assert.ok(p?.manufacturerReference);assert.equal(p.referenceImage,undefined);}
+});
