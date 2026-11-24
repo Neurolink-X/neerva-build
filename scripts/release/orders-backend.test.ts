@@ -19,7 +19,7 @@ test("Spring proxy preserves POST, authenticated JWT and body without downgradin
  try{
   process.env.ORDER_SERVICE_URL="https://orders.internal.test";
   globalThis.fetch=async(input,init)=>{
-   called={url:String(input),method:init?.method,authorization:init?.headers?.Authorization,body:init?.body};
+   called={url:String(input),method:init?.method,authorization:new Headers(init?.headers).get("authorization"),body:init?.body};
    return new Response(JSON.stringify({requestId:"test-order",status:"received"}),{status:201,headers:{"content-type":"application/json"}});
   };
   const request=new Request("https://neerva.example/api/orders",{method:"POST",headers:{authorization:"Bearer fixture-token"}});
