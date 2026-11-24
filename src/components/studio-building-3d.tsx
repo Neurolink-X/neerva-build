@@ -38,8 +38,9 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    const zCoord=(v:number)=>(v-design.plot.depthFt/2)*FT;
    // Show the actual missing rear L-corner instead of visually claiming that land exists.
    const shape=planModel?.plot.siteShape??{kind:"rectangle"} as const;
-   if(shape.kind==="rectangle")box(0,-.13,0,width,.2,depth,foundation,false);
-   else {
+   const showSite=mode==="exterior"||selectedFloor===undefined||selectedFloor===0;
+   if(showSite&&shape.kind==="rectangle")box(0,-.13,0,width,.2,depth,foundation,false);
+   else if(showSite&&shape.kind!=="rectangle") {
     const W=design.plot.widthFt,D=design.plot.depthFt,w=shape.notchWidthFt,d=shape.notchDepthFt;
     const groundPart=(x0:number,x1:number,y0:number,y1:number)=>
      box(xCoord((x0+x1)/2),-.13,zCoord((y0+y1)/2),(x1-x0)*FT,.2,(y1-y0)*FT,foundation,false);
@@ -56,7 +57,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
     for(const r of planModel.rooms.filter(r=>visible(r.floor)&&!["parking","verandah"].includes(r.kind))){
      box(xCoord(r.x+r.w/2),r.floor*height,zCoord(r.y+r.d/2),r.w*FT,.14,r.d*FT,concrete,false);
     }
-   }else for(let f=0;f<design.floors;f++)box(cx,f*height,cz,W,.14,D,concrete,false);
+   }else for(let f=0;f<design.floors;f++)if(visible(f))box(cx,f*height,cz,W,.14,D,concrete,false);
    const instances=new THREE.InstancedMesh(shared,wall,wallCells.length),dummy=new THREE.Object3D();
    wallCells.forEach((cell,index)=>{const length=(cell.endFt-cell.startFt)*FT,mid=(cell.startFt+cell.endFt)/2;
     dummy.position.set(cell.axis==="x"?xCoord(cell.planeFt):xCoord(mid),cell.floorIndex*height+(cell.bottomFt+cell.topFt)/2*FT,cell.axis==="z"?zCoord(cell.planeFt):zCoord(mid));
@@ -114,37 +115,73 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
       box(xCoord(r.xFt+r.wFt/2),.42,zCoord(r.yFt+r.dFt/2),Math.min(r.wFt*.7,6.5)*FT,.65,Math.min(r.dFt*.65,11)*FT,car,false);
     }
    }
-   const fenceH=.85;box(-width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(0,-.13+fenceH/2,depth/2,width,fenceH,.12,concrete);
-   const gates=planModel?[
-    {start:planModel.gate.xFt,width:planModel.gate.widthFt},
-    {start:planModel.pedestrianGate.xFt,width:planModel.pedestrianGate.widthFt}
-   ].filter(g=>g.width>0).sort((a,b)=>a.start-b.start):[{start:(design.plot.widthFt-Math.min(3,width*.65)/FT)/2,width:Math.min(3,width*.65)/FT}];
-   let fenceCursor=0;
-   for(const gate of gates){
-    if(gate.start>fenceCursor+.01){
-     const len=(gate.start-fenceCursor)*FT;
-     box(xCoord((fenceCursor+gate.start)/2),fenceH/2,-depth/2,len,fenceH,.14,concrete);
+   if(showSite){
+    const fenceH=.85;box(-width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(0,-.13+fenceH/2,depth/2,width,fenceH,.12,concrete);
+    const gates=planModel?[
+     {start:planModel.gate.xFt,width:planModel.gate.widthFt},
+     {start:planModel.pedestrianGate.xFt,width:planModel.pedestrianGate.widthFt}
+    ].filter(g=>g.width>0).sort((a,b)=>a.start-b.start):[{start:(design.plot.widthFt-Math.min(3,width*.65)/FT)/2,width:Math.min(3,width*.65)/FT}];
+    let fenceCursor=0;
+    for(const gate of gates){
+     if(gate.start>fenceCursor+.01){
+      const len=(gate.start-fenceCursor)*FT;
+      box(xCoord((fenceCursor+gate.start)/2),fenceH/2,-depth/2,len,fenceH,.14,concrete);
+     }
+     const gw=gate.width*FT,gx=xCoord(gate.start+gate.width/2);
+     box(gx,fenceH*.47,-depth/2,gw,fenceH*.94,.08,gateMat);
+     for(let k=0;k<7;k++)box(gx-gw/2+gw*(k+.5)/7,fenceH*.48,-depth/2-.06,.028,fenceH*.86,.04,railingMat);
+     fenceCursor=gate.start+gate.width;
     }
-    const gw=gate.width*FT,gx=xCoord(gate.start+gate.width/2);
-    box(gx,fenceH*.47,-depth/2,gw,fenceH*.94,.08,gateMat);
-    for(let k=0;k<7;k++)box(gx-gw/2+gw*(k+.5)/7,fenceH*.48,-depth/2-.06,.028,fenceH*.86,.04,railingMat);
-    fenceCursor=gate.start+gate.width;
+    if(fenceCursor<design.plot.widthFt-.01)
+     box(xCoord((fenceCursor+design.plot.widthFt)/2),fenceH/2,-depth/2,(design.plot.widthFt-fenceCursor)*FT,fenceH,.14,concrete);
+    box(0,-.26,0,width*1.8,.05,depth*1.8,material("#b4c7ad"),false);
    }
-   if(fenceCursor<design.plot.widthFt-.01)
-    box(xCoord((fenceCursor+design.plot.widthFt)/2),fenceH/2,-depth/2,(design.plot.widthFt-fenceCursor)*FT,fenceH,.14,concrete);
-   box(0,-.26,0,width*1.8,.05,depth*1.8,material("#b4c7ad"),false);
    scene.add(new THREE.HemisphereLight("#ffffff","#78816d",2.2));const sun=new THREE.DirectionalLight("#fff1d7",2.4);sun.position.set(width,top+8,depth*.7);sun.castShadow=renderer.shadowMap.enabled;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-width*1.8;sun.shadow.camera.right=width*1.8;sun.shadow.camera.top=depth*1.8;sun.shadow.camera.bottom=-depth*1.8;sun.shadow.bias=-.001;scene.add(sun);
    const camera=new THREE.PerspectiveCamera(46,1,.04,300);
    const focusHeight=selectedFloor!==undefined&&mode!=="exterior"?(selectedFloor+.5)*height:Math.min(top,top*.55);
-   const cameraPosition=mode==="walkthrough"?new THREE.Vector3(cx,(selectedFloor??0)*height+1.65,cz+Math.min(D*.38,2.4))
-     :new THREE.Vector3(width*.92,top+Math.max(3,top*.4),-depth*1.15);
-   camera.position.copy(cameraPosition.applyAxisAngle(new THREE.Vector3(0,1,0),angle));
-   controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.075;controls.minDistance=mode==="walkthrough"?.7:2;controls.maxDistance=Math.max(width,depth)*3;controls.maxPolarAngle=Math.PI*.51;
-   controls.target.set(cx,mode==="walkthrough"?(selectedFloor??0)*height+1.55:focusHeight,cz);controls.update();
+   const up=new THREE.Vector3(0,1,0);
+   const focus=new THREE.Vector3(cx,mode==="walkthrough"?(selectedFloor??0)*height+1.55:focusHeight,cz).applyAxisAngle(up,angle);
+   const direction=new THREE.Vector3(.74,mode==="dollhouse"?1.85:.82,-1).normalize().applyAxisAngle(up,angle);
+   controls=new OrbitControls(camera,renderer.domElement);
+   controls.enableDamping=true;
+   controls.dampingFactor=.075;
+   controls.minDistance=mode==="walkthrough"?.7:2;
+   controls.maxPolarAngle=Math.PI*.51;
+   controls.target.copy(focus);
+   camera.position.copy(focus).add(mode==="walkthrough"
+    ?new THREE.Vector3(0,.1,Math.min(D*.38,2.4)).applyAxisAngle(up,angle)
+    :direction);
+   const right=new THREE.Vector3().crossVectors(up,direction).normalize();
+   const screenUp=new THREE.Vector3().crossVectors(direction,right);
+   const corners:THREE.Vector3[]=[];
+   const low=showSite?-.3:(selectedFloor??0)*height-.1;
+   const high=mode==="exterior"||selectedFloor===undefined?top+1:(selectedFloor+1)*height;
+   for(const x of [-width/2,width/2])for(const y of [low,high])for(const z of [-depth/2,depth/2]){
+    corners.push(new THREE.Vector3(x,y,z).applyAxisAngle(up,angle).sub(focus));
+   }
+   let previousFit=0;
    function draw(){frame=0;if(!renderer||!controls)return;controls.update();renderer.render(scene,camera)}
    function schedule(){if(!frame)frame=window.requestAnimationFrame(draw)}
    refresh.current=schedule;controls.addEventListener("change",schedule);
-   const resize=()=>{if(!renderer)return;const w=Math.max(200,target.clientWidth),h=Math.max(260,Math.min(630,w*.7));renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();schedule()};
+   const resize=()=>{
+    if(!renderer||!controls||target.clientWidth<1)return;
+    const w=target.clientWidth,h=Math.max(260,Math.min(630,Math.round(w*.78)));
+    renderer.setSize(w,h);
+    camera.aspect=w/h;
+    if(mode!=="walkthrough"){
+     const tanY=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+     const fit=Math.max(...corners.map(point=>point.dot(direction)+1.12*Math.max(
+      Math.abs(point.dot(right))/(tanY*camera.aspect),Math.abs(point.dot(screenUp))/tanY)));
+     const offset=previousFit?camera.position.clone().sub(controls.target).multiplyScalar(fit/previousFit):direction.clone().multiplyScalar(fit);
+     controls.maxDistance=fit*3;
+     camera.far=Math.max(300,fit*5);
+     camera.position.copy(controls.target).add(offset);
+     previousFit=fit;
+    }
+    camera.updateProjectionMatrix();
+    controls.update();
+    schedule();
+   };
    observer=new ResizeObserver(resize);observer.observe(target);resize();
   }catch{failedTimer=window.setTimeout(()=>setFallback(true),0)}
   return()=>{window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();scene.traverse(o=>{if(o instanceof THREE.InstancedMesh)o.dispose()});renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};

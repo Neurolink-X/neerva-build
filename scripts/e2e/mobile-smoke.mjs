@@ -13,7 +13,7 @@ async function main(){
  const failures=[],accessibilityReports=[];
  try{
   for(const v of views){
-   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:1,isMobile:v.w<=430,hasTouch:v.w<=430});
+   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
    const page=await ctx.newPage(),errors=[];
    page.on("pageerror",error=>errors.push("uncaught at "+new URL(page.url()).pathname+": "+error.message));
    page.on("console",message=>{if(message.type()==="error")errors.push("console at "+new URL(page.url()).pathname+": "+message.text().slice(0,180))});
@@ -223,6 +223,15 @@ async function main(){
     assert.ok(sixthId,"2D must expose its exact source model");
     assert.equal(await plan3D.getAttribute("data-plan-id"),sixthId,"3D must use the same PlanModel as selected 2D");
     assert.equal(await plan2D.getAttribute("data-selected-floor"),"0");
+    const viewerBounds=await plan3D.evaluate(viewer=>{
+      const buttons=[...viewer.querySelectorAll(".nbd-buttons button")];
+      const viewport=document.documentElement.clientWidth;
+      const visual=viewer.querySelector("canvas, svg")?.getBoundingClientRect();
+      return {fits:visual&&visual.left>=0&&visual.right<=viewport+1,
+        targets:buttons.map(button=>button.getBoundingClientRect().height)};
+    });
+    assert.ok(viewerBounds.fits,"hydrated 3D preview fits the page");
+    assert.ok(viewerBounds.targets.every(height=>height>=44),"3D modes have full touch targets");
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"0","3D cutaway must start on the selected ground floor");
     assert.ok(Number(await plan3D.getAttribute("data-wall-cells"))>0,"3D selected floor must contain actual mesh walls");
     await page.locator(".nroad-variants button").first().click();
