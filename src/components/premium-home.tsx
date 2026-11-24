@@ -5,8 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {homeVisuals,homeReferencePhotos} from "@/modules/home/assets";
 import {BrandMark} from "@/components/brand-mark";
-import {studioDesigns} from "@/modules/studio/library";
-import {rankStudioDesigns,type PlotBrief} from "@/modules/studio/fit";
 
 type Language="en"|"hi";
 const copy={
@@ -90,24 +88,18 @@ export function PremiumHome(){
  const [reveal,setReveal]=useState(50);
  const [lang,setLang]=useState<Language>("en");
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
- const [plot,setPlot]=useState("all"),[designStyle,setDesignStyle]=useState("all");
- const [customWidth,setCustomWidth]=useState(""),[customDepth,setCustomDepth]=useState("");
- const customPlotActive=customWidth.trim()!==""||customDepth.trim()!=="";
+ const [plot,setPlot]=useState("18x50");
+ const [customWidth,setCustomWidth]=useState("18"),[customDepth,setCustomDepth]=useState("50");
+ const [homeFloors,setHomeFloors]=useState<1|2|3>(2);
+ const [homeRoad,setHomeRoad]=useState<"N"|"E"|"S"|"W">("N");
+ const customPlotActive=plot==="custom";
  const w=Number(customWidth),d=Number(customDepth);
  const customPlotValid=customWidth.trim()!==""&&customDepth.trim()!==""&&Number.isFinite(w)&&Number.isFinite(d)&&w>=10&&w<=200&&d>=15&&d<=250;
- const fitLink=customPlotValid?`/design-studio/fit?width=${encodeURIComponent(customWidth)}&depth=${encodeURIComponent(customDepth)}`:"/design-studio/fit";
- const portfolioDimensions=customPlotValid?{width:w,depth:d}:plot==="all"?{width:18,depth:50}:(()=>{const [width,depth]=plot.split("x").map(Number);return {width,depth};})();
- const portfolioHref=`/design-studio/portfolio?width=${encodeURIComponent(String(portfolioDimensions.width))}&depth=${encodeURIComponent(String(portfolioDimensions.depth))}`;
+ const [presetWidth,presetDepth]=plot==="custom"?[w,d]:plot.split("x").map(Number);
+ const plotValid=customPlotActive?customPlotValid:true;
+ const portfolioDimensions={width:presetWidth,depth:presetDepth};
+ const portfolioHref="/design-studio/portfolio?"+new URLSearchParams({width:String(presetWidth),depth:String(presetDepth),floors:String(homeFloors),road:homeRoad}).toString();
  const t=copy[lang];
- const designs=useMemo(()=>{
-  const styled=studioDesigns.filter(design=>designStyle==="all"||designStyle===design.style);
-  if(customPlotActive){
-   if(!customPlotValid)return [];
-   const brief:PlotBrief={widthFt:w,depthFt:d,city:"Kanpur",facing:"North",roadSide:"North",bedrooms:2,floors:1,parking:false};
-   return rankStudioDesigns(styled,brief).filter(result=>result.fit.plotDimensionsFit).slice(0,6).map(result=>result.design);
-  }
-  return styled.filter(design=>plot==="all"||plot===String(design.plot.widthFt)+"x"+design.plot.depthFt).slice(0,6);
- },[plot,designStyle,customPlotActive,customPlotValid,w,d]);
  const suggestions=useMemo(()=>query.trim()?items.filter(item=>(item.en+" "+item.hi+" "+item.description).toLowerCase().includes(query.toLowerCase())).slice(0,4):[],[query]);
  useEffect(()=>{const id=window.setTimeout(()=>{try{const l=localStorage.getItem("neerva-home-lang");if(l==="en"||l==="hi")setLang(l);const r=JSON.parse(localStorage.getItem("neerva-home-search-v1")||"[]");if(Array.isArray(r))setRecent(r.filter((x):x is string=>typeof x==="string"&&x.length<65).slice(0,4));}catch{/* Private browsing: state remains in memory. */}},0);return()=>clearTimeout(id)},[]);
  function language(){const next=lang==="en"?"hi":"en";setLang(next);try{localStorage.setItem("neerva-home-lang",next)}catch{/* Language still changes for this session */}}
@@ -169,12 +161,57 @@ export function PremiumHome(){
    <div className="nbh-category-grid">{items.map(item=><Link href={item.href} className="nbh-material-card" key={item.id}><div className="nbh-material-image">{item.image?<Image src={item.image} fill sizes="(max-width:600px) 48vw, (max-width:1000px) 30vw, 16vw" alt={"Representative "+item.en+" category "+(item.image.endsWith(".svg")?"illustration":"material photo")+", not verified branded SKU"} loading="lazy"/>:<div className="nbh-photo-pending" role="img" aria-label="Representative category illustration pending">SKU photo pending review</div>}</div><div className="nbh-material-info"><h3>{lang==="hi"?item.hi:item.en}</h3><p>{lang==="hi"?item.descriptionHi:item.description}</p><span>{item.id==="paint"?t.paintLabel:t.options} <Icon name="arrow"/></span></div></Link>)}</div>
    <p className="nbh-fineprint">{t.disclaimer}</p>
   </section>
-  <section className="nbh-section nbh-featured" id="designs"><div className="nbh-section-head"><div><p className="nbh-eyebrow">02 / HOME STUDIO</p><h2>{t.designs}</h2><p>{t.galleryDesc}</p></div><Link href={portfolioHref} className="nbh-section-link">{t.gallery} <Icon name="arrow"/></Link></div>
-   <div className="nbh-filter-row"><label>Preset <select value={plot} onChange={e=>{setPlot(e.target.value);setCustomWidth("");setCustomDepth("")}}><option value="all">All sizes</option>{["15x30","20x40","25x40","30x40","30x50","40x60"].map(v=><option key={v} value={v}>{v.replace("x"," × ")} ft</option>)}</select></label><label>Or your width (ft)<input type="number" inputMode="decimal" min="10" max="200" step="0.5" placeholder="e.g. 18" value={customWidth} onChange={e=>setCustomWidth(e.target.value)}/></label><label>Depth (ft)<input type="number" inputMode="decimal" min="15" max="250" step="0.5" placeholder="e.g. 50" value={customDepth} onChange={e=>setCustomDepth(e.target.value)}/></label><label>Style <select value={designStyle} onChange={e=>setDesignStyle(e.target.value)}><option value="all">All styles</option>{["warm-modern","sandstone-calm","urban-slate","terracotta-ivory"].map(s=><option key={s} value={s}>{s.replaceAll("-"," ")}</option>)}</select></label></div>
-   <p className="nbh-spatial-promo"><strong>{lang==="hi"?"अलग-अलग कमरों वाले 24 नक्शे":"24 actual room arrangements for one plot"}</strong> <span>{portfolioDimensions.width} × {portfolioDimensions.depth} ft · road-facing parking · shared 2D/3D geometry</span><Link href={portfolioHref}> {lang==="hi"?"नक्शे बनाएं →":"Generate my 24 spatial plans →"}</Link></p>
-   {customPlotActive&&<p className="nbh-custom-fit" role="status">{customPlotValid?`Your ${w} × ${d} ft plot: showing concepts whose existing footprint fits the dimensions (not a custom-generated floor plan).`:"Enter both valid plot dimensions (width 10–200 ft; depth 15–250 ft)."} <Link href={fitLink}>Open detailed plot fit and room requirements →</Link></p>}
-   {designs.length===0?<div className="nbh-empty"><p>{customPlotActive?"No existing concept fits the entered dimensions. Do not stretch a fixed plan and call it a custom design.":"No concept matches this filter."}</p><Link href={fitLink}>Review your custom plot →</Link><button onClick={()=>{setPlot("all");setDesignStyle("all");setCustomWidth("");setCustomDepth("")}}>Show all designs</button></div>:<div className="nbh-design-scroll">{designs.map((d,i)=><Link className="nbh-design-card" href={"/design-studio/library/"+d.slug} key={d.slug}><div className="nbh-design-image"><Image src={homeReferencePhotos[i%homeReferencePhotos.length].src} fill sizes="(max-width: 600px) 80vw, 350px" loading="lazy" alt={"Licensed architectural photograph for style reference only, not the exact 3D render of "+d.title}/><span>{d.plot.widthFt} × {d.plot.depthFt} FT</span><small className="nbh-photo-plan-note">REAL PHOTO · STYLE REFERENCE</small></div><div className="nbh-design-text"><h3>{lang==="hi"?d.titleHi:d.title}</h3><p>{d.bedrooms} BHK · {d.floors===1?"Ground":"G+1"} · {d.facing}</p><span>{t.plan} <Icon name="arrow"/></span></div></Link>)}</div>}
-   <p className="nbh-fineprint">{t.concept}. {t.disclaimer}</p>
+  <section className="nbh-section nbh-featured nbh-studio-redesign" id="designs" aria-labelledby="nbh-studio-title">
+   <div className="nbh-studio-layout">
+    <div className="nbh-studio-story">
+     <p className="nbh-eyebrow">02 / HOME STUDIO</p>
+     <h2 id="nbh-studio-title">{t.designs}</h2>
+     <p className="nbh-studio-description">{t.galleryDesc}</p>
+     <div className="nbh-studio-benefits" aria-label="What you get">
+      <span>{lang==="hi"?"अपने प्लॉट की नाप":"Your own plot dimensions"}</span>
+      <span>{lang==="hi"?"एक ही प्लान का 2D + 3D":"Matching 2D + 3D views"}</span>
+      <span>{lang==="hi"?"कॉन्सेप्ट प्लान मुफ्त":"Free concept previews"}</span>
+     </div>
+     <div className="nbh-studio-photo">
+      <Image src={homeReferencePhotos[0].src} fill sizes="(max-width: 980px) 100vw, 49vw" loading="lazy" alt="Licensed contemporary house photograph used only as exterior inspiration; not a Neerva-generated house or the selected floor plan"/>
+      <div className="nbh-studio-photo-caption"><strong>{lang==="hi"?"घर की शैली का उदाहरण":"Exterior inspiration"}</strong><span>{lang==="hi"?"असली फोटो, चुने हुए नक्शे का 3D रेंडर नहीं":"Real photo, not a render of your selected plan"}</span></div>
+     </div>
+    </div>
+    <div className="nbh-studio-planner">
+     <div className="nbh-studio-planner-head"><span>{lang==="hi"?"चरण 1 / 2":"STEP 1 OF 2"}</span><h3>{lang==="hi"?"अपने प्लॉट से शुरुआत करें":"Start with your plot"}</h3><p>{lang==="hi"?"पहले प्लॉट का साइज चुनें। अगली स्क्रीन पर कमरों और पार्किंग के हिसाब से नक्शे बनेंगे।":"Choose the actual plot size first. The next screen creates room layouts using your selected dimensions."}</p></div>
+     <label className="nbh-studio-primary-label" htmlFor="nbh-studio-preset">{lang==="hi"?"प्लॉट का आकार (फीट)":"Plot dimensions (feet)"}</label>
+     <select className="nbh-studio-preset" id="nbh-studio-preset" value={plot} onChange={e=>setPlot(e.target.value)}>
+      <option value="18x50">18 × 50 ft</option>
+      <option value="15x30">15 × 30 ft</option>
+      <option value="20x40">20 × 40 ft</option>
+      <option value="25x40">25 × 40 ft</option>
+      <option value="30x40">30 × 40 ft</option>
+      <option value="30x50">30 × 50 ft</option>
+      <option value="40x60">40 × 60 ft</option>
+      <option value="custom">{lang==="hi"?"दूसरी नाप भरें":"Enter a custom size"}</option>
+     </select>
+     {customPlotActive&&<div className="nbh-studio-custom-fields">
+      <label htmlFor="nbh-studio-width">{lang==="hi"?"चौड़ाई (फीट)":"Road frontage (ft)"}<input id="nbh-studio-width" type="number" inputMode="decimal" min="10" max="200" step="0.5" value={customWidth} onChange={e=>setCustomWidth(e.target.value)} required/></label>
+      <label htmlFor="nbh-studio-depth">{lang==="hi"?"लंबाई (फीट)":"Plot depth (ft)"}<input id="nbh-studio-depth" type="number" inputMode="decimal" min="15" max="250" step="0.5" value={customDepth} onChange={e=>setCustomDepth(e.target.value)} required/></label>
+     </div>}
+     {!plotValid&&<p className="nbh-studio-error" role="alert">{lang==="hi"?"चौड़ाई 10–200 फीट और लंबाई 15–250 फीट रखें।":"Enter both dimensions: frontage 10–200 ft and depth 15–250 ft."}</p>}
+     <details className="nbh-studio-options">
+      <summary>{lang==="hi"?"वैकल्पिक: मंज़िल और सड़क की दिशा":"Optional: floors and road-facing direction"}</summary>
+      <div className="nbh-studio-option-grid">
+       <label htmlFor="nbh-studio-floors">{lang==="hi"?"मंज़िल":"Floors"}<select id="nbh-studio-floors" value={homeFloors} onChange={e=>setHomeFloors(Number(e.target.value) as 1|2|3)}><option value={1}>Ground</option><option value={2}>G + 1</option><option value={3}>G + 2</option></select></label>
+       <label htmlFor="nbh-studio-road">{lang==="hi"?"सड़क की दिशा":"Road-facing direction"}<select id="nbh-studio-road" value={homeRoad} onChange={e=>setHomeRoad(e.target.value as "N"|"E"|"S"|"W")}><option value="N">North</option><option value="E">East</option><option value="S">South</option><option value="W">West</option></select></label>
+      </div>
+     </details>
+     <div className="nbh-studio-result" aria-live="polite">
+      <span>{lang==="hi"?"चुना हुआ प्लॉट":"SELECTED PLOT"}</span>
+      <strong>{plotValid?String(portfolioDimensions.width)+" × "+String(portfolioDimensions.depth)+" ft":"—"}</strong>
+      <small>{homeFloors===1?"Ground":"G + "+String(homeFloors-1)} · {homeRoad==="N"?"North":homeRoad==="E"?"East":homeRoad==="S"?"South":"West"} facing</small>
+     </div>
+     {plotValid?<Link className="nbh-studio-generate" href={portfolioHref}>{lang==="hi"?"इस प्लॉट के लिए नक्शे बनाएं":"Generate matching 2D + 3D plans"} <Icon name="arrow"/></Link>:<span className="nbh-studio-generate nbh-studio-disabled" aria-disabled="true">{lang==="hi"?"पहले सही नाप भरें":"Enter valid dimensions to continue"}</span>}
+     <p className="nbh-studio-trust">{lang==="hi"?"24 तक वैध कॉन्सेप्ट लेआउट; वास्तविक संख्या आपके प्लॉट और कमरों की शर्तों पर निर्भर है।":"Up to 24 checked concept layouts; actual availability depends on plot and room constraints."}</p>
+     <nav className="nbh-studio-more" aria-label="Other home design tools"><Link href="/design-studio/fit">{lang==="hi"?"प्लॉट फिट जांचें":"Check plot fit"}</Link><Link href="/design-studio/visualizer">{lang==="hi"?"दीवार के रंग आज़माएं":"Try wall colours"}</Link><Link href="/studio-pricing">{lang==="hi"?"मुफ्त और प्रीमियम":"Free & premium"}</Link></nav>
+    </div>
+   </div>
   </section>
   <section className="nbh-colour nbh-build-section" id="construction">
     <div><div className="nbh-house-frame nbh-photo-hero">
