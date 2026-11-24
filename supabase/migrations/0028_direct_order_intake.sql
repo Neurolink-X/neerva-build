@@ -119,11 +119,58 @@ end $$;
 revoke all on function public.neerva_guard_dealer_price() from public,anon,authenticated;
 create trigger neerva_dealer_price_guard before insert or update or delete on public.pricing_rules for each row execute function public.neerva_guard_dealer_price();
 
+-- Versioned branch delivery settings: dealer submits; only administrator approves.
+create table public.dealer_delivery_versions(
+ id bigint generated always as identity primary key,
+ branch_id uuid not null references public.merchant_branches(id),
+ tenant_id uuid not null references public.tenants(id),
+ pincode text not null check(pincode ~ '^[1-9][0-9]{5}$'),
+ freight_paise bigint not null check(freight_paise between 0 and 5000000000),
+ unloading_paise bigint not null check(unloading_paise between 0 and 5000000000),
+ minimum_material_paise bigint not null check(minimum_material_paise between 0 and 5000000000),
+ lead_days integer not null check(lead_days between 0 and 90),
+ accepting_orders boolean not null,
+ status text not null default 'pending' check(status in ('pending','approved','rejected')),
+ created_by uuid not null default auth.uid() references auth.users(id),
+ created_at timestamptz not null default now(),
+ reviewed_by uuid references auth.users(id), reviewed_at timestamptz,
+ foreign key(branch_id,tenant_id) references public.merchant_branches(id,tenant_id)
+);
+create index dealer_delivery_scope on public.dealer_delivery_versions(branch_id,pincode,id desc);
+alter table public.dealer_delivery_versions enable row level security;
+revoke all on public.dealer_delivery_versions from public,anon,authenticated;
+grant select on public.dealer_delivery_versions to authenticated;
+grant insert(branch_id,tenant_id,pincode,freight_paise,unloading_paise,minimum_material_paise,lead_days,accepting_orders) on public.dealer_delivery_versions to authenticated;
+grant update(status) on public.dealer_delivery_versions to authenticated;
+create policy dealer_delivery_read on public.dealer_delivery_versions for select to authenticated using ((select public.neerva_account_access_allowed()) and (public.is_tenant_member(tenant_id,array['owner','manager']::text[]) or (select public.has_platform_role(array['admin','super_admin']::public.platform_role[]))));
+create policy dealer_delivery_submit on public.dealer_delivery_versions for insert to authenticated with check (
+ created_by=auth.uid() and status='pending' and reviewed_by is null and reviewed_at is null and (select public.neerva_account_access_allowed()) and public.is_tenant_member(tenant_id,array['owner','manager']::text[]) and exists(select 1 from public.tenants t where t.id=tenant_id and t.status='active') and exists(select 1 from public.merchant_branches b where b.id=branch_id and b.tenant_id=dealer_delivery_versions.tenant_id and b.approved));
+create policy dealer_delivery_review on public.dealer_delivery_versions for update to authenticated using (status='pending' and (select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[]))) with check(status in ('approved','rejected') and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
+create function public.neerva_delivery_review_stamp() returns trigger language plpgsql security invoker set search_path=pg_catalog,public,auth as $$ begin new.reviewed_by:=auth.uid();new.reviewed_at:=statement_timestamp();return new;end $$;
+revoke all on function public.neerva_delivery_review_stamp() from public,anon,authenticated;
+create trigger dealer_delivery_review_stamp before update on public.dealer_delivery_versions for each row execute function public.neerva_delivery_review_stamp();
+-- Explicit reviewed tax treatment per exact SKU. Never guess GST from a broad category.
+create table public.sku_tax_versions(
+ id bigint generated always as identity primary key,
+ variant_id uuid not null references public.product_variants(id),
+ hsn text not null check(hsn ~ '^[0-9]{4,8}$'),
+ rate_bps integer not null check(rate_bps between 0 and 10000),
+ price_includes_tax boolean not null,
+ reason text not null check(char_length(btrim(reason)) between 3 and 300),
+ created_by uuid not null default auth.uid() references auth.users(id),created_at timestamptz not null default now()
+);
+create index sku_tax_latest on public.sku_tax_versions(variant_id,id desc);
+alter table public.sku_tax_versions enable row level security;
+revoke all on public.sku_tax_versions from public,anon,authenticated;
+grant select on public.sku_tax_versions to authenticated;
+grant insert(variant_id,hsn,rate_bps,price_includes_tax,reason) on public.sku_tax_versions to authenticated;
+create policy sku_tax_admin_read on public.sku_tax_versions for select to authenticated using ((select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
+create policy sku_tax_admin_publish on public.sku_tax_versions for insert to authenticated with check(created_by=auth.uid() and (select public.neerva_account_access_allowed()) and (select public.has_platform_role(array['admin','super_admin']::public.platform_role[])));
 -- Read-only, narrow seller comparison. Does not expose exact stock, private rates, KYC or contact details.
 -- Authenticated entry point delegates to a non-exposed schema.
 grant usage on schema neerva_private to authenticated;
 create function neerva_private.compare_dealer_prices(p_category text,p_slug text,p_pin text,p_qty numeric)
-returns table(seller text,branch text,sku text,unit text,unit_paise bigint,material_paise bigint,fee_paise bigint,valid_to timestamptz)
+returns table(seller text,branch text,sku text,unit text,unit_paise bigint,material_paise bigint,fee_paise bigint,valid_to timestamptz,branch_id uuid,freight_paise bigint,unloading_paise bigint,tax_paise bigint,estimated_total_paise bigint,lead_days integer)
 language plpgsql stable security definer set search_path=pg_catalog,public,auth as $$
 begin
  if auth.uid() is null or not coalesce(public.neerva_account_access_allowed(),false) then raise exception using errcode='42501',message='AUTH_REQUIRED'; end if;
@@ -132,7 +179,7 @@ begin
  with fee as (select f.fixed_paise,f.rate_bps,f.cap_paise from public.marketplace_fee_versions f order by id desc limit 1),
  candidates as (
  select distinct on (r.tenant_id,v.id) t.business_name::text seller,b.name::text branch,v.sku::text sku,v.unit::text unit,r.amount_paise,
- round(r.amount_paise*p_qty)::bigint subtotal,r.valid_to
+ round(r.amount_paise*p_qty)::bigint subtotal,r.valid_to,b.id bid,d.freight_paise freight,d.unloading_paise unloading,d.lead_days days,case when tx.id is null then null when tx.price_includes_tax then 0::bigint else round(round(r.amount_paise*p_qty)*tx.rate_bps/10000)::bigint end extra_tax
  from public.pricing_rules r
  join public.product_variants v on v.id=r.variant_id and v.status='published' and v.unit=r.unit
  join public.products p on p.id=v.product_id and p.status='published'
@@ -140,17 +187,21 @@ begin
  join public.tenants t on t.id=r.tenant_id and t.status='active'
  join public.merchant_branches b on b.id=r.branch_id and b.tenant_id=t.id and b.approved
  join public.inventory i on i.branch_id=b.id and i.variant_id=v.id and i.unit=v.unit and i.available_quantity>=p_qty
- where c.slug=p_category and p.slug=p_slug and c.slug<>'aggregates' and r.status='published' and r.visibility='public' and r.currency='INR' and r.amount_paise>0 and r.minimum_quantity<=p_qty and r.valid_from<=now() and (r.valid_to is null or r.valid_to>now()) and (r.pincode_prefix is null or p_pin like r.pincode_prefix||'%')
+ left join lateral (select dv.* from public.dealer_delivery_versions dv where dv.branch_id=b.id and dv.pincode=p_pin and dv.status='approved' order by dv.id desc limit 1) d on true
+ left join lateral (select tv.* from public.sku_tax_versions tv where tv.variant_id=v.id order by tv.id desc limit 1) tx on true
+ where (d.id is null or (d.accepting_orders and round(r.amount_paise*p_qty)>=d.minimum_material_paise)) and c.slug=p_category and p.slug=p_slug and c.slug<>'aggregates' and r.status='published' and r.visibility='public' and r.currency='INR' and r.amount_paise>0 and r.minimum_quantity<=p_qty and r.valid_from<=now() and (r.valid_to is null or r.valid_to>now()) and (r.pincode_prefix is null or p_pin like r.pincode_prefix||'%')
  and exists(select 1 from public.dealer_applications a join public.dealer_service_pincodes sp on sp.application_id=a.id where a.tenant_id=t.id and a.status='approved' and a.gstin_verification='verified' and sp.pincode=p_pin)
- order by r.tenant_id,v.id,length(coalesce(r.pincode_prefix,'')) desc,r.minimum_quantity desc,r.valid_from desc,r.version desc,r.id
+ order by r.tenant_id,v.id,(d.id is not null) desc,length(coalesce(r.pincode_prefix,'')) desc,r.minimum_quantity desc,r.valid_from desc,r.version desc,r.id
  )
- select q.seller,q.branch,q.sku,q.unit,q.amount_paise,q.subtotal,coalesce((select least(f.cap_paise,f.fixed_paise+round(q.subtotal::numeric*f.rate_bps/10000)::bigint) from fee f),0),q.valid_to
- from candidates q order by q.sku,q.subtotal,q.seller limit 50;
+ select q.seller,q.branch,q.sku,q.unit,q.amount_paise,q.subtotal,fv.amount,q.valid_to,q.bid,q.freight,q.unloading,q.extra_tax,
+ case when q.freight is not null and q.unloading is not null and q.extra_tax is not null then q.subtotal+fv.amount+q.freight+q.unloading+q.extra_tax else null end,q.days
+ from candidates q cross join lateral (select coalesce((select least(f.cap_paise,f.fixed_paise+round(q.subtotal::numeric*f.rate_bps/10000)::bigint) from fee f),0) amount) fv
+ order by q.sku,(case when q.freight is not null and q.unloading is not null and q.extra_tax is not null then q.subtotal+fv.amount+q.freight+q.unloading+q.extra_tax else null end) nulls last,q.subtotal,q.seller limit 50;
 end $$;
 revoke all on function neerva_private.compare_dealer_prices(text,text,text,numeric) from public,anon,authenticated;
 grant execute on function neerva_private.compare_dealer_prices(text,text,text,numeric) to authenticated;
 create function public.neerva_compare_dealer_prices(p_category text,p_slug text,p_pin text,p_qty numeric)
-returns table(seller text,branch text,sku text,unit text,unit_paise bigint,material_paise bigint,fee_paise bigint,valid_to timestamptz)
+returns table(seller text,branch text,sku text,unit text,unit_paise bigint,material_paise bigint,fee_paise bigint,valid_to timestamptz,branch_id uuid,freight_paise bigint,unloading_paise bigint,tax_paise bigint,estimated_total_paise bigint,lead_days integer)
 language sql stable security invoker set search_path=pg_catalog,neerva_private as $$ select * from neerva_private.compare_dealer_prices(p_category,p_slug,p_pin,p_qty) $$;
 revoke all on function public.neerva_compare_dealer_prices(text,text,text,numeric) from public,anon,authenticated;
 grant execute on function public.neerva_compare_dealer_prices(text,text,text,numeric) to authenticated;
