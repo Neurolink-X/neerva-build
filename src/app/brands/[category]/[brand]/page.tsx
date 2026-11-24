@@ -4,6 +4,7 @@ import Link from "next/link";
 import {notFound} from "next/navigation";
 import {SiteHeader,SiteFooter} from "@/components/site-chrome";
 import {PublishedMaterials} from "@/components/published-materials";
+import {CatalogMaterialImage} from "@/components/catalog-material-image";
 import {BrandMark} from "@/components/brand-mark";
 import {BrandHeroPhoto} from "@/components/brand-hero-photo";
 import {catalogCategories} from "@/modules/catalog/catalog";
@@ -50,7 +51,7 @@ export default async function BrandSelection({params}:Props){
     {image&&<BrandHeroPhoto image={image} alt={card?.image?card.alt:card?.rangeImage?card.rangeAlt:material.title+" category example"} label={card?.image?"Product reference":card?.rangeImage?"Brand range photograph":"Representative material photo · not brand packaging"} fallback={categoryCover(material.slug)} fallbackAlt={material.title+" representative material photo"} product={Boolean(card?.image||card?.rangeImage)}/>}</header>{card?.rangeSource&&<p className="br-source"><a href={card.rangeSource} target="_blank" rel="noopener noreferrer">Range image source ↗</a></p>}
     {card?<section className="br-group"><div className="br-heading"><h2>{products.length?"Product ranges":"Request a local quotation"}</h2><Link href={dealerPath(material.slug)}>Check dealer-listed options →</Link></div>
     {products.length?<div className="br-grid">{groupCatalogByPhoto(products).map(({primary:p,variants})=><article className="br-card" key={p.slug}>
-      {p.referenceImage&&<div className="br-pack"><Image src={p.referenceImage} fill sizes="(max-width:620px) 45vw, 235px" alt={p.name}/></div>}
+      {material.slug==="tiles"?<div className="tile-swatch"><CatalogMaterialImage category="tiles" name={p.name} product={p}/></div>:p.referenceImage&&<div className="br-pack"><Image src={p.referenceImage} fill sizes="(max-width:620px) 45vw, 235px" alt={p.name}/></div>}
       <div className="br-card-copy"><h3><Link href={`/materials/${material.slug}/${p.slug}`}>{variants.length>1?p.specifications.find(s=>s.label==="Product family")?.value??p.name:p.name}</Link></h3>
       {p.specifications.slice(0,3).map(s=><p key={s.label}><b>{s.label}</b> {s.value}</p>)}
       {variants.length>1?<div className="catalog-variant-links">{variants.map(v=><Link key={v.slug} href={`/materials/${material.slug}/${v.slug}`}>{rangeVariantLabel(v)}</Link>)}</div>:<Link href={`/materials/${material.slug}/${p.slug}`}>Specifications and pricing →</Link>}</div></article>)}</div>:

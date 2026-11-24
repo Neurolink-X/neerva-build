@@ -30,7 +30,7 @@ export function ProductGallery({product}:{product:DemoProduct}){
    {photos.slice(0,5).map((media,i)=><button type="button" key={media.src} aria-label={"Show photo "+(i+1)+": "+media.label}
      aria-pressed={current?.src===media.src} onClick={()=>{setSelected(media.src);setZoom(false);}}>
      <span className="product-gallery-thumb-image"><Image src={media.src} alt="" fill sizes="90px" quality={60} unoptimized={media.src.startsWith("https://")} referrerPolicy="no-referrer" onError={()=>setFailed(old=>old.includes(media.src)?old:[...old,media.src])}/></span>
-     <span>{media.kind==="sku"?"Seller photo":media.kind==="listing"?"Product photo":media.kind==="editorial"?"Material photo":media.kind==="manufacturer"?"Media kit":"Category view"}</span>
+     <span>{media.kind==="sku"?"Seller photo":media.kind==="listing"?"Product photo":media.kind==="editorial"?"Material photo":media.kind==="manufacturer"?media.label:"Category view"}</span>
     </button>)}
   </div>}
  </figure>;
