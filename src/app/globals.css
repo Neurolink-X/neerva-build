@@ -135,3 +135,22 @@
  .topline{display:none!important}
  .site-header{min-height:68px}
 }
+
+/* Admin-reviewed offers: actual price delta and expiry, never a simulated timer. */
+.catalog-offer{margin:12px 0;border:1px solid #c6dac5;border-radius:12px;padding:13px;background:#f1f7ee;display:grid;gap:6px;color:#214734;overflow-wrap:anywhere}
+.catalog-offer>strong{font-size:14px;font-weight:850}.catalog-offer-prices{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.catalog-offer-prices s{color:#778878;font-size:13px}.catalog-offer-prices b{color:#205d3c;font-size:19px}
+.catalog-offer small{font-size:11px;line-height:1.6;color:#4c6854}.catalog-offer a{font-size:12px;font-weight:800;color:#174d32;text-decoration:underline;min-height:40px;display:inline-flex;align-items:center}
+.catalog-quote-cta{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;padding:16px clamp(18px,5vw,60px);background:#eaf2e6;border-top:1px solid #d0ddce;border-bottom:1px solid #d0ddce}
+.catalog-quote-cta h2{font:500 clamp(20px,3vw,28px)/1.2 Georgia,serif;margin:0}.catalog-quote-cta p{font-size:13px;line-height:1.5;max-width:74ch;margin:5px 0}.catalog-quote-cta a{display:inline-flex;min-height:45px;padding:10px 16px;border-radius:9px;background:#245239;color:#fff;align-items:center;font-weight:750}
+.nb-campaign-admin{margin-top:24px;border:1px solid #c6d9c6;border-radius:16px;padding:18px;background:#f6f9f3}
+.nb-campaign-admin h2{font:500 27px/1.2 Georgia,serif;margin:0 0 8px}.nb-campaign-admin>p{font-size:13px;line-height:1.6}
+.nb-campaign-admin form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:15px 0}
+.nb-campaign-admin label{display:grid;gap:7px;font-size:12px;font-weight:750;min-width:0}
+.nb-campaign-admin label input,.nb-campaign-admin label select,.nb-campaign-admin label textarea{width:100%;min-width:0;border:1px solid #afc3ad;border-radius:9px;padding:10px;background:#fff;min-height:45px;color:#1c3f2d}
+.nb-campaign-admin label:has(textarea){grid-column:1/-1}
+.nb-campaign-admin button{min-height:43px;border:1px solid #24543b;background:#24543b;color:white;border-radius:9px;padding:10px 15px;cursor:pointer;font-weight:750}
+.nb-campaign-admin button:disabled{opacity:.5;cursor:wait}
+.nb-campaign-list article{border:1px solid #d8e3d5;background:white;border-radius:11px;padding:12px;margin:9px 0;display:grid;gap:7px}
+.nb-campaign-list article p{font-size:13px;margin:2px 0}.nb-campaign-list article small{color:#61715f}
+.nb-campaign-list article button{justify-self:start}
+@media(max-width:640px){.nb-campaign-admin form{grid-template-columns:minmax(0,1fr)}.catalog-quote-cta{padding:16px}.catalog-offer-prices b{font-size:17px}}

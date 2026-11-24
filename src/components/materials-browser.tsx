@@ -1,4 +1,5 @@
 "use client";
+import {CatalogOffer} from "@/components/catalog-offer";
 import {ProductPrice} from "@/components/product-price";
 import Link from "next/link";
 import {useMemo,useState} from "react";
@@ -48,6 +49,7 @@ export function MaterialsBrowser({products,categories,initialQuery=""}:{
     <div className="catalog-sku-status"><span>Availability by pincode</span></div>
     <div className="product-card-foot"><ProductPrice category={p.category} slug={p.slug} quoteOnly={p.quoteOnly}/>
      <Link href={`/materials/${p.category}/${p.slug}`}>{variants.length>1?"Review range →":"View details →"}</Link></div>
+    <CatalogOffer category={p.category} slug={p.slug}/>
    </div>
   </article>)}</div>:<div className="catalog-empty">
    <strong>No matching material reference found.</strong><p>Try another brand, grade, size or category. This is not proof a product is unavailable nationwide.</p>
