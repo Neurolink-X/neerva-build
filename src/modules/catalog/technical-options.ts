@@ -2,6 +2,7 @@ import type {DemoProduct} from "./marketplace.ts";
 /** Specification-only choices: no authorised manufacturer, live inventory or public price claims. */
 type Row={category:string;familyKey:string;brand:string;kind:string;spec:string;values:string[];unit:string;note:string};
 const rows:Row[]=[
+ {category:"plumbing",familyKey:"generic-pvc-elbow90",brand:"Brand to confirm",kind:"PVC 90° elbow fitting",spec:"Nominal size",values:["20","25","32","40","50"],unit:"mm",note:"Confirm PVC series and pressure or drainage class. Do not substitute CPVC fittings."},
  {category:"plumbing",familyKey:"generic-tank-inlet-pipe",brand:"Brand to confirm",kind:"Water tank inlet and outlet connection pipe",spec:"Nominal size",values:["20","25","32","40"],unit:"mm",note:"Match tank connector, pipe material and isolation valve; verify pressure rating"},
  {category:"plumbing",familyKey:"generic-pump-delivery-pipe",brand:"Brand to confirm",kind:"Pump discharge / delivery pipe",spec:"Nominal size",values:["25","32","40","50"],unit:"mm",note:"Confirm pump outlet diameter, working pressure and compatible couplings"},
  {category:"plumbing",familyKey:"generic-flex-pump-connector",brand:"Brand to confirm",kind:"Flexible pump connection hose",spec:"Nominal size",values:["25","32","40"],unit:"mm",note:"Confirm vacuum or discharge rating, end fittings and vibration isolation"},

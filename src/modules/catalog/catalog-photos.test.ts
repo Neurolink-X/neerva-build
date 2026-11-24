@@ -61,3 +61,6 @@ test("reviewed image sets have exactly one primary, byte-decoded dimensions and 
 
 
 test("bulk stockpile references never masquerade as river or nominal-size stone",()=>{const concrete=demoProducts.find(p=>p.slug==="concrete-sand")!;const river=demoProducts.find(p=>p.slug==="river-sand-bulk")!;const coarse=demoProducts.find(p=>p.slug==="crushed-aggregate-bulk")!;assert.ok(concrete.quoteOnly);assert.ok(catalogPhotos(concrete).some(m=>m.sourceUrl?.includes("Concrete_sand_stockpile")));assert.ok(catalogPhotos(coarse).some(m=>m.sourceUrl?.includes("Crushed_stones_gravel")));assert.ok(catalogPhotos(river).every(m=>!m.sourceUrl?.includes("Concrete_sand_stockpile")));});
+
+
+test("PVC elbow photographs stay separate from branded CPVC fittings",()=>{const generic=demoProducts.find(p=>p.familyKey==="generic-pvc-elbow90")!;const cpvc=demoProducts.find(p=>p.slug==="fitting-elbow90")!;assert.ok(catalogPhotos(generic).some(m=>m.sourceUrl?.includes("PvcElbows")));assert.ok(catalogPhotos(cpvc).every(m=>!m.sourceUrl?.includes("PvcElbows")));assert.ok(catalogPhotos(demoProducts.find(p=>p.slug==="fitting-float-valve")!).some(m=>m.sourceUrl?.includes("Ball_valve_cold_water_tank")));});

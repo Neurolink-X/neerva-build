@@ -102,5 +102,35 @@
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
     "target": "aggregates:crusher-dust",
     "note": "Quarry stockpile only; no local grade claim."
+  },
+  {
+    "key": "hose-clamp",
+    "filename": "Hoseclamps.screw.agr.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Hoseclamps.screw.agr.jpg",
+    "credit": "ArnoldReinhold",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-hose-clamp",
+    "note": "Review screw-band clamps; no exact brand or diameter claim"
+  },
+  {
+    "key": "seal-parts",
+    "filename": "Mechanical_seal_part01.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Mechanical_seal_part01.jpg",
+    "credit": "Miya.m",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-mechanical-seal",
+    "note": "Seal parts for water system; not complete pump assembly"
+  },
+  {
+    "key": "pressure-gauge",
+    "filename": "Pressure_gauge.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Pressure_gauge.jpg",
+    "credit": "Omnibus-Trip",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-pressure-gauge",
+    "note": "Review dial units and use; no claim of pump rating"
   }
 ]

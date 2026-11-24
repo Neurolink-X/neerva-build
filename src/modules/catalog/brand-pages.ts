@@ -41,7 +41,7 @@ export const brandIdentityEvidence:Record<string,{manufacturer:string;source:str
 export function directoryCards(category:string){
   return brandDirectory.filter(b=>b.category===category).map(({name})=>{
     const products=getProductsByCategory(category).filter(p=>p.brand===name);
-    const pictured=products.find(p=>p.referenceImage);
+    const pictured=products.find(p=>p.referenceImage&&usableMediaSource(p.referenceImage));
     const paint=category==="paint"?products.map(p=>paintReference(p.slug)).find(p=>p?.image):undefined;
     const hardware=category==="hardware"?products.map(p=>hardwareReference(p.slug)).find(p=>p?.image):undefined;
     const range=rangeMedia[category+":"+name]??(hardware?.image&&hardware.source?{image:hardware.image,alt:name+" retailer product reference",source:hardware.source}:undefined)??(paint?.image?{image:paint.image,alt:name+" manufacturer product photograph",source:paint.source}:undefined);
