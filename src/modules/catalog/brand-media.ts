@@ -8,6 +8,16 @@
  * reference brands, without endorsement claims.
  */
 export const brandMedia={
+ "Astral":{"logo":"https://companieslogo.com/img/orig/ASTRAL.NS_BIG-a2c289e9.png?t=1720244490","logoSource":"https://companieslogo.com/astral-poly-technik/logo/","officialProductPage":"https://www.astralpipes.com/","logoAttribution":"Astral · published brand identification mark; trademark remains with owner"},
+ "Supreme":{"logo":"https://companieslogo.com/img/orig/SUPREMEIND.NS_BIG-76f22b5c.png?t=1744865028","logoSource":"https://companieslogo.com/supreme-industries/logo","officialProductPage":"https://www.supreme.co.in/","logoAttribution":"Supreme · published brand identification mark; trademark remains with owner"},
+ "Finolex":{"logo":"https://companieslogo.com/img/orig/FINPIPE.NS_BIG-62b376df.png?t=1746725341","logoSource":"https://companieslogo.com/finolex-industries/logo/","officialProductPage":"https://www.finolexpipes.com/","logoAttribution":"Finolex · published brand identification mark; trademark remains with owner"},
+ "Polycab":{"logo":"https://companieslogo.com/img/orig/POLYCAB.NS_BIG-75d2f870.png?t=1783656982","logoSource":"https://companieslogo.com/polycab-india/logo","officialProductPage":"https://polycab.com/","logoAttribution":"Polycab · published brand identification mark; trademark remains with owner"},
+ "KEI":{"logo":"https://companieslogo.com/img/orig/KEI.NS_BIG-58ea4e61.png?t=1723784396","logoSource":"https://companieslogo.com/kei-industries/logo","officialProductPage":"https://www.kei-ind.com/","logoAttribution":"KEI · published brand identification mark; trademark remains with owner"},
+ "Kajaria":{"logo":"https://companieslogo.com/img/orig/KAJARIACER.NS_BIG-300b5e39.png?t=1720244492","logoSource":"https://companieslogo.com/kajaria-ceramics/logo/","officialProductPage":"https://www.kajariaceramics.com/","logoAttribution":"Kajaria · published brand identification mark; trademark remains with owner"},
+ "Ambuja":{"logo":"https://companieslogo.com/img/orig/AMBUJACEM.NS-bc1a2948.png?t=1745681919","logoSource":"https://companieslogo.com/ambuja-cements/logo","officialProductPage":"https://www.ambujacement.com/","logoAttribution":"Ambuja · published brand identification mark; trademark remains with owner"},
+ "Shree Cement":{"logo":"https://companieslogo.com/img/orig/SHREECEM.NS_BIG-f0b68b2e.png?t=1745935873","logoSource":"https://companieslogo.com/shree-cement/logo","officialProductPage":"https://www.shreecement.com/","logoAttribution":"Shree Cement · published brand identification mark; trademark remains with owner"},
+ "Dalmia":{"logo":"https://companieslogo.com/img/orig/DALBHARAT.NS_BIG-8bb73928.png?t=1720244491","logoSource":"https://companieslogo.com/dalmia-bharat/logo/","officialProductPage":"https://www.dalmiabharat.com/","logoAttribution":"Dalmia · published brand identification mark; trademark remains with owner"},
+ "Hettich":{"logo":"https://upload.wikimedia.org/wikipedia/commons/1/15/Logo_of_Hettich_%28company%29.svg","logoSource":"https://commons.wikimedia.org/wiki/File:Logo_of_Hettich_(company).svg","officialProductPage":"https://www.hettich.com/en-in/home","logoAttribution":"Hettich · published brand identification mark; trademark remains with owner"},
  "ACC":{
   logo:"/images/catalog/reference/acc_limited_logo.webp",
   logoSource:"https://commons.wikimedia.org/wiki/File:ACC_Limited_logo.svg",
