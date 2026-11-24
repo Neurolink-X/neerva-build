@@ -10,7 +10,7 @@ export function StudioPaymentReview(){
   const r=await fetch("/api/admin/studio-payments",{cache:"no-store",headers:{Authorization:"Bearer "+token}});
   if(!r.ok){setMessage("Payment review is not available for this account.");return;}
   const data=await r.json();setOrders(data.orders??[]);setClaims(data.claims??[]);
-  setMessage("Always match UTR, exact INR 149 credit and beneficiary with the original bank statement. Customer screenshots are not proof.");
+  setMessage("Always match UTR, the exact bank-credit amount and beneficiary with the original bank statement. Customer screenshots are not proof.");
  }
  useEffect(()=>{
   let canceled=false;const client=createNeervaBrowserClient();
@@ -46,7 +46,7 @@ export function StudioPaymentReview(){
     <p>Order <code>{o.id}</code></p><small>Account ID: <code>{o.user_id}</code> · {new Date(o.created_at).toLocaleString("en-IN")}</small>
     <p>{proof?<>Self-reported UTR <code>{proof.utr}</code> · Customer claimed date: {new Date(proof.reported_paid_at).toLocaleString("en-IN")}</>:"No payment reference submitted"}</p>
     {o.status==="requested"&&proof&&<><label><input type="checkbox" checked={checked} onChange={e=>setAck(x=>e.target.checked?[...x,o.id]:x.filter(a=>a!==o.id))}/> I independently reconciled this payment against the bank statement.</label>
-     <button type="button" disabled={!checked||busy} onClick={()=>void action(o.id,"verified")}>Approve ₹149 credit and unlock</button>
+     <button type="button" disabled={!checked||busy} onClick={()=>void action(o.id,"verified")}>Approve verified credit and unlock</button>
      <button type="button" disabled={!checked||busy} onClick={()=>void action(o.id,"rejected")}>Reject mismatched claim</button>
     </>}
     {o.status==="verified"&&<><label><input type="checkbox" checked={checked} onChange={e=>setAck(x=>e.target.checked?[...x,o.id]:x.filter(a=>a!==o.id))}/> Confirm refund was processed in bank ledger.</label><button type="button" disabled={!checked||busy} onClick={()=>void action(o.id,"refunded")}>Record refund and revoke entitlement</button></>}
