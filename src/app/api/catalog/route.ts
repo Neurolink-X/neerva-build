@@ -4,7 +4,7 @@ import {catalogCategories} from "@/modules/catalog/catalog";
 /** Public RLS-only catalog: never use the service-role key or show draft SKUs as stock. */
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
-const headers={"Cache-Control":"public, max-age=30, stale-while-revalidate=120","X-Content-Type-Options":"nosniff"};
+const headers={"Cache-Control":"no-cache, max-age=0, must-revalidate","X-Content-Type-Options":"nosniff"};
 export async function GET(){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
  const referenceCategories=catalogCategories.map(({slug,title,titleHi,description,quoteOnly})=>({
