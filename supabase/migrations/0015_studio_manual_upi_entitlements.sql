@@ -39,7 +39,7 @@ create policy studio_settings_audit_admin on public.studio_feature_settings_audi
  using(public.has_platform_role(array['admin','super_admin']::public.platform_role[]));
 create or replace function public.neerva_log_studio_settings()
 returns trigger language plpgsql security definer
-set search_path=pg_catalog,public,auth,pg_temp as $
+set search_path=pg_catalog,public,auth,pg_temp as $$
 begin
  if new.product_code is distinct from old.product_code then raise exception 'STUDIO_PRODUCT_CODE_IMMUTABLE' using errcode='23514'; end if;
  if not public.has_platform_role(array['admin','super_admin']::public.platform_role[]) then
@@ -50,7 +50,7 @@ begin
  insert into public.studio_feature_settings_audit(product_code,previous,current,actor_id)
  values(old.product_code,to_jsonb(old),to_jsonb(new),auth.uid());
  return new;
-end $;
+end $$;
 revoke all on function public.neerva_log_studio_settings() from public,anon,authenticated;
 drop trigger if exists studio_settings_audit_change on public.studio_feature_settings;
 create trigger studio_settings_audit_change before update on public.studio_feature_settings
@@ -124,7 +124,7 @@ using(public.has_platform_role(array['admin','super_admin']::public.platform_rol
 -- the price/mode is read from the same database transaction.
 create or replace function public.neerva_begin_studio_checkout(p_product text)
 returns jsonb language plpgsql security definer
-set search_path=pg_catalog,public,auth,pg_temp as $
+set search_path=pg_catalog,public,auth,pg_temp as $$
 declare v_user uuid:=auth.uid();v_config public.studio_feature_settings%rowtype;v_order public.studio_paid_orders%rowtype;
 begin
  if v_user is null then raise exception 'AUTH_REQUIRED' using errcode='42501';end if;
@@ -151,12 +151,12 @@ begin
   end if;
  end if;
  return jsonb_build_object('orderId',v_order.id,'pricePaise',v_order.amount_paise,'status','requested');
-end $;
+end $$;
 revoke all on function public.neerva_begin_studio_checkout(text) from public,anon,authenticated;
 grant execute on function public.neerva_begin_studio_checkout(text) to authenticated;
 create or replace function public.neerva_cancel_studio_checkout(p_order uuid)
 returns boolean language plpgsql security definer
-set search_path=pg_catalog,public,auth,pg_temp as $
+set search_path=pg_catalog,public,auth,pg_temp as $$
 declare v_user uuid:=auth.uid();
 begin
  if v_user is null then raise exception 'AUTH_REQUIRED' using errcode='42501';end if;
@@ -164,7 +164,7 @@ begin
  where id=p_order and user_id=v_user and status='requested'
  and not exists(select 1 from public.studio_payment_claims where order_id=p_order);
  return found;
-end $;
+end $$;
 revoke all on function public.neerva_cancel_studio_checkout(uuid) from public,anon,authenticated;
 grant execute on function public.neerva_cancel_studio_checkout(uuid) to authenticated;
 
