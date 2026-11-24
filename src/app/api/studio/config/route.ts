@@ -1,6 +1,6 @@
 import {createClient} from "@supabase/supabase-js";
 import {baseStudioConfig,parseStudioConfig} from "@/modules/studio/studio-config";
-import {studioPaymentEnabled,type StudioProduct} from "@/modules/studio/paid-products";
+import {studioPaymentEnabled} from "@/modules/studio/paid-products";
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const names=["home_studio","colour_studio"] as const;
 export async function GET(){
