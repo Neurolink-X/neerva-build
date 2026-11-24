@@ -1,3 +1,6 @@
+import {hardwareReferences,hardwareGroups} from "./hardware-references.ts";
+import {paintReferences,paintGroups} from "./paint-references.ts";
+import {tileReferences as expandedTileReferences} from "./tile-references.ts";
 import type {DemoProduct} from "./marketplace.ts";
 
 // Retail listing references describe product choices. Seller availability and prices come from Neerva separately.
@@ -60,7 +63,7 @@ sourcedProducts.push({
  description:"Compare the pattern at full tile size. Request the shade lot, carton coverage and breakage terms before ordering.",
  referenceImage:"/images/catalog/reference/kajaria-k-12631.webp",
  manufacturerReference:"https://www.kajariaceramics.com/products/K-12631-600x1200-mm",
- specifications:[{label:"Design",value:"K 12631"},{label:"Format",value:"600 × 1200 mm"},{label:"Type",value:"Polished vitrified tile"}]
+ specifications:[{label:"Design",value:"K 12631"},{label:"Format",value:"600 × 1200 mm"},{label:"Type",value:"Polished vitrified tile"},{label:"Finish",value:"Super glossy"}]
 });
 
 const plumbingReferences = [
@@ -86,7 +89,7 @@ for (const [slug,image,kind,size,unit,price] of plumbingReferences) {
 const tileReferences = [
   ["orientbell-star","DGVT NEXA Star White","600 × 600 mm","Vitrified","dgvt-nexa-star-white-025606663250565361m",95],
   ["orientbell-opal","FT Opal Crema","600 × 600 mm","Porcelain","ft-opal-crema-024606654091098361m",85],
-  ["orientbell-oak","DR DGVT Lugano Oak Wood Ivory","200 × 1200 mm","Glazed vitrified plank","dr-dgvt-lugano-oak-wood-ivory",null]
+  ["orientbell-oak","DR DGVT Lugano Oak Wood Ivory","200 × 1200 mm","Glazed vitrified plank","dr-dgvt-lugano-oak-wood-ivory",149]
 ] as const;
 for (const [slug,model,size,material,handle,mrp] of tileReferences) {
   sourcedProducts.push({
@@ -98,3 +101,144 @@ for (const [slug,model,size,material,handle,mrp] of tileReferences) {
       ...(mrp?[{label:"Manufacturer MRP",value:`₹${mrp} / sq ft`}]:[]),{label:"Finish",value:"Matte"}]
   });
 }
+
+sourcedProducts.push({
+  slug:"jk-super-ppc", category:"cement", name:"JK Super Cement PPC", brand:"JK Cement", verification:"reference",
+  description:"Compare this Portland Pozzolana cement with other PPC options. Ask for pack weight, packing date and a delivered quote for your site.",
+  referenceImage:"/images/catalog/reference/jk-super-ppc.webp",
+  manufacturerReference:"https://www.jkcement.com/grey-cement/jk-super-cement-ppc/",
+  specifications:[{label:"Type",value:"Portland Pozzolana Cement"},{label:"Range",value:"JK Super Cement"},{label:"Confirm with dealer",value:"Bag weight, batch and packing date"}]
+});
+
+// Manufacturer range references; exact dimensions, price and photo require SKU verification.
+const pipeRanges: [string,string,string,string,string,string][] = [
+  [
+    "astral-aquarius-upvc",
+    "plumbing",
+    "Astral",
+    "Aquarius uPVC plumbing system",
+    "Cold-water plumbing",
+    "https://www.astralpipes.com/plumbing-pipes-fittings/"
+  ],
+  [
+    "astral-drainmaster-swr",
+    "plumbing",
+    "Astral",
+    "Drainmaster PVC SWR system",
+    "Soil, waste and rainwater drainage",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "astral-hdpe-pro",
+    "plumbing",
+    "Astral",
+    "HDPE Pro pipe system",
+    "HDPE piping",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "astral-casewell",
+    "plumbing",
+    "Astral",
+    "Case-Well uPVC casing pipes",
+    "Borewell casing",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "astral-wireguard",
+    "electrical",
+    "Astral",
+    "Wire Guard PVC electrical conduit",
+    "Concealed wiring protection",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "astral-telerex",
+    "electrical",
+    "Astral",
+    "TeleRex cable protection duct",
+    "Cable protection",
+    "https://www.astralpipes.com/catalogue/"
+  ],
+  [
+    "supreme-aquagold",
+    "plumbing",
+    "Supreme",
+    "Aqua Gold uPVC pipes and fittings",
+    "Water supply",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-lifeline",
+    "plumbing",
+    "Supreme",
+    "Lifeline CPVC hot and cold water system",
+    "Hot/cold water plumbing",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-indogreen",
+    "plumbing",
+    "Supreme",
+    "Indo Green PPR piping system",
+    "Hot/cold water plumbing",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-swr",
+    "plumbing",
+    "Supreme",
+    "SWR pipe and drainage system",
+    "Soil, waste and rainwater drainage",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-cableshield",
+    "electrical",
+    "Supreme",
+    "Cableshield electrical conduit",
+    "Electrical wiring protection",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "supreme-cableguard",
+    "electrical",
+    "Supreme",
+    "Cableguard DWC HDPE cable duct",
+    "Underground cable protection",
+    "https://www.supreme.co.in/pipe/products"
+  ],
+  [
+    "finolex-cpvc-range",
+    "plumbing",
+    "Finolex",
+    "CPVC plumbing pipes and fittings",
+    "Hot/cold water plumbing",
+    "https://www.finolexpipes.com/plumbing-products/"
+  ],
+  [
+    "finolex-swr-range",
+    "plumbing",
+    "Finolex",
+    "SWR pipes and fittings",
+    "Soil, waste and rainwater drainage",
+    "https://www.finolexpipes.com/plumbing-products/"
+  ],
+  [
+    "finolex-astm-upvc",
+    "plumbing",
+    "Finolex",
+    "ASTM uPVC pipes and fittings",
+    "Water supply",
+    "https://www.finolexpipes.com/plumbing-products/"
+  ]
+];
+for(const [slug,category,brand,name,application,manufacturerReference] of pipeRanges){
+ sourcedProducts.push({slug,category,brand,name,manufacturerReference,verification:"reference",description:"Manufacturer range reference for "+application.toLowerCase()+". Confirm the exact model and size with the dealer.", specifications:[{label:"Product family",value:name},{label:"Application",value:application},{label:"Nominal size",value:"Confirm manufacturer variant"},{label:"Confirm with dealer",value:"Rating, length, compatible fittings and exact SKU"}]});
+}
+
+for(const t of expandedTileReferences){sourcedProducts.push({slug:t.slug,category:"tiles",brand:"Orientbell",name:"Orientbell "+t.name,verification:"reference",manufacturerReference:"https://www.orientbell.com/"+t.handle,description:"Manufacturer design reference. Confirm shade lot, local stock, carton coverage, installation suitability and delivery before ordering.",specifications:[{label:"Format",value:t.size},{label:"Material",value:t.material},{label:"Finish",value:t.finish},{label:"Design",value:t.design},{label:"Application",value:t.use},...(t.box?[{label:"Tiles per carton",value:String(t.box)}]:[]),...(t.coverage?[{label:"Carton coverage",value:t.coverage+" m²"}]:[])]});}
+
+for(const p of paintReferences){sourcedProducts.push({slug:p.slug,category:"paint",brand:p.brand!,name:p.brand+" "+p.name,verification:"reference",manufacturerReference:p.source,description:"Manufacturer range reference. Confirm shade, compatible substrate, pack size and current data sheet. Waterproofing needs diagnosis and the complete specified system.",specifications:[{label:"Application",value:paintGroups[p.group]},{label:"Finish / system",value:p.finish},{label:"Range",value:p.tier},{label:"Pack / coverage",value:"Confirm exact product data sheet and pack"},{label:"Before ordering",value:"Check surface condition, preparation, compatibility and dealer delivery terms"}]});}
+
+for(const r of hardwareReferences.filter(r=>r.brand!=="Local supplier")){sourcedProducts.push({slug:r.slug,category:"hardware",brand:r.brand,name:r.brand+" "+r.name,verification:"reference",...(r.source?{referenceSource:r.source}:{}),description:r.application+". Confirm exact variant, pack contents and local availability.",specifications:[{label:"Category",value:hardwareGroups[r.group]},{label:"Pack / variant",value:r.pack},{label:"Application",value:r.application},{label:"Before ordering",value:"Confirm dimensions, compatibility, warranty if applicable and total delivered price"}]});}

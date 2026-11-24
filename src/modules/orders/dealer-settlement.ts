@@ -1,0 +1,4 @@
+import {z} from "zod";
+export const settlementRecord=z.object({orderId:z.string().uuid(),kind:z.enum(["platform_collection","dealer_payout"]),amountPaise:z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),evidenceRef:z.string().trim().min(3).max(150)}).strict();
+export const SETTLEMENT_FIELDS="order_id,tenant_id,order_code,fee_version_id,subtotal_paise,order_total_paise,commission_bps,commission_paise,payable_paise,created_at,dealer_settlement_events(id,kind,amount_paise,evidence_ref,created_at)";
+export function settlementAmounts(subtotal:number,total:number,bps:number){if(!Number.isSafeInteger(subtotal)||!Number.isSafeInteger(total)||subtotal<0||total<subtotal||!Number.isInteger(bps)||bps<0||bps>3000)throw Error("Invalid settlement");const commission=Number((BigInt(subtotal)*BigInt(bps)+5000n)/10000n);return {commission,payable:total-commission};}

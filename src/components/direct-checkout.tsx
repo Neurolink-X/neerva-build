@@ -1,0 +1,26 @@
+"use client";
+import {DIRECT_CART_KEY,type CartItem} from "@/modules/orders/direct-cart";
+import {useRef,useState,type FormEvent} from "react";
+import Link from "next/link";
+import {createNeervaBrowserClient} from "@/modules/supabase/browser";
+import {categoryUnits,quantityUnitLabels} from "@/modules/catalog/category-units";
+const client=createNeervaBrowserClient();
+export function DirectCheckout({category,slug,name,cart,preferredSeller,initialQuantity,initialUnit,initialPin}:{category:string;slug:string;name:string;cart?:CartItem[];preferredSeller?:string;initialQuantity?:string;initialUnit?:string;initialPin?:string}){
+ const key=useRef<string|null>(null),lock=useRef(false);
+ const [busy,setBusy]=useState(false),[error,setError]=useState(""),[receipt,setReceipt]=useState<{code:string;message:string}|null>(null);
+ async function submit(e:FormEvent<HTMLFormElement>){
+ e.preventDefault();if(lock.current||receipt)return;lock.current=true;setBusy(true);setError("");
+ const form=new FormData(e.currentTarget);const val=(n:string)=>String(form.get(n)??"").trim();
+ try{const session=await client?.auth.getSession();const token=session?.data.session?.access_token;if(!token){setError("Please sign in before placing an order.");return;}
+ const items=(cart??[{category,productSlug:slug,productName:name,quantity:Number(val("quantity")),unit:val("unit")}]).map(({category,productSlug,quantity,unit})=>({category,productSlug,quantity,unit}));const first=items[0];if(!first){setError("Cart is empty.");return;}
+ const fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify([session?.data.session?.user.id,items,val("name"),val("phone"),val("city"),val("pin"),val("address"),val("notes")]))))).map(x=>x.toString(16).padStart(2,"0")).join("");
+ const storageKey="neerva-order-retry:"+fingerprint;
+ try{key.current=sessionStorage.getItem(storageKey)??crypto.randomUUID();sessionStorage.setItem(storageKey,key.current);}catch{key.current??=crypto.randomUUID();}
+ const result=await fetch("/api/direct-orders",{method:"POST",headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},body:JSON.stringify({idempotencyKey:key.current,...first,items,contactName:val("name"),phone:val("phone"),city:val("city"),pincode:val("pin"),deliveryAddress:val("address"),notes:val("notes"),consent:form.get("consent")==="yes"})});
+ const body=await result.json();if(!result.ok||!body.order?.code){setError(body.error??"Order not confirmed. Check My Orders.");return;}setReceipt({code:body.order.code,message:body.message});try{sessionStorage.removeItem(storageKey);if(cart)localStorage.removeItem(DIRECT_CART_KEY);}catch{/* receipt is authoritative */}
+ }catch{setError("Connection interrupted. Retry the same details or check My Orders before starting another order.");}
+ finally{lock.current=false;setBusy(false);}
+ }
+ if(receipt)return <section className="category-guidance" role="status"><h2>Order received · {receipt.code}</h2><p>{receipt.message}</p><p>आपका ऑर्डर मिल गया है। अंतिम कीमत और सप्लाई की पुष्टि के बाद तैयारी शुरू होगी।</p><p>No online payment collected.</p><Link className="button button-dark" href="/account/orders">Track my order →</Link></section>;
+ return <form className="account-auth-form" onSubmit={submit}><h2>{cart?"Checkout · "+cart.length+" materials":name}</h2>{cart&&<ul>{cart.map(i=><li key={i.category+i.productSlug+i.unit}>{i.productName} · {i.quantity} {i.unit}</li>)}</ul>}<p>No dealer required to submit. Neerva will arrange supply and send the final delivered price for your approval. No payment is collected here.</p><div className="tile-estimator-fields">{!cart&&<><label>Quantity<input name="quantity" type="number" min=".001" max="1000000" step=".001" defaultValue={initialQuantity??"1"} required/></label><label>Unit<select name="unit" defaultValue={categoryUnits(category).includes(initialUnit as never)?initialUnit:undefined}>{categoryUnits(category).map(u=><option value={u} key={u}>{quantityUnitLabels[u]}</option>)}</select></label></>}<label>Contact name<input name="name" autoComplete="name" required minLength={2} maxLength={100}/></label><label>Mobile<input name="phone" type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" required maxLength={10}/></label><label>Delivery city<input name="city" required maxLength={80}/></label><label>Pincode<input name="pin" inputMode="numeric" pattern="[1-9][0-9]{5}" required maxLength={6} defaultValue={initialPin}/></label></div><label>Complete delivery address<textarea name="address" required minLength={12} maxLength={300}/></label><label>Size, shade, delivery access or special instructions<textarea name="notes" maxLength={300} defaultValue={preferredSeller?"Preferred seller (not assigned): "+preferredSeller.slice(0,160):undefined}/></label><label><input type="checkbox" name="consent" value="yes" required/> I request Neerva to arrange this order and understand that the final delivered price must be approved before fulfillment.</label><button className="button button-dark" type="submit" disabled={busy}>{busy?"Saving order…":"Place order / ऑर्डर करें"}</button>{error&&<p role="alert">{error} <Link href="/account">Account</Link> · <Link href="/account/orders">My orders</Link></p>}</form>;
+}

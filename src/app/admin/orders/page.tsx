@@ -1,3 +1,4 @@
+import {DirectOrdersPanel} from "@/components/direct-orders-panel";
 import type {Metadata} from "next";
 import Link from "next/link";
 import {SiteHeader,SiteFooter} from "@/components/site-chrome";
@@ -9,11 +10,11 @@ export default function AdminOrdersPage(){
   <section className="page-hero page-hero-compact">
    <Link className="breadcrumb-link" href="/account">Account /</Link>
    <span className="eyebrow">ADMIN · ORDER OPERATIONS</span>
-   <h1>Manage accepted supplier orders.</h1>
-   <p>Only real customer-accepted offers appear. Confirm supplier availability, manage fulfillment exceptions and keep an audited record. A quotation alone is not an order.</p>
+   <h1>Manage all material orders.</h1>
+   <p>Manage direct orders requiring Neerva sourcing and existing dealer orders from one page. Confirm the final delivered amount before preparation.</p>
    <nav className="admin-page-links"><Link href="/admin/fulfilment">Supplier sourcing</Link><Link href="/admin/rfqs">RFQ queue</Link><Link href="/admin/system-health">System health</Link></nav>
   </section>
-  <section className="section ops-content"><OrderOperationsPanel role="admin"/></section>
+  <section className="section ops-content"><p><Link href="/admin/dealer-settlements">Dealer commissions & payouts →</Link></p><DirectOrdersPanel role="admin"/><h2>Dealer offer orders</h2><OrderOperationsPanel role="admin"/></section>
   <SiteFooter/>
  </main>;
 }

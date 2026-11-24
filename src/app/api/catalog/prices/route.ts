@@ -8,7 +8,7 @@ export async function GET(){
   const db=createClient(url,key,{auth:{persistSession:false}});
   const now=new Date().toISOString();
   const {data,error}=await db.from("pricing_rules").select("amount_paise,unit,city,pincode_prefix,minimum_quantity,valid_to,variant:product_variants!inner(sku,status,unit,product:products!inner(slug,status,category:categories!inner(slug,status)))")
-   .eq("visibility","public").eq("status","published").eq("currency","INR").eq("variant.status","published").eq("variant.product.status","published").eq("variant.product.category.status","published")
+   .is("tenant_id",null).eq("visibility","public").eq("status","published").eq("currency","INR").eq("variant.status","published").eq("variant.product.status","published").eq("variant.product.category.status","published")
    .gt("amount_paise",0).lte("valid_from",now).or("valid_to.is.null,valid_to.gt."+now).order("amount_paise").limit(1000);
   if(error)return Response.json({prices:[]},{status:503});
   for(const row of data??[]){

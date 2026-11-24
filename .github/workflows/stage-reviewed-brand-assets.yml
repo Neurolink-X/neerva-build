@@ -1,0 +1,32 @@
+name: Stage reviewed brand assets
+on:
+  push:
+    branches: ['feat/material-brand-directory']
+    paths: ['scripts/catalog/reviewed-media-batch.json']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  stage:
+    if: github.repository == 'Neurolink-X/neerva-build' && github.ref == 'refs/heads/feat/material-brand-directory'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+      - name: Fetch fixed previously reviewed artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api /repos/Neurolink-X/neerva-build/actions/artifacts/14940004645/zip > /tmp/brand-media.zip
+      - name: Verify and stage exact reviewed files
+        run: python3 scripts/catalog/stage-reviewed-media.py /tmp/brand-media.zip
+      - name: Commit assets only to current PR branch
+        run: |
+          set -eu
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- assets/catalog/brand-review/
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Bundle 17 visually reviewed brand assets for source-rights review'
+          git push origin HEAD:refs/heads/feat/material-brand-directory

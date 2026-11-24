@@ -18,6 +18,6 @@ export function groupCatalogByPhoto(products:readonly DemoProduct[]):PhotoFamily
  return groups;
 }
 export function rangeVariantLabel(p:DemoProduct):string{
- const spec=p.specifications.find(s=>/^(?:Diameter|Thickness|Nominal size|Pack \/ variant)$/i.test(s.label));
+ const spec=p.specifications.find(s=>/^(?:Diameter|Thickness|Nominal size|Requested type|Conductor size|Pack \/ variant)$/i.test(s.label));
  return spec?.value??p.name;
 }

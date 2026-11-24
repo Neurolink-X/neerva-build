@@ -1,3 +1,4 @@
+import {DirectOrdersPanel} from "@/components/direct-orders-panel";
 import { OrderList } from "@/components/order-list";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const metadata = {
@@ -10,7 +11,7 @@ export default function Orders() {
       <SiteHeader />
       <section className="section ops-content">
         <h1>My Orders</h1>
-        <OrderList />
+        <DirectOrdersPanel role="customer"/><h2>Dealer offer orders</h2><OrderList />
       </section>
       <SiteFooter />
     </main>

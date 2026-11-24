@@ -54,7 +54,19 @@ const manifest={
  "/api/admin/overview":["GET"],
  "/api/admin/fulfilment":["GET","PATCH"],
  "/api/admin/orders":["GET","PATCH"],
+ "/api/admin/direct-orders":["GET","PATCH"],
+ "/api/admin/direct-order-operations":["GET","POST"],
  "/api/admin/pricing":["GET","POST","PATCH"],
+ "/api/admin/marketplace-fees":["GET","POST"],
+ "/api/admin/delivery-settings":["GET","PATCH"],
+ "/api/admin/sku-tax":["GET","POST"],
+ "/api/dealer/delivery-settings":["GET","POST"],
+ "/api/dealer/pricing":["GET","POST"],
+ "/api/dealer/listings":["GET","POST","PATCH"],
+ "/api/dealer/settlements":["GET"],
+ "/api/admin/dealer-settlements":["GET","POST"],
+ "/api/admin/product-requests":["GET","PATCH"],
+ "/api/customer/dealer-comparison":["GET"],
  "/api/admin/rfqs":["GET","POST"],
  "/api/admin/studio-payments":["GET","PATCH"],
  "/api/admin/studio-settings":["GET","PATCH"],
@@ -69,6 +81,7 @@ const manifest={
  "/api/dealer/orders":["GET","PATCH"],
  "/api/dealer/quotes":["GET","POST"],
  "/api/orders":["GET","POST","PATCH"],
+ "/api/direct-orders":["GET","POST","PATCH"],
  "/api/rfqs":["POST"],
  "/api/studio/city-rules":["GET"],
  "/api/studio/config":["GET"],
@@ -91,7 +104,7 @@ test("every API route is accounted for by the role and method contract",()=>{
    assert.match(code,/requireAdmin|has_platform_role/,route+" must verify server-side administrator authorization");
   }else if(route.startsWith("/api/dealer/")){
    assert.match(code,/requireDealer/,route+" must check approved dealer + tenant roles");
-  }else if(route.startsWith("/api/customer/")||route==="/api/orders"||route==="/api/rfqs"||
+  }else if(route.startsWith("/api/customer/")||route==="/api/orders"||route==="/api/direct-orders"||route==="/api/rfqs"||
    /^\/api\/studio\/(?:payments|projects|support|premium-report)(?:\/|$)/.test(route)){
    assert.match(code,/requireAuth/,route+" must authenticate the caller");
   }
@@ -130,7 +143,7 @@ test("literal client fetch URL targets resolve to declared API routes",()=>{
  assert.deepEqual(invalid,[],"Client requests point to missing API handlers");
 });
 test("order and paid-access routes never issue backend success without identity checks",()=>{
- for(const route of ["/api/orders","/api/admin/orders","/api/studio/payments","/api/studio/premium-report"]){
+ for(const route of ["/api/orders","/api/admin/orders","/api/direct-orders","/api/admin/direct-orders","/api/studio/payments","/api/studio/premium-report"]){
   const code=readFileSync(api.get(route),"utf8");
   assert.match(code,/requireAuth|requireAdmin/,route+": identity gate missing");
  }
