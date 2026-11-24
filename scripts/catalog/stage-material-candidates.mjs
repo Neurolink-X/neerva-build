@@ -4,12 +4,17 @@ import sharp from "sharp";
 const candidates=JSON.parse(await fs.readFile("scripts/catalog/material-photo-review-candidates.json","utf8"));
 const root="assets/catalog/material-review";
 await fs.mkdir(root,{recursive:true});const rows=[];
+let previous=[];try{previous=JSON.parse(await fs.readFile(root+"/manifest.json","utf8")).rows??[];}catch{}
+
 for(const item of candidates){try{
+ const old=previous.find(r=>r.key===item.key&&r.filename===item.filename&&r.status==="visual-review-required"&&r.file&&r.sha256);
+ if(old){try{const b=await fs.readFile(root+"/"+old.file);if(createHash("sha256").update(b).digest("hex")===old.sha256){rows.push({...old,...item});continue;}}catch{}}
+
  const hash=createHash("md5").update(item.filename).digest("hex");
  const expected="https://upload.wikimedia.org/wikipedia/commons/"+hash[0]+"/"+hash.slice(0,2)+"/"+encodeURIComponent(item.filename);
  if(item.url&&decodeURI(expected)!==decodeURI(item.url))throw Error("Unexpected Wikimedia source");
- const r=await fetch(expected,{redirect:"error",signal:AbortSignal.timeout(20000),headers:{"User-Agent":"NeervaBuildCatalogMedia/1.0 (https://github.com/Neurolink-X/neerva-build)"}});
- if(!r.ok||!r.body)throw Error("HTTP "+r.status);
+ let r;for(let attempt=0;attempt<2;attempt++){r=await fetch(expected,{redirect:"error",signal:AbortSignal.timeout(20000),headers:{"User-Agent":"NeervaBuildCatalogMedia/1.0 (https://github.com/Neurolink-X/neerva-build)"}});if(r.ok||![429,503].includes(r.status))break;await r.body?.cancel();const delay=Math.min(10000,Math.max(1500,Number(r.headers.get("Retry-After")||0)*1000||1500));await new Promise(resolve=>setTimeout(resolve,delay));}
+ if(!r?.ok||!r.body)throw Error("HTTP "+r.status);
  const reader=r.body.getReader(),chunks=[];let size=0;while(true){const p=await reader.read();if(p.done)break;size+=p.value.length;if(size>8000000){await reader.cancel();throw Error("Source too large");}chunks.push(Buffer.from(p.value));}
  const source=Buffer.concat(chunks);const {data,info}=await sharp(source,{limitInputPixels:30000000,density:96}).rotate().resize({width:1200,height:1200,fit:"inside",withoutEnlargement:true}).webp({quality:78}).toBuffer({resolveWithObject:true});
  if(info.width<100||info.height<40||data.length>350000)throw Error("Invalid image dimensions or size");

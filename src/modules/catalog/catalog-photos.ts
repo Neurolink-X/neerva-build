@@ -37,7 +37,7 @@ function approvedSkuImage(path:string):boolean{return /^\/images\/catalog\/sku\/
 export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
  const entries:CatalogPhoto[]=[];
  const append=(src:string|undefined|null,label:string,kind:CatalogPhoto["kind"],alt:string,credit?:Pick<CatalogPhoto,"sourceUrl"|"license"|"licenseUrl"|"credit">)=>{
-  if(src&&usableMediaSource(src)&&!entries.some(x=>x.src===src))entries.push({src,label,kind,alt,...credit});
+  if(src&&usableMediaSource(src)&&!entries.some(x=>x.src===src)){const lowResolution=["/images/catalog/reference/magicrete-aac.webp","/images/catalog/reference/orientbell-oak.webp"].includes(src);entries.push({src,label:lowResolution?label+" · limited resolution":label,kind,alt,...credit});}
  };
  if(product.verification==="merchant_verified"&&product.imageVerified)
   for(const src of product.images??[])if(approvedSkuImage(src))

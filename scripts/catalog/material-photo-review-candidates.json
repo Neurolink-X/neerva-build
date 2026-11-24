@@ -132,5 +132,38 @@
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
     "target": "plumbing:fitting-pressure-gauge",
     "note": "Review dial units and use; no claim of pump rating"
+  },
+  {
+    "key": "river-sand-close",
+    "filename": "A_close-up_of_river_sand.JPG",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/64/A_close-up_of_river_sand.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File:A_close-up_of_river_sand.JPG",
+    "credit": "Thamizhpparithi Maari",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "aggregates:river-sand-bulk",
+    "note": "Visually reviewed river sand close-up; local origin, grading and supplier not verified"
+  },
+  {
+    "key": "garden-hose-coil",
+    "filename": "Garden_hose.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/cd/Garden_hose.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Garden_hose.jpg",
+    "credit": "Nandhp",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:generic-garden-hose",
+    "note": "Visually reviewed coiled green garden hose; not pump suction hose or verified size"
+  },
+  {
+    "key": "spirit-level-tool",
+    "filename": "Tool-level.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Tool-level.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Tool-level.jpg",
+    "credit": "Evan-Amos",
+    "license": "Public domain dedication",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-self",
+    "target": "hardware:spirit-level",
+    "note": "Visually reviewed spirit level; generic, not an exact manufacturer model"
   }
 ]
