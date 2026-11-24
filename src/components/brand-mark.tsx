@@ -16,8 +16,8 @@ export function BrandMark({name,small=false}:{name:string;small?:boolean}){
  }
  return <span className={small?"nb-brand-mark nb-brand-mark-small":"nb-brand-mark"} title="Brand name for identification only; dealer authorisation not implied">
   <Image src={media.logo} alt={name+" brand logo · brand identification, not dealership proof"}
-   width={small?88:145} height={small?33:54} sizes={small?"88px":"145px"} unoptimized
+   width={small?88:145} height={small?33:54} sizes={small?"88px":"145px"} unoptimized referrerPolicy="no-referrer"
    onError={()=>setFailed(old=>old.includes(media.logo)?old:[...old,media.logo])}
-   style={{objectFit:"contain",maxWidth:"100%",height:"auto"}}/>
+   style={{objectFit:"contain",maxWidth:"100%",height:small?33:54,width:small?88:145}}/>
  </span>;
 }
