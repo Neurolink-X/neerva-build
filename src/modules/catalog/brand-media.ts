@@ -9,6 +9,7 @@
  */
 import {localBrandAssets} from "./local-brand-assets.ts";
 export const brandMedia={
+ "SAIL":{logo:"/images/catalog/reference/sail-corporate-logo.webp",logoSource:"https://commons.wikimedia.org/wiki/File:Steel_Authority_of_India_logo.svg",logoAttribution:"Steel Authority of India · PD-textlogo (trademark applies); corporate identification, not dealer approval",officialProductPage:"https://www.sail.co.in/en/products"},
  "Orientbell":{"logo":"https://cdn.brandfetch.io/idvvgiDXNS/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1749265842617","logoSource":"https://brandfetch.com/orientbell.com","officialProductPage":"https://www.orientbell.com/","logoAttribution":"Orientbell · published brand mark; trademark remains with its owner"},
  "Ebco":{"logo":"https://cdn.brandfetch.io/idUDqO4-Hu/w/400/h/400/theme/dark/icon.jpeg?c=1bxid64Mup7aczewSAYMX&t=1764483516854","logoSource":"https://brandfetch.com/ebco.in","officialProductPage":"https://www.ebco.in/","logoAttribution":"Ebco · published brand mark; trademark remains with its owner"},
  "Ramco":{"logo":"https://images.assettype.com/fortune-india/import/company/logos/The%20Ramco%20Cements.png","logoSource":"https://www.fortuneindia.com/companies/the-ramco-cements-ltd","officialProductPage":"https://www.ramcocements.in/","logoAttribution":"Ramco · published brand mark; trademark remains with its owner"},
