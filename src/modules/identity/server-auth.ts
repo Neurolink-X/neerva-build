@@ -5,7 +5,7 @@ export type AuthResult={userId:string;client:SupabaseClient};
 const failure=(message:string,status:number)=>Response.json({error:message},{status,headers:{"Cache-Control":"private, no-store"}});
 export const unavailable=()=>failure("Neerva account/database service is not configured. No changes were saved.",503);
 export const notReady=()=>failure("This operation is not enabled until its protected database workflow has passed review.",503);
-export async function requireAuth(request:Request):Promise<AuthResult|Response>{
+async function authenticate(request:Request,admin=false):Promise<AuthResult|Response>{
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
  if(!url||!key)return unavailable();
  const header=request.headers.get("authorization")??"";
@@ -15,22 +15,14 @@ export async function requireAuth(request:Request):Promise<AuthResult|Response>{
    const client=createClient(url,key,{global:{headers:{Authorization:"Bearer "+match[1]}},auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false}});
    const {data,error}=await client.auth.getUser(match[1]);
    if(error||!data.user)return failure("Your session is invalid or expired.",401);
-   const access=await client.rpc("neerva_account_access_allowed");
+   const access=await client.rpc(admin?"neerva_admin_access_allowed":"neerva_account_access_allowed");
    if(access.error)return failure("Account access verification unavailable.",503);
-   if(access.data!==true)return failure("Account restricted. Contact support.",403);
+   if(access.data!==true)return failure(admin?"Administrator access required.":"Account restricted. Contact support.",403);
    return{client,userId:data.user.id};
  }catch{return failure("Authentication service is currently unavailable.",503)}
 }
-export async function requireAdmin(request:Request):Promise<AuthResult|Response>{
- const auth=await requireAuth(request);
- if(auth instanceof Response)return auth;
- try{
-   const {data,error}=await auth.client.rpc("has_platform_role",{p_roles:["admin","super_admin"]});
-   if(error)return failure("Permission service is temporarily unavailable.",503);
-   if(data!==true)return failure("Administrator access required.",403);
-   return auth;
- }catch{return failure("Permission service is temporarily unavailable.",503)}
-}
+export async function requireAuth(request:Request){return authenticate(request)}
+export async function requireAdmin(request:Request){return authenticate(request,true)}
 export async function requireDealer(request:Request):Promise<(AuthResult&{tenantIds:string[]})|Response>{
  const auth=await requireAuth(request);
  if(auth instanceof Response)return auth;
