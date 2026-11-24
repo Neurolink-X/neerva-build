@@ -18,11 +18,11 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{cate
  // generic category photo as a particular fitting or cable conduit product.
  const isPipe=product&&(category==="plumbing"||category==="electrical")&&!product.referenceImage;
  const safeSrc=isPipe&&current?.kind==="category"?undefined:src;
- return <div className={"catalog-material-image"+(compact?" compact":"")+(current?.kind==="sku"||current?.kind==="listing"?" pack-photo":"")}>
+ return <div className={"catalog-material-image"+(compact?" compact":"")+(current?.kind==="sku"||current?.kind==="listing"||current?.kind==="manufacturer"?" pack-photo":"")}>
   {safeSrc?<Image src={safeSrc} alt={compact?"":current?.alt??name} fill sizes="(max-width:680px) 100vw, (max-width:1100px) 50vw, 33vw"
-   quality={75} loading="lazy" onError={()=>setFailed(previous=>previous.includes(safeSrc)?previous:[...previous,safeSrc])}/>:
+   quality={75} loading="lazy" unoptimized={safeSrc.startsWith("https://")} referrerPolicy="no-referrer" onError={()=>setFailed(previous=>previous.includes(safeSrc)?previous:[...previous,safeSrc])}/>:
    <div className="catalog-image-awaiting" role="img" aria-label={"Product photo for "+name+" unavailable"}>
-    <strong>Image awaiting verification</strong><small>Brand/grade can be checked with the supplying dealer</small>
+    <strong>{category==="tiles"?"Design image not available":"Image awaiting verification"}</strong><small>{category==="tiles"?"Open product details for the manufacturer catalogue.":"Brand/grade can be checked with the supplying dealer"}</small>
    </div>}
   {!compact&&<span className="catalog-image-note">{(safeSrc?current?.label:null)??"Photo currently unavailable"}</span>}
  </div>;

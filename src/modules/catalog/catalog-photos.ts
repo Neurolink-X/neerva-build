@@ -1,4 +1,5 @@
 import type {DemoProduct} from "./marketplace.ts";
+import {tileReferenceMedia} from "./tile-references.ts";
 import {categoryImage} from "./public-products.ts";
 
 import {curatedPhotoPaths} from "./curated-photo-paths.ts";
@@ -40,6 +41,12 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
  if(product.referenceImage)append(product.referenceImage,
   product.familyKey?"Product range":"Product photo",
   "listing","Reference photo of "+product.name+"; exact physical variant unverified");
+ if(product.category==="tiles"){
+  const tile=tileReferenceMedia(product.slug);
+  if(tile?.swatch)append(tile.swatch,"Manufacturer surface sample","manufacturer",product.name+" surface pattern");
+  if(tile?.room)append(tile.room,"Manufacturer room visualisation","manufacturer",product.name+" manufacturer room visualisation");
+  return entries; // No unrelated tile image as a substitute for a named design.
+ }
  if(entries.length)return entries;
  if(product.familyKey==="generic-hollow"||product.slug==="aac-block-600x200"){
   const hollow=product.familyKey==="generic-hollow";

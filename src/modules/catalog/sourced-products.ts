@@ -1,3 +1,4 @@
+import {tileReferences as expandedTileReferences} from "./tile-references.ts";
 import type {DemoProduct} from "./marketplace.ts";
 
 // Retail listing references describe product choices. Seller availability and prices come from Neerva separately.
@@ -60,7 +61,7 @@ sourcedProducts.push({
  description:"Compare the pattern at full tile size. Request the shade lot, carton coverage and breakage terms before ordering.",
  referenceImage:"/images/catalog/reference/kajaria-k-12631.webp",
  manufacturerReference:"https://www.kajariaceramics.com/products/K-12631-600x1200-mm",
- specifications:[{label:"Design",value:"K 12631"},{label:"Format",value:"600 × 1200 mm"},{label:"Type",value:"Polished vitrified tile"}]
+ specifications:[{label:"Design",value:"K 12631"},{label:"Format",value:"600 × 1200 mm"},{label:"Type",value:"Polished vitrified tile"},{label:"Finish",value:"Super glossy"}]
 });
 
 const plumbingReferences = [
@@ -86,7 +87,7 @@ for (const [slug,image,kind,size,unit,price] of plumbingReferences) {
 const tileReferences = [
   ["orientbell-star","DGVT NEXA Star White","600 × 600 mm","Vitrified","dgvt-nexa-star-white-025606663250565361m",95],
   ["orientbell-opal","FT Opal Crema","600 × 600 mm","Porcelain","ft-opal-crema-024606654091098361m",85],
-  ["orientbell-oak","DR DGVT Lugano Oak Wood Ivory","200 × 1200 mm","Glazed vitrified plank","dr-dgvt-lugano-oak-wood-ivory",null]
+  ["orientbell-oak","DR DGVT Lugano Oak Wood Ivory","200 × 1200 mm","Glazed vitrified plank","dr-dgvt-lugano-oak-wood-ivory",149]
 ] as const;
 for (const [slug,model,size,material,handle,mrp] of tileReferences) {
   sourcedProducts.push({
@@ -233,3 +234,5 @@ const pipeRanges: [string,string,string,string,string,string][] = [
 for(const [slug,category,brand,name,application,manufacturerReference] of pipeRanges){
  sourcedProducts.push({slug,category,brand,name,manufacturerReference,verification:"reference",description:"Manufacturer range reference for "+application.toLowerCase()+". Confirm the exact model and size with the dealer.", specifications:[{label:"Product family",value:name},{label:"Application",value:application},{label:"Nominal size",value:"Confirm manufacturer variant"},{label:"Confirm with dealer",value:"Rating, length, compatible fittings and exact SKU"}]});
 }
+
+for(const t of expandedTileReferences){sourcedProducts.push({slug:t.slug,category:"tiles",brand:"Orientbell",name:"Orientbell "+t.name,verification:"reference",manufacturerReference:"https://www.orientbell.com/"+t.handle,description:"Manufacturer design reference. Confirm shade lot, local stock, carton coverage, installation suitability and delivery before ordering.",specifications:[{label:"Format",value:t.size},{label:"Material",value:t.material},{label:"Finish",value:t.finish},{label:"Design",value:t.design},{label:"Application",value:t.use},...(t.box?[{label:"Tiles per carton",value:String(t.box)}]:[]),...(t.coverage?[{label:"Carton coverage",value:t.coverage+" m²"}]:[])]});}

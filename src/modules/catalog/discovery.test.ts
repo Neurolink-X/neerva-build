@@ -124,3 +124,6 @@ test("Kohinoor keeps its actual local product reference without substituting a n
  const {directoryCards}=await import("./brand-pages.ts");const {brandMediaFor}=await import("./brand-media.ts");const {existsSync}=await import("node:fs");
  const card=directoryCards("plumbing").find(c=>c.name==="Kohinoor");assert.ok(card);assert.equal(card.identity?.manufacturer,"Kohinoor Impex");assert.equal(card.identity?.logoStatus,"unconfirmed");assert.equal(brandMediaFor("Kohinoor"),null);assert.ok(card.image&&existsSync("public"+card.image));
 });
+
+
+test("manufacturer tile references have exact price source, unique routes and no fake stock",async()=>{const {tileReferences,tileReferencePrice}=await import("./tile-references.ts");const {catalogPhotos}=await import("./catalog-photos.ts");for(const t of tileReferences){const product=demoProducts.find(p=>p.slug===t.slug&&p.category==="tiles");assert.ok(product);assert.equal(tileReferencePrice(t.slug)?.rupees,t.mrp);assert.equal(tileReferencePrice(t.slug)?.source,product.manufacturerReference);assert.equal(productEvidence(product).inventoryVerified,false);if(t.swatch)assert.equal(catalogPhotos(product)[0]?.src,t.swatch);else assert.equal(catalogPhotos(product).length,0);}assert.equal(tileReferencePrice("kajaria-k-12631"),null);assert.equal(tileReferencePrice("orientbell-oak")?.rupees,149);});
