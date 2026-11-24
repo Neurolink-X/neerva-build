@@ -3,7 +3,7 @@ import Link from "next/link";
 import {usePathname} from "next/navigation";
 import {useEffect,useState,type ReactNode} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
-const groups=[["Operations",[["Overview","/admin"],["Orders","/admin/orders"],["Quotations","/admin/rfqs"],["Sourcing","/admin/fulfilment"]]],["Commerce",[["Materials","/admin/catalog"],["Pricing","/admin/pricing"],["Marketing","/admin/marketing"],["Dealers","/admin/dealers"]]],["Studio",[["Free / paid access","/admin/studio-settings"],["Payments","/admin/studio-payments"],["Design library","/admin/studio"]]],["Platform",[["Customers & roles","/admin/users"],["System health","/admin/system-health"],["Activity audit","/admin/audit"]]]] as const;
+const groups=[["Operations",[["Overview","/admin"],["Orders","/admin/orders"],["Quotations","/admin/rfqs"],["Sourcing","/admin/fulfilment"]]],["Commerce",[["Materials","/admin/catalog"],["Pricing","/admin/pricing"],["Marketing","/admin/marketing"],["Dealers","/admin/dealers"]]],["Studio",[["Free / paid access","/admin/studio-settings"],["Payments","/admin/studio-payments"],["Design library","/admin/studio"]]],["Platform",[["Customers & roles","/admin/users"],["Account help & recovery","/admin/account-recovery"],["System health","/admin/system-health"],["Activity audit","/admin/audit"]]]] as const;
 export function AdminWorkspace({children}:{children:ReactNode}){
  const path=usePathname();const [access,setAccess]=useState<"loading"|"ready"|"denied"|"error">("loading");const [retry,setRetry]=useState(0);const [menuFor,setMenuFor]=useState<string|null>(null);const menuOpen=menuFor===path;
  useEffect(()=>{const client=createNeervaBrowserClient();let active=true;let generation=0;
