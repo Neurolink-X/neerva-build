@@ -57,7 +57,7 @@ export function statusForOrderError(error:{code?:string;message?:string}|null|un
  if(error.code==="PGRST116")return 404;
  return 503;
 }
-export function safeOrderError(error:{code?:string}|null|undefined):string{
+export function safeOrderError(error:{code?:string;message?:string}|null|undefined):string{
  switch(error?.code){
   case "23505":return "This quotation has already been accepted. Check your existing orders.";
   case "23514":return "Offer expired, revised or dealer coverage is not verified. Request a new quote.";
