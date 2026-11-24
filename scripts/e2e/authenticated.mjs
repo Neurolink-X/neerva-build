@@ -21,8 +21,9 @@ const record=(name,ms)=>{report.checks.push({name,ms:Math.round(ms),status:"pass
 async function check(name,fn){const t=performance.now();await fn();record(name,performance.now()-t)}
 async function login(role){
  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2,serviceWorkers:"block"});
- contexts.push(context);const page=await context.newPage();
+ contexts.push(context);await context.route("**/auth/v1/token**",route=>new URL(route.request().url()).hostname===expectedProject+".supabase.co"?route.continue():route.abort("blockedbyclient"));const page=await context.newPage();
  await page.goto(base.origin+"/account",{waitUntil:"domcontentloaded"});
+ assert.equal(new URL(page.url()).origin,base.origin,"Unexpected staging redirect");
  const form=page.locator("form.account-auth-form").first();
  await form.locator('[name="email"]').fill(process.env["QA_"+role+"_EMAIL"]);
  await form.locator('[name="password"]').fill(process.env["QA_"+role+"_PASSWORD"]);
@@ -36,7 +37,8 @@ async function login(role){
  return {page,token:session.access_token,id:session.user.id,context};
 }
 async function api(actor,route,method="GET",data,expected=200){
- const res=await actor.context.request.fetch(base.origin+route,{method,headers:{Authorization:"Bearer "+actor.token,"Content-Type":"application/json"},...(data===undefined?{}:{data}),timeout:20000});
+ const res=await actor.context.request.fetch(base.origin+route,{method,headers:{Authorization:"Bearer "+actor.token,"Content-Type":"application/json"},...(data===undefined?{}:{data}),timeout:20000,maxRedirects:0});
+ assert.equal(new URL(res.url()).origin,base.origin,"Unexpected API redirect");
  assert.equal(res.status(),expected,method+" "+route+" HTTP "+res.status());
  if(expected===200||expected===201)assert.match(res.headers()["cache-control"]??"",/no-store/,"Private response cache policy");
  return res.json();
@@ -106,7 +108,7 @@ try{
   variantId=undefined;productId=undefined;
  });
  await check("sign-out removes admin access",async()=>{
-  await admin.page.goto(base.origin+"/account");await admin.page.getByRole("button",{name:"Sign out",exact:true}).click();
+  await admin.page.goto(base.origin+"/account");await admin.page.getByRole("button",{name:"Sign out",exact:true}).click();await admin.page.getByRole("button",{name:/Sign in securely/}).waitFor({timeout:20000});
   await admin.page.goto(base.origin+"/admin");await admin.page.getByRole("heading",{name:"Administrator access required"}).waitFor({timeout:20000});
  });
  report.status="passed";
