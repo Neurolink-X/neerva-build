@@ -54,7 +54,7 @@
 .nroad-road-help strong{font-size:14px;color:#215136}
 .nroad-road-help p{font-size:12px;line-height:1.5;margin:0;color:#526958}
 .nroad-road-help button{display:inline-flex;justify-content:center;align-items:center;min-height:44px;border:1px solid #31674b;background:#fff;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:800;color:#215139;text-align:center}
-@media(max-width:520px){.nroad-form{grid-template-columns:minmax(0,1fr)}.nroad-main,.nroad-results,.nroad-controls,.nroad-variants{min-width:0}.nroad-diagram{overflow-x:auto}.nroad-diagram svg{min-width:260px}.nroad-metrics>div{grid-template-columns:1fr}}
+@media(max-width:520px){.nroad-form{grid-template-columns:minmax(0,1fr)}.nroad-main,.nroad-results,.nroad-controls,.nroad-variants{min-width:0}.nroad-metrics>div{grid-template-columns:1fr}}
 
 
 /* Exact-site spatial portfolio: selectable accessible 24-floorplan cards. */
@@ -86,3 +86,21 @@
 .nroad .nbd-webgl{width:100%;min-width:0;overflow:hidden;border-radius:12px;background:#dce6e1}
 .nroad .nbd-webgl canvas,.nroad .nbd-building svg{display:block;max-width:100%}
 .nroad .nroad-variants button{min-width:0}
+
+/* Both planner routes share this shell, including their loading state. */
+.nroad{width:100%;min-width:0}
+.nroad-main,.nroad-form,.nroad-results,.nroad-form label,.nroad-main > *{min-inline-size:0}
+.nroad-form label,.nroad-road-help{grid-template-columns:minmax(0,1fr)}
+.nroad-main :is(input,select,button,details,svg,canvas){max-inline-size:100%}
+.nroad-results,.nroad-form{overflow-wrap:anywhere}
+@media(max-width:600px){
+ .nroad-nav{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 12px;padding:10px 16px}
+ .nroad-nav>span{grid-area:1/1;align-self:end}
+ .nroad-nav>a{grid-area:2/1;display:flex;align-items:center;min-height:44px}
+ .nroad-nav>button{grid-area:1/2/3/3}
+ .nroad-hero,.nroad-main{width:100%;padding-inline:clamp(12px,4vw,20px)}
+ .nroad-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .nroad-form>:nth-child(n+3){grid-column:1/-1}
+ .nroad-controls,.nroad-results{width:100%}
+ .nroad-diagram svg,.nroad-elevation svg{height:auto;min-inline-size:0;max-inline-size:100%}
+}
