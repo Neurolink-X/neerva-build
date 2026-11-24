@@ -23,8 +23,9 @@ const curated:Record<string,string[]>={
  "cement:generic-cement":["cement-stack"],
  "electrical:frls-wire-15sqmm":["wire-coil","wire-install"],
  "electrical:generic-wire":["wire-coil","wire-install"],
- "electrical:generic-conduit":["wire-install"],
- "electrical:conduit-pipe-20mm":["wire-install"]
+ "plumbing:generic-upvc-pressure":["pipe-stack"],
+ "plumbing:generic-tee":["plumbing-fitting"],
+ "plumbing:generic-coupler":["plumbing-fitting"]
 };
 function editorialKeys(p:DemoProduct):string[]{return curated[p.category+":"+p.slug]??(p.familyKey?curated[p.category+":"+p.familyKey]:undefined)??[];}
 function approvedSkuImage(path:string):boolean{return /^\/images\/catalog\/sku\/[a-z0-9][a-z0-9/_-]{3,160}\.(?:webp|avif|png|jpe?g)$/i.test(path)&&!path.includes("..");}
@@ -54,7 +55,7 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   append(src,"Real material photo · not exact SKU","editorial",
    "Real-world photograph of "+product.category.replaceAll("-"," ")+" materials, not the exact "+product.name);
  }
- if(!entries.length && product.category!=="bricks-blocks" && product.category!=="cement")
+ if(!entries.length && product.category!=="bricks-blocks" && product.category!=="cement" && product.category!=="plumbing" && !(product.category==="electrical"&&/conduit|cable duct|casing and capping|cable protection|junction box/i.test(product.name)))
   append(categoryImage(product.category),"Material example","category","Representative "+product.category+" material");
  return entries;
 }
