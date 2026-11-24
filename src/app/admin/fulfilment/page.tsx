@@ -8,7 +8,7 @@ export default function AdminFulfilmentPage(){
   <Link href="/admin/rfqs" className="breadcrumb-link">Admin RFQs /</Link>
   <span className="eyebrow">PROCUREMENT · PLATFORM ADMIN ONLY</span>
   <h1>Help when no dealer is available.</h1>
-  <p>Review genuine customer material requests from any Indian delivery pincode. Source manually only with customer consent and verified supplier details. Do not claim automatic nationwide delivery.</p>
+  <p>Review genuine customer material requests from any Indian delivery pincode. Source manually only with customer consent and verified supplier details. <Link href="/admin/orders">View accepted orders</Link>. Do not claim automatic nationwide delivery.</p>
  </section><section className="section" style={{maxWidth:1150,margin:"auto",padding:"24px 16px 64px"}}>
   <AdminSourcingDesk/>
  </section><SiteFooter/></main>;
