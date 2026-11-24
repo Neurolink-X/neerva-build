@@ -44,6 +44,7 @@ function normalize(path){
  catch{return null;}
 }
 const manifest={
+ "/api/admin/design-reviews":["GET","PATCH"],
  "/api/admin/account-recovery":["POST"],
  "/api/admin/dealer-members":["GET","POST"],
  "/api/dealer/overview":["GET"],
