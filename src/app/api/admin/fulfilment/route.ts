@@ -5,17 +5,18 @@ export const runtime="nodejs";
 export async function GET(request:Request){
  const auth=await requireAdmin(request);if(auth instanceof Response)return auth;
  try{
-  const [quotes,cases,invites]=await Promise.all([
+  const [quotes,cases,invites,orderProbe]=await Promise.all([
    auth.client.from("quote_requests").select("id,category_slug,material_description,quantity,unit,city,pincode,status,created_at").order("created_at",{ascending:false}).limit(100),
    auth.client.from("admin_sourcing_cases").select("id,quote_request_id,status,scope,note,updated_at").order("updated_at",{ascending:false}).limit(100),
-   auth.client.from("quote_invites").select("quote_request_id").limit(500)
+   auth.client.from("quote_invites").select("quote_request_id").limit(500),
+   auth.client.from("orders").select("id",{head:true,count:"exact"})
   ]);
   if(quotes.error||cases.error||invites.error)return apiFailed();
   const counts=new Map<string,number>();
   for(const inv of invites.data??[])counts.set(String(inv.quote_request_id),(counts.get(String(inv.quote_request_id))??0)+1);
   const rows=joinSourcingQueue((quotes.data??[]) as AdminRFQ[],(cases.data??[]) as SourcingCase[],counts);
-  return apiData({cases:rows,orderServiceStatus:process.env.ORDER_SERVICE_URL?"configured_but_unverified":"not_configured",
-   note:"These are genuine quotation sourcing cases, NOT accepted or paid orders. Only a verified backend may accept, deliver or invoice an order."});
+  return apiData({cases:rows,orderServiceStatus:orderProbe.error?"migration_pending":"typescript_postgres_ready",
+   note:"These are actual RFQ sourcing cases, NOT accepted or paid orders. Accepted offers are listed in the separate Neerva order queue; no GST invoice or payment confirmation is generated."});
  }catch{return apiFailed()}
 }
 export async function PATCH(request:Request){

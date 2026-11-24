@@ -122,10 +122,18 @@
     "src/app/materials/layout.tsx",
     "scripts/e2e/mobile-smoke.mjs",
     ".github/workflows/ci.yml",
-    ".github/workflows/mobile-regression.yml"
+    ".github/workflows/mobile-regression.yml",
+    "src/app/api/orders/route.ts",
+    "src/app/api/admin/orders/route.ts",
+    "src/app/api/dealer/orders/route.ts",
+    "src/modules/orders/order-contract.ts",
+    "supabase/migrations/0016_typescript_order_workflow.sql",
+    "src/components/customer-quote-inbox.tsx",
+    "src/components/order-operations-panel.tsx",
+    "src/components/order-list.tsx"
   ],
   "protectedGitBlobs": {
-    "src/app/api/orders/route.ts": "72181f88e5008e605e380a5753fe47a91eb97250",
+    "src/app/api/orders/route.ts": "7f10d7ffc56e431ddcf87006b2bd782c160f10c6",
     "src/modules/orders/backend.ts": "727869915623cbb664744b696e0637c9d9bd2488",
     "src/modules/identity/server-auth.ts": "de3afb321bdbb51fe51fe83a89523cc416e83674",
     "src/app/api/admin/catalog/route.ts": "568ec700ae77ffb1837cd6a5c7985332c8cb62f9",
@@ -133,7 +141,7 @@
     "src/app/api/admin/rfqs/route.ts": "d74ea8907d49353a9c29f86b53cd75732c4efde1",
     "src/app/api/dealer/inventory/route.ts": "82c0b90979d60300a743ba592dd7680b16282152",
     "src/app/api/dealer/quotes/route.ts": "4bdc8035e4ce273503abf8a5034e2da7433ffe6d",
-    "src/app/api/customer/quotes/route.ts": "aeced18facd09db13cb176873d63bc8563e6c2c5",
+    "src/app/api/customer/quotes/route.ts": "2a260727535f6128b0a445b6c43adaf91baa1433",
     "src/components/material-basket.tsx": "2064be2569dcc76da29b5a4b38ecc5e659758d85",
     "src/modules/catalog/basket.ts": "75b0a4c5f986adc706544788000f11db2df28aef",
     "src/modules/studio/room.ts": "e4dcb232a494a8f99a748a78ba5c5538ac708bd6",
@@ -143,7 +151,13 @@
     "supabase/migrations/0001_platform_foundation.sql": "5b89fe75f95b8a01340a904d60eda321593de55f",
     "supabase/migrations/0002_incident_observability_and_tenant_constraints.sql": "62dcb528b22e688434bd76a091c2f1ce6593baed",
     "supabase/migrations/0003_dealer_onboarding.sql": "7ed8801bbcf3f2087411963630140faa5b97cafc",
-    "supabase/migrations/0004_design_studio_phase_a.sql": "e0275af4d1ed3156a00e7ce1e8eefc6b143d3a77"
+    "supabase/migrations/0004_design_studio_phase_a.sql": "e0275af4d1ed3156a00e7ce1e8eefc6b143d3a77",
+    "src/app/api/admin/orders/route.ts": "5f1da1df0384bd2730504f11546f1bec68d4e09f",
+    "src/app/api/dealer/orders/route.ts": "d2b979d6e0f9385ce987264e1391bc8de6105096",
+    "src/modules/orders/order-contract.ts": "5189d31c51c41475f38c9bd7534e532558b87fef",
+    "supabase/migrations/0016_typescript_order_workflow.sql": "d27e7ef56e8f9060db855d432b3a6bf76b55bde5",
+    "supabase/migrations/0017_order_contact_role_scope.sql": "5c2c4fbeaa0f71e3db1227aada41c8cc43f7378d",
+    "supabase/migrations/0018_orders_offer_lookup_index.sql": "1de0750e0cbc18478e5d4f3262d26ee66e574ec1"
   },
   "reviewedProtectedChanges20261124": [
     {
@@ -160,6 +174,51 @@
       "path": "src/modules/orders/backend.ts",
       "reason": "Forward request's explicit HTTP method; never silently convert POST to GET because body is missing.",
       "validation": "Dedicated mocked Spring proxy GET/POST/error regression tests"
+    },
+    {
+      "path": "src/app/api/orders/route.ts",
+      "reason": "Replace unconfigured Java order proxy with signed-in Supabase RLS row, atomic dealer offer acceptance and no payment capture.",
+      "validation": "CI release gate, checked SQL migration and customer role browser smoke"
+    },
+    {
+      "path": "src/app/api/admin/orders/route.ts",
+      "reason": "Real order database fetch and admin-only audited, expected-state status transitions.",
+      "validation": "CI API permission contract and guest denial"
+    },
+    {
+      "path": "src/app/api/dealer/orders/route.ts",
+      "reason": "Tenant-scoped approved dealer read and status transitions; never mark delivered.",
+      "validation": "Role contract, RLS transition trigger"
+    },
+    {
+      "path": "src/modules/orders/order-contract.ts",
+      "reason": "Strict inputs; never accept client totals or seller identity; no pricing or order spoofing.",
+      "validation": "Zod order-contract unit tests"
+    },
+    {
+      "path": "supabase/migrations/0016_typescript_order_workflow.sql",
+      "reason": "Additive orders table with column-level grants, verified seller/pincode, quote row-lock, row-level tenancy isolation, immutable offer totals and audit events.",
+      "validation": "SQL review + migration execution and audited role fixture tests before activation"
+    },
+    {
+      "path": "src/app/api/customer/quotes/route.ts",
+      "reason": "Project dealer offer revision in the customer read model; prevent stale-price selection without weakening permissions.",
+      "validation": "Customer offer revision filter + CI and mobile smoke"
+    },
+    {
+      "path": "src/app/api/dealer/orders/route.ts",
+      "reason": "Explicit owner/manager/dispatch staff role gate before returning private customer delivery addresses or updating status.",
+      "validation": "CI typecheck, contract test, RLS migration verification"
+    },
+    {
+      "path": "supabase/migrations/0017_order_contact_role_scope.sql",
+      "reason": "Canonical already-applied order address privacy RLS migration; only dealer owner/manager/dispatch may see customer contact.",
+      "validation": "Read-only PostgreSQL pg_policies introspection and Supabase migration history"
+    },
+    {
+      "path": "supabase/migrations/0018_orders_offer_lookup_index.sql",
+      "reason": "Distinct additive foreign-key lookup index; avoids a duplicate numbered migration or RLS drift.",
+      "validation": "Release source hash, migration preflight and database index inspection"
     }
   ]
 }
