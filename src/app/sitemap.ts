@@ -1,3 +1,4 @@
+import {canonicalPublicOrigin} from "@/modules/seo/site-origin";
 import type { MetadataRoute } from "next";
 import {publicIndexingEnabled} from "@/modules/seo/indexing";
 import { articles } from "@/modules/blog/articles";
@@ -7,7 +8,7 @@ import { studioDesigns } from "@/modules/studio/library";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   if(!publicIndexingEnabled(process.env))return [];
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl = canonicalPublicOrigin(process.env);
   return [
     { url: siteUrl, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.7 },
