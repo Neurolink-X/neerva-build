@@ -7,12 +7,21 @@ const headers={"Cache-Control":"private, no-store"};
 const err=(status:number,error:string,fields?:unknown)=>Response.json({error,...(fields?{fields}:{})},{status,headers});
 export async function GET(request:Request){
  const auth=await requireDealer(request);if(auth instanceof Response)return auth;
- try{const [a,b,c,d]=await Promise.all([
+ try{const [a,b,c]=await Promise.all([
    auth.client.from("tenant_memberships").select("tenant_id,role,tenants(business_name,status)").in("tenant_id",auth.tenantIds).eq("user_id",auth.userId),
    auth.client.from("merchant_branches").select("id,tenant_id,name,city,pincode,approved").in("tenant_id",auth.tenantIds).eq("approved",true),
-   auth.client.from("product_variants").select("id,sku,unit,product:products(id,slug,name,status,category:categories(slug,name_en,pricing_mode),brand:brands(name))").eq("status","published").limit(250),
-   auth.client.from("inventory").select("branch_id,variant_id,available_quantity,unit,updated_at").limit(300)
- ]);return a.error||b.error||c.error||d.error?apiFailed():apiData({memberships:a.data??[],branches:b.data??[],variants:c.data??[],inventory:d.data??[]})}catch{return apiFailed()}
+   auth.client.from("product_variants").select("id,sku,unit,product:products(id,slug,name,status,category:categories(slug,name_en,pricing_mode),brand:brands(name))").eq("status","published").limit(250)
+ ]);
+ if(a.error||b.error||c.error)return apiFailed();
+ // Do not serve unrelated branch stock, including a dealer's unapproved branches.
+ // Query after verifying approved branches rather than trusting row order/limit + RLS alone.
+ const approvedBranchIds=(b.data??[]).map(row=>String(row.id));
+ const d=approvedBranchIds.length
+  ?await auth.client.from("inventory").select("branch_id,variant_id,available_quantity,unit,updated_at").in("branch_id",approvedBranchIds).limit(300)
+  :{data:[],error:null};
+ if(d.error)return apiFailed();
+ return apiData({memberships:a.data??[],branches:b.data??[],variants:c.data??[],inventory:d.data??[]});
+ }catch{return apiFailed()}
 }
 export async function POST(request:Request){
  const auth=await requireDealer(request);if(auth instanceof Response)return auth;
@@ -30,8 +39,8 @@ export async function POST(request:Request){
   ]);
   if(branch.error||variant.error||membership.error)return apiFailed();
   if(!branch.data?.approved||!auth.tenantIds.includes(String(branch.data.tenant_id)))return err(403,"Approved dealer branch required.");
-  if(!(membership.data??[]).some(x=>x.tenant_id===branchTenant&&x.active&&["owner","manager","inventory"].includes(x.role)))return err(403,"Inventory editing permission required.");
   const branchTenant=String(branch.data.tenant_id);
+  if(!(membership.data??[]).some(x=>x.tenant_id===branchTenant&&x.active&&["owner","manager","inventory"].includes(x.role)))return err(403,"Inventory editing permission required.");
   const v=variant.data,product=Array.isArray(v?.product)?v?.product[0]:v?.product;
   const category=product?(Array.isArray(product.category)?product.category[0]:product.category):null;
   if(!v||v.status!=="published"||product?.status!=="published"||v.unit!==value.unit||

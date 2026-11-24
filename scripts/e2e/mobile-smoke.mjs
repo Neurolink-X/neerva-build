@@ -42,6 +42,26 @@ async function main(){
     if(v.w===360||v.w===430)await page.screenshot({path:path.join("test-results/mobile",v.w+"-"+(route.replaceAll("/","-")||"home")+".png"),fullPage:true,animations:"disabled"});
    }
    if(v.w===390){
+    // Verify role shells, legal/support destinations, and catalog routes not in the
+    // repeated five-viewport sample. Status checks avoid creating fake test orders.
+    const extraPages=[
+      "/admin/catalog","/admin/rfqs","/admin/fulfilment","/admin/pricing",
+      "/admin/studio","/admin/studio-payments","/admin/system-health","/admin/users",
+      "/dealer/inventory","/dealer/quotes","/account/orders","/account/quotes",
+      "/support","/privacy","/brands","/business-model","/calculators","/blog",
+      "/learn/plot-size-in-gaj","/learn/2d-to-3d-house-layout","/learn/wall-paint-pattern-ideas",
+      "/materials/cement","/materials/steel","/materials/tiles","/materials/plumbing",
+      "/materials/bricks-blocks","/materials/electrical","/materials/paint",
+      "/materials/hardware","/materials/aggregates"
+    ];
+    for(const route of extraPages){
+      const res=await page.goto(base+route,{waitUntil:"load",timeout:60000});
+      if(res?.status()!==200)failures.push("390px role/footer/catalog route "+route+" returned "+String(res?.status()));
+      const overflow=await page.evaluate(()=>Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-innerWidth);
+      if(overflow>2)failures.push("390px "+route+": "+overflow+"px horizontal overflow");
+    }
+   }
+   if(v.w===390){
     // PWA is installable without storing private pages or fabricating offline orders.
     const manifest=await page.request.get(base+"/manifest.webmanifest");
     assert.equal(manifest.status(),200,"manifest route");
@@ -322,12 +342,41 @@ async function main(){
    await ctx.close();
   }
   const req=await browser.newContext();
-  const a=await req.request.get(base+"/api/orders");
-  if(![401,503].includes(a.status()))failures.push("Unauthenticated order API must fail closed; observed "+a.status());
-  for(const route of ["/api/customer/quotes","/api/dealer/inventory","/api/admin/users"]) {
-   const response=await req.request.get(base+route);
-   if(![401,403,503].includes(response.status()))failures.push("Unauthenticated protected "+route+" must fail closed; observed "+response.status());
+  // Negative authorization checks for EVERY protected role API and exposed verb.
+  // These are guest-only probes; none may persist an order, payment, offer or role change.
+  const protectedMatrix={
+   GET:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
+    "/api/admin/orders","/api/admin/pricing","/api/admin/rfqs",
+    "/api/admin/studio-payments","/api/admin/studio-settings","/api/admin/studio-support",
+    "/api/admin/system-incidents","/api/admin/users","/api/customer/quotes",
+    "/api/dealer/inventory","/api/dealer/quotes","/api/orders",
+    "/api/studio/payments","/api/studio/projects","/api/studio/support"],
+   POST:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/pricing",
+    "/api/admin/rfqs","/api/admin/users","/api/dealer/inventory","/api/dealer/quotes",
+    "/api/orders","/api/rfqs","/api/studio/payments","/api/studio/payments/claim",
+    "/api/studio/premium-report","/api/studio/projects","/api/studio/support"],
+   PATCH:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
+    "/api/admin/pricing","/api/admin/studio-payments","/api/admin/studio-settings",
+    "/api/admin/studio-support","/api/admin/users"],
+   DELETE:["/api/studio/payments"]
+  };
+  for(const [method,routes] of Object.entries(protectedMatrix)){
+   for(const route of routes){
+    const res=await req.request.fetch(base+route,{
+     method,
+     ...(method==="GET"?{}:{headers:{"Content-Type":"application/json"},data:{}})
+    });
+    if(![401,403,503].includes(res.status()))failures.push(method+" "+route+" failed closed-authorization contract: "+res.status());
+   }
   }
+  for(const route of ["/api/catalog","/api/catalog/prices","/api/catalog/offers","/api/studio/config"]){
+   const res=await req.request.get(base+route);
+   if(![200,503].includes(res.status()))failures.push("Public API "+route+" unexpected status "+res.status());
+  }
+  const missingCity=await req.request.get(base+"/api/studio/city-rules");
+  if(missingCity.status()!==400)failures.push("City rules must reject requests lacking a supported city, received "+missingCity.status());
+  const cityRules=await req.request.get(base+"/api/studio/city-rules?city=Kanpur");
+  if(![200,503].includes(cityRules.status()))failures.push("City rules for Kanpur returned "+cityRules.status());
   await req.close();
  }finally{await browser.close()}
  fs.writeFileSync("test-results/mobile/accessibility-baseline.json",JSON.stringify({
