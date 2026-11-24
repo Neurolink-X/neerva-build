@@ -398,6 +398,18 @@
       "bytes": 31836,
       "originalSha256": "ba951e59d9f55451f9457f459a0e08077d187f5cf4465b6b7ecc4cd80f87ac39",
       "sha256": "69e90b3bb30f7cae4757f14bcbc7f99d2ef1f9a035955cba10ae8c7e0efae6a4"
+    },
+    {
+      "key": "polycab-current-mark",
+      "filename": "Polycab India logo.png",
+      "source": "https://commons.wikimedia.org/wiki/File:Polycab_India_logo.png",
+      "credit": "Polycab India",
+      "license": "PD-textlogo; trademark restrictions apply",
+      "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-textlogo",
+      "target": "electrical:Polycab",
+      "note": "Review current brand identity and original source before publication; not a product photo.",
+      "status": "failed",
+      "reason": "Error: HTTP 404"
     }
   ]
 }
