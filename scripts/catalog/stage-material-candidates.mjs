@@ -7,7 +7,7 @@ await fs.mkdir(root,{recursive:true});const rows=[];
 for(const item of candidates){try{
  const hash=createHash("md5").update(item.filename).digest("hex");
  const expected="https://upload.wikimedia.org/wikipedia/commons/"+hash[0]+"/"+hash.slice(0,2)+"/"+encodeURIComponent(item.filename);
- if(decodeURI(expected)!==decodeURI(item.url))throw Error("Unexpected Wikimedia source");
+ if(item.url&&decodeURI(expected)!==decodeURI(item.url))throw Error("Unexpected Wikimedia source");
  const r=await fetch(expected,{redirect:"error",signal:AbortSignal.timeout(20000),headers:{"User-Agent":"NeervaBuildCatalogMedia/1.0 (https://github.com/Neurolink-X/neerva-build)"}});
  if(!r.ok||!r.body)throw Error("HTTP "+r.status);
  const reader=r.body.getReader(),chunks=[];let size=0;while(true){const p=await reader.read();if(p.done)break;size+=p.value.length;if(size>8000000){await reader.cancel();throw Error("Source too large");}chunks.push(Buffer.from(p.value));}

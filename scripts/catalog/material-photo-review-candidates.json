@@ -42,5 +42,65 @@
     "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-textlogo",
     "target": "hardware:Godrej",
     "note": "Historic brand mark; verify current locks brand identity and trademark use before approval"
+  },
+  {
+    "key": "pvc-elbows",
+    "filename": "PvcElbows.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File:PvcElbows.JPG",
+    "credit": "REisemann3937",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-elbow90",
+    "note": "Confirm elbow angle and material visually; not branded SKU."
+  },
+  {
+    "key": "tank-float-valve",
+    "filename": "Ball_valve_cold_water_tank.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Ball_valve_cold_water_tank.jpg",
+    "credit": "Stubacca",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-float-valve",
+    "note": "Installed ballcock reference, not a shutoff ball valve."
+  },
+  {
+    "key": "ball-valve",
+    "filename": "Valve_(ball).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Valve_(ball).jpg",
+    "credit": "DenysDM",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "target": "plumbing:fitting-ball-valve",
+    "note": "Confirm domestic application compatibility; no pressure rating implied."
+  },
+  {
+    "key": "ball-valve-detail",
+    "filename": "Valve_(ball)_detailed.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Valve_(ball)_detailed.jpg",
+    "credit": "DenysDM",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "target": "plumbing:fitting-ball-valve",
+    "note": "Separate close-up from same photographer; visually compare before approval."
+  },
+  {
+    "key": "upvc-rainwater",
+    "filename": "UPVC_pipe_and_fitting.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:UPVC_pipe_and_fitting.jpg",
+    "credit": "Mekalshan",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "plumbing:generic-rainwater",
+    "note": "Rainwater fitting, not pressure pipe."
+  },
+  {
+    "key": "stone-dust",
+    "filename": "The_stone_dust_pile_Gelligaer_Quarry_-_geograph.org.uk_-_88548.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:The_stone_dust_pile_Gelligaer_Quarry_-_geograph.org.uk_-_88548.jpg",
+    "credit": "nantcoly",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "target": "aggregates:crusher-dust",
+    "note": "Quarry stockpile only; no local grade claim."
   }
 ]
