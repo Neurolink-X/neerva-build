@@ -66,8 +66,8 @@ export function StudioAdminSettings(){
        <option value="free">Free — full report at no cost</option><option value="paid">Paid — purchase needed for report</option>
       </select></label>
       <label>One-time price (₹, applied to NEW orders)<input type="number" min="10" max="20000" step="0.01" required
-       value={(item.pricePaise/100).toFixed(2)} onChange={e=>{const v=Number(e.target.value);if(Number.isFinite(v))edit(product,{pricePaise:Math.round(v*100)})}}/></label>
-      <label>Free gallery sample designs (1–24)<input type="number" min="1" max="24" value={item.freePreviewCount}
+       value={String(item.pricePaise/100)} onChange={e=>{const v=Number(e.target.value);if(Number.isFinite(v))edit(product,{pricePaise:Math.round(v*100)})}}/></label>
+      <label>Featured free sample cards (1–24; all remain viewable)<input type="number" min="1" max="24" value={item.freePreviewCount}
        onChange={e=>edit(product,{freePreviewCount:Number(e.target.value)})}/></label>
       <label className="nb-studio-toggle"><input type="checkbox" checked={item.published}
        onChange={e=>edit(product,{published:e.target.checked,checkoutEnabled:e.target.checked?item.checkoutEnabled:false})}/> Published to customers</label>
