@@ -1,0 +1,4 @@
+import {requireAuth,apiData,apiFailed} from "@/modules/identity/server-auth";
+import {failOrder} from "@/modules/orders/order-contract";
+export const dynamic="force-dynamic";
+export async function GET(r:Request){const a=await requireAuth(r);if(a instanceof Response)return a;const q=new URL(r.url).searchParams;const category=q.get("category")??"",slug=q.get("slug")??"",pin=q.get("pin")??"",qty=Number(q.get("qty"));if(!/^[a-z0-9-]{1,40}$/.test(category)||!/^[a-z0-9-]{1,100}$/.test(slug)||!/^[1-9][0-9]{5}$/.test(pin)||!Number.isFinite(qty)||qty<=0||qty>1000000)return failOrder(400,"Enter valid pincode and quantity.");const {data,error}=await a.client.rpc("neerva_compare_dealer_prices",{p_category:category,p_slug:slug,p_pin:pin,p_qty:qty});return error?apiFailed():apiData({sellers:data??[],basis:"material and platform fee only; tax and delivery require confirmation"});}

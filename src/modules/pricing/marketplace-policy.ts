@@ -1,0 +1,4 @@
+import {z} from "zod";
+export const feePolicyInput=z.object({fixedPaise:z.number().int().min(0).max(1000000),rateBps:z.number().int().min(0).max(2000),capPaise:z.number().int().min(0).max(10000000),commissionBps:z.number().int().min(0).max(3000),reason:z.string().trim().min(3).max(300)}).strict();
+export const dealerRateInput=z.object({branchId:z.string().uuid(),variantId:z.string().uuid(),amountPaise:z.number().int().positive().max(5000000000),minimumQuantity:z.number().finite().positive().max(1000000),pincodePrefix:z.string().regex(/^[1-9][0-9]{0,5}$/).optional(),validTo:z.string().datetime({offset:true}).optional()}).strict();
+export function calculateMarketplaceFee(materialPaise:number,policy:Pick<z.infer<typeof feePolicyInput>,"fixedPaise"|"rateBps"|"capPaise">){if(!Number.isSafeInteger(materialPaise)||materialPaise<0)throw Error("Invalid material subtotal");return Math.min(policy.capPaise,policy.fixedPaise+Math.round(materialPaise*policy.rateBps/10000));}
