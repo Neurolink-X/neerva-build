@@ -47,7 +47,7 @@ const manifest={
  "/api/admin/catalog/campaigns":["GET","POST","PATCH"],
  "/api/admin/catalog":["GET","POST","PATCH"],
  "/api/admin/fulfilment":["GET","PATCH"],
- "/api/admin/orders":["GET"],
+ "/api/admin/orders":["GET","PATCH"],
  "/api/admin/pricing":["GET","POST","PATCH"],
  "/api/admin/rfqs":["GET","POST"],
  "/api/admin/studio-payments":["GET","PATCH"],
@@ -60,8 +60,9 @@ const manifest={
  "/api/catalog":["GET"],
  "/api/customer/quotes":["GET"],
  "/api/dealer/inventory":["GET","POST"],
+ "/api/dealer/orders":["GET","PATCH"],
  "/api/dealer/quotes":["GET","POST"],
- "/api/orders":["GET","POST"],
+ "/api/orders":["GET","POST","PATCH"],
  "/api/rfqs":["POST"],
  "/api/studio/city-rules":["GET"],
  "/api/studio/config":["GET"],
@@ -127,7 +128,12 @@ test("order and paid-access routes never issue backend success without identity 
   const code=readFileSync(api.get(route),"utf8");
   assert.match(code,/requireAuth|requireAdmin/,route+": identity gate missing");
  }
- const orderBackend=readFileSync(resolve("src/modules/orders/backend.ts"),"utf8");
- assert.match(orderBackend,/ORDER_SERVICE_URL/,"Orders must depend on a real configured backend");
- assert.match(readFileSync(api.get("/api/orders"),"utf8"),/notReady\(\)/,"Orders must fail closed before service activation");
+ const orderApi=readFileSync(api.get("/api/orders"),"utf8");
+ assert.match(orderApi,/from\("orders"\)/,"Orders must query real PostgreSQL rows via the customer JWT and RLS");
+ assert.match(orderApi,/acceptOfferInput/,"Buyer order POST validates server-trusted offer references");
+ assert.doesNotMatch(orderApi,/springOrders|ORDER_SERVICE_URL/,"Live orders must not depend on a missing Java upstream");
+ const dealerApi=readFileSync(api.get("/api/dealer/orders"),"utf8");
+ assert.match(dealerApi,/in\("tenant_id",auth.tenantIds\)/,"Dealer order responses must be tenant scoped");
+ const adminApi=readFileSync(api.get("/api/admin/orders"),"utf8");
+ assert.match(adminApi,/requireAdmin/,"Platform order changes require admin identity");
 });
