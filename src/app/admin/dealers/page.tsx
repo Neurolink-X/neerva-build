@@ -1,0 +1,4 @@
+import type {Metadata} from "next";
+import {SecureOperationsList} from "@/components/secure-operations-list";
+export const metadata:Metadata={title:"Dealer operations",robots:{index:false,follow:false}};
+export default function DealerOperationsPage(){return <main><h1>Dealer management</h1><p>Review dealer businesses and branch records visible under the existing database permissions. Approval and suspension require a reviewed administrative write workflow.</p><SecureOperationsList endpoint="/api/admin/dealers" title="Dealer directory" description="Records are restricted by database policies; an empty result is not evidence that there are no dealers." arrays={[{key:"dealers",label:"Businesses",fields:["id","business_name","status","created_at"]},{key:"branches",label:"Branches",fields:["tenant_id","name","city","pincode","approved"]}]}/></main>}
