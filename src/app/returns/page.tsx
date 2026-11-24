@@ -13,10 +13,10 @@ export default function ReturnsPage(){
    <Link className="button button-dark" href="/support">Open a private support request →</Link>
   </section>
   <article className="studio-policy-document">
-   <p><strong>Current availability:</strong> The paid ₹149 Studio checkout is not active unless Neerva has explicitly completed its operator, bank and support verification gates. Do not transfer funds merely because you find a payment QR, UPI ID or old screenshot.</p>
+   <p><strong>Current availability:</strong> The paid Studio checkout is not active unless Neerva has explicitly completed its operator, bank and support verification gates. Do not transfer funds merely because you find a payment QR, UPI ID or old screenshot.</p>
    <h2>1. Free Studio previews</h2>
    <p>Free plot-plan ideas, conceptual 2D/3D previews and basic colour samples do not involve a monetary transaction, so there is no purchase to refund.</p>
-   <h2>2. Paid digital Studio reports — ₹149 per studio</h2>
+   <h2>2. Paid digital Studio reports — the published Studio price per studio</h2>
    <p>When checkout is activated, each Home Studio Pro or Colour Studio Pro report is a separate one-time digital purchase, not a subscription. The checkout must show the exact amount, UPI receiver name, terms and scope before you pay. A digital concept is not a signed architectural plan or professional service.</p>
    <p>Submitting a UPI transaction reference does not prove payment. After a bank-confirmed matching credit, the account is granted the purchased report entitlement. No automatic paid access is promised for a manually reviewed QR transfer.</p>
    <h2>3. Failed, mistaken or duplicate transfers</h2>
