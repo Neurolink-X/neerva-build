@@ -1,3 +1,4 @@
+import {fittingProducts} from "./fitting-references.ts";
 import {hardwareReferences,hardwareGroups} from "./hardware-references.ts";
 import {aggregateProducts} from "./aggregate-references.ts";
 import {sourcedProducts} from "./sourced-products.ts";
@@ -31,6 +32,7 @@ export const demoProducts: DemoProduct[] = [
   ...sourcedProducts,
   ...hardwareReferences.filter(r=>r.brand==="Local supplier").map((r):DemoProduct=>({slug:r.slug,category:"hardware",brand:r.brand,name:r.name,verification:"reference",description:r.application+". Confirm the exact supplier variant before ordering.",specifications:[{label:"Category",value:hardwareGroups[r.group]},{label:"Size / pack",value:r.pack},{label:"Application",value:r.application},{label:"Before ordering",value:"Confirm dimensions, material, compatibility and delivered price"}]})),
   ...technicalOptions,
+  ...fittingProducts,
   ...aggregateProducts,
   { verification: "reference", slug: "fe-500d-tmt-12mm", category: "steel", name: "TMT bar · Fe 500D · 12 mm", description: "Illustrative product profile. Confirm the exact manufacturer range and test documents with the supplying dealer.", brand: "Tata Tiscon", specifications: [{ label: "Grade", value: "Fe 500D (verify SKU)" }, { label: "Diameter", value: "12 mm" }, { label: "Typical unit", value: "kg / quintal / tonne" }, { label: "Supply note", value: "Actual weight and bundle details must be confirmed" }] },
   { verification: "reference", slug: "fe-500d-tmt-10mm", category: "steel", name: "TMT bar · Fe 500D · 10 mm", description: "Compare the same grade and diameter across dealer offers before acceptance.", brand: "JSW Neosteel", specifications: [{ label: "Grade", value: "Fe 500D (verify SKU)" }, { label: "Diameter", value: "10 mm" }, { label: "Typical unit", value: "kg / quintal / tonne" }, { label: "Supply note", value: "Theoretical weight is not actual weighed supply" }] },

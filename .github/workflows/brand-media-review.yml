@@ -6,6 +6,7 @@ on:
       - 'src/modules/catalog/brand-media.ts'
       - 'src/modules/catalog/brand-pages.ts'
       - 'src/modules/catalog/hardware-references.ts'
+      - 'src/modules/catalog/fitting-references.ts'
       - '.github/workflows/brand-media-review.yml'
   workflow_dispatch:
 permissions:

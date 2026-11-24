@@ -1,3 +1,4 @@
+import {fittingReference} from "./fitting-references.ts";
 import type {DemoProduct} from "./marketplace.ts";
 import {aggregateReference,aggregatePhotoSources} from "./aggregate-references.ts";
 import {hardwareReference} from "./hardware-references.ts";
@@ -45,6 +46,8 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
  if(product.referenceImage)append(product.referenceImage,
   product.familyKey?"Product range":"Product photo",
   "listing","Reference photo of "+product.name+"; exact physical variant unverified");
+ const fitting=fittingReference(product.slug);
+ if(fitting){if(fitting.image)append(localBrandAsset(fitting.image),"Retailer fitting reference","listing",product.name+" product family photo");return entries;}
  if(product.category==="aggregates"){
   const ref=aggregateReference(product.slug);
   if(ref){const photo=aggregatePhotoSources[ref.group];append(photo.src,"Representative material photo · not exact SKU","editorial",photo.alt);}
