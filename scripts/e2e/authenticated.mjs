@@ -110,6 +110,10 @@ try{
   await api(admin,"/api/admin/catalog","PATCH",{kind:"product",id:productId,status:"archived"});
   variantId=undefined;productId=undefined;
  });
+ await check("real public API response and speed budgets",async()=>{
+ const endpoints=[["/api/catalog","published_database"],["/api/catalog/prices","published_database"],["/api/catalog/offers","published_database"],["/api/studio/config",null]];
+ for(const [route,source] of endpoints){const times=[];for(let i=0;i<5;i++){const t=performance.now();const res=await customer.context.request.get(base.origin+route,{timeout:20000,maxRedirects:0});assert.equal(res.status(),200,route);const body=await res.json();assert.ok(!body.unavailable,route+" fallback");if(source)assert.equal(body.source,source);else assert.equal(body.ready,true);assert.match(res.headers()["server-timing"]??"",/public_api;dur=/);times.push(Math.round(performance.now()-t))}const p95=Math.max(...times);report.apiTimings.push({route,samples:times,p95});console.log("PUBLIC API "+route+" p95="+p95+"ms");assert.ok(p95<=600,route+" exceeds 600ms in isolated backend benchmark")}
+ });
  await check("authenticated API timing samples",async()=>{
  for(const [actor,route] of [[admin,"/api/admin/overview"],[admin,"/api/admin/catalog"],[admin,"/api/admin/analytics"],[customer,"/api/orders"],[dealer,"/api/dealer/overview"]]){
   const times=[];for(let i=0;i<5;i++){const started=performance.now();await api(actor,route);times.push(Math.round(performance.now()-started))}report.apiTimings.push({route,samples:times,p95:Math.max(...times)});console.log("API "+route+" p95="+Math.max(...times)+"ms");

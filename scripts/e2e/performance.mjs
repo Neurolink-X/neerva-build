@@ -6,7 +6,7 @@ const live=base.origin==="https://neerva-build.vercel.app";
 if(!live&&base.origin!=="http://127.0.0.1:3000")throw Error("Benchmark target must be the local production build or Neerva production host.");
 const routes=["/","/materials","/materials/cement/ppc-cement-50kg","/design-studio","/design-studio/fit","/studio-pricing"];
 const budgets={lcp:2500,cls:0.1,ttfb:800,interaction:200,api:600};
-const samples=3,report={target:base.origin,commit:process.env.GITHUB_SHA??null,startedAt:new Date().toISOString(),profile:"390x844, DPR 2, 4x CPU, 1.6 Mbps down, 750 kbps up, 150ms latency; cold browser contexts",budgets,routes:[],api:[],failures:[]};
+const samples=3,report={target:base.origin,workflowCommit:process.env.GITHUB_SHA??null,scope:live?"deployed public site":"local frontend build without hosted database",startedAt:new Date().toISOString(),profile:"390x844, DPR 2, 4x CPU, 1.6 Mbps down, 750 kbps up, 150ms latency; cold browser contexts",budgets,routes:[],api:[],failures:[]};
 const percentile=(values,p)=>{const s=values.filter(Number.isFinite).sort((a,b)=>a-b);return s.length?s[Math.ceil(s.length*p)-1]:null};
 mkdirSync("test-results/performance",{recursive:true});
 const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -44,8 +44,8 @@ try{
  }
  const ctx=await browser.newContext();
  try{for(const endpoint of ["/api/catalog","/api/catalog/prices","/api/catalog/offers","/api/studio/config"]){
-  const times=[];for(let i=0;i<5;i++){const t=performance.now();const r=await ctx.request.get(base.origin+endpoint,{timeout:20000});await r.body();if(r.status()!==200)report.failures.push(endpoint+" HTTP "+r.status());times.push(Math.round(performance.now()-t))}
-  const p95=percentile(times,.95);report.api.push({endpoint,times,p95});if(p95>budgets.api)report.failures.push(endpoint+" p95 "+p95+"ms");
+  const times=[],serverMs=[],regions=[];for(let i=0;i<5;i++){const t=performance.now();const r=await ctx.request.get(base.origin+endpoint,{timeout:20000,maxRedirects:0});const body=await r.json();if(r.status()!==200)report.failures.push(endpoint+" HTTP "+r.status());if(live&&(body.unavailable||endpoint==="/api/catalog"&&body.source!=="published_database"||endpoint==="/api/studio/config"&&body.ready!==true))report.failures.push(endpoint+" authoritative data unavailable");times.push(Math.round(performance.now()-t));const headers=r.headers(),timing=/public_api;dur=([0-9.]+)/.exec(headers["server-timing"]??"");if(timing)serverMs.push(Number(timing[1]));if(headers["x-vercel-id"])regions.push(headers["x-vercel-id"].split("::").slice(0,-1).join("::"))}
+  const p95=percentile(times,.95);report.api.push({endpoint,times,p95,serverMs,regions:[...new Set(regions)]});console.log("API "+endpoint+" "+JSON.stringify({p95,serverMs,regions:[...new Set(regions)]}));if(p95>budgets.api)report.failures.push(endpoint+" p95 "+p95+"ms");
  }}finally{await ctx.close()}
 }catch(e){report.failures.push(String(e.message).slice(0,200))}
 finally{await browser.close();report.finishedAt=new Date().toISOString();report.status=report.failures.length?"failed":"passed";writeFileSync("test-results/performance/report.json",JSON.stringify(report,null,2));console.log(JSON.stringify({status:report.status,failures:report.failures}));if(report.failures.length)process.exitCode=1}

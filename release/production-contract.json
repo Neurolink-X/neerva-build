@@ -158,7 +158,12 @@
     "src/components/public-refresh.ts",
     "src/components/business-analytics.tsx",
     "src/app/admin/analytics/page.tsx",
-    "supabase/migrations/20261124123644_neerva_design_review_queue.sql"
+    "supabase/migrations/20261124123644_neerva_design_review_queue.sql",
+    "src/modules/supabase/public-server.ts",
+    "vercel.json",
+    "src/app/api/catalog/prices/route.ts",
+    "src/app/api/catalog/offers/route.ts",
+    "src/app/api/studio/config/route.ts"
   ],
   "protectedGitBlobs": {
     "src/app/api/orders/route.ts": "7f10d7ffc56e431ddcf87006b2bd782c160f10c6",
@@ -190,14 +195,19 @@
     "src/app/api/admin/dealers/route.ts": "cea7eddba4fe5655c5ba36019ece7e92203aa26a",
     "src/app/api/admin/users/route.ts": "7103b8ac1d22b15c37f1d6d5fb095974cfbf2bd9",
     "src/modules/marketplace/write-contract.ts": "91fbb77745d6fc925a631ddf2f4d503a905530e9",
-    "src/app/api/catalog/route.ts": "627591ae5ac6196207b323f00968a56c08670f48",
+    "src/app/api/catalog/route.ts": "b42d6684174718fb5181b30d01ba051d3aedd961",
     "src/app/api/admin/audit/route.ts": "c06d6a90ee1a071876a6f08bc66c3b089720b43c",
     "src/app/api/admin/account-recovery/route.ts": "8eca1325c8b1f075e4afbe165f9a7aae30f1749d",
     "src/app/api/admin/dealer-members/route.ts": "3610fc86c8edf76ec64a1ebdcb59e0514ef26e5f",
     "src/app/api/admin/system-incidents/route.ts": "757773fb9a46091610d40a1801ac3349ad9bb58c",
     "src/app/api/dealer/overview/route.ts": "27e60731cfd382ae6d17ab1d8fa144972b1822e4",
     "src/app/api/admin/design-reviews/route.ts": "45a2c01381cd6ad00eda33ea27b04f3ba09b3f78",
-    "src/app/api/admin/analytics/route.ts": "148644032f53c452a849df8246154403be22e5ed"
+    "src/app/api/admin/analytics/route.ts": "148644032f53c452a849df8246154403be22e5ed",
+    "src/modules/supabase/public-server.ts": "d56888cec29646965786223a42e12da40ba3f749",
+    "vercel.json": "f087ed1dbd78c6f0c266279888d883553335e496",
+    "src/app/api/catalog/prices/route.ts": "13e5222094ec561d1c447c8458c7aae2e83adebe",
+    "src/app/api/catalog/offers/route.ts": "cc0549bf8b99101a9bb89f54f60eb9ff2e3ccf74",
+    "src/app/api/studio/config/route.ts": "5891026a0e980a9bcce3118a17cebd45d72e593b"
   },
   "reviewedProtectedChanges20261124": [
     {

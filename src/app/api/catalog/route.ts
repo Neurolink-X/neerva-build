@@ -1,19 +1,19 @@
-import {createClient} from "@supabase/supabase-js";
+import {publicDatabase,timedPublicResponse} from "@/modules/supabase/public-server";
 import {NextResponse} from "next/server";
 import {catalogCategories} from "@/modules/catalog/catalog";
 /** Public RLS-only catalog: never use the service-role key or show draft SKUs as stock. */
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const headers={"Cache-Control":"no-cache, max-age=0, must-revalidate","X-Content-Type-Options":"nosniff"};
-export async function GET(){
- const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+async function readPublic(){
+ const db=publicDatabase();
  const referenceCategories=catalogCategories.map(({slug,title,titleHi,description,quoteOnly})=>({
   slug,title,titleHi,description,pricingMode:quoteOnly?"quotation":"published-price-required"
  }));
- if(!url||!key)return NextResponse.json({categories:referenceCategories,products:[],source:"reference_only",stockVerified:false,
+ if(!db)return NextResponse.json({categories:referenceCategories,products:[],source:"reference_only",stockVerified:false,
    note:"Catalog connection is not configured. Reference taxonomy only; no verified product listings or stock."},{headers});
  try{
-  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+
   const [categories,products]=await Promise.all([
    db.from("categories").select("id,slug,name_en,name_hi,pricing_mode").eq("status","published").order("name_en").limit(100),
    db.from("products").select("id,slug,name,description,attributes,category:categories(slug),brand:brands(name),variants:product_variants(id,sku,unit,attributes,status),media:catalog_product_media(id,storage_path,alt_text,published)").eq("status","published").limit(100)
@@ -35,3 +35,5 @@ export async function GET(){
    note:"Live catalog temporarily unavailable; only non-commercial reference categories are shown."},{headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
  }
 }
+
+export async function GET(){const start=performance.now();try{return timedPublicResponse(start,await readPublic())}catch{return timedPublicResponse(start,Response.json({error:"Public data temporarily unavailable",unavailable:true},{status:503}))}}

@@ -14,3 +14,6 @@ For manual execution after workflow is on the default branch: Actions > Neerva a
 
 ## Disposable CI authentication
 The `authenticated-local` job provisions Supabase on a fresh GitHub runner, applies repository migrations, creates three real verified Auth users and a dealer fixture using the local-only service key, runs the same browser/API suite, measures authenticated API timings, and destroys containers. Credentials are ephemeral, masked and never sent to production. Hosted staging remains a separate optional deployment-level test. Local timing does not establish hosted latency.
+
+## API locality and deployment quota
+Production Vercel was confirmed in iad1 and the Neerva database in ap-south-1. `vercel.json` pins the single Mumbai region (bom1) for the next deployment. Public routes reuse an anonymous server client, include Server-Timing and never cache stale prices, offers, Studio configuration or signed image links. Isolated backend tests assert authoritative response shape and the 600 ms budget; frontend-only candidate timings cannot establish hosted API speed. Production reports distinguish workflow commit from deployed code. Batch related changes into one atomic commit; avoid repeated deployments on every small edit. Vercel limits are external; do not bypass quota or upgrade without approval. Retest the actual deployed commit after release.

@@ -1,15 +1,15 @@
-import {createClient} from "@supabase/supabase-js";
+import {publicDatabase,timedPublicResponse} from "@/modules/supabase/public-server";
 import {baseStudioConfig,parseStudioConfig} from "@/modules/studio/studio-config";
 import {studioPaymentEnabled} from "@/modules/studio/paid-products";
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const names=["home_studio","colour_studio"] as const;
-export async function GET(){
- const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+async function readPublic(){
+ const db=publicDatabase();
  const fallback=names.map(name=>baseStudioConfig(name));
  const headers={"Cache-Control":"no-store, max-age=0","X-Content-Type-Options":"nosniff"};
- if(!url||!key)return Response.json({products:fallback,ready:false,unavailable:true},{headers});
+ if(!db)return Response.json({products:fallback,ready:false,unavailable:true},{headers});
  try{
-  const db=createClient(url,key,{auth:{autoRefreshToken:false,persistSession:false}});
+
   const {data,error}=await db.from("studio_feature_settings").select(
    "product_code,access_mode,price_paise,checkout_enabled,is_published,free_preview_count,version"
   ).eq("is_published",true);
@@ -22,3 +22,5 @@ export async function GET(){
   return Response.json({products,ready:true},{headers});
  }catch{return Response.json({products:fallback,ready:false,unavailable:true},{headers})}
 }
+
+export async function GET(){const start=performance.now();try{return timedPublicResponse(start,await readPublic())}catch{return timedPublicResponse(start,Response.json({error:"Public data temporarily unavailable",unavailable:true},{status:503}))}}
