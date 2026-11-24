@@ -279,21 +279,36 @@ async function main(){
     const reveal=page.getByRole("slider",{name:/construction-stage/});
     await reveal.focus();await reveal.press("End");assert.equal(await reveal.inputValue(),"100");
     await reveal.press("Home");assert.equal(await reveal.inputValue(),"0");
-    const dimensions=page.locator(".nbh-filter-row input[type=number]");
-    assert.equal(await dimensions.count(),2,"home must support arbitrary plot width and depth");
+    const preset=page.locator("#nbh-studio-preset");
+    assert.equal(await preset.count(),1,"home uses a single accessible plot-size picker");
+    assert.equal(await preset.inputValue(),"18x50","default selection matches the displayed plot and generated plan");
+    assert.equal(await page.locator(".nbh-studio-photo img").count(),1,"only one independent inspiration photo is shown in the planner");
+    await preset.selectOption("custom");
+    const dimensions=page.locator(".nbh-studio-custom-fields input[type=number]");
+    assert.equal(await dimensions.count(),2,"custom plotting accepts both frontage and depth");
+    await dimensions.nth(0).fill("9");
+    assert.equal(await page.locator(".nbh-studio-generate[href]").count(),0,"invalid dimensions must never open a fallback 18×50 plan");
     for(const [w,d] of [["18","50"],["20","45"]]){
       await dimensions.nth(0).fill(w);
       await dimensions.nth(1).fill(d);
-      const link=page.getByRole("link",{name:/Open detailed plot fit/});
-      assert.match((await link.getAttribute("href"))??"",new RegExp("width="+w+"&depth="+d),"plot dimensions need to persist into fit flow");
+      const link=page.locator(".nbh-studio-generate[href]");
+      const href=await link.getAttribute("href");
+      assert.ok(href?.includes("width="+w+"&depth="+d), "selected custom plot must reach the geometry generator");
+      assert.ok(href?.includes("floors=2&road=N"),"floor and road facing defaults are explicit");
       await link.click();
-      await page.waitForURL("**/design-studio/fit?**");
-      const next=page.getByRole("link",{name:/Explore floors, front elevation/});
-      await page.getByRole("img",{name:/Road on N side/}).waitFor();
-      await page.waitForFunction(([w,d])=>document.querySelector(".nfit-primary-next a")?.href.includes("width="+w+"&depth="+d),[w,d]);
-      assert.ok(await next.isVisible());
+      await page.waitForURL("**/design-studio/portfolio?**");
+      assert.ok(new URL(page.url()).searchParams.get("width")===w&&new URL(page.url()).searchParams.get("depth")===d,
+        "portfolio must inherit selected dimensions");
       await page.goto(base+"/",{waitUntil:"load"});
+      await page.locator("#nbh-studio-preset").selectOption("custom");
     }
+    await page.locator("#nbh-studio-preset").selectOption("30x40");
+    const roadOptions=page.locator(".nbh-studio-options");
+    await roadOptions.locator("summary").click();
+    await roadOptions.locator("#nbh-studio-floors").selectOption("3");
+    await roadOptions.locator("#nbh-studio-road").selectOption("W");
+    assert.match((await page.locator(".nbh-studio-generate[href]").getAttribute("href"))??"",/width=30&depth=40&floors=3&road=W/,
+      "preset, floors and road direction must use one consistent plan link");
 
    }
    await page.goto(base+"/",{waitUntil:"load"});
