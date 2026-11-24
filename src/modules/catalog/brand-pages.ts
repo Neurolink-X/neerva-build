@@ -1,6 +1,7 @@
 import {brandDirectory, getCategory, getProductsByCategory} from "./marketplace.ts";
 import {groupCatalogByPhoto} from "./media-usage.ts";
 import {categoryImage} from "./public-products.ts";
+import {paintReference} from "./paint-references.ts";
 import {localBrandAsset} from "./brand-media.ts";
 
 export function brandSlug(name:string) {
@@ -39,7 +40,8 @@ export function directoryCards(category:string){
   return brandDirectory.filter(b=>b.category===category).map(({name})=>{
     const products=getProductsByCategory(category).filter(p=>p.brand===name);
     const pictured=products.find(p=>p.referenceImage);
-    const range=rangeMedia[category+":"+name];
+    const paint=category==="paint"?products.map(p=>paintReference(p.slug)).find(p=>p?.image):undefined;
+    const range=rangeMedia[category+":"+name]??(paint?.image?{image:paint.image,alt:name+" manufacturer product photograph",source:paint.source}:undefined);
     const identity=brandIdentityEvidence[category+":"+name]??null;
     return {name,category,href:brandPath(category,name),count:products.length,familyCount:groupCatalogByPhoto(products).length,identity,
       image:pictured?.referenceImage??null,alt:pictured?.name??"",rangeImage:range?localBrandAsset(range.image):null,rangeAlt:range?.alt??"",rangeSource:range?.source??null,

@@ -1,3 +1,4 @@
+import {paintReferences,paintGroups} from "./paint-references.ts";
 import {tileReferences as expandedTileReferences} from "./tile-references.ts";
 import type {DemoProduct} from "./marketplace.ts";
 
@@ -236,3 +237,5 @@ for(const [slug,category,brand,name,application,manufacturerReference] of pipeRa
 }
 
 for(const t of expandedTileReferences){sourcedProducts.push({slug:t.slug,category:"tiles",brand:"Orientbell",name:"Orientbell "+t.name,verification:"reference",manufacturerReference:"https://www.orientbell.com/"+t.handle,description:"Manufacturer design reference. Confirm shade lot, local stock, carton coverage, installation suitability and delivery before ordering.",specifications:[{label:"Format",value:t.size},{label:"Material",value:t.material},{label:"Finish",value:t.finish},{label:"Design",value:t.design},{label:"Application",value:t.use},...(t.box?[{label:"Tiles per carton",value:String(t.box)}]:[]),...(t.coverage?[{label:"Carton coverage",value:t.coverage+" m²"}]:[])]});}
+
+for(const p of paintReferences){sourcedProducts.push({slug:p.slug,category:"paint",brand:p.brand!,name:p.brand+" "+p.name,verification:"reference",manufacturerReference:p.source,description:"Manufacturer range reference. Confirm shade, compatible substrate, pack size and current data sheet. Waterproofing needs diagnosis and the complete specified system.",specifications:[{label:"Application",value:paintGroups[p.group]},{label:"Finish / system",value:p.finish},{label:"Range",value:p.tier},{label:"Pack / coverage",value:"Confirm exact product data sheet and pack"},{label:"Before ordering",value:"Check surface condition, preparation, compatibility and dealer delivery terms"}]});}

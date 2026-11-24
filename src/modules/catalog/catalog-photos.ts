@@ -1,5 +1,6 @@
 import type {DemoProduct} from "./marketplace.ts";
 import {aggregateReference,aggregatePhotoSources} from "./aggregate-references.ts";
+import {paintReference} from "./paint-references.ts";
 import {tileReferenceMedia} from "./tile-references.ts";
 import {categoryImage} from "./public-products.ts";
 
@@ -47,6 +48,11 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   if(ref){const photo=aggregatePhotoSources[ref.group];append(photo.src,"Representative material photo · not exact SKU","editorial",photo.alt);}
   append(categoryImage("aggregates"),"Material samples · illustrative comparison","category","Illustrative samples of construction sand and stone aggregate");
   return entries;
+ }
+ if(product.category==="paint"){
+  const paint=paintReference(product.slug);
+  if(paint?.image)append(paint.image,"Manufacturer product photograph","manufacturer",product.name+" manufacturer pack reference");
+  return entries; // Never show another paint brand's packaging for missing assets.
  }
  if(product.category==="tiles"){
   const tile=tileReferenceMedia(product.slug);

@@ -1,4 +1,5 @@
 "use client";
+import {paintReferencePrice} from "@/modules/catalog/paint-references";
 import {tileReferencePrice} from "@/modules/catalog/tile-references";
 import {planningRate} from "@/modules/catalog/planning-rate";
 import {useSyncExternalStore} from "react";
@@ -35,6 +36,8 @@ const format=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maxi
 export function ProductPrice({category,slug,sku,quoteOnly}:{sku?:string;category:string;slug:string;quoteOnly?:boolean}){
  const rate=useSyncExternalStore(subscribe,()=>currentRate(category,slug,sku),noRate);
  const budget=quoteOnly?null:planningRate(category,slug);
+ const paint=category==="paint"&&!quoteOnly?paintReferencePrice(slug):null;
+ if(!rate&&paint)return <span><strong>₹{paint.rupees} / L</strong><br/>Manufacturer reference MRP, tax included, largest pack basis · {paint.checked}. Smaller packs and shade may differ. <a href={paint.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  const tile=category==="tiles"&&!quoteOnly?tileReferencePrice(slug):null;
  if(!rate&&tile)return <span><strong>₹{tile.rupees} / sq ft</strong><br/>Manufacturer MRP (tax included) · Reference checked {tile.checked}; dealer rate may differ. <a href={tile.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  if(!rate&&budget)return <span><strong>{budget}</strong><br/>Kanpur planning estimate · {category==="bricks-blocks"?"Aug":"Oct"} 2026 · Get a delivered quote</span>;
