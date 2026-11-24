@@ -280,5 +280,25 @@ export const approvedMedia:readonly ApprovedMedia[]=[
     "sha256": "b13185127f5c233b4d08cf3604605177b35aa0586d85997db75489f702c7faa0",
     "path": "/images/catalog/approved/b13185127f5c233b4d08cf36.webp",
     "sortOrder": 0
+  },
+  {
+    "category": "aggregates",
+    "family": "river-sand-bulk",
+    "scope": "family",
+    "sourceType": "curated",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_close-up_of_river_sand.JPG",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "credit": "Thamizhpparithi Maari",
+    "verified": true,
+    "primary": true,
+    "alt": "Close-up of natural river sand; local supplier, exact grading and source not verified",
+    "view": "close-up",
+    "width": 1000,
+    "height": 750,
+    "bytes": 315866,
+    "sha256": "a979f7287e70ae70cffecae64922144ff8f52ba7cdcb381edaeac400ee087131",
+    "path": "/images/catalog/approved/a979f7287e70ae70cffecae6.webp",
+    "sortOrder": 0
   }
 ];

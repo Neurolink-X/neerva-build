@@ -67,7 +67,7 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
         </label>
       </div>
       <p className="option-confirmation-note">Options describe your requirement; the dealer will confirm whether this brand supplies that exact variant, its current stock and the final rate.</p>
-      <button type="button" className="button button-dark" onClick={addToOrderCart}>Add to order cart</button> <Link href="/checkout?cart=1" className="button button-outline">View order cart →</Link><button type="button" className="button button-orange product-add-button" onClick={saveMaterial}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
+      <Link className="button button-dark" href={"/checkout?"+new URLSearchParams({category:product.category,product:product.slug,qty:String(quantity),unit})}>Place order with selected quantity →</Link> <button type="button" className="button button-dark" onClick={addToOrderCart}>Add to order cart</button> <Link href="/checkout?cart=1" className="button button-outline">View order cart →</Link><button type="button" className="button button-orange product-add-button" onClick={saveMaterial}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
     </div>
   );
 }
