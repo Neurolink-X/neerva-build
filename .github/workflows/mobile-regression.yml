@@ -34,6 +34,7 @@ jobs:
       - name: Install Chromium
         run: '"$RUNNER_TEMP/neerva-browser/node_modules/.bin/playwright" install --with-deps chromium'
       - run: npm run release:verify
+      - run: npm run test:contracts
       - run: npm run build
       - name: Start isolated local preview, test 360–1440px
         shell: bash
