@@ -1,12 +1,12 @@
 {
-  "basis": "3fa0f1f0dc82dff6d2c655922e688443023fbd00",
-  "scope": "Static source-level audit, using actual data construction and media selection logic adapted from TS to JS. No browser network checks or merchant verification.",
+  "basis": "b3fb117f753cb20214f4e25c1d0d1efc3facfeda",
+  "scope": "Static source-level audit, using actual data construction and media selection logic adapted from TS to JS. All 56 hardware reference identities cross-checked. No browser network checks or merchant verification.",
   "totals": {
-    "products": 372,
-    "families": 234,
-    "noPhoto": 151,
-    "brandEntries": 39,
-    "missingBrandEntries": 22
+    "products": 376,
+    "families": 264,
+    "noPhoto": 181,
+    "brandEntries": 51,
+    "missingBrandEntries": 31
   },
   "byCategory": {
     "cement": {
@@ -28,13 +28,13 @@
       "noProductSource": 16
     },
     "hardware": {
-      "families": 34,
-      "variants": 60,
-      "noPhoto": 28,
+      "families": 64,
+      "variants": 64,
+      "noPhoto": 58,
       "remote": 0,
       "threeReviewed": 0,
       "incompleteDetails": 0,
-      "noProductSource": 27
+      "noProductSource": 28
     },
     "plumbing": {
       "families": 101,
@@ -138,11 +138,6 @@
       "note": "Product specifications available"
     },
     {
-      "name": "JSW",
-      "category": "hardware",
-      "note": "Product specifications available"
-    },
-    {
       "name": "Kohinoor",
       "category": "plumbing",
       "note": "Product specifications available"
@@ -198,7 +193,57 @@
       "note": "Product specifications available"
     },
     {
-      "name": "Local supplier",
+      "name": "Roff",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Birla White",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "DOWSIL",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Pidilite",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Liftor",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Godrej",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Europa",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Freemans",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Haks",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Jon Bhandari",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Taparia",
       "category": "hardware",
       "note": "Product specifications available"
     }
@@ -1558,11 +1603,460 @@
     },
     {
       "category": "hardware",
+      "slug": "roff-t01-nca",
+      "name": "Roff T01 NCA grey tile adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t01-nca"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-303-grey",
+      "name": "MYK Laticrete 303 grey tile adhesive",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-303-grey"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-335-white",
+      "name": "MYK Laticrete 335 Super Flex white tile & stone adhesive",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-335-white"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "birla-tx1-white",
+      "name": "Birla White TX1 white tile adhesive",
+      "brand": "Birla White",
+      "variants": [
+        "birla-tx1-white"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t02-nsa",
+      "name": "Roff T02 NSA grey tile adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t02-nsa"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t09-nsa",
+      "name": "Roff T09 NSA white tile adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t09-nsa"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "smartcare-tile-adhesive",
+      "name": "Asian Paints SmartCare grey tile adhesive",
+      "brand": "Asian Paints",
+      "variants": [
+        "smartcare-tile-adhesive"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t03-vfa",
+      "name": "Roff T03 VFA grey tile adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t03-vfa"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-315-plus",
+      "name": "MYK Laticrete 315 Plus tile adhesive",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-315-plus"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "birla-tx2-white",
+      "name": "Birla White TX2 white tile adhesive",
+      "brand": "Birla White",
+      "variants": [
+        "birla-tx2-white"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t20-ultra",
+      "name": "Roff T20 Extrofix Ultra white adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t20-ultra"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t04-vfa",
+      "name": "Roff T04 VFA white adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t04-vfa"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-sp100-grout",
+      "name": "MYK Laticrete SP-100 epoxy grout system",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-sp100-grout"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t34-grout",
+      "name": "Roff T34 Starlike epoxy grout",
+      "brand": "Roff",
+      "variants": [
+        "roff-t34-grout"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-tile-spacers",
+      "name": "Roff Tile spacers",
+      "brand": "Roff",
+      "variants": [
+        "roff-tile-spacers"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "dowsil-789",
+      "name": "DOWSIL 789 silicone weatherproofing sealant",
+      "brand": "DOWSIL",
+      "variants": [
+        "dowsil-789"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "fevikwik-203",
+      "name": "Pidilite Fevikwik 203 instant adhesive",
+      "brand": "Pidilite",
+      "variants": [
+        "fevikwik-203"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "ebco-dv1",
+      "name": "Ebco DV1 door viewer",
+      "brand": "Ebco",
+      "variants": [
+        "ebco-dv1"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "liftor-magnetic-stopper",
+      "name": "Liftor Magnetic door stopper / catcher",
+      "brand": "Liftor",
+      "variants": [
+        "liftor-magnetic-stopper"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "godrej-cylindrical-keyless",
+      "name": "Godrej Stainless steel cylindrical lock",
+      "brand": "Godrej",
+      "variants": [
+        "godrej-cylindrical-keyless"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "europa-drawer-lock",
+      "name": "Europa Cupboard / drawer lock",
+      "brand": "Europa",
+      "variants": [
+        "europa-drawer-lock"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "ebco-drawer-slide",
+      "name": "Ebco Telescopic drawer slide",
+      "brand": "Ebco",
+      "variants": [
+        "ebco-drawer-slide"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "freemans-5m-tape",
+      "name": "Freemans 5 m measuring tape",
+      "brand": "Freemans",
+      "variants": [
+        "freemans-5m-tape"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "haks-plaster-trowel",
+      "name": "Haks Plaster trowel / gurmala",
+      "brand": "Haks",
+      "variants": [
+        "haks-plaster-trowel"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "jon-soft-mallet",
+      "name": "Jon Bhandari Two-way soft-face mallet",
+      "brand": "Jon Bhandari",
+      "variants": [
+        "jon-soft-mallet"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "taparia-long-nose",
+      "name": "Taparia Econ-series long nose plier",
+      "brand": "Taparia",
+      "variants": [
+        "taparia-long-nose"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "taparia-side-cutter",
+      "name": "Taparia Side cutting plier",
+      "brand": "Taparia",
+      "variants": [
+        "taparia-side-cutter"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "taparia-two-in-one",
+      "name": "Taparia Two-in-one screwdriver",
+      "brand": "Taparia",
+      "variants": [
+        "taparia-two-in-one"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "taparia-pipe-wrench",
+      "name": "Taparia Pipe wrench",
+      "brand": "Taparia",
+      "variants": [
+        "taparia-pipe-wrench"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "supreme-floor-protection",
+      "name": "Supreme Duraprotector-XF floor protection sheet",
+      "brand": "Supreme",
+      "variants": [
+        "supreme-floor-protection"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
       "slug": "tile-leveling-system",
-      "name": "Local supplier Tile leveling clips and reusable wedges",
+      "name": "Tile leveling clips and reusable wedges",
       "brand": "Local supplier",
       "variants": [
-        "tile-leveling-system",
         "tile-leveling-system"
       ],
       "photoCount": 0,
@@ -1576,10 +2070,9 @@
     {
       "category": "hardware",
       "slug": "notched-trowel",
-      "name": "Local supplier Notched tile adhesive trowel",
+      "name": "Notched tile adhesive trowel",
       "brand": "Local supplier",
       "variants": [
-        "notched-trowel",
         "notched-trowel"
       ],
       "photoCount": 0,
@@ -1593,10 +2086,9 @@
     {
       "category": "hardware",
       "slug": "rubber-grout-float",
-      "name": "Local supplier Rubber grout float",
+      "name": "Rubber grout float",
       "brand": "Local supplier",
       "variants": [
-        "rubber-grout-float",
         "rubber-grout-float"
       ],
       "photoCount": 0,
@@ -1610,10 +2102,9 @@
     {
       "category": "hardware",
       "slug": "tile-grout-sponge",
-      "name": "Local supplier Tile cleaning sponge",
+      "name": "Tile cleaning sponge",
       "brand": "Local supplier",
       "variants": [
-        "tile-grout-sponge",
         "tile-grout-sponge"
       ],
       "photoCount": 0,
@@ -1627,10 +2118,9 @@
     {
       "category": "hardware",
       "slug": "wood-adhesive",
-      "name": "Local supplier Woodworking PVA adhesive",
+      "name": "Woodworking PVA adhesive",
       "brand": "Local supplier",
       "variants": [
-        "wood-adhesive",
         "wood-adhesive"
       ],
       "photoCount": 0,
@@ -1644,10 +2134,9 @@
     {
       "category": "hardware",
       "slug": "acrylic-gap-sealant",
-      "name": "Local supplier Paintable acrylic gap sealant",
+      "name": "Paintable acrylic gap sealant",
       "brand": "Local supplier",
       "variants": [
-        "acrylic-gap-sealant",
         "acrylic-gap-sealant"
       ],
       "photoCount": 0,
@@ -1661,10 +2150,9 @@
     {
       "category": "hardware",
       "slug": "pu-joint-sealant",
-      "name": "Local supplier Polyurethane construction joint sealant",
+      "name": "Polyurethane construction joint sealant",
       "brand": "Local supplier",
       "variants": [
-        "pu-joint-sealant",
         "pu-joint-sealant"
       ],
       "photoCount": 0,
@@ -1678,10 +2166,9 @@
     {
       "category": "hardware",
       "slug": "sealant-gun",
-      "name": "Local supplier Manual cartridge sealant gun",
+      "name": "Manual cartridge sealant gun",
       "brand": "Local supplier",
       "variants": [
-        "sealant-gun",
         "sealant-gun"
       ],
       "photoCount": 0,
@@ -1695,26 +2182,25 @@
     {
       "category": "hardware",
       "slug": "ss-butt-hinge-3in",
-      "name": "Local supplier Stainless steel butt hinge",
+      "name": "Stainless steel butt hinge",
       "brand": "Local supplier",
       "variants": [
-        "ss-butt-hinge-3in",
         "ss-butt-hinge-3in"
       ],
       "photoCount": 0,
       "photos": [],
       "flags": [
         "no-photo",
-        "fewer-than-three-new-reviewed-views"
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
       ]
     },
     {
       "category": "hardware",
       "slug": "door-pull-handle",
-      "name": "Local supplier Door pull handle",
+      "name": "Door pull handle",
       "brand": "Local supplier",
       "variants": [
-        "door-pull-handle",
         "door-pull-handle"
       ],
       "photoCount": 0,
@@ -1728,10 +2214,9 @@
     {
       "category": "hardware",
       "slug": "door-al-drop",
-      "name": "Local supplier Door aldrope latch",
+      "name": "Door aldrope latch",
       "brand": "Local supplier",
       "variants": [
-        "door-al-drop",
         "door-al-drop"
       ],
       "photoCount": 0,
@@ -1745,10 +2230,9 @@
     {
       "category": "hardware",
       "slug": "door-closer",
-      "name": "Local supplier Hydraulic door closer",
+      "name": "Hydraulic door closer",
       "brand": "Local supplier",
       "variants": [
-        "door-closer",
         "door-closer"
       ],
       "photoCount": 0,
@@ -1762,10 +2246,9 @@
     {
       "category": "hardware",
       "slug": "door-floor-spring",
-      "name": "Local supplier Floor spring door closer",
+      "name": "Floor spring door closer",
       "brand": "Local supplier",
       "variants": [
-        "door-floor-spring",
         "door-floor-spring"
       ],
       "photoCount": 0,
@@ -1779,10 +2262,9 @@
     {
       "category": "hardware",
       "slug": "door-mortise-lock",
-      "name": "Local supplier Mortise lock and lever handle set",
+      "name": "Mortise lock and lever handle set",
       "brand": "Local supplier",
       "variants": [
-        "door-mortise-lock",
         "door-mortise-lock"
       ],
       "photoCount": 0,
@@ -1796,10 +2278,9 @@
     {
       "category": "hardware",
       "slug": "cabinet-pull-handle",
-      "name": "Local supplier Cabinet pull handle",
+      "name": "Cabinet pull handle",
       "brand": "Local supplier",
       "variants": [
-        "cabinet-pull-handle",
         "cabinet-pull-handle"
       ],
       "photoCount": 0,
@@ -1813,10 +2294,9 @@
     {
       "category": "hardware",
       "slug": "cabinet-knob",
-      "name": "Local supplier Cabinet knob",
+      "name": "Cabinet knob",
       "brand": "Local supplier",
       "variants": [
-        "cabinet-knob",
         "cabinet-knob"
       ],
       "photoCount": 0,
@@ -1830,10 +2310,9 @@
     {
       "category": "hardware",
       "slug": "cabinet-magnetic-catch",
-      "name": "Local supplier Magnetic cabinet catch",
+      "name": "Magnetic cabinet catch",
       "brand": "Local supplier",
       "variants": [
-        "cabinet-magnetic-catch",
         "cabinet-magnetic-catch"
       ],
       "photoCount": 0,
@@ -1847,10 +2326,9 @@
     {
       "category": "hardware",
       "slug": "wardrobe-rod-support",
-      "name": "Local supplier Wardrobe rod and supports",
+      "name": "Wardrobe rod and supports",
       "brand": "Local supplier",
       "variants": [
-        "wardrobe-rod-support",
         "wardrobe-rod-support"
       ],
       "photoCount": 0,
@@ -1864,10 +2342,9 @@
     {
       "category": "hardware",
       "slug": "window-friction-stay",
-      "name": "Local supplier Window friction stay hinge",
+      "name": "Window friction stay hinge",
       "brand": "Local supplier",
       "variants": [
-        "window-friction-stay",
         "window-friction-stay"
       ],
       "photoCount": 0,
@@ -1881,10 +2358,9 @@
     {
       "category": "hardware",
       "slug": "window-latch",
-      "name": "Local supplier Window sash latch",
+      "name": "Window sash latch",
       "brand": "Local supplier",
       "variants": [
-        "window-latch",
         "window-latch"
       ],
       "photoCount": 0,
@@ -1898,10 +2374,9 @@
     {
       "category": "hardware",
       "slug": "sliding-window-roller",
-      "name": "Local supplier Sliding window roller",
+      "name": "Sliding window roller",
       "brand": "Local supplier",
       "variants": [
-        "sliding-window-roller",
         "sliding-window-roller"
       ],
       "photoCount": 0,
@@ -1915,10 +2390,9 @@
     {
       "category": "hardware",
       "slug": "window-weather-strip",
-      "name": "Local supplier Window weather strip",
+      "name": "Window weather strip",
       "brand": "Local supplier",
       "variants": [
-        "window-weather-strip",
         "window-weather-strip"
       ],
       "photoCount": 0,
@@ -1932,10 +2406,9 @@
     {
       "category": "hardware",
       "slug": "spirit-level",
-      "name": "Local supplier Spirit level",
+      "name": "Spirit level",
       "brand": "Local supplier",
       "variants": [
-        "spirit-level",
         "spirit-level"
       ],
       "photoCount": 0,
@@ -1949,10 +2422,9 @@
     {
       "category": "hardware",
       "slug": "fiberglass-mesh",
-      "name": "Local supplier Alkali-resistant plaster reinforcement mesh",
+      "name": "Alkali-resistant plaster reinforcement mesh",
       "brand": "Local supplier",
       "variants": [
-        "fiberglass-mesh",
         "fiberglass-mesh"
       ],
       "photoCount": 0,
@@ -1966,10 +2438,9 @@
     {
       "category": "hardware",
       "slug": "corner-bead",
-      "name": "Local supplier Plaster corner bead",
+      "name": "Plaster corner bead",
       "brand": "Local supplier",
       "variants": [
-        "corner-bead",
         "corner-bead"
       ],
       "photoCount": 0,
@@ -1983,10 +2454,9 @@
     {
       "category": "hardware",
       "slug": "masking-tape",
-      "name": "Local supplier Painter masking tape",
+      "name": "Painter masking tape",
       "brand": "Local supplier",
       "variants": [
-        "masking-tape",
         "masking-tape"
       ],
       "photoCount": 0,
