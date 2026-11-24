@@ -1,6 +1,7 @@
 import {publicDatabase,timedPublicResponse} from "@/modules/supabase/public-server";
 import {hasRealActiveDiscount} from "@/modules/catalog/offer-eligibility";
 export const dynamic="force-dynamic";
+export const preferredRegion="bom1";
 export const runtime="nodejs";
 type Price={id:string;amount_paise:number;unit:string;city:string;minimum_quantity:number;pincode_prefix:string|null;valid_from:string;valid_to:string|null;status:string;visibility:string;
  variant:{sku:string;status:string;product:{slug:string;status:string;category:{slug:string;status:string}}}|null};
@@ -9,7 +10,6 @@ async function readPublic(){
  const db=publicDatabase();
  if(!db)return Response.json({offers:[],source:"reference_only"},{headers:{"Cache-Control":"public, max-age=30"}});
  try{
-
   const now=new Date().toISOString();
   const {data,error}=await db.from("catalog_campaigns").select(
    "id,title,terms,base_amount_paise,offer_amount_paise,starts_at,ends_at,price:pricing_rules!inner(id,amount_paise,unit,city,minimum_quantity,pincode_prefix,valid_from,valid_to,status,visibility,variant:product_variants!inner(sku,status,product:products!inner(slug,status,category:categories!inner(slug,status))))"
@@ -34,7 +34,7 @@ async function readPublic(){
     endsAt:row.ends_at});
   }
   return Response.json({offers,source:"published_database"},{headers:{"Cache-Control":"public, max-age=30"}});
- }catch{return Response.json({offers:[]},{headers:{"Cache-Control":"public, max-age=30"}});}
+ }catch{return Response.json({offers:[],unavailable:true},{status:503});}
 }
 
 export async function GET(){const start=performance.now();try{return timedPublicResponse(start,await readPublic())}catch{return timedPublicResponse(start,Response.json({error:"Public data temporarily unavailable",unavailable:true},{status:503}))}}

@@ -1,12 +1,11 @@
 import {publicDatabase,timedPublicResponse} from "@/modules/supabase/public-server";
 export const dynamic="force-dynamic";
+export const preferredRegion="bom1";
 
 async function readPublic(){
  const db=publicDatabase();
  const prices=[];
  if(!db)return Response.json({prices:[],source:"reference_only"});
- {
-
   const now=new Date().toISOString();
   const {data,error}=await db.from("pricing_rules").select("amount_paise,unit,city,pincode_prefix,minimum_quantity,valid_to,variant:product_variants!inner(sku,status,unit,product:products!inner(slug,status,category:categories!inner(slug,status)))")
    .eq("visibility","public").eq("status","published").eq("currency","INR").eq("variant.status","published").eq("variant.product.status","published").eq("variant.product.category.status","published")
@@ -19,7 +18,6 @@ async function readPublic(){
    if(!c||!p||!v||v.unit!==row.unit||c.slug==="aggregates")continue;
    prices.push({slug:p.slug,category:c.slug,sku:v.sku,unit:row.unit,paise:row.amount_paise,city:row.city,prefix:row.pincode_prefix,min:row.minimum_quantity,until:row.valid_to});
   }
- }
  return Response.json({prices,source:"published_database"},{headers:{"Cache-Control":"no-cache, max-age=0, must-revalidate"}});
 }
 

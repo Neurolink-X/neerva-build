@@ -4,6 +4,7 @@ import {catalogCategories} from "@/modules/catalog/catalog";
 /** Public RLS-only catalog: never use the service-role key or show draft SKUs as stock. */
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
+export const preferredRegion="bom1";
 const headers={"Cache-Control":"no-cache, max-age=0, must-revalidate","X-Content-Type-Options":"nosniff"};
 async function readPublic(){
  const db=publicDatabase();
@@ -13,7 +14,6 @@ async function readPublic(){
  if(!db)return NextResponse.json({categories:referenceCategories,products:[],source:"reference_only",stockVerified:false,
    note:"Catalog connection is not configured. Reference taxonomy only; no verified product listings or stock."},{headers});
  try{
-
   const [categories,products]=await Promise.all([
    db.from("categories").select("id,slug,name_en,name_hi,pricing_mode").eq("status","published").order("name_en").limit(100),
    db.from("products").select("id,slug,name,description,attributes,category:categories(slug),brand:brands(name),variants:product_variants(id,sku,unit,attributes,status),media:catalog_product_media(id,storage_path,alt_text,published)").eq("status","published").limit(100)

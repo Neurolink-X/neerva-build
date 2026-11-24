@@ -2,6 +2,7 @@ import {publicDatabase,timedPublicResponse} from "@/modules/supabase/public-serv
 import {baseStudioConfig,parseStudioConfig} from "@/modules/studio/studio-config";
 import {studioPaymentEnabled} from "@/modules/studio/paid-products";
 export const runtime="nodejs";export const dynamic="force-dynamic";
+export const preferredRegion="bom1";
 const names=["home_studio","colour_studio"] as const;
 async function readPublic(){
  const db=publicDatabase();
@@ -9,7 +10,6 @@ async function readPublic(){
  const headers={"Cache-Control":"no-store, max-age=0","X-Content-Type-Options":"nosniff"};
  if(!db)return Response.json({products:fallback,ready:false,unavailable:true},{headers});
  try{
-
   const {data,error}=await db.from("studio_feature_settings").select(
    "product_code,access_mode,price_paise,checkout_enabled,is_published,free_preview_count,version"
   ).eq("is_published",true);
