@@ -5,7 +5,7 @@ import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {studioProducts,studioPayee,studioUpiUrl,type StudioProduct} from "@/modules/studio/paid-products";
 type Order={id:string;status:string;created_at:string};
-type Status={product:StudioProduct;enabled:boolean;paid:boolean;orders:Order[];pricePaise:number};
+type Status={product:StudioProduct;enabled:boolean;paid:boolean;orders:Order[];claimedOrderIds:string[];pricePaise:number};
 export function StudioCheckout({product}:{product:StudioProduct}){
  const [token,setToken]=useState(""),[status,setStatus]=useState<Status|null>(null);
  const [orderId,setOrderId]=useState(""),[utr,setUtr]=useState(""),[paidAt,setPaidAt]=useState("");
@@ -17,7 +17,7 @@ export function StudioCheckout({product}:{product:StudioProduct}){
   const body=await res.json() as Status;
   setStatus(body);const requested=body.orders.find(v=>v.status==="requested");
   setOrderId(requested?.id??"");
-  setMessage(body.paid?"Your paid studio access has been confirmed.":requested?"Payment order created. Awaiting verified bank confirmation.":"Free preview is ready.");
+  setMessage(body.paid?"Your paid studio access has been confirmed.":requested&&body.claimedOrderIds?.includes(requested.id)?"Payment reference received; waiting for independent bank verification.":requested?"Payment order is ready. Confirm payment details before proceeding.":"Free preview is ready.");
  }
  useEffect(()=>{
   let canceled=false;const client=createNeervaBrowserClient();
@@ -41,7 +41,8 @@ export function StudioCheckout({product}:{product:StudioProduct}){
  }
  async function claim(e:React.FormEvent<HTMLFormElement>){
   e.preventDefault();if(!token||!orderId||busy)return;
-  const at=new Date(paidAt).toISOString();
+  const date=new Date(paidAt);if(!Number.isFinite(date.getTime())){setMessage("Enter a valid payment date and time.");return;}
+  const at=date.toISOString();
   setBusy(true);
   try{
    const r=await fetch("/api/studio/payments/claim",{method:"POST",
@@ -70,11 +71,11 @@ export function StudioCheckout({product}:{product:StudioProduct}){
      <p>Receiver: <strong>{studioPayee.name}</strong> · UPI ID: <code>{studioPayee.id}</code></p>
      <a className="studio-upgrade-btn" href={studioUpiUrl(product,orderId)}>Open any UPI app · ₹149</a>
      <p className="studio-upgrade-warning">Check the receiver name and ₹149 amount in your UPI app. The UPI intent fills service and amount; final confirmation remains inside the payment app. Do not pay twice for the same order. A UTR is not automatic payment verification.</p>
-     <form onSubmit={claim}>
+     {!(status.claimedOrderIds??[]).includes(orderId)&&<form onSubmit={claim}>
       <label>UPI transaction reference (UTR)<input required value={utr} onChange={e=>setUtr(e.target.value)} minLength={10} maxLength={35} placeholder="Reference from your bank/UPI app" autoComplete="off"/></label>
       <label>Actual payment date and time<input type="datetime-local" required value={paidAt} onChange={e=>setPaidAt(e.target.value)}/></label>
       <button type="submit" disabled={busy}>Submit payment reference for review</button>
-     </form>
+     </form>}
     </>}
    </>}
    <p className="studio-upgrade-legal">This is a digital planning aid, not a certified architectural plan or physically colour-matched paint sample. <Link href="/returns">Payment, cancellation & refund policy</Link> · <Link href="/privacy">Privacy</Link></p>
