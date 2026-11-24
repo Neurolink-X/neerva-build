@@ -93,3 +93,19 @@ test("pipe expansion has distinct families, valid routes and source-linked manuf
  }
  for(const slug of ["astral-wireguard","supreme-cableshield","supreme-cableguard"]){const p=getProduct("electrical",slug);assert.ok(p?.manufacturerReference);assert.equal(p.referenceImage,undefined);}
 });
+
+test("priority brand marks retain attribution and range photographs are never exact SKU evidence",async()=>{
+ const {brandMediaFor}=await import("./brand-media.ts");
+ const {directoryCards}=await import("./brand-pages.ts");
+ for(const name of ["Astral","Supreme","Ashirvad","Finolex","Polycab","KEI","Anchor Panasonic","Kajaria","Hettich","MYK Laticrete","Ambuja","Dalmia","Shree Cement"]){
+  const media=brandMediaFor(name);assert.ok(media,name);
+  assert.ok(media.logo.startsWith("https://")||media.logo.startsWith("/images/"));
+  assert.match(media.logoSource,/^https:\/\//);assert.ok(media.logoAttribution);
+ }
+ for(const category of ["plumbing","electrical"]){
+  for(const card of directoryCards(category)){
+   assert.ok(card.familyCount<=card.count);
+   if(card.rangeImage){assert.match(card.rangeImage,/^https:\/\//);assert.ok(card.rangeAlt&&card.rangeSource);}
+  }
+ }
+});
