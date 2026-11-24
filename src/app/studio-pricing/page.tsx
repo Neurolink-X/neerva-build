@@ -8,7 +8,7 @@ export const metadata:Metadata={
  title:"Home Studio & Colour Studio Pricing — Admin-Controlled One-Time Pricing | NEERVA BUILD",
  description:"Compare free room-plan and colour previews with optional priced downloadable studio reports. UPI checkout requires account login and verified bank settlement; no automatic renewals.",
  alternates:{canonical:"/studio-pricing"},
- openGraph:{title:"Free Home Design Samples + ₹149 Studio Reports",description:"Try plot plans and wall colours free, upgrade only for detailed personal reports.",url:"/studio-pricing"}
+ openGraph:{title:"Free Home Design Samples + Admin-Priced Studio Reports",description:"Try plot plans and wall colours free, upgrade only for detailed personal reports.",url:"/studio-pricing"}
 };
 export default function StudioPricingPage(){
  return <main className="catalog-page"><SiteHeader/>
