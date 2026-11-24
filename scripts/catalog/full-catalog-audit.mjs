@@ -14,7 +14,7 @@ const brands=brandDirectory.map(b=>{const m=brandMediaFor(b.name==="JSW"?"JSW Ne
 // Distinguish an actual product source from a generic photo citation or a retailer category page.
 for(const row of products){
  const p=demoProducts.find(x=>x.category===row.category&&x.slug===row.slug);
- const generic=/^(?:local\b|brand to confirm$|dealer-listed brand$)/i.test(row.brand)||row.brand.includes(" / ");
+ const generic=/^(?:local\b|brand to confirm$|mill to confirm$|dealer-listed brand$)/i.test(row.brand)||row.brand.includes(" / ");
  const source=p?.manufacturerReference||p?.referenceSource||null;
  row.sourceClassification=source?(p.manufacturerReference?"manufacturer-reference":"retailer-or-technical-reference"):generic?"supplier-specification-required":"branded-product-source-required";
  row.sourceUrl=source;

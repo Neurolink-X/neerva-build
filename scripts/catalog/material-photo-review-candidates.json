@@ -235,5 +235,15 @@
     "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
     "target": "plumbing:fitting-impeller",
     "note": "Multiple impeller types; review suitability for representative pump spare only, not exact model."
+  },
+  {
+    "key": "polycab-current-mark",
+    "filename": "Polycab India logo.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Polycab_India_logo.png",
+    "credit": "Polycab India",
+    "license": "PD-textlogo; trademark restrictions apply",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-textlogo",
+    "target": "electrical:Polycab",
+    "note": "Review current brand identity and original source before publication; not a product photo."
   }
 ]
