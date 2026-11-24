@@ -34,3 +34,20 @@ test("sourced references use readable local media and keep stock separate",async
  }
  assert.ok(demoProducts.filter(p=>p.category==="cement"&&p.referenceSource).length>=8);
 });
+
+test("sourced brands open their catalog and unlisted brands prefill a quote",async()=>{
+ const {brandDirectory,brandDestination}=await import("./marketplace.ts");
+ for(const p of demoProducts.filter(p=>p.referenceImage)){
+  assert.ok(brandDirectory.some(entry=>entry.name===p.brand && entry.category===p.category),p.name);
+  const url=new URL(brandDestination(p.brand,p.category),"https://example.test");
+  assert.equal(url.pathname,"/materials");
+  assert.equal(url.searchParams.get("brand"),p.brand);
+  assert.equal(url.searchParams.get("category"),p.category);
+ }
+ const request=new URL(brandDestination("Ambuja","cement"),"https://example.test");
+ assert.equal(request.pathname,"/quotes");
+ assert.equal(request.searchParams.get("material"),"Ambuja cement");
+ const pipes=demoProducts.filter(p=>p.familyKey==="ashirvad-flowguard-sdr11");
+ assert.equal(pipes.length,4);
+ assert.equal(new Set(pipes.map(p=>p.specifications.find(s=>s.label==="Nominal size")?.value)).size,4);
+});

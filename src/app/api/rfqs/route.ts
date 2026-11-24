@@ -9,7 +9,7 @@ export const dynamic="force-dynamic";
 const MAX_BODY_BYTES=8192;
 const headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 
-export const rfqFieldHelp:Record<string,string>={
+const rfqFieldHelp:Record<string,string>={
  categorySlug:"Choose a valid material category.",
  materialDescription:"Enter product details, size or grade (3–240 characters).",
  quantity:"Enter a positive quantity in a supported unit.",

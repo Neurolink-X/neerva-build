@@ -154,3 +154,4 @@
 .nb-campaign-list article p{font-size:13px;margin:2px 0}.nb-campaign-list article small{color:#61715f}
 .nb-campaign-list article button{justify-self:start}
 @media(max-width:640px){.nb-campaign-admin form{grid-template-columns:minmax(0,1fr)}.catalog-quote-cta{padding:16px}.catalog-offer-prices b{font-size:17px}}
+.product-card-art:empty{display:none}
