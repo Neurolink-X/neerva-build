@@ -354,10 +354,14 @@ async function main(){
     if(![401,403,503].includes(res.status()))failures.push(method+" "+route+" failed closed-authorization contract: "+res.status());
    }
   }
-  for(const route of ["/api/catalog","/api/catalog/prices","/api/catalog/offers","/api/studio/config","/api/studio/city-rules"]){
+  for(const route of ["/api/catalog","/api/catalog/prices","/api/catalog/offers","/api/studio/config"]){
    const res=await req.request.get(base+route);
    if(![200,503].includes(res.status()))failures.push("Public API "+route+" unexpected status "+res.status());
   }
+  const missingCity=await req.request.get(base+"/api/studio/city-rules");
+  if(missingCity.status()!==400)failures.push("City rules must reject requests lacking a supported city, received "+missingCity.status());
+  const cityRules=await req.request.get(base+"/api/studio/city-rules?city=Kanpur");
+  if(![200,503].includes(cityRules.status()))failures.push("City rules for Kanpur returned "+cityRules.status());
   await req.close();
  }finally{await browser.close()}
  fs.writeFileSync("test-results/mobile/accessibility-baseline.json",JSON.stringify({
