@@ -4,6 +4,7 @@ import {useEffect,useMemo,useState,type FormEvent} from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {homeVisuals,homeReferencePhotos} from "@/modules/home/assets";
+import {HomeShowcase} from "@/components/home-showcase";
 import {BrandMark} from "@/components/brand-mark";
 
 type Language="en"|"hi";
@@ -73,7 +74,7 @@ function Icon({name}:{name:IconName}){
 }
 const items=[
  {id:"steel",en:"TMT & steel",hi:"सरिया / TMT",description:"Grade, diameter and weight",descriptionHi:"ग्रेड, मोटाई और वजन",image:homeVisuals.steel,href:"/materials/steel"},
- {id:"cement",en:"Cement",hi:"सीमेंट",description:"Type, brand and bag size",descriptionHi:"प्रकार, ब्रांड और बैग",image:homeVisuals.cement,href:"/materials/cement"},
+ {id:"cement",en:"Cement",hi:"सीमेंट",description:"ACC, UltraTech, Ramco, Priya, Maha and Birla Super · 50 kg bags",descriptionHi:"ACC, UltraTech, Ramco, Priya, Maha और Birla Super · 50 किलो बैग",image:"/images/catalog/reference/acc-suraksha-power-ppc-cement-50-kg-bag.webp",href:"/materials/cement"},
  {id:"bricks",en:"Bricks & blocks",hi:"ईंट और ब्लॉक",description:"Clay, fly ash and AAC",descriptionHi:"मिट्टी, फ्लाई ऐश, AAC",image:homeVisuals.bricks,href:"/materials/bricks-blocks"},
  {id:"pipes",en:"Pipes",hi:"पाइप",description:"Plumbing sizes and fittings",descriptionHi:"आकार और फिटिंग",image:homeVisuals.pipes,href:"/materials/plumbing"},
  {id:"paint",en:"Paint & waterproofing",hi:"पेंट व वॉटरप्रूफिंग",description:"Coatings and finish systems",descriptionHi:"पेंट, प्राइमर और कोटिंग",image:homeVisuals.paint,href:"/materials/paint"},
@@ -85,7 +86,6 @@ const items=[
 const popular=[["cement","/materials/cement"],["TMT","/materials/steel"],["bricks","/materials/bricks-blocks"],["pipes","/materials/plumbing"]] as const;
 
 export function PremiumHome(){
- const [reveal,setReveal]=useState(50);
  const [lang,setLang]=useState<Language>("en");
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
  const [plot,setPlot]=useState("18x50");
@@ -141,21 +141,13 @@ export function PremiumHome(){
     {recent.length>0&&<div className="nbh-recent"><small>{t.recent}</small>{recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>)}</div>}
    </div>
    <div className="nbh-hero-visual">
-   <figure className="home-stage-comparison" style={{margin:0,alignSelf:"center",minWidth:0}}>
-    <div style={{position:"relative",aspectRatio:"3 / 1",overflow:"hidden",borderRadius:12}}>
-     <Image src="/images/studio/finished.webp" fill priority sizes="(max-width:760px) 100vw, 48vw" alt="Completed home concept"/>
-     <Image src="/images/studio/shell.webp" fill sizes="(max-width:760px) 100vw, 48vw" alt="Unfinished shell of the same home concept" style={{clipPath:`inset(0 ${100-reveal}% 0 0)`}}/>
-     <span aria-hidden="true" style={{position:"absolute",left:`${reveal}%`,top:0,height:"100%",borderLeft:"3px solid white",pointerEvents:"none"}}><b style={{position:"absolute",top:"45%",left:-17,borderRadius:20,padding:"4px 8px",background:"white",color:"#244737"}}>↔</b></span>
-     <input type="range" min="0" max="100" value={reveal} aria-label="Compare construction-stage views" onChange={e=>setReveal(Number(e.target.value))} style={{position:"absolute",inset:0,width:"100%",height:"100%",margin:0,opacity:0,cursor:"ew-resize",touchAction:"pan-y"}}/>
-    </div>
-    <figcaption>{lang==="hi"?"खींचकर देखें · निर्माणाधीन और तैयार घर":"Drag to compare · Under construction and finished home"} · Design simulation</figcaption>
-   </figure>
+   <HomeShowcase hindi={lang==="hi"}/>
    </div>
   </section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
   <section className="nbh-brands-strip" aria-label="Construction manufacturer reference directory">
    <div><strong>{lang==="hi"?"निर्माण सामग्री के ब्रांड":"Explore established material brands"}</strong><p>{lang==="hi"?"ब्रांड लोगो केवल पहचान के लिए हैं। स्टॉक और अधिकृत डीलर की पुष्टि अलग जरूरी है।":"Original brand marks where source-verified; names are references, not authorised dealership or product stock."}</p></div>
-   <div className="nbh-brand-links">{(["ACC","UltraTech","Ambuja","Astral","Supreme","Polycab"] as const).map(name=><Link href="/brands" key={name} aria-label={name+" construction materials brand directory"}><BrandMark name={name} small/></Link>)}</div>
+   <div className="nbh-brand-links">{(["ACC","UltraTech","Ambuja","Ramco","Priya","Maha","Birla Super","JSW Neosteel","Asian Paints","Astral","Supreme","Polycab"] as const).map(name=><Link href={name==="Ambuja"?"/brands":"/materials?search="+encodeURIComponent(name)} key={name} aria-label={name+" construction materials brand directory"}><BrandMark name={name} small/></Link>)}</div>
   </section>
   <section className="nbh-section nbh-materials" id="materials"><div className="nbh-section-head"><div><p className="nbh-eyebrow">01 / MATERIALS</p><h2>{t.category}</h2><p>{t.catDesc}</p></div><Link href="/materials" className="nbh-section-link">{t.navMaterials} <Icon name="arrow"/></Link></div>
    <div className="nbh-category-grid">{items.map(item=><Link href={item.href} className="nbh-material-card" key={item.id}><div className="nbh-material-image">{item.image?<Image src={item.image} fill sizes="(max-width:600px) 48vw, (max-width:1000px) 30vw, 16vw" alt={"Representative "+item.en+" category "+(item.image.endsWith(".svg")?"illustration":"material photo")+", not verified branded SKU"} loading="lazy"/>:<div className="nbh-photo-pending" role="img" aria-label="Representative category illustration pending">SKU photo pending review</div>}</div><div className="nbh-material-info"><h3>{lang==="hi"?item.hi:item.en}</h3><p>{lang==="hi"?item.descriptionHi:item.description}</p><span>{item.id==="paint"?t.paintLabel:t.options} <Icon name="arrow"/></span></div></Link>)}</div>

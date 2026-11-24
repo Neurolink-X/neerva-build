@@ -62,3 +62,38 @@ sourcedProducts.push({
  manufacturerReference:"https://www.kajariaceramics.com/products/K-12631-600x1200-mm",
  specifications:[{label:"Design",value:"K 12631"},{label:"Format",value:"600 × 1200 mm"},{label:"Type",value:"Polished vitrified tile"}]
 });
+
+const plumbingReferences = [
+  ["ashirvad-cpvc-half","ashirvad-pipe","SDR-11 pipe","½ inch","5 m length",305],
+  ["ashirvad-cpvc-three-quarter","ashirvad-pipe","SDR-11 pipe","¾ inch","5 m length",375],
+  ["ashirvad-cpvc-one","ashirvad-pipe","SDR-11 pipe","1 inch","5 m length",590],
+  ["ashirvad-cpvc-one-quarter","ashirvad-pipe","SDR-11 pipe","1¼ inch","5 m length",1099],
+  ["ashirvad-elbow-half","ashirvad-elbow","45° elbow","½ inch","fitting",19],
+  ["ashirvad-threaded-tee-half","ashirvad-tee","Brass threaded tee","½ × ½ inch","fitting",87]
+] as const;
+for (const [slug,image,kind,size,unit,price] of plumbingReferences) {
+  sourcedProducts.push({
+    slug, category:"plumbing", brand:"Ashirvad", verification:"reference",
+    name:`Ashirvad FlowGuard Plus CPVC ${kind} · ${size}`,
+    description:"Check nominal size, connection type and required quantity against your plumbing schedule.",
+    referenceImage:`/images/catalog/reference/${image}.webp`,
+    referenceSource:"https://home-run.co/pages/price-list/pipes-plumbing",
+    specifications:[{label:"Product family",value:`FlowGuard Plus CPVC ${kind}`},
+      {label:"Nominal size",value:size},{label:"Bengaluru retail reference · May 2026",value:`₹${price} / ${unit}`}]
+  });
+}
+const tileReferences = [
+  ["orientbell-star","DGVT NEXA Star White","600 × 600 mm","Vitrified","dgvt-nexa-star-white-025606663250565361m",95],
+  ["orientbell-opal","FT Opal Crema","600 × 600 mm","Porcelain","ft-opal-crema-024606654091098361m",85],
+  ["orientbell-oak","DR DGVT Lugano Oak Wood Ivory","200 × 1200 mm","Glazed vitrified plank","dr-dgvt-lugano-oak-wood-ivory",null]
+] as const;
+for (const [slug,model,size,material,handle,mrp] of tileReferences) {
+  sourcedProducts.push({
+    slug, category:"tiles", brand:"Orientbell", verification:"reference",
+    name:`Orientbell ${model}`, description:"Confirm carton coverage, shade lot, stock and delivered price with your dealer.",
+    manufacturerReference:`https://www.orientbell.com/${handle}`,
+    referenceImage:`/images/catalog/reference/${slug}.webp`,
+    specifications:[{label:"Format",value:size},{label:"Material",value:material},{label:"Finish",value:"Matte"},
+      ...(mrp?[{label:"Manufacturer MRP",value:`₹${mrp} / sq ft`}]:[])]
+  });
+}

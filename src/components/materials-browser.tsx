@@ -40,8 +40,8 @@ export function MaterialsBrowser({products,categories,initialQuery=""}:{
    <div className="product-card-copy">
     <div className="product-brand-identity"><BrandMark name={p.brand} small/><small>Brand reference · no authorised dealer claim</small></div>
     <h2><Link href={`/materials/${p.category}/${p.slug}`}>{variants.length>1?p.name.replace(/\s*[·-]\s*\d+(?:\.\d+)?\s*mm\s*$/i,"")+" · size options":p.name}</Link></h2>
-    <p>{variants.length>1?"One genuine product-family photograph is used for these separately specified sizes. Choose your size below and ask the dealer to verify the supplied physical product.":p.description}</p>
-    {variants.length>1&&<><p className="catalog-range-note">{variants.length} size references · one range photo · no unverified SKU-specific images</p>
+    <p>{variants.length>1?"Choose a size below to see its specifications and request the matching variant.":p.description}</p>
+    {variants.length>1&&<><p className="catalog-range-note">{variants.length} size options</p>
      <div className="catalog-variant-links" aria-label={"Available "+p.brand+" reference sizes"}>
       {variants.map(item=><Link key={item.slug} href={`/materials/${item.category}/${item.slug}`}>{rangeVariantLabel(item)}</Link>)}
      </div></>}

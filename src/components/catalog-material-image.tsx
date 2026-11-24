@@ -14,6 +14,10 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{cate
  const sources=product?media:[{src:categoryImage(category),label:"Category photograph · not exact SKU",alt:"Representative "+category+" material photo",kind:"category" as const}];
  const current=sources.find(x=>x.src&&!failed.includes(x.src));
  const src=current?.src;
+ // Specification-only ranges share editorial/category images. Show their dimensions
+ // directly in the card below instead of repeating a photograph from another range.
+ if(product && (category==="plumbing" || category==="tiles") &&
+    (current?.kind==="editorial" || current?.kind==="category")) return null;
  return <div className={"catalog-material-image"+(compact?" compact":"")+(current?.kind==="sku"||current?.kind==="listing"?" pack-photo":"")}>
   {src?<Image src={src} alt={compact?"":current.alt} fill sizes="(max-width:680px) 100vw, (max-width:1100px) 50vw, 33vw"
    quality={75} loading="lazy" onError={()=>setFailed(previous=>previous.includes(src)?previous:[...previous,src])}/>:

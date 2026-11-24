@@ -8,12 +8,18 @@
 import {PUBLIC_CATEGORY_IMAGES} from "@/modules/catalog/public-products";
 const photo=(id:string)=>`https://images.unsplash.com/${id}?auto=format&fit=crop&w=1400&q=79`;
 export const homeReferencePhotos=[
- {src:photo("photo-1600585154340-be6161a56a0c"),name:"Contemporary house exterior · photographic inspiration",type:"residence"},
- {src:photo("photo-1600596542815-ffad4c1539a9"),name:"Premium modern residence · photographic inspiration",type:"residence"},
- {src:photo("photo-1600047509807-ba8f99d2cdde"),name:"Residential villa exterior · photographic inspiration",type:"residence"},
- {src:photo("photo-1600585152915-d208bec867a1"),name:"Residential architecture · photographic inspiration",type:"residence"},
- {src:photo("photo-1600573472591-ee6b68d14c68"),name:"Contemporary residence · photographic inspiration",type:"residence"},
- {src:photo("photo-1600585152220-90363fe7e115"),name:"Contemporary home exterior · photographic inspiration",type:"residence"}
+ // Unsplash photo-1600585154340-be6161a56a0c
+ {src:"/images/studio/house-1.webp",name:"Contemporary house exterior · photographic inspiration",type:"residence"},
+ // Unsplash photo-1600596542815-ffad4c1539a9
+ {src:"/images/studio/house-2.webp",name:"Premium modern residence · photographic inspiration",type:"residence"},
+ // Unsplash photo-1600047509807-ba8f99d2cdde
+ {src:"/images/studio/house-3.webp",name:"Residential villa exterior · photographic inspiration",type:"residence"},
+ // Unsplash photo-1600585152915-d208bec867a1
+ {src:"/images/studio/house-4.webp",name:"Open-plan living room with garden access",type:"residence"},
+ // Unsplash photo-1600573472591-ee6b68d14c68
+ {src:"/images/studio/house-5.webp",name:"Bright living room with glazed doors",type:"residence"},
+ // Unsplash photo-1600585152220-90363fe7e115
+ {src:"/images/studio/house-6.webp",name:"Kitchen with breakfast island",type:"residence"}
 ] as const;
 export const homeVisuals={
  hero:homeReferencePhotos[0].src,
