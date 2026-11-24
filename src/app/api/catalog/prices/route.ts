@@ -19,5 +19,5 @@ export async function GET(){
    prices.push({slug:p.slug,category:c.slug,sku:v.sku,unit:row.unit,paise:row.amount_paise,city:row.city,prefix:row.pincode_prefix,min:row.minimum_quantity,until:row.valid_to});
   }
  }
- return Response.json({prices},{headers:{"Cache-Control":"public, max-age=30"}});
+ return Response.json({prices},{headers:{"Cache-Control":"no-cache, max-age=0, must-revalidate"}});
 }
