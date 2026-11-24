@@ -49,7 +49,7 @@ export const demoProducts: DemoProduct[] = [
   { verification:"reference", slug:"door-hinge-stainless-steel",category:"hardware",name:"Stainless steel door hinge · size selection",brand:"Godrej / Ebco",description:"Compare manufacturer, metal grade, load rating, hole pattern, bearing type and finish; exact variant pending verification.",manufacturerSku:null,specifications:[{label:"Material",value:"Stainless steel (confirm grade)"},{label:"Size",value:"4 in / 5 in reference options"},{label:"Unit",value:"piece / pair"},{label:"Compatibility",value:"Door thickness and loading require confirmation"}] },
 ];
 
-export const brandDirectory = [
+const directoryReferences = [
   { name: "Tata Tiscon", category: "steel", note: "TMT discovery example" },
   { name: "JSW Neosteel", category: "steel", note: "TMT discovery example" },
   { name: "Jindal Panther", category: "steel", note: "TMT discovery example" },
@@ -65,6 +65,20 @@ export const brandDirectory = [
   { name: "Finolex", category: "electrical", note: "Electrical discovery example" },
   { name: "Polycab", category: "electrical", note: "Electrical discovery example" },
 ];
+
+// Keep editorial directory entries and include every brand with a sourced product.
+export const brandDirectory = [...directoryReferences];
+for (const {brand,category} of sourcedProducts) {
+  if (!brandDirectory.some(entry=>entry.category===category && entry.name===brand)) {
+    brandDirectory.push({name:brand,category,note:"Product specifications available"});
+  }
+}
+
+export function brandDestination(name:string,category:string) {
+  const listed=demoProducts.some(product=>product.brand===name && product.category===category);
+  if (listed) return "/materials?"+new URLSearchParams({brand:name,category})+"#catalog-results";
+  return "/quotes?"+new URLSearchParams({category,material:name+" "+category});
+}
 
 export const getCategory = (slug: string) => catalogCategories.find((category) => category.slug === slug);
 export const getProductsByCategory = (slug: string) => demoProducts.filter((product) => product.category === slug);

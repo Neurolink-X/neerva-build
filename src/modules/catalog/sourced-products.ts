@@ -74,6 +74,7 @@ const plumbingReferences = [
 for (const [slug,image,kind,size,unit,price] of plumbingReferences) {
   sourcedProducts.push({
     slug, category:"plumbing", brand:"Ashirvad", verification:"reference",
+    familyKey:kind==="SDR-11 pipe"?"ashirvad-flowguard-sdr11":undefined,
     name:`Ashirvad FlowGuard Plus CPVC ${kind} · ${size}`,
     description:"Check nominal size, connection type and required quantity against your plumbing schedule.",
     referenceImage:`/images/catalog/reference/${image}.webp`,
@@ -93,7 +94,7 @@ for (const [slug,model,size,material,handle,mrp] of tileReferences) {
     name:`Orientbell ${model}`, description:"Confirm carton coverage, shade lot, stock and delivered price with your dealer.",
     manufacturerReference:`https://www.orientbell.com/${handle}`,
     referenceImage:`/images/catalog/reference/${slug}.webp`,
-    specifications:[{label:"Format",value:size},{label:"Material",value:material},{label:"Finish",value:"Matte"},
-      ...(mrp?[{label:"Manufacturer MRP",value:`₹${mrp} / sq ft`}]:[])]
+    specifications:[{label:"Format",value:size},{label:"Material",value:material},
+      ...(mrp?[{label:"Manufacturer MRP",value:`₹${mrp} / sq ft`}]:[]),{label:"Finish",value:"Matte"}]
   });
 }

@@ -9,11 +9,11 @@ import type {DemoProduct} from "@/modules/catalog/marketplace";
 import type {CatalogCategory} from "@/modules/catalog/catalog";
 import {filterCatalog,productFacetValues} from "@/modules/catalog/discovery";
 import {groupCatalogByPhoto,rangeVariantLabel} from "@/modules/catalog/media-usage";
-export function MaterialsBrowser({products,categories,initialQuery=""}:{
- products:DemoProduct[];categories:CatalogCategory[];initialQuery?:string
+export function MaterialsBrowser({products,categories,initialQuery="",initialBrand="all",initialCategory="all"}:{
+ products:DemoProduct[];categories:CatalogCategory[];initialQuery?:string;initialBrand?:string;initialCategory?:string
 }){
- const [category,setCategory]=useState("all");
- const [brand,setBrand]=useState("all");
+ const [category,setCategory]=useState(initialCategory);
+ const [brand,setBrand]=useState(initialBrand);
  const [gradeOrSize,setGradeOrSize]=useState("all");
  const [query,setQuery]=useState(initialQuery);
  const facets=useMemo(()=>productFacetValues(products,category),[products,category]);
@@ -21,7 +21,7 @@ export function MaterialsBrowser({products,categories,initialQuery=""}:{
  const groups=useMemo(()=>groupCatalogByPhoto(visible),[visible]);
  function chooseCategory(c:string){setCategory(c);setBrand("all");setGradeOrSize("all")}
  function clear(){setCategory("all");setBrand("all");setGradeOrSize("all");setQuery("")}
- return <section className="catalog-discovery" aria-label="Find materials by brand and technical specification">
+ return <section id="catalog-results" className="catalog-discovery" aria-label="Find materials by brand and technical specification">
   <form className="catalog-toolbar" role="search" onSubmit={e=>e.preventDefault()}>
    <label className="catalog-search">Search by product, brand, grade or application
     <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="e.g. 550SD, 50 kg PPC, CPVC" maxLength={100}/></label>
