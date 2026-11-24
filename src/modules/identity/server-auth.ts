@@ -15,6 +15,9 @@ export async function requireAuth(request:Request):Promise<AuthResult|Response>{
    const client=createClient(url,key,{global:{headers:{Authorization:"Bearer "+match[1]}},auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false}});
    const {data,error}=await client.auth.getUser(match[1]);
    if(error||!data.user)return failure("Your session is invalid or expired.",401);
+   const access=await client.rpc("neerva_account_access_allowed");
+   if(access.error)return failure("Account access verification unavailable.",503);
+   if(access.data!==true)return failure("Account restricted. Contact support.",403);
    return{client,userId:data.user.id};
  }catch{return failure("Authentication service is currently unavailable.",503)}
 }

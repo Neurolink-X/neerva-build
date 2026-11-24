@@ -19,6 +19,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
  useEffect(()=>{
   const target=host.current;if(!target)return;
   let renderer:THREE.WebGLRenderer|undefined,controls:OrbitControls|undefined,observer:ResizeObserver|undefined,frame=0,failedTimer=0;
+  let resumeDrawing:(()=>void)|undefined;
   const scene=new THREE.Scene();scene.background=new THREE.Color("#dce6e1");
   const site=new THREE.Group();const angle=planModel?threeRoadRotation(planModel.plot.roadSide):0;site.rotation.y=angle;scene.add(site);
   const shared=new THREE.BoxGeometry(1,1,1),materials:THREE.Material[]=[];
@@ -160,13 +161,16 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
     corners.push(new THREE.Vector3(x,y,z).applyAxisAngle(up,angle).sub(focus));
    }
    let previousFit=0;
-   function draw(){frame=0;if(!renderer||!controls)return;controls.update();renderer.render(scene,camera)}
-   function schedule(){if(!frame)frame=window.requestAnimationFrame(draw)}
+   function draw(){frame=0;if(!renderer||!controls||document.hidden)return;controls.update();renderer.render(scene,camera)}
+   function schedule(){if(!frame&&!document.hidden)frame=window.requestAnimationFrame(draw)}
+   resumeDrawing=()=>{if(document.hidden){window.cancelAnimationFrame(frame);frame=0}else schedule()};document.addEventListener("visibilitychange",resumeDrawing);
    refresh.current=schedule;controls.addEventListener("change",schedule);
+   let lastWidth=0,lastHeight=0;
    const resize=()=>{
     if(!renderer||!controls||target.clientWidth<1)return;
     const w=target.clientWidth,h=Math.max(260,Math.min(630,Math.round(w*.78)));
-    renderer.setSize(w,h);
+    if(w===lastWidth&&h===lastHeight)return;
+    lastWidth=w;lastHeight=h;renderer.setSize(w,h);
     camera.aspect=w/h;
     if(mode!=="walkthrough"){
      const tanY=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
@@ -184,7 +188,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    };
    observer=new ResizeObserver(resize);observer.observe(target);resize();
   }catch{failedTimer=window.setTimeout(()=>setFallback(true),0)}
-  return()=>{window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();scene.traverse(o=>{if(o instanceof THREE.InstancedMesh)o.dispose()});renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
+  return()=>{if(resumeDrawing)document.removeEventListener("visibilitychange",resumeDrawing);window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();scene.traverse(o=>{if(o instanceof THREE.InstancedMesh)o.dispose();if(o instanceof THREE.DirectionalLight)o.shadow.dispose()});renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
  },[design,mode,planModel,selectedFloor,wallCells]);
  return <section className="nbd-building" data-plan-id={design.id} data-selected-floor={mode==="exterior"?"all":selectedFloor??"all"} data-wall-cells={wallCells.length}><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>{selectedFloor===undefined?"Full building":mode==="exterior"?"Full building · all floors":`${["Ground floor","First floor","Second floor"][selectedFloor]??`Floor ${selectedFloor+1}`} only`} · touch to rotate</span></div><div className="nbd-buttons">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Selected floor cutaway":"Full exterior · all floors"}</button>)}</div>{fallback?<div><p role="status">Interactive rotation is unavailable on this device.</p>{planModel?<PlanAxonometric plan={planModel} design={design} floor={mode==="exterior"?undefined:selectedFloor}/>:<DesignPlanArt design={design} floor={selectedFloor??0}/>}</div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}<p className="nbd-disclaimer">{selectedFloor!==undefined?"Floor tabs show that level only by default. Choose Full exterior to inspect all selected storeys. ":""}Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Slabs and roofs are simplified; parapet details are not modeled for PlanModel mode. HDRI, phototextures and photoreal renders are not yet bundled. Eye-level beta is not a measured walkthrough.</p></section>;
 }

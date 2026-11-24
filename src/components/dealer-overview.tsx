@@ -1,0 +1,11 @@
+"use client";
+import Link from "next/link";
+import {useEffect,useState} from "react";
+import {operationsRequest} from "./operations-request";
+type Data={memberships:{tenant_id:string;role:string;tenants:{business_name:string;status:string}|{business_name:string;status:string}[]|null}[];branches:{id:string;name:string;city:string;pincode:string}[];counts:Record<string,number|null>};
+export function DealerOverview(){
+ const [data,setData]=useState<Data|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[revision,setRevision]=useState(0);
+ useEffect(()=>{let active=true;void operationsRequest<Data>("/api/dealer/overview").then(d=>{if(active){setData(d);setError("")}}).catch(e=>{if(active){setData(null);setError(e.message)}}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[revision]);
+ const tiles=[["Orders","orders","/dealer/orders"],["Open invitations","invites","/dealer/quotes"],["Submitted offers","offers","/dealer/quotes"],["Stock records","stock","/dealer/inventory"]];
+ return <div className="admin-catalog-workbench"><section className="admin-box"><h1>Dealer business centre</h1><p>Approved business operations, not estimated sales figures.</p><button disabled={loading} onClick={()=>{setLoading(true);setRevision(n=>n+1)}}>{loading?"Loading…":"Refresh overview"}</button>{error&&<p role="alert" className="admin-error">{error} <Link href="/account">Check your account</Link>.</p>}{data&&<>{data.memberships.map(m=><p key={m.tenant_id}>{(Array.isArray(m.tenants)?m.tenants[0]:m.tenants)?.business_name??"Approved business"} · {m.role}</p>)}<div className="admin-overview-grid">{tiles.map(([label,key,href])=><Link key={key} href={href} className="admin-box admin-overview-tile"><small>{label}</small><strong>{data.counts[key]??"Unavailable"}</strong><span>Open module →</span></Link>)}</div></>}</section>{data&&<section className="admin-box"><h2>Approved branches</h2>{data.branches.map(b=><article className="admin-record" key={b.id}>{b.name} · {b.city} {b.pincode}</article>)}{!data.branches.length&&<p>No approved branch. Contact the platform team.</p>}</section>}<section className="admin-box"><h2>Account help</h2><Link href="/account">Sign-in or password recovery →</Link><p>Contact platform administration for changes to dealer roles or approval.</p></section></div>
+}
