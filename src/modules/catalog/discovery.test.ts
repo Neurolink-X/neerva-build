@@ -105,7 +105,16 @@ test("priority brand marks retain attribution and range photographs are never ex
  for(const category of ["plumbing","electrical"]){
   for(const card of directoryCards(category)){
    assert.ok(card.familyCount<=card.count);
-   if(card.rangeImage){assert.match(card.rangeImage,/^https:\/\//);assert.ok(card.rangeAlt&&card.rangeSource);}
+   if(card.rangeImage){assert.ok(card.rangeImage.startsWith("https://")||card.rangeImage.startsWith("/images/catalog/brand-local/"));assert.ok(card.rangeAlt&&card.rangeSource);}
   }
+ }
+});
+
+
+test("local media manifest points only to existing bundled WebP assets",async()=>{
+ const {localBrandAssets}=await import("./local-brand-assets.ts");
+ const {existsSync}=await import("node:fs");
+ for(const [source,path] of Object.entries(localBrandAssets)){
+  assert.match(source,/^https:\/\//);assert.match(path,/^\/images\/catalog\/brand-local\/[a-f0-9]{24}\.webp$/);assert.ok(existsSync("public"+path),path);
  }
 });

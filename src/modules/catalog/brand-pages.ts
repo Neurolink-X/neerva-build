@@ -1,6 +1,7 @@
 import {brandDirectory, getCategory, getProductsByCategory} from "./marketplace.ts";
 import {groupCatalogByPhoto} from "./media-usage.ts";
 import {categoryImage} from "./public-products.ts";
+import {localBrandAsset} from "./brand-media.ts";
 
 export function brandSlug(name:string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
@@ -21,7 +22,10 @@ export const buyingDetails:Record<string,string>={
 };
 
 // Reviewed range photographs: representative only; not exact SKU or a stock claim.
-const rangeMedia:Record<string,{image:string;alt:string;source:string}>={
+export const rangeMedia:Record<string,{image:string;alt:string;source:string}>={
+ "cement:Ambuja":{image:"https://www.masonmart.in/cdn/shop/files/AMBUJA-CEMENT_-50KG.png?v=1754362527",alt:"Ambuja PPC cement 50 kg pack reference",source:"https://www.masonmart.in/products/ambuja-cement-ppc"},
+ "cement:Dalmia":{image:"https://lntsufin.com/storage/mediafiles/catalog/live/16986-11282/original/16986-11282_image_0.jpg",alt:"Dalmia PPC cement 50 kg pack reference",source:"https://lntsufin.com/product/dalmia-ppc-cement-50-kg/16986-11282"},
+ "steel:Jindal Panther":{image:"https://lntsufin.com/storage/mediafiles/catalog/live/17499-356/original/17499-356_image_0.jpg",alt:"Jindal Panther TMT rebar range reference",source:"https://lntsufin.com/product/jindal-panther-16-mm-fe-550-crs-tmt-bars-is-1786/17499-356"},
  "plumbing:Astral":{image:"https://5.imimg.com/data5/SELLER/Default/2023/12/370425940/TZ/FL/AB/8521096/astral-cpvc-pro-1000x1000.png",alt:"Astral CPVC Pro pipe and fitting range",source:"https://www.krishnapipes.in/astral-pipes.html"},
  "plumbing:Supreme":{image:"https://www.supreme.co.in/uploads/images/rYp2eJWqCU1H1V2HDsplxl8zEcIxNCcJcy7iH9dP.png",alt:"Supreme Lifeline CPVC pipes and fittings",source:"https://www.supreme.co.in/pipe/plumbing/products/lifeline-c-pvc-hot-cold-water-system-cts-series"},
  "electrical:Finolex":{image:"https://madhukarpipesandelectricals.com/images/pipe7.png",alt:"Finolex electrical conduit range",source:"https://madhukarpipesandelectricals.com/electrical-wires-and-cables-supplier-in-madurai-tamilnadu"},
@@ -33,7 +37,7 @@ export function directoryCards(category:string){
     const pictured=products.find(p=>p.referenceImage);
     const range=rangeMedia[category+":"+name];
     return {name,category,href:brandPath(category,name),count:products.length,familyCount:groupCatalogByPhoto(products).length,
-      image:pictured?.referenceImage??null,alt:pictured?.name??"",rangeImage:range?.image??null,rangeAlt:range?.alt??"",rangeSource:range?.source??null,
+      image:pictured?.referenceImage??null,alt:pictured?.name??"",rangeImage:range?localBrandAsset(range.image):null,rangeAlt:range?.alt??"",rangeSource:range?.source??null,
       detail:pictured?.name??products[0]?.name??`Request ${name} ${getCategory(category)?.title.toLowerCase()}`};
   });
 }
