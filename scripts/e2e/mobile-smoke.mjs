@@ -49,6 +49,8 @@ async function main(){
    assert.equal(await page.locator(".nbh-family-entry").count(),1,"Family planning entry point");
    await page.goto(base+"/family-homes",{waitUntil:"load"});
    assert.equal(await page.locator(".nbh-family-card").count(),4,"Separate family planning page");
+   const familyLinks=await page.locator('.nbh-family-card a[href^="/design-studio/portfolio?"]').evaluateAll(links=>links.map(a=>{const q=new URL(a.href).searchParams;return ["width","depth","bedrooms","floors"].map(k=>q.get(k)).join("x");}));
+   assert.deepEqual(familyLinks,["15x30x1x1","18x50x3x2","20x40x2x1"],"Family home cards use supported plot and room briefs");
    await page.goto(base+"/",{waitUntil:"load"});
    const categoryCards=page.locator(".nbh-material-card");
    assert.equal(await categoryCards.count(),9,"all home material categories");
