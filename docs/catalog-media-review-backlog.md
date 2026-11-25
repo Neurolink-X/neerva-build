@@ -25,3 +25,6 @@ Distinct house photography reserved for the planner and construction section; he
 ## Generated fallback batch 01
 
 16 separately cropped unbranded AI-generated product-type illustrations (75,376 bytes combined) are local WebP. Ten generic plumbing families and six local hardware families. These 307–308 px discovery illustrations are not high-resolution manufacturer photos. Existing actual local reviewed images take precedence. Category montage is replaced by one photo with product shortcuts below. Real-photo release backlog remains open.
+
+### Third generated-media batch
+16 new local WebP product-type illustrations (12 plumbing, 4 hardware), adding 110,320 bytes. The manifest now contains 46 generated assets. These are explicitly labelled AI references and never counted as verified photography. Original premium home and separate family-homes route unchanged. Strict release audit now identifies missing visuals for individual variants and priority departments separately. CI execution remains unverified.

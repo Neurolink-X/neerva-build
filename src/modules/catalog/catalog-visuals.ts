@@ -9,5 +9,5 @@ export function catalogVisuals(product:DemoProduct):CatalogVisual[]{
  const m=index.get(product.category+":"+(product.familyKey??product.slug));
  if(!m)return photos;
  if(!/^(?:local\b|brand to confirm$|dealer-listed brand$|mill to confirm$)/i.test(product.brand))return photos;
- return [...photos.filter(p=>p.kind!=="category"),{src:m.path,kind:"generated",label:"AI-generated reference · not exact product",alt:m.alt+"; illustrative appearance only"}];
+ return [{src:m.path,kind:"generated",label:"AI-generated reference · not exact product",alt:m.alt+"; illustrative appearance only"},...photos.filter(p=>p.kind!=="category")];
 }
