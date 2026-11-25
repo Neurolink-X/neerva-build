@@ -19,3 +19,5 @@
 - For an owner-managed runner, use a disposable/isolated Linux VM with Node 24, Docker, browser dependencies and no production credentials. Do not route arbitrary public PRs to a persistent privileged runner. GitHub Actions runner usage is free for self-hosted runners, but hardware and hosting are the owner's responsibility. Never migrate runner labels until an approved runner exists and the test environment is validated.
 
 This document does not certify CI or authorize a release.
+
+**Billing evidence (2026-11-25):** Owner-provided Actions usage shows 5,006 Linux minutes and $0 billed. Confirm the applicable included allowance and budget before attributing runner allocation failure to quota exhaustion.
