@@ -325,3 +325,5 @@
 
 /* Six discovery entries flow into balanced rows at tablet/desktop widths. */
 @media(min-width:1000px){.nbh-explore-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+@media(max-width:760px){.nbh-hero h1:lang(en){font-size:clamp(24px,7.1vw,44px);letter-spacing:-.045em;text-wrap:balance}.nbh-hero h1:lang(en) span{text-wrap:balance}.nbh-hero h1:lang(hi){text-wrap:balance}}
