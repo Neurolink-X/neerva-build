@@ -1,3 +1,4 @@
+import {stockConfirmationEnabled} from "@/modules/orders/stock-confirmation";
 import {requireAdmin} from "@/modules/identity/server-auth";
 import {adminOrderStatusInput,ORDER_FIELDS,ORDER_RESPONSE_HEADERS,parseOrderJson,failOrder,safeOrderError,statusForOrderError} from "@/modules/orders/order-contract";
 export const dynamic="force-dynamic";export const runtime="nodejs";
@@ -16,6 +17,7 @@ export async function PATCH(request:Request){
  const input=adminOrderStatusInput.safeParse(await parseOrderJson(request,1500));
  if(!input.success)return failOrder(400,"Invalid admin order status transition.");
  const {orderId,expectedStatus,status}=input.data;
+ if(status==="confirmed"&&stockConfirmationEnabled(process.env))return failOrder(409,"Assigned dealer must use atomic stock confirmation.");
  try{
   const {data,error}=await auth.client.from("orders").update({status})
    .eq("id",orderId).eq("status",expectedStatus).select(ORDER_FIELDS).maybeSingle();

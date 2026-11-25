@@ -30,7 +30,7 @@ begin
  if tg_op='DELETE' then return old;end if;return new;
 end$$;
 create function neerva_internal.has_stock_hold(b uuid,v uuid) returns boolean
-language sql stable security definer set search_path='' as $$
+language sql volatile security definer set search_path='' as $
  select auth.uid() is not null and exists(
  select 1 from public.merchant_branches x where x.id=b and public.is_tenant_member(x.tenant_id)
  ) and exists(select 1 from neerva_internal.stock_holds h where h.branch_id=b and h.variant_id=v and h.state='held')
@@ -54,7 +54,8 @@ begin
  if not found or not public.is_tenant_member(o.tenant_id,array['owner','manager','dispatch']::text[]) then raise exception 'ORDER_ACCESS_DENIED' using errcode='42501';end if;
  if o.status<>'pending_confirmation' then raise exception 'ORDER_NOT_PENDING' using errcode='23514';end if;
  if not exists(select 1 from public.merchant_branches b join public.tenants t on t.id=b.tenant_id join public.dealer_applications a on a.tenant_id=t.id join public.dealer_service_pincodes pin on pin.application_id=a.id where b.id=p_branch and b.tenant_id=o.tenant_id and b.approved and t.status='active' and a.status='approved' and a.gstin_verification='verified' and pin.pincode=o.pincode) then raise exception 'BRANCH_COVERAGE_INVALID' using errcode='23514';end if;
- if exists(select 1 from neerva_internal.stock_holds h where h.order_id=p_order) then raise exception 'ORDER_HOLD_ALREADY_RECORDED' using errcode='23505';end if;
+ if exists(select 1 from neerva_internal.stock_holds h where h.order_id=p_order and h.state<>'released') then raise exception 'ORDER_HOLD_ALREADY_RECORDED' using errcode='23505';end if;
+ delete from neerva_internal.stock_holds where order_id=p_order and state='released';
  n:=jsonb_array_length(o.line_items);
  if p_mapping is null or jsonb_typeof(p_mapping)<>'array' or jsonb_array_length(p_mapping)<>n then raise exception 'EXACT_LINE_MAPPING_REQUIRED' using errcode='23514';end if;
  -- A mapping array in the original order line sequence; quantities never supplied by client.
@@ -72,10 +73,26 @@ begin
  return true;
 end$$;
 revoke all on function neerva_internal.reserve_order_stock(uuid,uuid,jsonb) from public,anon,authenticated;
-grant execute on function neerva_internal.reserve_order_stock(uuid,uuid,jsonb) to authenticated;
-create function public.neerva_reserve_order_stock(p_order uuid,p_branch uuid,p_mapping jsonb) returns boolean language sql security invoker set search_path='' as $$select neerva_internal.reserve_order_stock(p_order,p_branch,p_mapping)$$;
-revoke all on function public.neerva_reserve_order_stock(uuid,uuid,jsonb) from public,anon,authenticated;
-grant execute on function public.neerva_reserve_order_stock(uuid,uuid,jsonb) to authenticated;
+-- Reserve and confirm in one transaction. No public standalone hold creation.
+create function neerva_internal.confirm_reserved_order(p_order uuid,p_branch uuid,p_mapping jsonb)
+returns boolean language plpgsql security definer set search_path='' as $
+declare o public.orders%rowtype;
+begin
+ if auth.uid() is null or not coalesce(public.neerva_account_access_allowed(),false) then raise exception 'AUTH_REQUIRED' using errcode='42501';end if;
+ select * into o from public.orders where id=p_order for update;
+ if not found or not public.is_tenant_member(o.tenant_id,array['owner','manager','dispatch']::text[]) then raise exception 'ORDER_ACCESS_DENIED' using errcode='42501';end if;
+ -- No ambiguous replay: a second call cannot debit stock or confirm a different mapping.
+ if o.status<>'pending_confirmation' then raise exception 'ORDER_STATE_CHANGED_REFRESH' using errcode='23514';end if;
+ perform neerva_internal.reserve_order_stock(p_order,p_branch,p_mapping);
+ update public.orders set status='confirmed' where id=p_order and status='pending_confirmation';
+ if not found then raise exception 'ORDER_STATE_CHANGED_REFRESH' using errcode='23514';end if;
+ return true;
+end$;
+revoke all on function neerva_internal.confirm_reserved_order(uuid,uuid,jsonb) from public,anon,authenticated;
+grant execute on function neerva_internal.confirm_reserved_order(uuid,uuid,jsonb) to authenticated;
+create function public.neerva_confirm_reserved_order(p_order uuid,p_branch uuid,p_mapping jsonb) returns boolean language sql security invoker set search_path='' as $select neerva_internal.confirm_reserved_order(p_order,p_branch,p_mapping)$;
+revoke all on function public.neerva_confirm_reserved_order(uuid,uuid,jsonb) from public,anon,authenticated;
+grant execute on function public.neerva_confirm_reserved_order(uuid,uuid,jsonb) to authenticated;
 -- Internal helper: caller already holds order row lock. Never re-add dispatched stock.
 create function neerva_internal.finish_stock_hold(p_order uuid,p_state text) returns void language plpgsql security definer set search_path='' as $$
 declare h record;
@@ -93,7 +110,11 @@ revoke all on function neerva_internal.finish_stock_hold(uuid,text) from public,
 create function neerva_internal.order_stock_transition() returns trigger language plpgsql security definer set search_path='' as $$
 begin
  if new.status=old.status then return new;end if;
- if new.status='confirmed' and exists(select 1 from neerva_internal.stock_holds where order_id=old.id) and not exists(select 1 from neerva_internal.stock_holds where order_id=old.id and state='held' and expires_at>statement_timestamp()) then raise exception 'STOCK_HOLD_EXPIRED' using errcode='23514';end if;
+ if new.status='confirmed' then
+  if not exists(select 1 from neerva_internal.stock_holds where order_id=old.id and state='held' and expires_at>statement_timestamp()) then
+   raise exception 'ATOMIC_STOCK_CONFIRMATION_REQUIRED' using errcode='23514';
+  end if;
+ end if;
  if new.status in ('cancelled','declined') and old.status<>'out_for_delivery' then perform neerva_internal.finish_stock_hold(old.id,'released');end if;
  if new.status='out_for_delivery' then perform neerva_internal.finish_stock_hold(old.id,'consumed');end if;
  return new;

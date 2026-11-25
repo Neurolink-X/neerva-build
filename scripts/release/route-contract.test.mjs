@@ -80,6 +80,7 @@ const manifest={
  "/api/customer/quotes":["GET"],
  "/api/dealer/inventory":["GET","POST"],
  "/api/dealer/orders":["GET","PATCH"],
+ "/api/dealer/orders/stock":["GET","POST"],
  "/api/dealer/quotes":["GET","POST"],
  "/api/orders":["GET","POST","PATCH"],
  "/api/direct-orders":["GET","POST","PATCH"],

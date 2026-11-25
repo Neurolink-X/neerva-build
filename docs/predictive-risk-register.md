@@ -23,3 +23,6 @@ Added isolated SQL candidate for explicitly mapped RFQ order lines, validated se
 
 ## Catalog reconciliation
 Read-only exact slug/category/origin/reference-SKU/unit/status reconciliation and unit tests are now linked to the disposable import workflow. Conflicting rows and missing or orphan reference records are reported, not overwritten or published. Production run requires a verified database connection and does not synchronize records by itself.
+
+## Atomic confirmation integration
+Opt-in server flag NEERVA_ATOMIC_STOCK_CONFIRMATION=true enables the dealer exact-SKU mapping UI/API. In the candidate DB, reserve and confirm occur in one transaction; no new standalone pending reservations can be created, eliminating the need for a new scheduled expiry job for this flow. Existing pending-hold cleanup remains bounded and admin-only. Legacy admin/dealer manual confirmation remains unchanged until the flag and reviewed DB migration are coordinated. An activated candidate blocks bypass via direct order status updates. Dealer must explicitly verify the exact product; a unit match alone is not identity proof. Direct sourcing requests remain non-guaranteed. No production activation.
