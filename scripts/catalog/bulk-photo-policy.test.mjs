@@ -1,0 +1,7 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {commonsUrl,license,brief,csv,familyKey} from "./bulk-photo-policy.mjs";
+test("only allow exact Wikimedia origins and safe paths",()=>{assert.ok(commonsUrl("https://upload.wikimedia.org/wikipedia/commons/a/ab/a.jpg"));for(const x of ["http://upload.wikimedia.org/wikipedia/commons/a.jpg","https://upload.wikimedia.org.evil.com/wikipedia/commons/a.jpg","https://user@upload.wikimedia.org/wikipedia/commons/a.jpg","https://upload.wikimedia.org/wikipedia/commons/a.jpg?x=1"])assert.equal(commonsUrl(x),null);});
+test("reject ambiguous or noncommercial licenses",()=>{const m=(name,url)=>({LicenseShortName:{value:name},LicenseUrl:{value:url}});assert.ok(license(m("CC BY-SA 4.0","https://creativecommons.org/licenses/by-sa/4.0/")));assert.equal(license(m("CC BY-NC 4.0","https://creativecommons.org/licenses/by-nc/4.0/")),null);assert.equal(license(m("CC BY 4.0","https://fake.example/")),null);});
+test("generic illustration briefs never generate branded packaging",()=>{assert.equal(brief({brand:"MYK Laticrete",name:"335 adhesive"}),null);assert.match(brief({brand:"Local supplier",name:"Pipe union"}),/No logo/);});
+test("CSV spreadsheet injection and cross brand families",()=>{assert.equal(csv("=1+1"),"\"'=1+1\"");assert.notEqual(familyKey({category:"hardware",brand:"A",slug:"lock"}),familyKey({category:"hardware",brand:"B",slug:"lock"}));});

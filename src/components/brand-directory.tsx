@@ -3,6 +3,7 @@ import {useState} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {BrandMark} from "@/components/brand-mark";
+import {isLocalCatalogMedia} from "@/modules/catalog/local-media-policy";
 import {MaterialIdentity} from "./material-identity";
 
 type Card={name:string;category:string;href:string;count:number;familyCount:number;image:string|null;alt:string;detail:string;rangeImage:string|null;rangeAlt:string;rangeSource:string|null};
@@ -22,8 +23,8 @@ export function BrandDirectory({sections}:{sections:Section[]}) {
     <p className="br-result" aria-live="polite">{filtered.reduce((sum,s)=>sum+s.cards.length,0)} brand options · {filtered.length} material categories</p>
     {!filtered.length&&<p role="status">No matching brands. <button onClick={()=>{setQuery("");setSelected("");}}>Clear filters</button></p>}
     {filtered.map(s=><section className="br-group" key={s.slug}><div className="br-heading"><div><h2>{s.title}</h2><p>{s.description}</p></div><Link href={s.dealer}>Dealer-listed options →</Link></div>
-      <div className="br-grid">{s.cards.map(c=>{const photo=[c.image,c.rangeImage].find(src=>src&&!failed.includes(src));return <article className="br-card" key={c.href}><div className="br-brand-header"><BrandMark name={c.name} small/></div><Link className="br-media-link" href={c.href} aria-label={"Explore "+c.name}>
-        {photo?<div className="br-pack"><Image src={photo} alt={photo===c.image?c.alt:c.rangeAlt} fill sizes="(max-width:620px) 46vw, 240px" unoptimized={photo.startsWith("https://")} referrerPolicy="no-referrer" onError={()=>setFailed(old=>old.includes(photo)?old:[...old,photo])}/><span className="br-photo-label">{photo===c.image?"Product reference":"Range photograph"}</span></div>:<div className="br-pack"><MaterialIdentity name={c.detail} category={c.category} brand={c.name}/></div>}</Link>
+      <div className="br-grid">{s.cards.map(c=>{const photo=[c.image,c.rangeImage].find(src=>isLocalCatalogMedia(src)&&!failed.includes(src));return <article className="br-card" key={c.href}><div className="br-brand-header"><BrandMark name={c.name} small/></div><Link className="br-media-link" href={c.href} aria-label={"Explore "+c.name}>
+        {photo?<div className="br-pack"><Image src={photo} alt={photo===c.image?c.alt:c.rangeAlt} fill sizes="(max-width:620px) 46vw, 240px"  referrerPolicy="no-referrer" onError={()=>setFailed(old=>old.includes(photo)?old:[...old,photo])}/><span className="br-photo-label">{photo===c.image?"Product reference":"Range photograph"}</span></div>:<div className="br-pack"><MaterialIdentity name={c.detail} category={c.category} brand={c.name}/></div>}</Link>
         <div className="br-card-copy"><h3><Link href={c.href}>{c.name}</Link></h3><p>{c.count?c.detail:"Confirm grade, pack size and local delivery terms."}</p><span className="br-stock-note">{c.count?`${c.familyCount} product ranges · ${c.count} specification options`:"Brand enquiry"} · Stock by confirmation</span>{photo===c.rangeImage&&c.rangeSource&&<a className="br-source" href={c.rangeSource} rel="noopener noreferrer" target="_blank">Range reference ↗</a>}<Link className="br-card-action" href={c.href}>{c.count?"Explore products":"Explore brand"} →</Link><Link className="br-quote-action" href={"/quotes?"+new URLSearchParams({category:c.category,material:c.name+" "+s.title})}>Request a quote</Link></div>
       </article>})}</div></section>)}
   </>;
