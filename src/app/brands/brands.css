@@ -56,3 +56,9 @@
 .br-wrap .tile-swatch .catalog-image-note{position:absolute;right:8px;bottom:8px;z-index:1;max-width:calc(100% - 16px);padding:4px 6px;border-radius:4px;background:#172b20e8;color:#fff;font-size:10px;line-height:1.2;overflow-wrap:anywhere}
 .br-wrap .catalog-variant-links{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
 .br-wrap .catalog-variant-links a{max-width:100%;overflow-wrap:anywhere}
+
+/* Do not letterbox surface/context photographs; preserve the whole pack or fitting. */
+.tile-swatch .catalog-material-image:not(.pack-photo) img{object-fit:cover!important;padding:0}
+.tile-show-card .catalog-material-image.pack-photo img{object-fit:contain!important;padding:4px;background:#fff}
+.tile-show-card .catalog-image-note{max-width:calc(100% - 16px);white-space:normal;overflow-wrap:anywhere}
+@media(max-width:640px){.tile-swatch .catalog-material-image{height:clamp(145px,43vw,205px)}}

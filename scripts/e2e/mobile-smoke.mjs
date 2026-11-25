@@ -41,6 +41,29 @@ async function main(){
     }
     if(v.w===360||v.w===430)await page.screenshot({path:path.join("test-results/mobile",v.w+"-"+(route.replaceAll("/","-")||"home")+".png"),fullPage:true,animations:"disabled"});
    }
+   // Check the reported category media regression on every viewport.
+   await page.goto(base+"/",{waitUntil:"load"});
+   const categoryCards=page.locator(".nbh-material-card");
+   assert.equal(await categoryCards.count(),9,"all home material categories");
+   await categoryCards.first().scrollIntoViewIfNeeded();
+   assert.equal(await page.locator('.nbh-material-choices a[href="/materials/bricks-blocks/red-clay-brick"]').count(),1);
+   const mediaIssues=await categoryCards.evaluateAll(cards=>cards.flatMap(card=>{
+    const img=card.querySelector(".nbh-material-main-photo img");
+    const frame=card.querySelector(".nbh-material-image");
+    const a=card.getBoundingClientRect(),b=frame?.getBoundingClientRect();
+    return !img||!b||getComputedStyle(img).objectFit!=="cover"||b.width<100||b.height<75||b.right>a.right+1?["invalid category image frame"]:[];
+   }));
+   assert.deepEqual(mediaIssues,[],"home category media fills frame at "+v.w);
+   for(const category of ["bricks-blocks","plumbing","tiles","hardware"]){
+    const res=await page.goto(base+"/materials/"+category,{waitUntil:"load"});
+    assert.equal(res?.status(),200,category);
+    assert.ok(await page.locator(".customer-material-choice").count()>=4,category+" product shortcuts");
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+    assert.ok(overflow<=2,category+" overflow at "+v.w);
+   }
+   const redBrick=await page.goto(base+"/materials/bricks-blocks/red-clay-brick",{waitUntil:"load"});
+   assert.equal(redBrick?.status(),200,"red brick details");
+   assert.match(await page.locator("h1").first().innerText(),/red clay brick/i);
    if(v.w===390||v.w===1440){
     const sizes=v.w===390?[[320,568],[360,800],[390,844],[412,915],[540,720],[768,1024],[844,390]]:[[1024,768],[1280,720],[1440,900],[1920,1080],[2560,1440]];
     for(const route of ["/design-studio/road-planner","/design-studio/portfolio?width=18&depth=50&road=N&bedrooms=3&floors=2&parking=true"]){

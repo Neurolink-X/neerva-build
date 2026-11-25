@@ -70,3 +70,17 @@ test("generic pump parts retain correct image identity without guessed brands",(
 
 
 test("downloaded tool, garden hose and pressure gauge stay on their own families",()=>{for(const [family,source] of [["generic-garden-hose","Garden_hose.jpg"],["spirit-level","Tool-level.jpg"],["fitting-pressure-gauge","Pressure_gauge.jpg"]]){const p=demoProducts.find(p=>(p.familyKey??p.slug)===family)!;assert.ok(p,family);const m=catalogPhotos(p).find(x=>x.sourceUrl?.endsWith(source));assert.ok(m,family);assert.equal(m.kind,"editorial");assert.ok(m.src.startsWith("/images/catalog/approved/"));}const suction=demoProducts.find(p=>p.familyKey==="generic-suction-hose")!;assert.ok(catalogPhotos(suction).every(m=>!m.sourceUrl?.endsWith("Garden_hose.jpg")));});
+
+test("customer category shortcuts open existing distinct catalog products and use local category images",async()=>{
+ const {categoryChoices,categorySecondaryImages,categoryChoiceHref}=await import("./category-discovery.ts");
+ const {categoryImage}=await import("./public-products.ts");
+ const {getProduct}=await import("./marketplace.ts");
+ const fs=await import("node:fs");
+ for(const [category,choices] of Object.entries(categoryChoices)){
+  assert.equal(new Set(choices.map(c=>c.slug)).size,choices.length);
+  for(const choice of choices){assert.ok(getProduct(category,choice.slug),categoryChoiceHref(category,choice.slug));assert.ok(choice.hi&&choice.en);}
+  const src=categoryImage(category);assert.ok(src&&fs.existsSync("public"+src));
+  for(const photo of categorySecondaryImages[category]??[])assert.ok(fs.existsSync("public"+photo),photo);
+ }
+ assert.equal(categoryChoices["bricks-blocks"][0].slug,"red-clay-brick");
+});
