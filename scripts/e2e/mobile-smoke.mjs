@@ -459,7 +459,7 @@ async function main(){
     await page.waitForFunction(()=>document.querySelector(".handbook-checks input")?.checked===true);
     await page.goto(base+"/build-iq",{waitUntil:"load"});
     await page.getByRole("link",{name:"Start exploring →"}).click();
-    await page.getByText("Optional Build IQ challenge",{exact:true}).click();
+    await page.getByText("Quick knowledge check",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Compare their measured dimensions and road access"}).click();
     await page.getByText("That's right.",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Mark lesson explored"}).click();
