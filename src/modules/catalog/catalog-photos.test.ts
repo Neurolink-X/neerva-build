@@ -97,3 +97,11 @@ test("generated visuals are separate from real photos, lightweight and exactly m
  for(const p of variants){const media=catalogVisuals(p);assert.equal(media[0]?.kind,"generated",p.slug);assert.equal(media[0]?.src,"/images/catalog/generated/"+family+".webp",p.slug);assert.match(media[0]?.label??"",/AI-generated/);}
  }
  });
+
+
+test("construction-first catalog filters small accessories without deleting direct product routes",async()=>{
+ const {isPublicConstructionProduct}=await import("./discovery-policy.ts");
+ const {getProduct}=await import("./marketplace.ts");
+ for(const [category,slug] of [["hardware","wood-adhesive"],["hardware","tile-grout-sponge"],["hardware","fevikwik-203"],["plumbing","fitting-gasket"]]){const p=getProduct(category,slug);assert.ok(p,slug);assert.equal(isPublicConstructionProduct(p),false,slug);}
+ for(const [category,slug] of [["hardware","roff-t01-nca"],["hardware","door-mortise-lock"],["plumbing","generic-cpvc-20mm"],["plumbing","fitting-float-valve"],["plumbing","fitting-elbow90"],["bricks-blocks","red-clay-brick"]]){const p=getProduct(category,slug);assert.ok(p,slug);assert.equal(isPublicConstructionProduct(p),true,slug);}
+});

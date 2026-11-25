@@ -28,3 +28,7 @@ Distinct house photography reserved for the planner and construction section; he
 
 ### Third generated-media batch
 16 new local WebP product-type illustrations (12 plumbing, 4 hardware), adding 110,320 bytes. The manifest now contains 46 generated assets. These are explicitly labelled AI references and never counted as verified photography. Original premium home and separate family-homes route unchanged. Strict release audit now identifies missing visuals for individual variants and priority departments separately. CI execution remains unverified.
+
+## Construction-first merchandising
+
+Minor consumables including the generic glue bottle are excluded from public discovery, category, fitting, brand and published-listing grids by a shared policy. Existing product records, direct URLs, orders and quotations are retained. Essential low-price fittings remain available; no arbitrary minimum price is imposed. Request minor accessories with a project quote. Audit reports public visual coverage separately from the full catalog.
