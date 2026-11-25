@@ -284,3 +284,14 @@
 .family-homes-page .nbh-family-grid{align-items:start}
 .family-homes-page .nbh-family-photo figcaption{font-weight:600;color:#365842}
 .family-homes-page .nbh-family-disclosure{margin:12px 0 0;font-size:12px;line-height:1.5;color:#526557}
+
+/* Local branded packaging and stable, responsive discovery cards. */
+.nbh-material-image.nbh-cement-preview{grid-template-columns:repeat(2,minmax(0,1fr));background:#fff;gap:2px}
+.nbh-cement-preview .nbh-material-main-photo{min-width:0;position:relative;background:#fff}
+.nbh-cement-preview .nbh-material-main-photo img{object-fit:contain;padding:5px}
+.nbh-cement-preview:hover img{transform:none}
+.nbh-guide-discovery{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;background:#e9eee6}
+.nbh-guide-discovery>div{flex:1 1 260px;min-width:0}.nbh-guide-discovery h2{font-family:Georgia,serif;font-size:clamp(25px,3vw,40px);line-height:1.2;margin:8px 0}.nbh-guide-discovery p{line-height:1.6;max-width:65ch}.nbh-guide-discovery .nbh-section-link{min-height:44px;display:inline-flex;align-items:center;gap:8px}
+.nbh-footer-expanded nav a{display:flex;align-items:center;min-height:40px;padding-block:3px}.nbh-footer-expanded .nbh-fineprint{color:#c4d2c6!important}.nbh-footer-bottom small{min-width:0;overflow-wrap:anywhere;border:0;padding:0}
+@media(max-width:700px){.nbh-footer-expanded{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:20px 14px}.nbh-footer-brand,.nbh-footer-bottom{grid-column:1/-1}.nbh-footer-expanded nav{min-width:0;gap:4px}.nbh-footer-expanded nav a{line-height:1.45;font-size:13px;min-height:44px}.nbh-footer-expanded nav:last-of-type{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px}.nbh-footer-expanded nav:last-of-type strong{grid-column:1/-1}}
+@media(max-width:350px){.nbh-footer-expanded{grid-template-columns:minmax(0,1fr)!important}.nbh-footer-expanded nav:last-of-type{grid-template-columns:minmax(0,1fr)}}
