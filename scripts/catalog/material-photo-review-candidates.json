@@ -423,5 +423,38 @@
     "license": "Publication rights not yet verified",
     "licenseUrl": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
     "note": "Manufacturer original; verify resolution, exact model, distinct view and permission before publication."
+  },
+  {
+    "key": "hdpe-coil-family",
+    "filename": "Hdpe_Pipes_In_Coil.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Hdpe_Pipes_In_Coil.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Hdpe_Pipes_In_Coil.jpg",
+    "credit": "Deeptarpara",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "plumbing:generic-hdpe",
+    "note": "Visually reviewed HDPE coils in storage; no diameter, grade or supplier verified. Stage bytes, check quality and hash before import."
+  },
+  {
+    "key": "drawer-pull-installed",
+    "filename": "Drawer_handle.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Drawer_handle.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Drawer_handle.jpg",
+    "credit": "iluvrhinestones",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "target": "hardware:cabinet-pull-handle",
+    "note": "Visually reviewed installed drawer pull. Generic installed example only; do not claim dimensions or finish."
+  },
+  {
+    "key": "indian-family-house-reference",
+    "filename": "House_front_look.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0c/House_front_look.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:House_front_look.jpg",
+    "credit": "Gausanchennai",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "home:family-house",
+    "note": "Street-facing house in Chennai. Visually reviewed; no budget, ownership or plot dimensions inferred. Review crop and privacy before use."
   }
 ]

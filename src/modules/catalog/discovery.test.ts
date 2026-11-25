@@ -143,3 +143,27 @@ test("requested tank and pump parts are covered without duplicate aliases",async
 
 
 test("failed remote media is excluded and pressure switch is not represented by an unconfirmed float-switch listing",async()=>{const {failedMediaSources,usableMediaSource}=await import("./failed-media-sources.ts");const {fittingReference,fittingPrice}=await import("./fitting-references.ts");assert.ok(failedMediaSources.size>=40);for(const source of failedMediaSources)assert.equal(usableMediaSource(source),false);assert.equal(fittingReference("fitting-pressure-switch")?.image,undefined);assert.equal(fittingPrice("fitting-pressure-switch"),null);});
+
+
+test("published catalog paging is bounded, stable and rejects unsafe query parameters",async()=>{
+ const {parsePublishedCatalogPage,takePublishedCatalogPage}=await import("./published-page.ts");
+ assert.deepEqual(parsePublishedCatalogPage(new URLSearchParams()),{limit:100,after:null,category:null});
+ assert.deepEqual(parsePublishedCatalogPage(new URLSearchParams("limit=24&category=plumbing&after=generic-cpvc-20mm")),{limit:24,after:"generic-cpvc-20mm",category:"plumbing"});
+ for(const q of ["limit=0","limit=101","limit=-1","limit=2.5","after=../secret","category=invalid","after=","limit=1e2"])assert.equal(parsePublishedCatalogPage(new URLSearchParams(q)),null,q);
+ const rows=[{slug:"a"},{slug:"b"},{slug:"c"}];assert.deepEqual(takePublishedCatalogPage(rows,2),{products:rows.slice(0,2),nextCursor:"b"});assert.deepEqual(takePublishedCatalogPage(rows,3),{products:rows,nextCursor:null});assert.deepEqual(takePublishedCatalogPage([],2),{products:[],nextCursor:null});
+});
+
+
+test("reference pagination preserves every product family and every size across pages",async()=>{
+ const {referencePage,REFERENCE_PAGE_SIZE}=await import("./reference-page.ts");
+ const {groupCatalogByPhoto}=await import("./media-usage.ts");
+ const {isPublicConstructionProduct}=await import("./discovery-policy.ts");
+ const products=demoProducts.filter(isPublicConstructionProduct);
+ const groups=groupCatalogByPhoto(products);
+ const first=referencePage(groups,0);
+ assert.ok(first.pages>1);assert.equal(first.items.length,REFERENCE_PAGE_SIZE);
+ const all=Array.from({length:first.pages},(_,i)=>referencePage(groups,i).items).flat();
+ assert.deepEqual(all,groups);assert.equal(all.flatMap(g=>g.variants).length,products.length);
+ assert.equal(referencePage(groups,99999).page,first.pages-1);
+ assert.equal(referencePage(groups,-1).page,0);assert.equal(referencePage([],3).items.length,0);
+});

@@ -1,6 +1,7 @@
 "use client";
 import {useCallback,useEffect,useState} from "react";
 import Link from "next/link";
+import {StockConfirmationPanel} from "./stock-confirmation-panel";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 type Role="admin"|"dealer";
 type Order={
@@ -26,7 +27,7 @@ const transitions:Record<Role,Record<string,{status:string;label:string}[]>>={
 };
 const currency=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR"});
 const supabase=createNeervaBrowserClient();
-export function OrderOperationsPanel({role}:{role:Role}){
+export function OrderOperationsPanel({role,atomicStock=false}:{role:Role;atomicStock?:boolean}){
  const [orders,setOrders]=useState<Order[]>([]),[message,setMessage]=useState("Loading verified orders…");
  const [busy,setBusy]=useState<string|null>(null);
  const reload=useCallback(async()=>{
@@ -79,10 +80,12 @@ export function OrderOperationsPanel({role}:{role:Role}){
     <ul>{(order.line_items??[]).map((line,index)=><li key={index}>{line.productName} — {line.quantity} {line.unit} — {currency.format(line.lineTotalPaise/100)}</li>)}</ul>
     <p style={{fontSize:12}}>Accepted {new Date(order.created_at).toLocaleString("en-IN")}</p>
     <div style={{display:"flex",gap:9,flexWrap:"wrap"}}>
-     {(transitions[role][order.status]??[]).map(action=><button key={action.status}
+     {(transitions[role][order.status]??[]).filter(action=>!(atomicStock&&action.status==="confirmed")).map(action=><button key={action.status}
       className="button button-outline" type="button" disabled={Boolean(busy)}
       onClick={()=>void update(order,action.status)}>{busy===order.id?"Updating…":action.label}</button>)}
     </div>
+    {atomicStock&&order.status==="pending_confirmation"&&role==="dealer"&&<StockConfirmationPanel orderId={order.id} tenantId={order.tenant_id} lines={order.line_items??[]} onDone={reload} disabled={Boolean(busy)}/>}
+    {atomicStock&&order.status==="pending_confirmation"&&role==="admin"&&<p>Stock-backed confirmation must be completed by the assigned dealer.</p>}
     {order.status==="out_for_delivery"&&<p style={{fontSize:13}}>Delivery completes only when the signed-in customer confirms receipt. Do not issue a GST invoice from this screen.</p>}
    </article>)}
   </div>

@@ -8,3 +8,13 @@ coverage/
 !.env.example
 *.tsbuildinfo
 .vercel/
+
+# Local audit output and ephemeral browser evidence (CI uploads separately)
+catalog-audit/
+brand-media-review/
+ci-evidence/
+test-results/
+playwright-report/
+
+# Generated draft catalog export; review before importing to any database
+catalog-sync/

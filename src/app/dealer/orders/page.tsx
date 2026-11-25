@@ -1,3 +1,4 @@
+import {stockConfirmationEnabled} from "@/modules/orders/stock-confirmation";
 import type {Metadata} from "next";
 import Link from "next/link";
 import {SiteHeader,SiteFooter} from "@/components/site-chrome";
@@ -13,7 +14,7 @@ export default function DealerOrdersPage(){
    <p>Handle only customer-accepted, verified dealer offers. Confirm actual stock, prepare materials and record dispatch. The customer acknowledges receipt from their own account; this screen does not collect payment.</p>
    <nav className="admin-page-links"><Link href="/dealer/quotes">Quotation invitations</Link><Link href="/dealer/inventory">Stock</Link><Link href="/account">Account</Link></nav>
   </section>
-  <section className="section ops-content"><OrderOperationsPanel role="dealer"/></section>
+  <section className="section ops-content"><OrderOperationsPanel role="dealer" atomicStock={stockConfirmationEnabled(process.env)}/></section>
   <SiteFooter/>
  </main>;
 }

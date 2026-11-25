@@ -1,14 +1,15 @@
 name: Authenticated isolated order E2E
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches: [main]
     paths:
       - 'src/modules/orders/**'
       - 'src/modules/identity/**'
       - 'src/app/api/**'
-      - 'scripts/e2e/authenticated-direct-orders.mjs'
-      - 'scripts/catalog/export-draft-catalog.mjs'
-      - 'scripts/catalog/verify-draft-import.mjs'
+      - 'scripts/e2e/**'
+      - 'scripts/ops/**'
+      - 'scripts/catalog/**'
       - 'src/modules/catalog/**'
       - 'supabase/migrations/**'
       - '.github/workflows/authenticated-orders.yml'
@@ -20,10 +21,11 @@ concurrency:
   cancel-in-progress: true
 jobs:
   authenticated:
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
@@ -42,9 +44,13 @@ jobs:
           set -a
           source "$RUNNER_TEMP/neerva-local.env"
           set +a
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          echo "::add-mask::$ANON_KEY"
+          echo "::add-mask::$DB_URL"
           [[ "$API_URL" == "http://127.0.0.1:54321" ]]
           [[ "$DB_URL" == *"127.0.0.1:54322/"* ]]
           {
+            echo "DB_URL=$DB_URL"
             echo "NEERVA_E2E_LOCAL=yes"
             echo "NEERVA_E2E_DISPOSABLE=yes"
             echo "NEERVA_E2E_SUPABASE_URL=$API_URL"
@@ -52,19 +58,27 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
           } >> "$GITHUB_ENV"
+          export NEERVA_E2E_LOCAL=yes NEERVA_E2E_DISPOSABLE=yes
           node --experimental-strip-types scripts/catalog/export-draft-catalog.mjs
           node scripts/catalog/verify-draft-import.mjs
+          node --experimental-strip-types scripts/catalog/reconcile-reference-catalog.mjs
           node --input-type=module <<'JS'
           import {createClient} from "@supabase/supabase-js";
           import {randomUUID} from "node:crypto";
           import {appendFileSync} from "node:fs";
           import {execFileSync} from "node:child_process";
           const client=createClient(process.env.API_URL,process.env.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
-          for(const role of ["CUSTOMER","OTHER_CUSTOMER","ADMIN"]){
+          for(const role of ["CUSTOMER","OTHER_CUSTOMER","ADMIN","DEALER_A","DEALER_B"]){
             const email=role.toLowerCase()+"-"+randomUUID()+"@example.test";
             const password=randomUUID()+"Aa1!";
+            console.log("::add-mask::"+password);
             const {data,error}=await client.auth.admin.createUser({email,password,email_confirm:true});
             if(error||!data.user)throw Error("Fixture creation failed: "+role);
+            if(role.startsWith("DEALER_")){
+              const id=data.user.id;const tenant=randomUUID();const branch=randomUUID();
+              execFileSync("psql",[process.env.DB_URL,"-v","ON_ERROR_STOP=1","-c",`insert into public.tenants(id,business_name,status) values (\x27${tenant}\x27,\x27Disposable dealer ${role}\x27,\x27active\x27); insert into public.tenant_memberships(tenant_id,user_id,role) values (\x27${tenant}\x27,\x27${id}\x27,\x27owner\x27); insert into public.merchant_branches(id,tenant_id,name,city,pincode,approved) values (\x27${branch}\x27,\x27${tenant}\x27,\x27Test branch\x27,\x27Kanpur\x27,\x27208001\x27,true);`]);
+              appendFileSync(process.env.GITHUB_ENV,"NEERVA_E2E_"+role+"_BRANCH="+branch+"\n");
+            }
             if(role==="ADMIN"){
               const id=data.user.id;
               if(!/^[0-9a-f-]{36}$/.test(id))throw Error("Invalid fixture ID");
@@ -73,8 +87,18 @@ jobs:
             appendFileSync(process.env.GITHUB_ENV,"NEERVA_E2E_"+role+"_EMAIL="+email+"\nNEERVA_E2E_"+role+"_PASSWORD="+password+"\n");
           }
           JS
+      - name: Verify disposable database backup tools
+        run: node --experimental-strip-types scripts/ops/disposable-recovery-drill.mjs --preflight
       - run: npm run build
+        env:
+          NEERVA_STUDIO_PAYMENTS_ENABLED: "true"
+          NEERVA_OPERATOR_TERMS_VERIFIED: "true"
+          NEERVA_ATOMIC_STOCK_CONFIRMATION: "true"
       - name: Execute authenticated order lifecycle
+        env:
+          NEERVA_STUDIO_PAYMENTS_ENABLED: "true"
+          NEERVA_OPERATOR_TERMS_VERIFIED: "true"
+          NEERVA_ATOMIC_STOCK_CONFIRMATION: "true"
         shell: bash
         run: |
           set -euo pipefail
@@ -87,6 +111,12 @@ jobs:
             sleep 2
           done
           node scripts/e2e/authenticated-direct-orders.mjs | tee test-results/authenticated/result.json
+          node scripts/ops/rehearse-studio-concurrency.mjs
+          node scripts/ops/rehearse-order-acceptance.mjs
+          node scripts/ops/rehearse-stock-reservation.mjs
+          node scripts/e2e/marketplace-reliability.mjs | tee test-results/authenticated/reliability.json
+          node scripts/ops/benchmark-public.mjs http://127.0.0.1:3000 > test-results/authenticated/benchmark.json
+          node --experimental-strip-types scripts/ops/disposable-recovery-drill.mjs > test-results/authenticated/recovery.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
@@ -96,6 +126,7 @@ jobs:
             catalog-sync/summary.json
             catalog-sync/draft-import.sql
           if-no-files-found: ignore
+          retention-days: 7
       - name: Destroy local test stack
         if: always()
         run: npx --yes supabase@2.122.1 stop --no-backup

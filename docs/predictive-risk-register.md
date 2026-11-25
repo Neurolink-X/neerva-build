@@ -1,0 +1,54 @@
+# Predictive risk register — 2026-11-25
+These are risks, not reported production incidents. No production data or permissions changed.
+| Area | Existing controls and this change | Outstanding validation |
+|---|---|---|
+| Auth | JWT getUser, account access RPC, role gates; separate session expiry from outages | Real expired session and 429/5xx integration |
+| Admin/dealer | RLS, explicit tenant/role filters, fixture tests | Execute authenticated tests; restricted and suspended identities |
+| Inventory | Nonnegative stock, tenant/unit checks; orders are RFQ acceptance, not stock reservations | SKU-linked reservation design required before instant checkout; never imply availability is guaranteed |
+| Orders | Unique RFQ/key, row lock, expected status; reject address-changing idempotent retry | Concurrent accepted-offer and transition tests |
+| Payments/refunds | Unique UTR, review RPC row lock, atomic entitlement changes | Claim-versus-cancel interleaving, checkout/refund race, real reconciliation |
+| Catalog/media | Draft-only import, explicit published identity, local reviewed photos | PR 56 must pass; rights and all media coverage need review |
+| Design | Canonical PlanModel, adapter and geometry tests | Cross-size/floor/orientation browser execution |
+| Colour | Header-based 16MP decode budget, 1280px retained bitmap, stale request and cleanup guards | Real low-memory devices, malformed/animated files and rapid selection |
+| Pincode | Exact service-area checks at quote acceptance, validated delivery policy | Cross-dealer/unsupported PIN and stale coverage tests |
+No stock reservation, automatic settlement or certified architectural drawings are introduced by these changes.
+
+Extended disposable regression suite: concurrent Studio checkout and UTR submissions, cancellation after claim, duplicate refund, entitlement revocation, malformed PINs, invalid and stale direct-order transitions. These tests are configured, not yet executed. Claim-versus-cancel at exactly the same instant still needs a reviewed database locking migration; stock reservation requires explicit SKU/branch linkage and fulfillment semantics.
+
+## Next candidate: Studio concurrency
+A transaction-locking SQL candidate is in scripts/ops/studio-concurrency-candidate.sql, rehearsed only on the disposable local database before the reliability suite. It serializes checkout and admin review per account/product, locks the same order row for claim/cancel, validates claim time and ownership inside the database, and refuses refund if the matching active entitlement is missing. The regression checks the persisted outcome of concurrent claim/cancel. This is not a deployed migration, nor bank reconciliation. Supabase CLI is unavailable in the current environment; generate a tracked migration after staging tests and review. Existing inconsistencies must be reconciled, not overwritten.
+
+## Stock reservation candidate
+Added isolated SQL candidate for explicitly mapped RFQ order lines, validated seller branch/service PIN, atomic conditional stock decrement, deterministic row locking, holds, pre-dispatch cancellation release, dispatch consumption, and bounded admin expiry. Existing unmapped orders remain sourcing/confirmation requests and are not stock guarantees. Requires staging concurrency fixtures, reviewed SKU selection UI/API, expiry scheduling and a tracked migration before activation. Expired holds currently require manual order reconciliation; archived SKU release and stale stock-editor behavior require staging validation. Do not deploy the candidate directly.
+
+## Catalog reconciliation
+Read-only exact slug/category/origin/reference-SKU/unit/status reconciliation and unit tests are now linked to the disposable import workflow. Conflicting rows and missing or orphan reference records are reported, not overwritten or published. Production run requires a verified database connection and does not synchronize records by itself.
+
+## Atomic confirmation integration
+Opt-in server flag NEERVA_ATOMIC_STOCK_CONFIRMATION=true enables the dealer exact-SKU mapping UI/API. In the candidate DB, reserve and confirm occur in one transaction; no new standalone pending reservations can be created, eliminating the need for a new scheduled expiry job for this flow. Existing pending-hold cleanup remains bounded and admin-only. Legacy admin/dealer manual confirmation remains unchanged until the flag and reviewed DB migration are coordinated. An activated candidate blocks bypass via direct order status updates. Dealer must explicitly verify the exact product; a unit match alone is not identity proof. Direct sourcing requests remain non-guaranteed. No production activation.
+
+Added disposable real RFQ → invite → offer → accept → simultaneous stock confirmation tests with two independent customers, role and direct database bypass rejection, cancellation release exactly once and no restock after dispatch. Authentication read-only operations can refresh once on explicit 401; writes are not automatically retried. No per-order flag polling. Remaining: test execution, archived variant release and real coverage/rights review, approved migration and production rollout.
+
+## Recheck fixes
+Corrected malformed SQL dollar delimiters in the reservation candidate, added lexical regression tests, locked published SKU/category/product during reservation, guarded SKU archival while reserved and journaled inventory movements. Added archive/ledger assertions. PostgreSQL execution remains mandatory; no production activation.
+
+## Snapshot consistency
+Dealer stock form and API now use optimistic timestamp checks, reject stale updates even after release, and validate decimal precision. Legacy four-field clients are accepted only while the atomic-stock flag is off. Direct database writes remain subject to existing RLS and candidate hold guards; complete enforcement of snapshot tokens at the database boundary still requires a reviewed migration. RFQ retries with changed payload now return conflict instead of returning the earlier unrelated request. Tests added, not yet executed.
+
+## Actual CI finding
+Public runner run 45551147209 executed 204 tests; 203 passed, one L-shaped plan note assertion failed. Preserve the cadastral survey warning in alternate architectural and compact plans, and include the notch identity in their IDs. Regression coverage extends the check to both notch directions. No geometry or test assertions were removed.
+
+## Authenticated E2E connection fix
+Run 45551316570 passed local database bootstrap and both catalog imports (376 rows), but reconciliation psql attempted the default Unix socket because the full database URI had been supplied via PGDATABASE. Pass validated host, port, database, user, password and SSL mode as separate libpq environment fields in both reconciliation and production preflight. Remove inherited connection service/address overrides; retain read-only reconciliation and production approval gates. Actual E2E rerun required.
+
+## RFQ acceptance regression
+Run 45551955218 passed catalog bootstrap and build, then failed real RFQ acceptance with HTTP 503. The existing migration and read-only inspected production definition both contain ambiguous `p.application_id=application_id` in a PL/pgSQL function. Rehearsal candidate replaces it with an explicit join, preserving approved/verified dealer, exact PIN, branch, ownership, order locking and amount checks. Extend E2E to exact replay, changed-address conflict, amount and RFQ transition. Log only sanitized database error codes; no payload or personal data. This is a candidate; exact cause is not confirmed by a SQLSTATE in the previous run, and production migration is not applied.
+
+## Release verification after draft transition
+PR #57 ready-for-review event produced skipped jobs after concurrent cancellation (CI 45554827313, authenticated E2E 45554827367, mobile 45554827392, catalog 45554827303). A fresh non-draft synchronization must execute the required checks on the exact new head. Skipped or cancelled jobs are not passing release evidence. Candidate SQL remains rehearsal-only until an approved production migration.
+
+## PostgreSQL backup tool compatibility
+Authenticated E2E 45555379686 reached the recovery drill, which failed because server 17.11 was newer than runner pg_dump 16.16. Install the exact detected server-major client in the disposable workflow if missing, select explicit dump/restore paths, validate both versions before creating fixtures and retain checksum verification. No production DB changes. New E2E evidence required before merge.
+
+## Recovery tooling correction
+Run 45555864026 failed because Ubuntu's package sources lacked postgresql-client-17. CI 45555863934 and mobile 45555863923 failed TypeScript declaration checks for the JS helper. Replace host-package installation with the already running disposable Supabase PostgreSQL container's own dump and restore binaries, typed helper, unique port/image selection, same-server system identifier verification and preflight before build. Real custom archive and transactional restore must still pass the catalog checksum. No external package installation or production access.

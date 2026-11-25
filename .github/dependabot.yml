@@ -16,6 +16,10 @@ updates:
           - react-dom
           - '@types/react'
           - '@types/react-dom'
+      tailwind-compatible-stack:
+        patterns:
+          - tailwindcss
+          - '@tailwindcss/postcss'
       patch-updates:
         exclude-patterns:
           - react

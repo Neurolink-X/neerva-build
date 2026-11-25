@@ -19,6 +19,7 @@ test("real L-shaped rear-left parcel uses conservative interior envelope; no roo
   assert.equal(p.plot.widthFt,20);
   assert.ok(p.rooms.every(room=>rectInsideShape(room,20,60,siteShape)),p.id+" crosses missing land");
   assert.match(p.notes.join(" "),/cadastral site survey/);
+  assert.ok(p.id.includes(siteShape.kind), "Notched plot identity must include its shape");
  }
 });
 test("real rear-right L parcel mirrors missing corner, while car entry stays at road",()=>{
@@ -31,6 +32,8 @@ test("real rear-right L parcel mirrors missing corner, while car entry stays at 
   assert.equal(p.plot.roadSide,"E");
   assert.ok(p.rooms.every(room=>rectInsideShape(room,20,60,siteShape)));
   assert.equal(p.gate.side,"front");
+  assert.match(p.notes.join(" "),/cadastral site survey/);
+  assert.ok(p.id.includes(siteShape.kind), "Notched plot identity must include its shape");
  }
 });
 test("unsafe L-plot notch or too-small remaining frontage is rejected without fake architecture",()=>{

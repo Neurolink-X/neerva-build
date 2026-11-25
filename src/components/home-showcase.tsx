@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import {useEffect, useRef, useState} from "react";
-import {homeReferencePhotos} from "@/modules/home/assets";
+import {heroGalleryPhotos} from "@/modules/home/assets";
 
 export function HomeShowcase({hindi}:{hindi:boolean}) {
   const root = useRef<HTMLDivElement>(null);
@@ -41,7 +41,7 @@ export function HomeShowcase({hindi}:{hindi:boolean}) {
   useEffect(() => {
     if (!playing) return;
     const timer = window.setInterval(() => {
-      if (!document.hidden) slide((index+1)%homeReferencePhotos.length,true);
+      if (!document.hidden) slide((index+1)%heroGalleryPhotos.length,true);
     },5500);
     return () => clearInterval(timer);
   },[playing,index]);
@@ -53,8 +53,8 @@ export function HomeShowcase({hindi}:{hindi:boolean}) {
     <div className="nbh-house-strip" ref={strip} onPointerDown={()=>setPaused(true)} onScroll={e=>{
       const el=e.currentTarget;
       if(el.clientWidth) setIndex(Math.round(el.scrollLeft/el.clientWidth));
-    }}>{homeReferencePhotos.map((photo,i)=><div key={photo.src}><Image src={photo.src} fill sizes="(max-width:760px) 95vw, 46vw" loading={i===0?"eager":"lazy"} alt={photo.name}/></div>)}</div>
-    <div className="nbh-house-controls">{homeReferencePhotos.map((photo,i)=><button type="button" key={photo.src} aria-current={i===index?"true":undefined} aria-label={(hindi?"घर ":"House ")+(i+1)} onClick={()=>{setPaused(true);slide(i,motion);}}>{i+1}</button>)}</div>
+    }}>{heroGalleryPhotos.map((photo,i)=><div key={photo.src}><Image src={photo.src} fill sizes="(max-width:760px) 95vw, 46vw" loading={i===0?"eager":"lazy"} alt={photo.name}/></div>)}</div>
+    <div className="nbh-house-controls">{heroGalleryPhotos.map((photo,i)=><button type="button" key={photo.src} aria-current={i===index?"true":undefined} aria-label={(hindi?"घर ":"House ")+(i+1)} onClick={()=>{setPaused(true);slide(i,motion);}}>{i+1}</button>)}</div>
     <figure className="home-stage-comparison"><div className="nbh-compare-frame">
       <Image src="/images/studio/finished.webp" fill sizes="(max-width:760px) 95vw, 46vw" alt="Finished house concept"/>
       <Image src="/images/studio/shell.webp" fill sizes="(max-width:760px) 95vw, 46vw" alt="Unfinished house concept" style={{clipPath:`inset(0 ${100-reveal}% 0 0)`}}/>
