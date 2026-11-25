@@ -11,8 +11,8 @@ const local=db.hostname==="127.0.0.1"&&db.port==="54322"&&process.env.NEERVA_E2E
 const production=db.hostname==="db.djgghisbkucprqiezrcn.supabase.co"&&db.searchParams.get("sslmode")==="require";
 assert.ok(local||production,"Only disposable local or exact Neerva production DB");
 const sql="select coalesce(jsonb_agg(jsonb_build_object('slug',p.slug,'category',c.slug,'status',p.status,'origin',p.attributes->>'origin','variants',coalesce((select jsonb_agg(jsonb_build_object('sku',v.sku,'unit',v.unit,'status',v.status)) from public.product_variants v where v.product_id=p.id),'[]'::jsonb))),'[]'::jsonb) from public.products p join public.categories c on c.id=p.category_id";
-const env={...process.env,PGDATABASE:db.toString(),PGCONNECT_TIMEOUT:"10",PGOPTIONS:"-c default_transaction_read_only=on -c statement_timeout=20000"};
-delete env.NEERVA_CATALOG_DATABASE_URL;delete env.DB_URL;
+const env={...process.env,PGHOST:db.hostname,PGPORT:db.port||"5432",PGDATABASE:decodeURIComponent(db.pathname.slice(1)),PGUSER:decodeURIComponent(db.username),PGPASSWORD:decodeURIComponent(db.password),PGSSLMODE:db.searchParams.get("sslmode")||"disable",PGCONNECT_TIMEOUT:"10",PGOPTIONS:"-c default_transaction_read_only=on -c statement_timeout=20000"};
+delete env.NEERVA_CATALOG_DATABASE_URL;delete env.PGSERVICE;delete env.PGSERVICEFILE;delete env.PGHOSTADDR;delete env.DB_URL;
 const rows=JSON.parse(execFileSync("psql",["-X","-v","ON_ERROR_STOP=1","-At","-c",sql],{env,encoding:"utf8",maxBuffer:16*1024*1024}).trim());
 const refs=demoProducts.map(p=>({slug:p.slug,category:p.category,unit:defaultCategoryUnit(p.category)}));
 const findings=reconcileCatalog(refs,rows);

@@ -37,3 +37,6 @@ Dealer stock form and API now use optimistic timestamp checks, reject stale upda
 
 ## Actual CI finding
 Public runner run 45551147209 executed 204 tests; 203 passed, one L-shaped plan note assertion failed. Preserve the cadastral survey warning in alternate architectural and compact plans, and include the notch identity in their IDs. Regression coverage extends the check to both notch directions. No geometry or test assertions were removed.
+
+## Authenticated E2E connection fix
+Run 45551316570 passed local database bootstrap and both catalog imports (376 rows), but reconciliation psql attempted the default Unix socket because the full database URI had been supplied via PGDATABASE. Pass validated host, port, database, user, password and SSL mode as separate libpq environment fields in both reconciliation and production preflight. Remove inherited connection service/address overrides; retain read-only reconciliation and production approval gates. Actual E2E rerun required.
