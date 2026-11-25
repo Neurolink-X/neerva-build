@@ -49,3 +49,6 @@ PR #57 ready-for-review event produced skipped jobs after concurrent cancellatio
 
 ## PostgreSQL backup tool compatibility
 Authenticated E2E 45555379686 reached the recovery drill, which failed because server 17.11 was newer than runner pg_dump 16.16. Install the exact detected server-major client in the disposable workflow if missing, select explicit dump/restore paths, validate both versions before creating fixtures and retain checksum verification. No production DB changes. New E2E evidence required before merge.
+
+## Recovery tooling correction
+Run 45555864026 failed because Ubuntu's package sources lacked postgresql-client-17. CI 45555863934 and mobile 45555863923 failed TypeScript declaration checks for the JS helper. Replace host-package installation with the already running disposable Supabase PostgreSQL container's own dump and restore binaries, typed helper, unique port/image selection, same-server system identifier verification and preflight before build. Real custom archive and transactional restore must still pass the catalog checksum. No external package installation or production access.

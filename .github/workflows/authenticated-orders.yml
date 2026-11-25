@@ -87,20 +87,8 @@ jobs:
             appendFileSync(process.env.GITHUB_ENV,"NEERVA_E2E_"+role+"_EMAIL="+email+"\nNEERVA_E2E_"+role+"_PASSWORD="+password+"\n");
           }
           JS
-      - name: Ensure PostgreSQL backup client matches disposable server
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ "$DB_URL" == *"127.0.0.1:54322/postgres"* ]]
-          [[ "$NEERVA_E2E_LOCAL" == "yes" && "$NEERVA_E2E_DISPOSABLE" == "yes" ]]
-          major=$(node --input-type=module -e 'import {execFileSync} from "node:child_process"; import {postgresClientMajor} from "./scripts/ops/recovery-tools.mjs"; console.log(postgresClientMajor(execFileSync("psql",[process.env.DB_URL,"-X","-At","-c","show server_version_num"],{encoding:"utf8"})))')
-          [[ "$major" =~ ^[0-9]{2}$ ]]
-          if [[ ! -x "/usr/lib/postgresql/$major/bin/pg_dump" || ! -x "/usr/lib/postgresql/$major/bin/pg_restore" ]]; then
-            sudo apt-get update -qq
-            sudo apt-get install -y --no-install-recommends "postgresql-client-$major"
-          fi
-          "/usr/lib/postgresql/$major/bin/pg_dump" --version
-          "/usr/lib/postgresql/$major/bin/pg_restore" --version
+      - name: Verify disposable database backup tools
+        run: node --experimental-strip-types scripts/ops/disposable-recovery-drill.mjs --preflight
       - run: npm run build
         env:
           NEERVA_STUDIO_PAYMENTS_ENABLED: "true"
@@ -128,7 +116,7 @@ jobs:
           node scripts/ops/rehearse-stock-reservation.mjs
           node scripts/e2e/marketplace-reliability.mjs | tee test-results/authenticated/reliability.json
           node scripts/ops/benchmark-public.mjs http://127.0.0.1:3000 > test-results/authenticated/benchmark.json
-          node scripts/ops/disposable-recovery-drill.mjs > test-results/authenticated/recovery.json
+          node --experimental-strip-types scripts/ops/disposable-recovery-drill.mjs > test-results/authenticated/recovery.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
