@@ -328,3 +328,12 @@ export const siteCases=[
 export type SiteCase=typeof siteCases[number];
 export const practiceEdition={revision:1,updated:"2026-11-25",reviewDue:"2027-05-25",status:"Professional review pending"} as const;
 export function findCases(query:string,stage:string){const words=query.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean).slice(0,12);return siteCases.filter(c=>(stage==="all"||c.stage===stage)&&words.every(w=>[c.title,c.hi,c.situation,c.hindi,c.stage,...c.actions].join(" ").toLocaleLowerCase().includes(w)))}
+
+export const fieldRecordTemplates=[
+ {id:"daily",title:"Daily site record",hi:"रोज का साइट रिकॉर्ड",fields:["Date / location / work stage","Drawing revision used","Work completed and measured quantity","Materials received and batch / invoice","Inspections and test records","Problems, responsible person and next action"]},
+ {id:"delivery",title:"Material delivery discrepancy",hi:"मटेरियल डिलीवरी में कमी",fields:["Purchase order and invoice reference","Material specification and unit","Ordered quantity","Delivered quantity including rejected","Rejected / damaged quantity","Accepted quantity and discrepancy","Supplier acknowledgement and agreed resolution"]},
+ {id:"variation",title:"Contractor change request",hi:"ठेकेदार के काम में बदलाव",fields:["Original drawing or agreed scope","Proposed change and reason","Professional approval if required","Measured quantity and written cost difference","Schedule effect and exclusions","Owner / contractor written decision before work"]},
+ {id:"concealed",title:"Before covering work",hi:"काम ढकने से पहले रिकॉर्ड",fields:["Location and work to be covered","Current drawing / specification","Required inspections and test references","Outstanding defects and responsible person","Qualified professional's recorded decision","As-built record / photo reference (if safe and permitted)"]},
+ {id:"handover",title:"Home handover and maintenance file",hi:"घर हैंडओवर और रखरखाव फाइल",fields:["Rooms and systems inspected","Outstanding defects and agreed resolution","As-built drawings and concealed service locations","Test / commissioning records","Product warranties and maintenance instructions","Keys, equipment manuals and contact references"]}
+] as const;
+export function fieldTemplateText(id:string){const t=fieldRecordTemplates.find(x=>x.id===id);return t?[t.title,t.hi,"Neerva Academy — editable record template, not an inspection or contractual approval.",...t.fields.map(x=>x+": ____________________")].join("\n\n"):null}
