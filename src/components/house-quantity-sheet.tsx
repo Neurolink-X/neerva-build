@@ -1,0 +1,14 @@
+
+"use client";
+import {useState} from "react";
+import {houseTakeoff} from "@/modules/home/house-takeoff";
+const inputs=[["floorArea","Measured flooring area (sq ft)",900],["wallLength","Total wall centreline length (ft)",100],["wallHeight","Wall height (ft)",10],["wallThickness","Modular wall thickness (mm)",200],["openings","Total openings (sq ft)",120],["concreteVolume","Measured total concrete (m³)",20],["cementPerM3","Approved cement (kg/m³)",350],["sandPerM3","Approved sand (kg/m³)",700],["aggregatePerM3","Approved aggregate (kg/m³)",1100],["paintCoverage","Paint coverage per coat (m²/L)",10],["paintCoats","Paint coats",2],["waste","Example allowance (%)",5]] as const;
+type Field=typeof inputs[number][0];
+const fmt=(n:number)=>n.toLocaleString("en-IN",{maximumFractionDigits:2});
+export function HouseQuantitySheet(){
+ const [values,setValues]=useState<Record<Field,string>>(()=>Object.fromEntries(inputs.map(([k,,n])=>[k,String(n)])) as Record<Field,string>),[bars,setBars]=useState(["0","1000","0","0"]);
+ const num=(s:string)=>s.trim()?Number(s):NaN;
+ const x=Object.fromEntries(inputs.map(([k])=>[k,num(values[k])])) as Record<Field,number>;
+ const result=houseTakeoff({...x,barLengths:[8,12,16,20].map((diameter,i)=>({diameter,length:num(bars[i])}))});
+ return <section className="build-workbench" id="quantity-sheet"><span className="eyebrow">MEASURED HOUSE QUANTITY SHEET</span><h2>Turn a drawing into a material list.</h2><p>Editable example inputs only, not a design for a 900 sq ft home. Enter measured quantities from your approved drawings; use separate sheets for different wall heights or thicknesses and sum the results.</p><div className="build-lab-grid"><div className="build-fields">{inputs.map(([k,label])=><label key={k}>{label}<input type="number" min="0" step="any" value={values[k]} onChange={e=>setValues(v=>({...v,[k]:e.target.value}))}/></label>)}{[8,12,16,20].map((d,i)=><label key={d}>{d} mm scheduled steel length (m)<input type="number" min="0" step="any" value={bars[i]} onChange={e=>setBars(b=>b.map((s,j)=>i===j?e.target.value:s))}/></label>)}</div><div className="build-results" aria-live="polite"><h3>Partial quantity summary</h3>{result?<>{Object.entries({"Modular bricks":fmt(result.bricks),"Concrete cement bags (50 kg)":fmt(result.cementBags),"Concrete sand (t)":fmt(result.sandTonnes),"Coarse aggregate (t)":fmt(result.aggregateTonnes),"Scheduled steel (kg)":fmt(result.steelKg),"Floor tile area (sq ft)":fmt(result.tilesSqFt),"Wall paint (L, both faces)":fmt(result.paintLitres)}).map(([k,v])=><div key={k}><small>{k}</small><strong>{v}</strong></div>)}</>:<p>Check all inputs, including openings, quantities and allowance.</p>}<small>Excludes mortar/plaster cement, ceiling paint, MEP, other bar diameters and room-specific finish details. Use actual product coverage. This is not a complete BOQ, structural design or purchase order.</small></div></div></section>
+}
