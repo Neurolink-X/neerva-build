@@ -1,11 +1,11 @@
 "use client";
 import {useEffect,useState} from "react";
 import Link from "next/link";
-import {initialProject,parseProject,projectKey,projectStats,stages,toggleTask,type Project} from "@/modules/home/project-planner";
+import {initialProject,parseProject,readProject,projectKey,projectStats,stages,toggleTask,type Project} from "@/modules/home/project-planner";
 const money=(n:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:0}).format(n);
 export function ProjectPlanner(){
  const [project,setProject]=useState<Project>(initialProject),[ready,setReady]=useState(false),[notice,setNotice]=useState("");
- useEffect(()=>{const timer=window.setTimeout(()=>{try{setProject(parseProject(JSON.parse(localStorage.getItem(projectKey)??"null")))}catch{setNotice("Saved project could not be loaded.")}setReady(true)},0);return()=>clearTimeout(timer)},[]);
+ useEffect(()=>{const timer=window.setTimeout(()=>{try{setProject(readProject(localStorage.getItem(projectKey)))}catch{setNotice("Saved project could not be loaded.")}setReady(true)},0);return()=>clearTimeout(timer)},[]);
  const current=stages.find(s=>s.id===project.stage)??stages[0],stats=projectStats(project);
  function save(next:Project){setProject(next);try{localStorage.setItem(projectKey,JSON.stringify(next));setNotice("Saved on this device.")}catch{setNotice("Storage unavailable. Changes will not persist.")}}
  async function share(){const text="My construction planning stage: "+current.name+". Explore Neerva Build's free project planner: "+window.location.origin+"/my-project";try{if(navigator.share){await navigator.share({title:"Neerva Build project planner",text})}else{await navigator.clipboard.writeText(text);setNotice("Planner link copied.")}}catch{setNotice("Sharing was not completed.")}}

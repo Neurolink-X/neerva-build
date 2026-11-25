@@ -14,7 +14,9 @@ function amount(v:unknown){return typeof v==="number"&&Number.isFinite(v)&&v>=0&
 export function parseProject(value:unknown):Project{
  if(!value||typeof value!=="object")return {...initialProject,done:[]};
  const p=value as Partial<Project>;
- return {stage:stages.some(s=>s.id===p.stage)?p.stage!:"planning",budget:amount(p.budget),spent:amount(p.spent),done:Array.isArray(p.done)?[...new Set(p.done.filter(x=>typeof x==="string"&&taskIds.includes(x)))]:[]};
+ return {stage:stages.some(s=>s.id===p.stage)?p.stage!:"planning",budget:amount(p.budget),spent:amount(p.spent),done:Array.isArray(p.done)?[...new Set(p.done.slice(0,128).filter(x=>typeof x==="string"&&taskIds.includes(x)))]:[]};
 }
 export function projectStats(p:Project){return {completed:p.done.length,total:taskIds.length,percent:Math.round(p.done.length/taskIds.length*100),balance:p.budget-p.spent}}
 export function toggleTask(p:Project,id:string):Project{if(!taskIds.includes(id))return p;return {...p,done:p.done.includes(id)?p.done.filter(x=>x!==id):[...p.done,id]}}
+
+export function readProject(raw:string|null):Project{try{return parseProject(raw&&raw.length<=4096?JSON.parse(raw):null)}catch{return parseProject(null)}}

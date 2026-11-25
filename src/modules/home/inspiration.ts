@@ -23,7 +23,9 @@ export const palettes=[
 ] as const;
 export type Board={ids:string[];palette:string};
 export const boardKey="neerva-inspiration-v1";
-export function parseBoard(v:unknown):Board{const b=v&&typeof v==="object"?v as Partial<Board>:{};return {ids:Array.isArray(b.ids)?[...new Set(b.ids.filter(x=>typeof x==="string"&&ideas.some(i=>i.id===x)))].slice(0,ideas.length):[],palette:palettes.some(p=>p.id===b.palette)?b.palette!:"warm"}}
+export function parseBoard(v:unknown):Board{const b=v&&typeof v==="object"?v as Partial<Board>:{};return {ids:Array.isArray(b.ids)?[...new Set(b.ids.slice(0,128).filter(x=>typeof x==="string"&&ideas.some(i=>i.id===x)))].slice(0,ideas.length):[],palette:palettes.some(p=>p.id===b.palette)?b.palette!:"warm"}}
 export function toggleIdea(b:Board,id:string):Board{if(!ideas.some(i=>i.id===id))return b;return {...b,ids:b.ids.includes(id)?b.ids.filter(x=>x!==id):[...b.ids,id]}}
 export function boardQuery(b:Board){const safe=parseBoard(b);return new URLSearchParams({ideas:safe.ids.join(","),palette:safe.palette}).toString()}
 export function boardFromQuery(query:string):Board|null{const p=new URLSearchParams(query);if(!p.has("ideas")&&!p.has("palette"))return null;return parseBoard({ids:(p.get("ideas")??"").slice(0,300).split(","),palette:p.get("palette")})}
+
+export function readBoard(raw:string|null):Board{try{return parseBoard(raw&&raw.length<=4096?JSON.parse(raw):null)}catch{return parseBoard(null)}}

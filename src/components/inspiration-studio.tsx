@@ -2,11 +2,11 @@
 import {useEffect,useState} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {ideas,palettes,boardKey,parseBoard,toggleIdea,boardQuery,boardFromQuery,type Board,type IdeaKind} from "@/modules/home/inspiration";
+import {ideas,palettes,boardKey,readBoard,toggleIdea,boardQuery,boardFromQuery,type Board,type IdeaKind} from "@/modules/home/inspiration";
 const filters=[["all","All ideas"],["exterior","Exteriors"],["interior","Interiors"],["finish","Finishes"],["saved","My board"]] as const;
 export function InspirationStudio(){
  const [board,setBoard]=useState<Board>({ids:[],palette:"warm"}),[filter,setFilter]=useState<"all"|IdeaKind|"saved">("all"),[ready,setReady]=useState(false),[notice,setNotice]=useState(""),[shared,setShared]=useState(false);
- useEffect(()=>{const timer=window.setTimeout(()=>{try{const incoming=boardFromQuery(location.search);if(incoming){setBoard(incoming);setFilter("saved");setShared(true)}else setBoard(parseBoard(JSON.parse(localStorage.getItem(boardKey)??"null")))}catch{setNotice("Saved ideas could not be loaded.")}setReady(true)},0);return()=>clearTimeout(timer)},[]);
+ useEffect(()=>{const timer=window.setTimeout(()=>{try{const incoming=boardFromQuery(location.search);if(incoming){setBoard(incoming);setFilter("saved");setShared(true)}else setBoard(readBoard(localStorage.getItem(boardKey)))}catch{setNotice("Saved ideas could not be loaded.")}setReady(true)},0);return()=>clearTimeout(timer)},[]);
  function persist(next:Board){setBoard(next);setShared(false);try{localStorage.setItem(boardKey,JSON.stringify(next));setNotice("Board saved on this device.")}catch{setNotice("Storage unavailable; your current board remains open.")}}
  async function share(){const link=window.location.origin+"/inspiration?"+boardQuery(board);try{if(navigator.share)await navigator.share({title:"My Neerva inspiration board",url:link});else{await navigator.clipboard.writeText(link);setNotice("Board link copied.")}}catch{setNotice("Sharing was not completed.")}}
  const palette=palettes.find(p=>p.id===board.palette)??palettes[0];
