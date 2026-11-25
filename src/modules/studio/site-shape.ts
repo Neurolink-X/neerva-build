@@ -44,3 +44,18 @@ export function rectInsideShape(room:{x:number;y:number;w:number;d:number},width
 export function siteAreaSqFt(widthFt:number,depthFt:number,shape:SiteShape):number{
  return widthFt*depthFt-(shape.kind==="rectangle"?0:shape.notchWidthFt*shape.notchDepthFt);
 }
+
+/** Parse shared plot links without silently treating an invalid shape as rectangular. */
+export function parseSiteShape(kind:unknown,notchWidth:unknown,notchDepth:unknown):SiteShape|null{
+ if(kind===undefined||kind==="rectangle")return rectangleSite;
+ if(kind!=="rear-left-notch"&&kind!=="rear-right-notch")return null;
+ if(typeof notchWidth!=="string"||typeof notchDepth!=="string"||!notchWidth.trim()||!notchDepth.trim())return null;
+ const notchWidthFt=Number(notchWidth),notchDepthFt=Number(notchDepth);
+ if(!Number.isFinite(notchWidthFt)||!Number.isFinite(notchDepthFt)||notchWidthFt<1||notchDepthFt<1)return null;
+ return {kind,notchWidthFt,notchDepthFt};
+}
+/** Boundary edges excluding the road edge: shared by site geometry and 3D fence. */
+export function nonRoadBoundaryEdges(widthFt:number,depthFt:number,shape:SiteShape){
+ const points=siteOutline(widthFt,depthFt,shape);
+ return points.map((start,i)=>({start,end:points[(i+1)%points.length]})).filter(e=>!(e.start.y===0&&e.end.y===0));
+}

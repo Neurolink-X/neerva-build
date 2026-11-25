@@ -6,9 +6,10 @@ import {SiteFooter} from "@/components/site-chrome";
 import {StudioPremiumTools} from "./studio-premium-tools";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
-import {planMetrics,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
+import {planMetrics,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
-import {oppositeRoadSide} from "@/modules/studio/plan-coordinate";
+import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
+import {siteOutline} from "@/modules/studio/site-shape";
 import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 const Building3D=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{
@@ -34,14 +35,15 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
   const token=session.data.session?.access_token;
   if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
   setSaving(true);setSaveInfo("");
-  try{const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id,finish:{kit,main:shade.main,accent:shade.accent}}),cache:"no-store"});
+  try{const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id,geometryDigest:await planGeometryDigest(draft),finish:{kit,main:shade.main,accent:shade.accent}}),cache:"no-store"});
    const body=await response.json() as {project?:{id?:string};error?:string};
    setSaveInfo(response.ok&&body.project?.id?"Private concept saved. Not a construction-approved plan.":(body.error??"Project was not saved."));
   }catch{setSaveInfo("Network issue. Your concept was not confirmed saved.");}finally{setSaving(false)}
  }
  useEffect(()=>{const frame=window.requestAnimationFrame(()=>setThreeReady(true));return()=>window.cancelAnimationFrame(frame)},[]);
  const result=useMemo(()=>generateSpatialPortfolio(brief,24),[brief]);
- const draft=result.plans[chosen]??result.plans[0]??null;
+ const activeOption=result.plans[chosen]?chosen:0;
+ const draft=result.plans[activeOption]??null;
  const shade=colours.find(c=>c.id===palette)??colours[0];
  const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,kit,main:shade.main,accent:shade.accent}}:null,[draft,shade,kit]);
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
@@ -111,33 +113,34 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
     </section>:<>
      <p className="nroad-jump"><a href="#selected-plan-drawing">Jump to the selected exact 2D + 3D plan ↓</a></p>
      <div className="nroad-head nroad-choices"><h2>{str("Room-layout options checked for your plot","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} room-layout options, same plot</span></div>
-     <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=><button key={v.id} type="button" aria-pressed={v.id===plan.id}
-       onClick={()=>{setChosen(i);document.getElementById("selected-plan-drawing")?.scrollIntoView({block:"start"})}}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${v.plot.widthFt+2} ${v.plot.depthFt+2}`} role="img" aria-label={`Ground layout preview ${i+1}: ${v.plot.widthFt} by ${v.plot.depthFt} feet, road ${v.plot.roadSide}`}>
-       <rect x="0" y="0" width={v.plot.widthFt} height={v.plot.depthFt} fill="#f7f5ec" stroke="#55765a" strokeWidth=".45"/>
-       {v.rooms.filter(r=>r.floor===0).map(r=><rect key={r.id} x={r.x} y={r.y} width={r.w} height={r.d}
-        fill={({parking:"#d4e6e0",verandah:"#fff3d9",living:"#e0ead9",dining:"#e8ebd7",kitchen:"#f0dfcc",bedroom:"#dce2f1",bath:"#c7e3f0",stairs:"#d4d4d4",corridor:"#f4efd9",utility:"#e5d5c4",lounge:"#d9e8cd",terrace:"#dce8df"} as Record<string,string>)[r.kind]??"#e7e4da"} stroke="#496452" strokeWidth=".18"/>)}
-       <line x1="0" x2={v.plot.widthFt} y1="0" y2="0" stroke="#be6740" strokeWidth="1.1"/>
+     <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=>{const {widthFt:w,depthFt:d,roadSide:side}=v.plot;const dim=siteDimensions(w,d,side),road=roadSegment(w,d,side);const boundary=siteOutline(w,d,v.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,side));return <button key={v.id} type="button" aria-pressed={v.id===plan.id}
+       onClick={()=>{setChosen(i);document.getElementById("selected-plan-drawing")?.scrollIntoView({block:"start"})}}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} role="img" aria-label={`Floor ${floor+1} layout preview ${i+1}: ${w} by ${d} feet, road ${side}`}>
+       <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#f7f5ec" stroke="#55765a" strokeWidth=".45"/>
+       {v.rooms.filter(r=>r.floor===floor).map(r=>{const box=roadRect(r,w,d,side);return <rect key={r.id} x={box.x} y={box.y} width={box.w} height={box.d}
+        fill={({parking:"#d4e6e0",verandah:"#fff3d9",living:"#e0ead9",dining:"#e8ebd7",kitchen:"#f0dfcc",bedroom:"#dce2f1",bath:"#c7e3f0",stairs:"#d4d4d4",corridor:"#f4efd9",utility:"#e5d5c4",lounge:"#d9e8cd",terrace:"#dce8df"} as Record<string,string>)[r.kind]??"#e7e4da"} stroke="#496452" strokeWidth=".18"/>})}
+       <line x1={road.start.x} x2={road.end.x} y1={road.start.y} y2={road.end.y} stroke="#be6740" strokeWidth="1.1"/>
       </svg><strong>{i+1}. {v.rooms.find(r=>r.id==="stairs-g")?.y===v.setbacks.frontFt?"Staircase beside parking":v.rooms.find(r=>r.id==="bed-g")?.y===v.setbacks.frontFt?"Bedroom beside parking":!v.parking&&!v.stairs.roomIds.length?"Compact 1 BHK":v.rooms.some(r=>r.id==="bed-g2")?"Two rear bedrooms":v.notes[0]?.includes("family-gallery")?"Gallery / family seating":v.notes[0]?.includes("rear-courtyard")?"Open rear courtyard":v.notes[0]?.includes("rear-baranda")?"Rear baranda / veranda":"Utility & wash"}</strong>
        <span>{!v.parking?"Pedestrian entrance":v.variant==="parking-left"?"Car at left":"Car at right"} · {!v.parking&&!v.stairs.roomIds.length?"Living + dining":v.notes[0]?.includes("family hall")?"Family hall":v.notes[0]?.includes("lounge / drawing")?"Drawing lounge":"Dining + hall"}</span>
-       <small>Kitchen {v.rooms.find(r=>r.id==="kitchen")!.x < v.plot.widthFt/2 ? "left" : "right"} · {v.plot.widthFt} × {v.plot.depthFt} ft</small></button>)}</div>
-     {result.plans.length<24&&<p className="nroad-small" role="status">Only {result.plans.length} structurally distinct 3D layouts passed for this exact plot. We do not duplicate walls to reach 24.</p>}
+       <small>Kitchen {v.rooms.find(r=>r.id==="kitchen")!.x < v.plot.widthFt/2 ? "left" : "right"} · {v.plot.widthFt} × {v.plot.depthFt} ft · Floor {floor+1}</small></button>})}</div>
+     {result.plans.length<24&&<p className="nroad-small" role="status">Only {result.plans.length} geometry-distinct concept layouts passed for this exact plot. We do not duplicate walls to reach 24.</p>}
      <div className="nroad-save"><button type="button" disabled={saving} onClick={()=>void saveDraft()}>{saving?"Saving…":str("Save this plot-specific concept privately","अपना नक्शा सुरक्षित सेव करें")}</button>{saveInfo&&<p role="status">{saveInfo} {saveInfo.startsWith("Sign in")&&<Link href="/account">Sign in →</Link>}</p>}</div>
      <div className="nroad-head" id="selected-plan-drawing"><h2>{str("Plan & room dimensions","प्लान और कमरों का नाप")}</h2><span>Road · {plan.plot.roadSide}</span></div>
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{["Ground floor","First floor","Second floor"][i]}</button>)}
      </div>
+     <div className="nroad-plan-summary" aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.floor===floor).length}</strong> Spaces on this floor</span><span><strong>{plan.plot.widthFt} × {plan.plot.depthFt}</strong> Plot (ft)</span><span><strong>{plan.floors}</strong> Level(s)</span></div>
      <OrientedPlanDrawing plan={plan} floor={floor}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
      {design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
-     <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The legacy viewer simplifies wall thickness and stair construction; it is not verified CAD/BIM.</p>
-     <StudioPremiumTools product="home_studio" brief={brief} option={chosen}/>
+     <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The selected floor uses the same room footprints and openings. Wall thickness, stairs and finishes remain conceptual, not verified CAD/BIM.</p>
+     <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
      {plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>
      <div className="nroad-palette"><h2>{str("House colour mood","घर की रंग योजना")}</h2>
       <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>setPalette(x.id)}>
        <i style={{background:x.main}}/><span>{hindi?x.hi:x.en}</span></button>)}</div>
-      <p className="nroad-small">Digital colours are approximate; check an actual shade card. Finishes and room paint are not physically simulated here.</p>
+      <p className="nroad-small">Digital colours are approximate; check an actual shade card. Finishes and room paint are not physically simulated here.</p><Link href="/design-studio/visualizer" className="nroad-secondary-link">{str("Try paint on sample homes or your own photo →","सैंपल घर या अपनी फोटो पर रंग आज़माएँ →")}</Link>
      </div>
      {metrics&&<section className="nroad-metrics"><h2>{str("Preliminary quantities — not a BOQ","प्रारंभिक अनुमान — अंतिम BOQ नहीं")}</h2>
       <div><span><strong>{metrics.roomFloorSqFt.toFixed(0)} ft²</strong><small>Room-floor rectangles, all levels</small></span>
