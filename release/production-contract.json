@@ -154,7 +154,7 @@
     "supabase/migrations/20261124113117_neerva_operations_incident_recovery_and_dealer_roles.sql"
   ],
   "protectedGitBlobs": {
-    "src/app/api/orders/route.ts": "696b92b7e488e83b1a98bb65cb447ffab8be046e",
+    "src/app/api/orders/route.ts": "dcb500db92b45177810e168af7bd7e0d7caf8e23",
     "src/modules/orders/backend.ts": "727869915623cbb664744b696e0637c9d9bd2488",
     "src/modules/identity/server-auth.ts": "d249e64b5a7a2329097898ff716da075c4893a1c",
     "src/app/api/admin/catalog/route.ts": "11657a7ecf0beeb112cabaae1839ab0131929570",

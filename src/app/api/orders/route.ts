@@ -40,6 +40,7 @@ export async function POST(request:Request){
     if(!lookup.error&&isSameOfferReplay(lookup.data,offerId,deliveryAddress))
      return Response.json({order:lookup.data,duplicate:true,paymentTaken:false},{headers:ORDER_RESPONSE_HEADERS});
    }
+   if(statusForOrderError(error)===503)console.error("[orders.accept] database error",/^[A-Z0-9]{5,8}$/.test(error.code??"")?error.code:"UNKNOWN");
    return failOrder(statusForOrderError(error),safeOrderError(error));
   }
   if(!saved)return failOrder(503,"Could not confirm that your order request was saved.");

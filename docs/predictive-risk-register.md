@@ -40,3 +40,6 @@ Public runner run 45551147209 executed 204 tests; 203 passed, one L-shaped plan 
 
 ## Authenticated E2E connection fix
 Run 45551316570 passed local database bootstrap and both catalog imports (376 rows), but reconciliation psql attempted the default Unix socket because the full database URI had been supplied via PGDATABASE. Pass validated host, port, database, user, password and SSL mode as separate libpq environment fields in both reconciliation and production preflight. Remove inherited connection service/address overrides; retain read-only reconciliation and production approval gates. Actual E2E rerun required.
+
+## RFQ acceptance regression
+Run 45551955218 passed catalog bootstrap and build, then failed real RFQ acceptance with HTTP 503. The existing migration and read-only inspected production definition both contain ambiguous `p.application_id=application_id` in a PL/pgSQL function. Rehearsal candidate replaces it with an explicit join, preserving approved/verified dealer, exact PIN, branch, ownership, order locking and amount checks. Extend E2E to exact replay, changed-address conflict, amount and RFQ transition. Log only sanitized database error codes; no payload or personal data. This is a candidate; exact cause is not confirmed by a SQLSTATE in the previous run, and production migration is not applied.

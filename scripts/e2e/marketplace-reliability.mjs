@@ -73,8 +73,19 @@ async function acceptedOrder(customer){
  assert.equal(invite.status,201,JSON.stringify(invite.data));
  const quote=await call(a,"/api/dealer/quotes","POST",{quoteRequestId:req,tenantId:tenant,lines:[{description:"Disposable cement fixture",quantity:10,unit:"bag",unitPricePaise:1000}],taxPaise:0,freightPaise:0,unloadingPaise:0,terms:"Synthetic test; no delivery",validUntil:new Date(Date.now()+3600000).toISOString()});
  assert.equal(quote.status,201,JSON.stringify(quote.data));
- const accept=await call(customer,"/api/orders","POST",{offerId:quote.data.offer.id,idempotencyKey:randomUUID(),deliveryAddress:"Disposable Kanpur address only",quoteAccepted:true});
- assert.equal(accept.status,201,JSON.stringify(accept.data));return accept.data.order.id;
+ const payload={offerId:quote.data.offer.id,idempotencyKey:randomUUID(),deliveryAddress:"Disposable Kanpur address only",quoteAccepted:true};
+ const accept=await call(customer,"/api/orders","POST",payload);
+ assert.equal(accept.status,201,JSON.stringify(accept.data));
+ assert.equal(accept.data.order.customer_id,customer.id);
+ assert.equal(accept.data.order.total_paise,10000);
+ assert.equal(accept.data.order.pincode,"208001");
+ const replay=await call(customer,"/api/orders","POST",payload);
+ assert.equal(replay.status,200,JSON.stringify(replay.data));
+ assert.equal(replay.data.order.id,accept.data.order.id);
+ assert.equal((await call(customer,"/api/orders","POST",{...payload,deliveryAddress:"Different disposable delivery address"})).status,409);
+ const stored=await customer.client.from("quote_requests").select("status").eq("id",req).single();
+ assert.ifError(stored.error);assert.equal(stored.data.status,"accepted");
+ return accept.data.order.id;
 }
 const [firstOrder,secondOrder]=await Promise.all([acceptedOrder(c),acceptedOrder(other)]);
 const reservePath="/api/dealer/orders/stock";

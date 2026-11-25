@@ -9,7 +9,7 @@ on:
       - 'scripts/e2e/**'
       - 'scripts/ops/**'
       - 'scripts/catalog/export-draft-catalog.mjs'
-      - 'scripts/catalog/verify-draft-import.mjs'
+      - 'scripts/catalog/**'
       - 'src/modules/catalog/**'
       - 'supabase/migrations/**'
       - '.github/workflows/authenticated-orders.yml'
@@ -109,6 +109,7 @@ jobs:
           done
           node scripts/e2e/authenticated-direct-orders.mjs | tee test-results/authenticated/result.json
           node scripts/ops/rehearse-studio-concurrency.mjs
+          node scripts/ops/rehearse-order-acceptance.mjs
           node scripts/ops/rehearse-stock-reservation.mjs
           node scripts/e2e/marketplace-reliability.mjs | tee test-results/authenticated/reliability.json
           node scripts/ops/benchmark-public.mjs http://127.0.0.1:3000 > test-results/authenticated/benchmark.json
