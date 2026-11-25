@@ -122,6 +122,7 @@ for(const product of demoProducts){
 report.exactSkuPhotography={totalVariants:demoProducts.length,verifiedVariants:demoProducts.length-exactSkuWorklist.length,remainingVariants:exactSkuWorklist.length,worklist:exactSkuWorklist,scope:"Static catalog only; verified exact SKU identity is distinct from family imagery."};
 report.visualSourcingWorklist=visualSourcingWorklist.sort((a,b)=>categoryPriority.indexOf(a.category)-categoryPriority.indexOf(b.category)||a.slug.localeCompare(b.slug));
 report.sourceConfirmedReferences={assets:sourceConfirmedPhotos.length,families:new Set(sourceConfirmedPhotos.map(x=>x.category+":"+x.family)).size,scope:"Licensed source-page-confirmed family references; independent visual review pending, not exact SKU photographs."};
+report.localDelivery={scope:"Static product catalog, all variants",externalRenderSources:demoProducts.flatMap(p=>catalogVisuals(p).filter(m=>!m.src.startsWith("/")).map(m=>({slug:p.slug,src:m.src}))),variantsWithoutLocalVisual:demoProducts.filter(p=>!catalogVisuals(p).some(m=>m.src.startsWith("/"))).map(p=>({category:p.category,slug:p.slug,name:p.name}))};
 report.variantWorklist=variantWorklist;
 report.integrityFailures=integrityFailures;
 report.totals.variantsWithoutConfiguredPhoto=variantWorklist.filter(v=>v.flags.includes("missing-photo")).length;
@@ -129,6 +130,7 @@ report.totals.variantsWithoutUsableLocalPhoto=variantWorklist.filter(v=>v.flags.
 report.localFileIssues=[...local].filter(([,issue])=>issue);
 const hardFailures=report.localFileIssues.filter(([,issue])=>issue!=="Low resolution");
 const regressionFailures=[];
+if(report.localDelivery.externalRenderSources.length)regressionFailures.push("External static product image render source");
 if(report.totals.noPhoto>170)regressionFailures.push("Missing configured families exceed 170 baseline");
 if(report.totals.missingBrandEntries>26)regressionFailures.push("Missing logo entries exceed 26 baseline");
 if(report.localFileIssues.filter(([,issue])=>issue==="Low resolution").length>2)regressionFailures.push("Low resolution files exceed 2 baseline");
@@ -143,7 +145,7 @@ report.releaseReadiness={regressionFailures,hardFailures,integrityFailures,stric
 ]};
 report.releaseReadiness.ready=!report.releaseReadiness.strictFailures.length&&!regressionFailures.length&&!hardFailures.length&&!integrityFailures.length;
 
-fs.mkdirSync("catalog-audit",{recursive:true});fs.writeFileSync("catalog-audit/report.json",JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify({sourceConfirmedReferences:report.sourceConfirmedReferences,visualSourcingRows:report.visualSourcingWorklist.length,totals:report.totals,coverageTarget:report.coverageTarget,byCategory,brandsMissing:brands.filter(b=>b.logoStatus==="fallback").map(b=>b.name),localFileIssues:report.localFileIssues,publicDiscovery:{families:report.publicDiscovery.families,hiddenAccessoryFamilies:report.publicDiscovery.hiddenAccessoryFamilies,missingVisualCount:report.publicDiscovery.missingVisualCount,missingVariants:report.publicDiscovery.missingVisualVariants.length},generatedVisuals:{assets:report.generatedVisuals.assets,bytes:report.generatedVisuals.bytes,missingVisualCount:report.generatedVisuals.missingVisualCount,priorityMissingCount:report.generatedVisuals.priorityMissingCount,missingVariantCount:report.generatedVisuals.missingVariantCount,byCategory:report.generatedVisuals.byCategory}},null,2));
+fs.mkdirSync("catalog-audit",{recursive:true});fs.writeFileSync("catalog-audit/report.json",JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify({localDelivery:{externalRenderSources:report.localDelivery.externalRenderSources.length,variantsWithoutLocalVisual:report.localDelivery.variantsWithoutLocalVisual.length},sourceConfirmedReferences:report.sourceConfirmedReferences,visualSourcingRows:report.visualSourcingWorklist.length,totals:report.totals,coverageTarget:report.coverageTarget,byCategory,brandsMissing:brands.filter(b=>b.logoStatus==="fallback").map(b=>b.name),localFileIssues:report.localFileIssues,publicDiscovery:{families:report.publicDiscovery.families,hiddenAccessoryFamilies:report.publicDiscovery.hiddenAccessoryFamilies,missingVisualCount:report.publicDiscovery.missingVisualCount,missingVariants:report.publicDiscovery.missingVisualVariants.length},generatedVisuals:{assets:report.generatedVisuals.assets,bytes:report.generatedVisuals.bytes,missingVisualCount:report.generatedVisuals.missingVisualCount,priorityMissingCount:report.generatedVisuals.priorityMissingCount,missingVariantCount:report.generatedVisuals.missingVariantCount,byCategory:report.generatedVisuals.byCategory}},null,2));
 
 if(!report.coverageTarget.met)console.warn("Coverage release target NOT MET: "+report.coverageTarget.remainingToTarget+" additional families still required. Audit completion alone is not a release approval.");
 

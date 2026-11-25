@@ -1,0 +1,9 @@
+export const priority=["cement","steel","bricks-blocks","plumbing","electrical","tiles","hardware","paint","aggregates"];
+export const generic=p=>/^(?:local\b|brand to confirm$|dealer-listed brand$|mill to confirm$)/i.test(p.brand);
+export const familyKey=p=>p.category+":"+p.brand.toLowerCase()+":"+(p.familyKey??p.slug);
+export function text(value,max=240){return String(value??"").replace(/<[^>]*>/g," ").replace(/[\u0000-\u001f\u007f]/g," ").replace(/\s+/g," ").trim().slice(0,max);}
+export function commonsUrl(value,page=false){try{const u=new URL(value);return u.protocol==="https:"&&!u.username&&!u.password&&!u.port&&!u.hash&&!u.search&&(page?u.hostname==="commons.wikimedia.org"&&u.pathname.startsWith("/wiki/File:"):u.hostname==="upload.wikimedia.org"&&u.pathname.startsWith("/wikipedia/commons/"))?u.href:null;}catch{return null;}}
+export function license(meta){const name=text(meta?.LicenseShortName?.value,80),url=text(meta?.LicenseUrl?.value,200).replace(/^http:/,"https:").replace(/\/?$/,"/");const m=name.match(/^CC BY(-SA)? ([234]\.0)$/);if(m&&url==="https://creativecommons.org/licenses/by"+(m[1]?"-sa":"")+"/"+m[2]+"/")return {name,url};if(/^CC0(?: 1.0)?$/.test(name)&&url==="https://creativecommons.org/publicdomain/zero/1.0/")return {name:"CC0 1.0",url};return null;}
+export function query(p){return text(generic(p)?p.specifications?.find(x=>x.label==="Product family")?.value??p.name.split(" · ")[0]:p.name,140);}
+export function brief(p){return generic(p)?"Photorealistic original reference illustration of "+query(p)+". Show only the correct functional shape and material on a neutral studio background. No logo, typography, invented dimensions, certifications or brand. Not a real SKU photo. Verify against material specifications before use.":null;}
+export function csv(v){const s=String(v??"");return '"'+(/^\s*[=+\-@]/.test(s)?"'":"")+s.replaceAll('"','""')+'"';}
