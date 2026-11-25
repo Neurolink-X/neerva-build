@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {SiteFooter} from "@/components/site-chrome";
 import { notFound } from "next/navigation";
 import { articles, getArticle } from "@/modules/blog/articles";
 
@@ -56,7 +57,7 @@ export default async function BlogArticlePage({ params, searchParams }: PageProp
       <JsonLd article={article} />
       <header className="blog-header">
         <Link className="brand" href="/"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link>
-        <nav aria-label="Article navigation"><Link href="/">Home</Link><Link href="/blog">Guides</Link><Link className="button button-dark button-small" href="/quotes">Request a quote</Link></nav>
+        <nav aria-label="Article navigation"><Link href="/">Home</Link><Link href="/blog">Blog & guides</Link><Link className="button button-dark button-small" href="/quotes">Request a quote</Link></nav>
       </header>
       <div className="article-breadcrumb"><Link href="/">Home</Link><span>/</span><Link href="/blog">Knowledge Hub</Link><span>/</span><span>{isHindi ? (article.category==="Platform guide"?"प्लेटफ़ॉर्म गाइड":"खरीद गाइड") : article.category}</span></div>
       <article>
@@ -80,7 +81,7 @@ export default async function BlogArticlePage({ params, searchParams }: PageProp
         </div>
       </article>
       <section className="article-next"><div><div className="eyebrow eyebrow-light">{isHindi ? "अगला कदम" : "PUT IT INTO PRACTICE"}</div><h2>{isHindi ? "अपनी सामग्री की ज़रूरत स्पष्ट करें।" : "Get the material requirement clear."}</h2><p>{isHindi ? "मात्रा, यूनिट और डिलीवरी लोकेशन के साथ निजी कोटेशन अनुरोध तैयार करें।" : "Prepare a private quotation request with your quantity, unit and delivery location."}</p></div><Link href="/quotes" className="button button-orange">{isHindi ? "कोटेशन माँगें" : "Request a quote"} <span>→</span></Link></section>
-      <footer className="blog-footer"><Link href="/" className="brand brand-footer"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link><span>Build better. Buy smarter.</span><Link href="/blog">More guides →</Link></footer>
+      <SiteFooter/>
     </main>
   );
 }
