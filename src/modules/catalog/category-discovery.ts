@@ -18,3 +18,9 @@ export const categorySecondaryImages:Record<string,readonly string[]>={
  hardware:["/images/catalog/approved/24463c3c61ce5e4917195b30.webp","/images/catalog/approved/b13185127f5c233b4d08cf36.webp"]
 };
 export function categoryChoiceHref(category:string,slug:string){return "/materials/"+category+"/"+slug;}
+
+/** Visible source attribution for the reused Commons category previews. */
+export const categoryPreviewCredits:Record<string,readonly {author:string;source:string;license:string;licenseUrl:string}[]>={
+ plumbing:[{author:"REisemann3937",source:"https://commons.wikimedia.org/wiki/File:PvcElbows.JPG",license:"CC BY-SA 3.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/3.0/"},{author:"Nandhp",source:"https://commons.wikimedia.org/wiki/File:Garden_hose.jpg",license:"CC BY-SA 3.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/3.0/"}],
+ hardware:[{author:"Frank C. Müller",source:"https://commons.wikimedia.org/wiki/File:Silikonpistole_(fcm).jpg",license:"CC BY-SA 3.0",licenseUrl:"https://creativecommons.org/licenses/by-sa/3.0/"},{author:"Carolin Heuckmann",source:"https://commons.wikimedia.org/wiki/File:Knickzahnkelle.JPG",license:"CC BY-SA 3.0 DE",licenseUrl:"https://creativecommons.org/licenses/by-sa/3.0/de/"},{author:"Evan-Amos",source:"https://commons.wikimedia.org/wiki/File:Tool-level.jpg",license:"Public domain",licenseUrl:"https://commons.wikimedia.org/wiki/File:Tool-level.jpg"}]
+};

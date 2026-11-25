@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { CatalogMaterialImage } from "@/components/catalog-material-image";
 import { catalogCategories } from "@/modules/catalog/catalog";
-import { getCategory, getProductsByCategory } from "@/modules/catalog/marketplace";
+import { getCategory, getProductsByCategory, getProduct } from "@/modules/catalog/marketplace";
 import {groupCatalogByPhoto,rangeVariantLabel} from "@/modules/catalog/media-usage";
 import {BrandMark} from "@/components/brand-mark";
 import {FittingShowroom} from "@/components/fitting-showroom";
@@ -18,7 +18,6 @@ import {AggregateShowroom} from "@/components/aggregate-showroom";
 import {TileShowroom} from "@/components/tile-showroom";
 import {PipeComparison} from "@/components/pipe-comparison";
 import {categoryChoices,categoryGuidance,categoryChoiceHref} from "@/modules/catalog/category-discovery";
-import {getProduct} from "@/modules/catalog/marketplace";
 import {directoryCards} from "@/modules/catalog/brand-pages";
 import "../../brands/brands.css";
 const pipeApplications = [

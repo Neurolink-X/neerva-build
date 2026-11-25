@@ -11,3 +11,9 @@ Rejected: industrial valve bore photos, distant crusher dust pile, reddish soil 
 - Pidilite corporate mark: current 2026 Commons source identifies official-site provenance and PD-textlogo. Publish the existing local WebP only as corporate identification, not as an authorized dealership mark.
 - PTFE candidate depicts Travis Perkins packaging; Viking listing must not use it.
 - Float switch candidate depicts a mechanical ballcock, not an electrical float switch. Reject for that family.
+
+## Customer category discovery follow-up
+
+- Replace category-only single pipe and screw images with visually inspected local pipe stack, tile samples and sealant gun photography; add PVC elbows, hose, tile surfaces, trowel and level category previews. These do not constitute new individual SKU photos.
+- Add direct existing product shortcuts, red clay brick priority and responsive photo sizing. Surface previews can be cropped; named packs stay contained.
+- Inspected remaining staged photos: brass nipple with technical drawing is not GI; Chubb lock image shows only installed lockcase/strike and no lever set; annotated hinge does not establish stainless grade; thread-seal tape has no Viking identity; pipe clamp photo is woodworking equipment. Do not publish them as exact missing SKUs.

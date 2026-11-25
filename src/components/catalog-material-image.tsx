@@ -20,7 +20,8 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{cate
  // generic category photo as a particular fitting or cable conduit product.
  const isPipe=product&&(category==="plumbing"||category==="electrical")&&!product.referenceImage;
  const safeSrc=isPipe&&current?.kind==="category"?undefined:src;
- return <div className={"catalog-material-image"+(compact?" compact":"")+(current?.kind==="sku"||current?.kind==="listing"||current?.kind==="manufacturer"?" pack-photo":"")}>
+ const surfacePreview=category==="tiles"&&product&&current?.kind!=="sku"&&Boolean(safeSrc);
+ return <div className={"catalog-material-image"+(compact?" compact":"")+(surfacePreview?" tile-surface-photo":current?.kind==="sku"||current?.kind==="listing"||current?.kind==="manufacturer"?" pack-photo":"")}>
   {safeSrc?<Image src={safeSrc} alt={compact?"":current?.alt??name} fill sizes={compact?"(max-width:680px) 50vw, 33vw":"(max-width:350px) 100vw, (max-width:680px) 90vw, (max-width:1100px) 50vw, 33vw"}
    quality={75} loading="lazy" unoptimized={safeSrc.startsWith("https://")} referrerPolicy="no-referrer" onError={()=>setFailed(previous=>previous.includes(safeSrc)?previous:[...previous,safeSrc])}/>:
    <MaterialIdentity name={name} category={category} brand={product?.brand} product={product}/>}
