@@ -29,3 +29,21 @@
 @media(max-width:330px){.paint-source,.paint-mode,.paint-targets,.paint-actions{grid-template-columns:minmax(0,1fr)}}
 
 .paint-sample-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}.paint-sample-gallery button{display:flex;flex-direction:column;text-align:left;gap:5px;padding:6px;border:1px solid #c8d2c5;background:#fff;border-radius:10px;color:#253d32;min-width:0;cursor:pointer}.paint-sample-gallery button[aria-pressed=true]{border:2px solid #254738;background:#eef4ed}.paint-sample-photo{position:relative;display:block;width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:6px;background:#edf0e9}.paint-sample-photo img{object-fit:cover}.paint-sample-gallery strong{font-size:clamp(11px,1.4vw,14px);line-height:1.25;overflow-wrap:anywhere}.paint-sample-gallery small{font-size:11px;line-height:1.35;color:#56685a;overflow-wrap:anywhere}.paint-sample-gallery button:focus-visible{outline:3px solid #a46b35;outline-offset:2px}@media(max-width:380px){.paint-sample-gallery small{display:none}}
+
+/* Keep swatches and actual photo next to one another, rather than two distant panels. */
+.visualizer-app .visualizer-layout{display:block}
+.visualizer-app .neerva-photo-stage{min-height:0;padding:0;background:transparent}
+.paint-live-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(220px,290px);gap:14px;align-items:start}
+.paint-live-preview{min-width:0}
+.paint-live-preview>button{min-height:44px;margin-bottom:6px}
+.paint-adjacent-controls{display:block;min-width:0}
+.paint-adjacent-controls section{padding:12px;border:1px solid #d5e0d4;border-radius:12px;background:#f7faf6}
+.paint-adjacent-controls h2{margin:0 0 8px!important;font-size:20px!important}
+.paint-adjacent-controls label{margin:6px 0!important}
+.paint-adjacent-controls .neerva-tier-note{margin:7px 0 0}
+@media(max-width:850px){.paint-live-workspace{grid-template-columns:minmax(0,1fr);gap:8px}.paint-adjacent-controls section{padding:10px}.paint-live-preview{position:relative}.paint-adjacent-controls section>div{margin:8px 0!important}.paint-adjacent-controls .paint-quality,.paint-adjacent-controls .neerva-tier-note{font-size:12px}}
+
+.paint-live-tools{min-width:0}
+.paint-live-workspace:has(.paint-live-tools:empty){grid-template-columns:minmax(0,1fr)}
+@media(min-width:851px){.paint-live-preview{position:sticky;top:12px;align-self:start}}
+@media(max-width:850px){.paint-live-tools .wall-pattern-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.paint-live-tools .wall-pattern-options button{min-width:0}}

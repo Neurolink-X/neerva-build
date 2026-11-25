@@ -7,12 +7,19 @@ export function SiteHeader(){
   <details className="site-mobile-menu"><summary>Menu</summary><nav aria-label="Mobile navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/design-studio">Plan my home</Link><Link href="/quotes">Prepare quote</Link><Link href="/install">Install app</Link><Link href="/account">Account</Link><Link href="/basket">Material list</Link><Link href="/blog">Blog & guides</Link></nav></details>
   <div className="header-utility"><Link className="header-install" href="/install" aria-label="Install NEERVA BUILD app">Install app</Link><Link className="button button-dark button-small header-quote" href="/quotes">Prepare quote →</Link></div></header></>;
 }
-export function SiteFooter(){
- return <footer className="site-footer" aria-label="NEERVA BUILD footer">
-  <div className="site-footer-brand"><Link className="brand brand-footer" href="/"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link><strong>Every dream home strengthens India&apos;s future.</strong><p>Explore material specifications, choose a plot-fitting concept and prepare clear requirements. Real dealer rates, stock and deliveries are confirmed separately.</p></div>
-  <nav aria-label="Explore"><strong>Explore</strong><Link href="/materials">Construction materials</Link><Link href="/brands">Material brands</Link><Link href="/quotes">Prepare a dealer quote</Link><Link href="/basket">Material list</Link></nav>
-  <nav aria-label="Home planning"><strong>Home Studio</strong><Link href="/design-studio">Start my home plan</Link><Link href="/design-studio/portfolio">Plot-specific layouts</Link><Link href="/design-studio/fit">Check plot fit</Link><Link href="/design-studio/visualizer">Try wall colours</Link><Link href="/studio-pricing">Studio pricing & free previews</Link></nav>
-  <nav aria-label="Help and policies"><strong>Support & legal</strong><Link href="/install">Install app</Link><Link href="/account">Account access</Link><Link href="/account/quotes">My quotations</Link><Link href="/account/orders">My orders</Link><Link href="/blog">Blog & buying guides</Link><Link href="/privacy">Privacy policy</Link><Link href="/terms">Terms</Link><Link href="/returns">Returns & refunds</Link><Link href="/support">Payment & customer help</Link><Link href="/learn">Home planning knowledge hub</Link></nav>
-  <div className="site-footer-bottom"><small>© 2026 NEERVA BUILD · Made for India’s builders</small><small>Architect sign-off required for designs. No unverified dealer prices, fake discounts or stock claims.</small></div>
+export function SiteFooter({language="en"}:{language?:"en"|"hi"}={}){
+ const hi=language==="hi";
+ const groups=[
+  {title:hi?"सामग्री और खरीदारी":"Materials & orders",links:[["/materials","Construction materials","निर्माण सामग्री"],["/brands","Material brands","मटेरियल ब्रांड"],["/basket","Material list","सामग्री सूची"],["/quotes","Prepare a quote","कोटेशन बनाएं"],["/account/orders","My orders","मेरे ऑर्डर"],["/account/quotes","My quotations","मेरे कोटेशन"]]},
+  {title:hi?"होम स्टूडियो":"Home Studio",links:[["/design-studio","Plan my home","घर का प्लान"],["/design-studio/portfolio","2D + 3D layouts","2D + 3D नक्शे"],["/design-studio/fit","Check plot fit","प्लॉट की जाँच"],["/design-studio/visualizer","Paint Studio","कलर स्टूडियो"],["/studio-pricing","Studio pricing","स्टूडियो मूल्य"],["/family-homes","Family home ideas","घर के विचार"]]},
+  {title:hi?"संसाधन":"Resources",links:[["/blog","Blog & buying guides","ब्लॉग और गाइड"],["/learn","Knowledge hub","जानकारी केंद्र"],["/business-model","Dealer information","डीलर जानकारी"],["/account","Account access","अकाउंट"],["/install","Install the app","ऐप इंस्टॉल"]]},
+  {title:hi?"सहायता और नीतियाँ":"Help & policies",links:[["/support","Customer support","ग्राहक सहायता"],["/privacy","Privacy policy","गोपनीयता"],["/terms","Terms of service","नियम और शर्तें"],["/returns","Returns & refunds","वापसी और रिफंड"]]}
+ ];
+ return <footer className="site-footer unified-footer" aria-label="NEERVA BUILD footer">
+  <div className="unified-footer-inner">
+   <div className="unified-footer-intro"><div><Link className="brand brand-footer" href="/"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link><h2>{hi?"अपने सपनों का घर बनाएं।":"Build with clarity."}</h2><p>{hi?"सामग्री समझें, घर की योजना बनाएं और सही जानकारी के साथ खरीदारी करें।":"Compare materials, plan your home and make informed construction decisions."}</p></div><div className="unified-footer-actions"><Link href="/materials">{hi?"सामग्री देखें":"Explore materials"} <span aria-hidden="true">→</span></Link><Link href="/design-studio">{hi?"घर की योजना बनाएं":"Plan my home"} <span aria-hidden="true">→</span></Link></div></div>
+   <div className="unified-footer-groups">{groups.map(g=><nav key={g.title} aria-label={g.title}><h3>{g.title}</h3><div>{g.links.map(([href,en,hindi])=><Link key={href} href={href}>{hi?hindi:en}</Link>)}</div></nav>)}</div>
+   <div className="unified-footer-bottom"><small>© 2026 NEERVA BUILD · {hi?"भारत के लिए निर्मित":"Made for India"}</small><small>{hi?"निर्माण से पहले पेशेवर जाँच आवश्यक है। स्टॉक, कीमत और डिलीवरी डीलर से पुष्टि करें।":"Concept designs require professional review. Stock, prices and delivery require dealer confirmation."}</small></div>
+  </div>
  </footer>;
 }
