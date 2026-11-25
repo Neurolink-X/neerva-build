@@ -6,7 +6,8 @@ on:
       - 'src/modules/orders/**'
       - 'src/modules/identity/**'
       - 'src/app/api/**'
-      - 'scripts/e2e/authenticated-direct-orders.mjs'
+      - 'scripts/e2e/**'
+      - 'scripts/ops/**'
       - 'scripts/catalog/export-draft-catalog.mjs'
       - 'scripts/catalog/verify-draft-import.mjs'
       - 'src/modules/catalog/**'
@@ -60,11 +61,16 @@ jobs:
           import {appendFileSync} from "node:fs";
           import {execFileSync} from "node:child_process";
           const client=createClient(process.env.API_URL,process.env.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
-          for(const role of ["CUSTOMER","OTHER_CUSTOMER","ADMIN"]){
+          for(const role of ["CUSTOMER","OTHER_CUSTOMER","ADMIN","DEALER_A","DEALER_B"]){
             const email=role.toLowerCase()+"-"+randomUUID()+"@example.test";
             const password=randomUUID()+"Aa1!";
             const {data,error}=await client.auth.admin.createUser({email,password,email_confirm:true});
             if(error||!data.user)throw Error("Fixture creation failed: "+role);
+            if(role.startsWith("DEALER_")){
+              const id=data.user.id;const tenant=randomUUID();const branch=randomUUID();
+              execFileSync("psql",[process.env.DB_URL,"-v","ON_ERROR_STOP=1","-c",`insert into public.tenants(id,business_name,status) values (\x27${tenant}\x27,\x27Disposable dealer ${role}\x27,\x27active\x27); insert into public.tenant_memberships(tenant_id,user_id,role) values (\x27${tenant}\x27,\x27${id}\x27,\x27owner\x27); insert into public.merchant_branches(id,tenant_id,name,city,pincode,approved) values (\x27${branch}\x27,\x27${tenant}\x27,\x27Test branch\x27,\x27Kanpur\x27,\x27208001\x27,true);`]);
+              appendFileSync(process.env.GITHUB_ENV,"NEERVA_E2E_"+role+"_BRANCH="+branch+"\n");
+            }
             if(role==="ADMIN"){
               const id=data.user.id;
               if(!/^[0-9a-f-]{36}$/.test(id))throw Error("Invalid fixture ID");
@@ -74,7 +80,13 @@ jobs:
           }
           JS
       - run: npm run build
+        env:
+          NEERVA_STUDIO_PAYMENTS_ENABLED: "true"
+          NEERVA_OPERATOR_TERMS_VERIFIED: "true"
       - name: Execute authenticated order lifecycle
+        env:
+          NEERVA_STUDIO_PAYMENTS_ENABLED: "true"
+          NEERVA_OPERATOR_TERMS_VERIFIED: "true"
         shell: bash
         run: |
           set -euo pipefail
@@ -87,6 +99,8 @@ jobs:
             sleep 2
           done
           node scripts/e2e/authenticated-direct-orders.mjs | tee test-results/authenticated/result.json
+          node scripts/e2e/marketplace-reliability.mjs | tee test-results/authenticated/reliability.json
+          node scripts/ops/benchmark-public.mjs http://127.0.0.1:3000 > test-results/authenticated/benchmark.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

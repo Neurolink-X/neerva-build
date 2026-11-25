@@ -35,7 +35,10 @@ const first={category:"cement",productSlug:"ppc-cement-50kg",quantity:3,unit:"ba
 const payload={...first,items:[first],idempotencyKey:randomUUID(),contactName:"Disposable E2E fixture",phone:"9000000000",city:"Kanpur",pincode:"208001",deliveryAddress:"Staging fixture only; never dispatch",notes:"DISPOSABLE E2E ONLY",consent:true};
 assert.equal((await call(customer,route,"POST",{...payload,quantity:0})).status,400);
 assert.equal((await call(customer,route,"POST",{...payload,consent:false})).status,400);
-const created=await call(customer,route,"POST",payload);
+const concurrent=await Promise.all([call(customer,route,"POST",payload),call(customer,route,"POST",payload)]);
+assert.deepEqual(concurrent.map(r=>r.status).sort(),[200,201],"Concurrent retries must produce one stored order");
+assert.equal(concurrent[0].data.order.id,concurrent[1].data.order.id);
+const created=concurrent.find(r=>r.status===201);
 assert.equal(created.status,201);
 const order=created.data.order;
 assert.ok(order?.id&&order.code);
@@ -64,4 +67,11 @@ const cancel=await call(customer,route,"POST",{...payload,idempotencyKey:randomU
 assert.equal(cancel.status,201);
 const cancelled=await call(customer,route,"PATCH",{orderId:cancel.data.order.id,expectedStatus:"received",status:"cancelled"});
 assert.equal(cancelled.status,200);assert.equal(cancelled.data.order.status,"cancelled");
+assert.equal((await call(null,"/api/admin/marketplace-readiness")).status,401);
+assert.equal((await call(customer,"/api/admin/marketplace-readiness")).status,403);
+const readiness=await call(admin,"/api/admin/marketplace-readiness");
+assert.equal(readiness.status,200);
+assert.notEqual(readiness.data.findings.find(r=>r.key==="inventory").state,"unknown","Inventory has a composite primary key");
+assert.equal((await call(customer,"/api/dealer/inventory")).status,403);
+assert.equal((await call(customer,"/api/admin/studio-payments")).status,403);
 console.log(JSON.stringify({scope:"authenticated disposable staging API workflow; no physical dispatch or payment",completed:order.code,cancelled:cancel.data.order.code,checks:["guest denial","role isolation","validation","idempotency","admin fallback","price acceptance","delivery state","tracking","cancellation"]}));

@@ -8,7 +8,7 @@ export async function GET(request:Request){
  // On-demand only. A timeout is unknown, never a fabricated zero.
  const deadline=AbortSignal.timeout(5000);
  const entries=await Promise.all(Object.entries(readinessTables).map(async ([key,table])=>{
-  try{const {count,error}=await auth.client.from(table).select("id",{count:"exact",head:true}).abortSignal(deadline);
+  try{const {count,error}=await auth.client.from(table).select(key==="inventory"?"branch_id":"id",{count:"exact",head:true}).abortSignal(deadline);
    return [key,error?null:count] as const;
   }catch{return [key,null] as const;}
  }));
