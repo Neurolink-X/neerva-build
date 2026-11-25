@@ -1,7 +1,7 @@
 name: Neerva production health watch
 on:
   schedule:
-    - cron: '23 3 * * *'
+    - cron: '23 3 * * 1'
   workflow_dispatch:
 permissions:
   contents: read
