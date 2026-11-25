@@ -158,3 +158,9 @@ test("order and paid-access routes never issue backend success without identity 
  const adminApi=readFileSync(api.get("/api/admin/orders"),"utf8");
  assert.match(adminApi,/requireAdmin/,"Platform order changes require admin identity");
 });
+
+
+test("blog and buying guides remain discoverable from home, shared navigation and article pages",()=>{
+ for(const f of ["src/components/premium-home.tsx","src/components/site-chrome.tsx"]){const code=readFileSync(f,"utf8");assert.match(code,/Blog & guides/);assert.match(code,/href="\/blog"/);}
+ for(const f of ["src/app/blog/page.tsx","src/app/blog/[slug]/page.tsx"]){assert.match(readFileSync(f,"utf8"),/<SiteFooter\s*\/>/);}
+});
