@@ -1,5 +1,5 @@
 {
-  "publication": "Not approved. Do not serve or map these files publicly.",
+  "publication": "Review metadata only; candidate status does not authorize publication. Shared public copies reference already published identical bytes.",
   "rows": [
     {
       "key": "red-coarse-sand",
@@ -35,7 +35,9 @@
       "height": 675,
       "bytes": 172338,
       "originalSha256": "97ee16215f66dc0f5da9d7cb55b3be3d005bd808a1b5daae87c7e201398ef046",
-      "sha256": "0694bcf1d5a0cb4b2552a9f30b7d67a3756009265b783912b65df566ee07d3c5"
+      "sha256": "0694bcf1d5a0cb4b2552a9f30b7d67a3756009265b783912b65df566ee07d3c5",
+      "publishedPath": "/images/catalog/approved/0694bcf1d5a0cb4b2552a9f3.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "concrete-sand-stockpile",
@@ -53,7 +55,9 @@
       "height": 1200,
       "bytes": 78304,
       "originalSha256": "d88ac973ceffe95fb76ae5b9a0ceddad9cc4ac3bb9730674b06f53c29960a8e1",
-      "sha256": "1a74f8b09fc34f7b2bd1221ed12b17f55fadc6538209c5d7593c221d140b433d"
+      "sha256": "1a74f8b09fc34f7b2bd1221ed12b17f55fadc6538209c5d7593c221d140b433d",
+      "publishedPath": "/images/catalog/approved/1a74f8b09fc34f7b2bd1221e.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "godrej-historic-wordmark",
@@ -88,7 +92,9 @@
       "height": 1200,
       "bytes": 42006,
       "originalSha256": "528978b6710bc84359ddfccf6296cbf47e4fc4ddf0520b3a45626adca593c2fa",
-      "sha256": "6162d659d451abcad4e54c5518c4a8073142c52e91c34d581db8f85103fb5da5"
+      "sha256": "6162d659d451abcad4e54c5518c4a8073142c52e91c34d581db8f85103fb5da5",
+      "publishedPath": "/images/catalog/approved/6162d659d451abcad4e54c55.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "tank-float-valve",
@@ -105,7 +111,9 @@
       "height": 1200,
       "bytes": 48690,
       "originalSha256": "75ee47990d643e4bf925a1a2880fc734f87824881208dc53d3b3c3b8e409fc68",
-      "sha256": "c69e69925cecd4d65ff0ae7dc851c9061f4ea365dc9bb1f9a747aa70a43b4376"
+      "sha256": "c69e69925cecd4d65ff0ae7dc851c9061f4ea365dc9bb1f9a747aa70a43b4376",
+      "publishedPath": "/images/catalog/approved/c69e69925cecd4d65ff0ae7d.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "ball-valve",
@@ -190,7 +198,9 @@
       "height": 947,
       "bytes": 96964,
       "originalSha256": "649dd4d0ab93bfca97a7c4442c052f531b8bc294cfb93fde5a527c1fca4929d4",
-      "sha256": "b8c05d7f4399350e6d329ffc246d30a0c3d2e0c3ceb804a62dfd3ca8b62581ee"
+      "sha256": "b8c05d7f4399350e6d329ffc246d30a0c3d2e0c3ceb804a62dfd3ca8b62581ee",
+      "publishedPath": "/images/catalog/approved/b8c05d7f4399350e6d329ffc.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "seal-parts",
@@ -207,7 +217,9 @@
       "height": 1200,
       "bytes": 37722,
       "originalSha256": "a298352af1c121ef0d6790a4995531d73e406a6e425ccb6269e33d5a8580e0de",
-      "sha256": "bfca013a5ecbbfea071bd33db1258f4e2ac955cc25b66c09d7df747482aef515"
+      "sha256": "bfca013a5ecbbfea071bd33db1258f4e2ac955cc25b66c09d7df747482aef515",
+      "publishedPath": "/images/catalog/approved/bfca013a5ecbbfea071bd33d.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "pressure-gauge",
@@ -224,7 +236,9 @@
       "height": 1200,
       "bytes": 39762,
       "originalSha256": "e8a47d1ecd0215af3f4ad53cd6b7eeb9d5e6dcf813b8b83cd2c0a39ac04929c6",
-      "sha256": "a01fab011150e080e33c089abf517dcb7252358d3ce2b02623ed1f64d9e68aea"
+      "sha256": "a01fab011150e080e33c089abf517dcb7252358d3ce2b02623ed1f64d9e68aea",
+      "publishedPath": "/images/catalog/approved/a01fab011150e080e33c089a.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "river-sand-close",
@@ -242,7 +256,9 @@
       "height": 750,
       "bytes": 315866,
       "originalSha256": "e65d227fe501dfd5938df242d1e132c7febea75c3d99351c6ed38e12d22e72ae",
-      "sha256": "a979f7287e70ae70cffecae64922144ff8f52ba7cdcb381edaeac400ee087131"
+      "sha256": "a979f7287e70ae70cffecae64922144ff8f52ba7cdcb381edaeac400ee087131",
+      "publishedPath": "/images/catalog/approved/a979f7287e70ae70cffecae6.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "garden-hose-coil",
@@ -260,7 +276,9 @@
       "height": 900,
       "bytes": 290910,
       "originalSha256": "ee80cbc4b9d0131a408785cb5560d1fc99afc2f8c3d7a4149a1997ee9863bec0",
-      "sha256": "03b503783fe52f8e5345acf93dc24b6c46e92e91357497a81e815b2ab39602ca"
+      "sha256": "03b503783fe52f8e5345acf93dc24b6c46e92e91357497a81e815b2ab39602ca",
+      "publishedPath": "/images/catalog/approved/03b503783fe52f8e5345acf9.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "spirit-level-tool",
@@ -278,7 +296,9 @@
       "height": 427,
       "bytes": 31846,
       "originalSha256": "e635cf3092c35c7490e4d03632923116734400a32dc6b9943d00cd513c111a14",
-      "sha256": "b13185127f5c233b4d08cf3604605177b35aa0586d85997db75489f702c7faa0"
+      "sha256": "b13185127f5c233b4d08cf3604605177b35aa0586d85997db75489f702c7faa0",
+      "publishedPath": "/images/catalog/approved/b13185127f5c233b4d08cf36.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "pipe-nipple-reference",
@@ -329,7 +349,9 @@
       "height": 1024,
       "bytes": 18880,
       "originalSha256": "d534764f389a21b9055887523a6d635c8776abcf15f4ba2373738555d40d439d",
-      "sha256": "f2ac9fff4a373ca61d30af68ab0cc68792c88098041b7f994d92958318969922"
+      "sha256": "f2ac9fff4a373ca61d30af68ab0cc68792c88098041b7f994d92958318969922",
+      "publishedPath": "/images/catalog/reference/sail-corporate-logo.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "notched-adhesive-trowel",
@@ -346,7 +368,9 @@
       "height": 248,
       "bytes": 7792,
       "originalSha256": "38b8a58a1f82b104c638b25fce433225832ced918f07398d32d7c2c1eb38a1ea",
-      "sha256": "24463c3c61ce5e4917195b3073835c2a22e460f3835643cdc095bbafe76af08a"
+      "sha256": "24463c3c61ce5e4917195b3073835c2a22e460f3835643cdc095bbafe76af08a",
+      "publishedPath": "/images/catalog/approved/24463c3c61ce5e4917195b30.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "float-switch-generic",
@@ -380,7 +404,9 @@
       "height": 900,
       "bytes": 194466,
       "originalSha256": "e22e50aa54597fd8d94d93e3422a6c5f307cfb5dbf7fada5bb4d5f15147f878f",
-      "sha256": "dcfd048c44fdaf7bbbf6232c15f8e247e8495b863b793c0db1d4ae5d597a7290"
+      "sha256": "dcfd048c44fdaf7bbbf6232c15f8e247e8495b863b793c0db1d4ae5d597a7290",
+      "publishedPath": "/images/catalog/approved/dcfd048c44fdaf7bbbf6232c.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "pump-impeller-range",
@@ -397,7 +423,9 @@
       "height": 462,
       "bytes": 31836,
       "originalSha256": "ba951e59d9f55451f9457f459a0e08077d187f5cf4465b6b7ecc4cd80f87ac39",
-      "sha256": "69e90b3bb30f7cae4757f14bcbc7f99d2ef1f9a035955cba10ae8c7e0efae6a4"
+      "sha256": "69e90b3bb30f7cae4757f14bcbc7f99d2ef1f9a035955cba10ae8c7e0efae6a4",
+      "publishedPath": "/images/catalog/approved/69e90b3bb30f7cae4757f14b.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "polycab-current-mark",
@@ -414,7 +442,9 @@
       "height": 400,
       "bytes": 8436,
       "originalSha256": "eb6ed1b1471c0a9050d784a6c9343d0b90a07c584f67ec6bf12f3e06c52193fc",
-      "sha256": "5364470a2371cb94cef0f091697086fec90b27ce427c4cb8b2a728c571c7379a"
+      "sha256": "5364470a2371cb94cef0f091697086fec90b27ce427c4cb8b2a728c571c7379a",
+      "publishedPath": "/images/catalog/reference/polycab-corporate-logo.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "hettich-brand-mark",
@@ -431,7 +461,9 @@
       "height": 456,
       "bytes": 12672,
       "originalSha256": "f58bd3e9bf96e858fd0ac028522eefcb3fda2350e21f017302e66ddd167de2f8",
-      "sha256": "ad75eb9597bae1d89fb9339a4791a5c620ad9db9d266014a6d68aac22a0c1905"
+      "sha256": "ad75eb9597bae1d89fb9339a4791a5c620ad9db9d266014a6d68aac22a0c1905",
+      "publishedPath": "/images/catalog/reference/hettich-corporate-logo.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "berger-brand-mark",
@@ -448,7 +480,9 @@
       "height": 225,
       "bytes": 7200,
       "originalSha256": "3a96d14217850f4117dd7702ae4e8764e1ac21817de3b7a52a5b33cf81af1aa8",
-      "sha256": "eaa2a3f28d1c8838956cc0a32fd5d507483061aa7baf7670699c42a6233eb9dd"
+      "sha256": "eaa2a3f28d1c8838956cc0a32fd5d507483061aa7baf7670699c42a6233eb9dd",
+      "publishedPath": "/images/catalog/reference/berger-corporate-logo.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "nerolac-brand-mark",
@@ -465,7 +499,9 @@
       "height": 59,
       "bytes": 7492,
       "originalSha256": "2a450a76c0b74215913b1d7802282d823512337498280fafcfdb360080cf123a",
-      "sha256": "0c0251298b89adf831a48ca045b326dfef428cb6df42246624409b7dedf5473a"
+      "sha256": "0c0251298b89adf831a48ca045b326dfef428cb6df42246624409b7dedf5473a",
+      "publishedPath": "/images/catalog/reference/nerolac-corporate-logo.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "gate-valve-installed",
@@ -482,7 +518,9 @@
       "height": 900,
       "bytes": 69032,
       "originalSha256": "ab94ac40f4a1ee21f2e92ab916a4364baad526ff2dfd2481c0b755d7bc726337",
-      "sha256": "152f5c8aa0c63696ed84e47946d1f3592d0a4585152af297cde8ce14e60cec17"
+      "sha256": "152f5c8aa0c63696ed84e47946d1f3592d0a4585152af297cde8ce14e60cec17",
+      "publishedPath": "/images/catalog/approved/152f5c8aa0c63696ed84e479.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "sealant-gun-application",
@@ -499,7 +537,9 @@
       "height": 950,
       "bytes": 28188,
       "originalSha256": "2132c0dc932bf53548eeb954748cb8ea7932a21bc022209ed3de2c947387afb2",
-      "sha256": "eb31c5436f3d0e037c1f0ef8386aecaa5529d56b71531c3056cf8f1585d47176"
+      "sha256": "eb31c5436f3d0e037c1f0ef8386aecaa5529d56b71531c3056cf8f1585d47176",
+      "publishedPath": "/images/catalog/approved/eb31c5436f3d0e037c1f0ef8.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "ptfe-tape-primary",
@@ -630,7 +670,9 @@
       "height": 67,
       "bytes": 2428,
       "originalSha256": "28dc48694580a43ec47341428a4def0d5804dfcb41b507e57874b637a9f46a94",
-      "sha256": "03456178bcbfe4fb1df790463e4272bb4e64b442169f9d74bf91e7c77af6b55c"
+      "sha256": "03456178bcbfe4fb1df790463e4272bb4e64b442169f9d74bf91e7c77af6b55c",
+      "publishedPath": "/images/catalog/reference/pidilite-corporate-logo.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "magicrete-aac-original",

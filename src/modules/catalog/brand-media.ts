@@ -9,6 +9,7 @@
  */
 import {localBrandAssets} from "./local-brand-assets.ts";
 export const brandMedia={
+ "Pidilite":{logo:"/images/catalog/reference/pidilite-corporate-logo.webp",logoSource:"https://commons.wikimedia.org/wiki/File:Pidilite_Industries_logo.svg",logoAttribution:"Pidilite Industries · official-site sourced corporate mark, Commons PD-textlogo; resized WebP, trademark applies; no dealer authorization implied",officialProductPage:"https://www.pidilite.com/"},
  "Berger":{"logo":"/images/catalog/reference/berger-corporate-logo.webp","logoSource":"https://commons.wikimedia.org/wiki/File:Berger_Paints_logo.png","logoAttribution":"Berger Paints · archived 2019 corporate mark, PD-textlogo per Commons; trademark applies","officialProductPage":"https://www.bergerpaints.com/"},
  "Nerolac":{"logo":"/images/catalog/reference/nerolac-corporate-logo.webp","logoSource":"https://commons.wikimedia.org/wiki/File:Nerolac-logo.webp","logoAttribution":"Nerolac · CC BY-SA 4.0 per Commons; resized WebP; https://creativecommons.org/licenses/by-sa/4.0/ · trademark applies","officialProductPage":"https://www.nerolac.com/"},
  "SAIL":{logo:"/images/catalog/reference/sail-corporate-logo.webp",logoSource:"https://commons.wikimedia.org/wiki/File:Steel_Authority_of_India_logo.svg",logoAttribution:"Steel Authority of India · PD-textlogo (trademark applies); corporate identification, not dealer approval",officialProductPage:"https://www.sail.co.in/en/products"},

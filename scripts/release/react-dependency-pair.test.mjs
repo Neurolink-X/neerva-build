@@ -1,0 +1,12 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {reactIssues} from "./react-dependency-pair.mjs";
+const fixture=()=>[JSON.parse(readFileSync("package.json","utf8")),JSON.parse(readFileSync("package-lock.json","utf8"))];
+test("valid",()=>{const [p,l]=fixture();(()=>{})(p,l);assert.equal(Boolean(reactIssues(p,l).length),false);});
+test("runtime mismatch",()=>{const [p,l]=fixture();((p,l)=>{p.dependencies["react-dom"]="19.3.1";})(p,l);assert.equal(Boolean(reactIssues(p,l).length),true);});
+test("types mismatch",()=>{const [p,l]=fixture();((p,l)=>{p.devDependencies["@types/react-dom"]="19.3.0";})(p,l);assert.equal(Boolean(reactIssues(p,l).length),true);});
+test("nested react",()=>{const [p,l]=fixture();((p,l)=>{l.packages["node_modules/example/node_modules/react"]={version:"18.2.0"};})(p,l);assert.equal(Boolean(reactIssues(p,l).length),true);});
+test("root lock drift",()=>{const [p,l]=fixture();((p,l)=>{l.packages[""].dependencies.react="19.3.0";})(p,l);assert.equal(Boolean(reactIssues(p,l).length),true);});
+test("floating version",()=>{const [p,l]=fixture();((p,l)=>{p.dependencies.react="^19.2.0";})(p,l);assert.equal(Boolean(reactIssues(p,l).length),true);});
+test("type runtime drift",()=>{const [p,l]=fixture();((p,l)=>{for(const n of ["@types/react","@types/react-dom"]){p.devDependencies[n]="19.3.0";l.packages[""].devDependencies[n]="19.3.0";l.packages["node_modules/"+n].version="19.3.0"}})(p,l);assert.equal(Boolean(reactIssues(p,l).length),true);});

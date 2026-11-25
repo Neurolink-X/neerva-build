@@ -52,6 +52,62 @@ async function main(){
     }
     if(v.w===360||v.w===430)await page.screenshot({path:path.join("test-results/mobile",v.w+"-"+(route.replaceAll("/","-")||"home")+".png"),fullPage:true,animations:"disabled"});
    }
+   // Check the reported category media regression on every viewport.
+   await page.goto(base+"/",{waitUntil:"load"});
+   const housePhotos=await page.locator(".nbh-house-strip img,.nbh-studio-photo img,.nbh-photo-hero img").evaluateAll(imgs=>imgs.map(img=>{const src=img.getAttribute("src")??"";return new URL(src,location.origin).searchParams.get("url")??src;}));
+   assert.equal(new Set(housePhotos).size,housePhotos.length,"No repeated house photograph across home sections");
+   assert.equal(await page.locator(".nbh-family-card").count(),0,"Keep the premium homepage focused");
+   assert.equal(await page.locator(".nbh-family-entry").count(),1,"Family planning entry point");
+   await page.goto(base+"/family-homes",{waitUntil:"load"});
+   assert.equal(await page.locator(".nbh-family-card").count(),4,"Separate family planning page");
+   const familyPhotos=page.locator(".nbh-family-photo img");
+   assert.equal(await familyPhotos.count(),3,"Three distinct family-home visual concepts");
+   for(const img of await familyPhotos.all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());assert.ok(await img.evaluate(el=>el.naturalWidth>0&&el.naturalHeight>0),"Family-home image decodes");}
+   assert.equal(new Set(await familyPhotos.evaluateAll(imgs=>imgs.map(img=>img.getAttribute("src")))).size,3,"No repeated family visual");
+   const familyLinks=await page.locator('.nbh-family-card a[href^="/design-studio/portfolio?"]').evaluateAll(links=>links.map(a=>{const q=new URL(a.href).searchParams;return ["width","depth","bedrooms","floors"].map(k=>q.get(k)).join("x");}));
+   assert.deepEqual(familyLinks,["15x30x1x1","18x50x3x2","20x40x2x1"],"Family home cards use supported plot and room briefs");
+   await page.goto(base+"/",{waitUntil:"load"});
+   const categoryCards=page.locator(".nbh-material-card");
+   assert.equal(await categoryCards.count(),9,"all home material categories");
+   assert.ok((await categoryCards.evaluateAll(cards=>cards.every(c=>c.querySelectorAll(".nbh-material-image img").length===1))),"one primary image per category card");
+   await categoryCards.first().scrollIntoViewIfNeeded();
+   assert.equal(await page.locator('.nbh-material-choices a[href="/materials/bricks-blocks/red-clay-brick"]').count(),1);
+   const mediaIssues=await categoryCards.evaluateAll(cards=>cards.flatMap(card=>{
+    const img=card.querySelector(".nbh-material-main-photo img");
+    const frame=card.querySelector(".nbh-material-image");
+    const a=card.getBoundingClientRect(),b=frame?.getBoundingClientRect();
+    return !img||!b||getComputedStyle(img).objectFit!=="cover"||b.width<100||b.height<75||b.right>a.right+1?["invalid category image frame"]:[];
+   }));
+   assert.deepEqual(mediaIssues,[],"home category media fills frame at "+v.w);
+   for(const category of ["bricks-blocks","plumbing","tiles","hardware"]){
+    const res=await page.goto(base+"/materials/"+category,{waitUntil:"load"});
+    assert.equal(res?.status(),200,category);
+    assert.ok(await page.locator(".customer-material-choice").count()>=4,category+" product shortcuts");
+    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+    assert.ok(overflow<=2,category+" overflow at "+v.w);
+   }
+   await page.goto(base+"/materials",{waitUntil:"load"});
+   const catalog=page.locator("#catalog-results");
+   await catalog.locator(".product-card").first().waitFor();
+   assert.equal(await catalog.locator(".product-card").count(),24,"Bound first-page DOM at "+v.w);
+   const firstPage=await catalog.locator(".product-card h2 a").evaluateAll(links=>links.map(a=>a.getAttribute("href")));
+   await catalog.getByRole("button",{name:"Next →",exact:true}).click();
+   const secondPage=await catalog.locator(".product-card h2 a").evaluateAll(links=>links.map(a=>a.getAttribute("href")));
+   assert.ok(secondPage.length>0&&secondPage.length<=24,"Next page stays bounded");
+   assert.ok(secondPage.every(h=>!firstPage.includes(h)),"No repeated family between pages");
+   await catalog.getByRole("button",{name:"← Previous",exact:true}).click();
+   assert.deepEqual(await catalog.locator(".product-card h2 a").evaluateAll(links=>links.map(a=>a.getAttribute("href"))),firstPage);
+   await catalog.locator(".catalog-search input").fill("red clay brick");
+   assert.ok(await catalog.locator('a[href="/materials/bricks-blocks/red-clay-brick"]').count()>0,"Search still discovers products beyond first page");
+   await page.goto(base+"/materials?category=hardware",{waitUntil:"load"});
+   assert.equal(await page.locator('#catalog-results a[href="/materials/hardware/wood-adhesive"]').count(),0,"Minor adhesive bottle must not appear in the public grid");
+   await page.goto(base+"/materials/hardware",{waitUntil:"load"});
+   assert.equal(await page.locator('.hardware-showroom a[href="/materials/hardware/wood-adhesive"]').count(),0,"Hardware showroom hides small accessories");
+   await page.goto(base+"/materials/plumbing",{waitUntil:"load"});
+   assert.equal(await page.locator('#fitting-showroom a[href="/materials/plumbing/fitting-gasket"]').count(),0,"Fittings showroom hides minor consumables");
+   const redBrick=await page.goto(base+"/materials/bricks-blocks/red-clay-brick",{waitUntil:"load"});
+   assert.equal(redBrick?.status(),200,"red brick details");
+   assert.match(await page.locator("h1").first().innerText(),/red clay brick/i);
    if(v.w===390||v.w===1440){
     const sizes=v.w===390?[[320,568],[360,800],[390,844],[412,915],[540,720],[768,1024],[844,390]]:[[1024,768],[1280,720],[1440,900],[1920,1080],[2560,1440]];
     for(const route of ["/design-studio/road-planner","/design-studio/portfolio?width=18&depth=50&road=N&bedrooms=3&floors=2&parking=true"]){

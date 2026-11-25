@@ -26,3 +26,10 @@ test("first buying guide covers final delivered costs and official references", 
   assert.ok(article.sources.some((source) => source.href.includes("bis.gov.in")));
   assert.ok(article.sources.some((source) => source.href.includes("gst.gov.in")));
 });
+
+
+test("Neerva platform guide includes bilingual steps, mission and honest fulfillment limits",()=>{
+ const a=getArticle("neerva-build-smarter-construction-viksit-bharat");assert.ok(a);assert.deepEqual(a.sections.map(x=>x.id),a.sectionsHi.map(x=>x.id));
+ const content=JSON.stringify(a.sections);for(const term of ["Viksit Bharat","2D","3D","My Orders","pincode","not a government programme","not guaranteed"])assert.ok(content.includes(term),term);
+ assert.ok(a.sources.some(s=>s.href==="/materials"));
+});

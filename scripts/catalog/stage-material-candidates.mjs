@@ -8,7 +8,12 @@ let previous=[];try{previous=JSON.parse(await fs.readFile(root+"/manifest.json",
 
 for(const item of candidates){try{
  const old=previous.find(r=>r.key===item.key&&r.filename===item.filename&&r.url===item.url&&r.status==="visual-review-required"&&r.file&&r.sha256);
- if(old){try{const b=await fs.readFile(root+"/"+old.file);if(createHash("sha256").update(b).digest("hex")===old.sha256){rows.push({...old,...item});continue;}}catch{}}
+ if(old){try{const candidatePath=old.publishedPath;
+ const safeShared=typeof candidatePath==="string"&&/^\/images\/catalog\/(?:approved\/[a-f0-9]{24}|reference\/[a-z0-9-]+)\.webp$/.test(candidatePath);
+ const safeFile=typeof old.file==="string"&&/^[a-f0-9]{24}\.webp$/.test(old.file);
+ if(!safeFile||candidatePath&&!safeShared)throw Error("Invalid cached asset path");
+ const b=await fs.readFile(safeShared?"public"+candidatePath:root+"/"+old.file);
+ if(b.length===old.bytes&&createHash("sha256").update(b).digest("hex")===old.sha256){rows.push({...old,...item});continue;}}catch{}}
 
  const filename=item.filename.trim().replaceAll(" ","_");
  const hash=createHash("md5").update(filename).digest("hex");
@@ -31,5 +36,5 @@ for(const item of candidates){try{
  await fs.writeFile(root+"/"+file,data);rows.push({...item,status:"visual-review-required",file,width:info.width,height:info.height,bytes:data.length,originalSha256:createHash("sha256").update(source).digest("hex"),sha256});
  }catch(err){rows.push({...item,status:"failed",reason:String(err)});}
 }
-await fs.writeFile(root+"/manifest.json",JSON.stringify({publication:"Not approved. Do not serve or map these files publicly.",rows},null,2)+"\n");
+await fs.writeFile(root+"/manifest.json",JSON.stringify({publication:"Candidate review metadata; no new publication authorization. Shared public copies refer only to already published matching bytes.",rows},null,2)+"\n");
 console.log(rows.map(r=>({key:r.key,status:r.status,bytes:r.bytes,reason:r.reason})));

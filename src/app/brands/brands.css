@@ -56,3 +56,17 @@
 .br-wrap .tile-swatch .catalog-image-note{position:absolute;right:8px;bottom:8px;z-index:1;max-width:calc(100% - 16px);padding:4px 6px;border-radius:4px;background:#172b20e8;color:#fff;font-size:10px;line-height:1.2;overflow-wrap:anywhere}
 .br-wrap .catalog-variant-links{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
 .br-wrap .catalog-variant-links a{max-width:100%;overflow-wrap:anywhere}
+
+/* Do not letterbox surface/context photographs; preserve the whole pack or fitting. */
+.tile-swatch .catalog-material-image:not(.pack-photo) img{object-fit:cover!important;padding:0}
+.tile-show-card .catalog-material-image.pack-photo img{object-fit:contain!important;padding:4px;background:#fff}
+.tile-show-card .catalog-image-note{max-width:calc(100% - 16px);white-space:normal;overflow-wrap:anywhere}
+@media(max-width:640px){.tile-swatch .catalog-material-image{height:clamp(145px,43vw,205px)}}
+
+.tile-show-card .catalog-material-image.pack-photo img{object-fit:contain!important;padding:3px;background:#fff}
+
+/* Shared catalog media frame also used by brand direct-entry pages. */
+.br-wrap .catalog-media-frame{display:flex;flex-direction:column;min-width:0;width:100%}
+.br-wrap .catalog-media-caption{position:static;display:flex;flex-wrap:wrap;gap:3px 7px;padding:7px 10px;background:#f5f7f3;color:#42564c;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.br-wrap .catalog-media-caption small{font-size:10px}
+.br-wrap .tile-swatch .catalog-media-frame .catalog-material-image img{object-fit:contain!important;padding:5px;background:#fff}

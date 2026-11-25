@@ -1,15 +1,30 @@
 name: Full catalog integrity audit
 on:
+  workflow_dispatch:
+    inputs:
+      strict:
+        description: Require complete coverage and no remaining logo or resolution issues
+        type: boolean
+        default: true
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches: [main]
     paths:
       - 'src/modules/catalog/**'
       - 'scripts/catalog/**'
+      - 'public/images/catalog/**'
+      - 'assets/catalog/**'
+      - 'package-lock.json'
       - '.github/workflows/full-catalog-audit.yml'
+# Superseded PR checks must not consume runner time. Manual strict audits stay separate.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions:
   contents: read
 jobs:
   audit:
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:
@@ -21,8 +36,17 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: node --experimental-strip-types scripts/catalog/full-catalog-audit.mjs
+      - name: Audit local files, variants and release coverage
+        env:
+          STRICT_CATALOG: ${{ inputs.strict }}
+        run: |
+          if [ "$STRICT_CATALOG" = "true" ]; then
+            node --experimental-strip-types scripts/catalog/full-catalog-audit.mjs --strict
+          else
+            node --experimental-strip-types scripts/catalog/full-catalog-audit.mjs
+          fi
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
         with:
           name: full-catalog-audit
           path: catalog-audit/report.json
