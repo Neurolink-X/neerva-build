@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {generateSpatialPortfolio} from "./road-generator.ts";
-import {rectInsideShape,shapeErrors,siteAreaSqFt,siteOutline,conservativeEnvelope} from "./site-shape.ts";
+import {rectInsideShape,shapeErrors,siteAreaSqFt,siteOutline,conservativeEnvelope,parseSiteShape,nonRoadBoundaryEdges} from "./site-shape.ts";
 import {validatePlan,type PlanBrief} from "./plan-model.ts";
 const base:PlanBrief={widthFt:20,depthFt:60,roadSide:"N",floors:2,bedrooms:3,parking:true,
  setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
@@ -45,4 +45,14 @@ test("unsafe L-plot notch or too-small remaining frontage is rejected without fa
  assert.ok(model.plans.length>0);
  const modified={...model.plans[0],plot:{...model.plans[0].plot,siteShape:{kind:"rear-left-notch" as const,notchWidthFt:9,notchDepthFt:20}}};
  assert.ok(validatePlan(modified).some(e=>e.includes("outside usable plot")));
+});
+
+
+test("shape query never silently substitutes a rectangle for malformed or unsupported site",()=>{
+ assert.deepEqual(parseSiteShape(undefined,undefined,undefined),{kind:"rectangle"});
+ assert.deepEqual(parseSiteShape("rear-right-notch","2","10"),{kind:"rear-right-notch",notchWidthFt:2,notchDepthFt:10});
+ for(const input of [["trapezoid","2","10"],["rear-left-notch","NaN","10"],["rear-left-notch","","10"],["rear-right-notch","2",undefined]])assert.equal(parseSiteShape(...input as [unknown,unknown,unknown]),null);
+});
+test("3D non-road fence follows each measured L outline rather than the enclosing rectangle",()=>{
+ for(const kind of ["rear-left-notch","rear-right-notch"] as const){const shape={kind,notchWidthFt:2,notchDepthFt:10};const edges=nonRoadBoundaryEdges(20,60,shape);assert.equal(edges.length,5);assert.ok(edges.every(e=>e.start.x===e.end.x||e.start.y===e.end.y));assert.ok(edges.some(e=>e.start.y===50&&e.end.y===50));assert.ok(edges.every(e=>!(e.start.y===0&&e.end.y===0)));}
 });
