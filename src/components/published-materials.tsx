@@ -1,4 +1,5 @@
 "use client";
+import {isPublicConstructionProduct} from "@/modules/catalog/discovery-policy";
 import {useEffect,useMemo,useState} from "react";
 import {ProductPrice} from "@/components/product-price";
 import Link from "next/link";
@@ -24,7 +25,7 @@ export function PublishedMaterials({category,initiallyOpen=false}:{category?:str
   }).catch(()=>{if(!controller.signal.aborted)setFailed(true)});
   return ()=>controller.abort();
  },[open,category,attempt]);
- const rows=useMemo(()=>(products??[]).filter(p=>(!category||p.category?.slug===category)&&p.category?.slug)
+ const rows=useMemo(()=>(products??[]).filter(p=>(!category||p.category?.slug===category)&&p.category?.slug&&isPublicConstructionProduct({category:p.category.slug,slug:p.slug}))
   .flatMap(p=>p.variants.filter(v=>v.status==="published").map(v=>({p,v}))),[products,category]);
  return <details open={open} className="category-guidance" onToggle={e=>{const next=e.currentTarget.open;setOpen(next);if(!next){setProducts(null);setFailed(false)}}}>
   <summary>Check published Neerva products</summary>
