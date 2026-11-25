@@ -29,12 +29,12 @@
 .button.button-light{border:1px solid #cbd6c7}
 :is(.button,.nbh-outline-link,.nbh-studio-generate,.header-install):active:not(:disabled):not([aria-disabled="true"]){transform:translateY(1px);box-shadow:none}
 :where(.desktop-nav,.nbh-nav) a[href]{display:inline-flex;align-items:center;min-height:var(--action-target);text-underline-offset:5px}
-:where(.site-mobile-menu,.nbh-mobile-menu) nav a[href]{border-radius:8px;min-height:var(--action-target);overflow-wrap:anywhere}
-:where(.site-mobile-menu,.nbh-mobile-menu)[open]>summary{background:#244b37;color:#fff;border-color:#244b37}
-:where(.site-footer,.nbh-footer) nav a[href]{display:flex;align-items:center;min-height:36px;line-height:1.5;text-underline-offset:4px}
+:is(.site-mobile-menu,.nbh-mobile-menu) nav a[href]{border-radius:8px;min-height:var(--action-target);overflow-wrap:anywhere}
+:is(.site-mobile-menu,.nbh-mobile-menu)[open]>summary{background:#244b37;color:#fff;border-color:#244b37}
+:is(.site-footer,.nbh-footer) nav a[href]{display:flex;align-items:center;min-height:36px;line-height:1.5;text-underline-offset:4px}
 :where(.article-section,.article-body,.article-sources,.article-toc,.blog-list,.legal-content) a[href]{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;overflow-wrap:anywhere}
 :where(.text-link,.nbh-section-link,.nbh-material-cta,.nroad-secondary-link,.home-visualizer-link){text-underline-offset:4px}
-:where(.product-request-config,.account-auth-form,.rfq-form,.plan-editor-actions,.nbd-buttons,.paint-actions,.paint-mode,.paint-targets,.admin-record) button:not([type="reset"]){min-height:var(--action-target)}
+:is(.product-request-config,.account-auth-form,.rfq-form,.plan-editor-actions,.nbd-buttons,.paint-actions,.paint-mode,.paint-targets,.admin-record) button:not([type="reset"]){min-height:var(--action-target)}
 :where(.product-request-config,.rfq-form,.account-auth-form) :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),select){min-height:var(--action-target)}
 :where(.nbd-buttons,.plan-editor-actions,.paint-actions,.paint-mode,.paint-targets,.admin-record) button{min-width:0;overflow-wrap:anywhere;line-height:1.35}
 :where(.nbd-buttons,.paint-mode,.paint-targets,.account-mode-switch,.floor-switch,.nroad-floor-tabs) button[aria-pressed="true"]{font-weight:700}
@@ -45,7 +45,7 @@
 }
 @media(max-width:680px){
  .button:not(.header-quote){white-space:normal;max-inline-size:100%}
- :where(.site-footer,.nbh-footer) nav a[href]{min-height:var(--action-target)}
+ :is(.site-footer,.nbh-footer) nav a[href]{min-height:var(--action-target)}
  :where(.article-toc,.blog-header) nav a[href]{min-height:var(--action-target)}
  :where(.product-request-config,.rfq-form,.account-auth-form) :is(button,a.button){font-size:var(--type-control, .9375rem)}
 }
