@@ -76,4 +76,23 @@ assert.equal(readiness.status,200);
 assert.equal(readiness.data.findings.find(r=>r.key==="inventory").state,"unknown","Global inventory is not visible under tenant-only RLS");
 assert.equal((await call(customer,"/api/dealer/inventory")).status,403);
 assert.equal((await call(customer,"/api/admin/studio-payments")).status,403);
-console.log(JSON.stringify({scope:"authenticated disposable staging API workflow; no physical dispatch or payment",completed:order.code,cancelled:cancel.data.order.code,checks:["guest denial","role isolation","validation","idempotency","admin fallback","price acceptance","delivery state","tracking","cancellation"]}));
+// Editorial publishing uses the same isolated fixture and actual RLS.
+const editorialRoute="/api/admin/blog",slug="disposable-editorial-"+randomUUID();
+const post={slug,title:"Disposable editorial fixture",summary:"A private fixture to verify publication and role boundaries.",body:"Educational staging article. ".repeat(12),language:"en",category:"Learning",cover:"architecture",source_url:null,status:"draft",reviewed:false};
+assert.equal((await call(null,editorialRoute)).status,401);
+assert.equal((await call(customer,editorialRoute)).status,403);
+assert.equal((await call(customer,editorialRoute,"POST",post)).status,403);
+assert.equal((await call(admin,editorialRoute,"POST",{...post,status:"published"})).status,400);
+const editorial=await call(admin,editorialRoute,"POST",post);assert.equal(editorial.status,200);assert.equal(editorial.data.post.version,1);
+const anonymous=createClient(db.origin,key,{auth:{persistSession:false,autoRefreshToken:false}});
+const signed=createClient(db.origin,key,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:"Bearer "+customer.token}}});
+async function visible(client){const r=await client.from("editorial_posts").select("slug").eq("slug",slug);assert.equal(r.error,null);return r.data.length}
+assert.equal(await visible(anonymous),0);assert.equal(await visible(signed),0);
+assert.ok((await signed.from("editorial_posts").insert({...post,slug:slug+"-denied"})).error,"Direct customer write denied by RLS");
+const published=await call(admin,editorialRoute,"PATCH",{post:{...post,status:"published",reviewed:true},expectedVersion:1});
+assert.equal(published.status,200);assert.equal(published.data.post.version,2);assert.equal(await visible(anonymous),1);
+assert.equal((await call(admin,editorialRoute,"PATCH",{post:{...post,status:"archived"},expectedVersion:1})).status,409);
+const article=await fetch(new URL("/blog/editorial/"+slug,base),{signal:AbortSignal.timeout(20000)});assert.equal(article.status,200);assert.match(await article.text(),/Disposable editorial fixture/);
+const archived=await call(admin,editorialRoute,"PATCH",{post:{...post,status:"archived",reviewed:true},expectedVersion:2});assert.equal(archived.status,200);assert.equal(await visible(anonymous),0);assert.equal(await visible(signed),0);
+assert.equal((await fetch(new URL("/blog/editorial/"+slug,base),{signal:AbortSignal.timeout(20000)})).status,404);
+console.log(JSON.stringify({scope:"authenticated disposable staging API workflow; no physical dispatch or payment",completed:order.code,cancelled:cancel.data.order.code,checks:["guest denial","role isolation","validation","idempotency","admin fallback","price acceptance","delivery state","tracking","cancellation","editorial admin role isolation","draft privacy","publish","version conflict","archive"]}));

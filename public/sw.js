@@ -15,7 +15,7 @@ self.addEventListener("fetch",event=>{
  const request=event.request;
  if(request.mode!=="navigate"||request.method!=="GET")return;
  const url=new URL(request.url);
- if(url.origin!==self.location.origin||/^\/(api|account|admin|dealer)(\/|$)/.test(url.pathname))return;
+ if(url.origin!==self.location.origin||/^\/(api|account|admin|dealer|checkout|customer|support|basket)(\/|$)/.test(url.pathname))return;
  event.respondWith(fetch(request).catch(async()=>{
   const response=await caches.match(OFFLINE);
   return response??new Response("Offline. No request was submitted.",{status:503,headers:{"Content-Type":"text/plain"}});

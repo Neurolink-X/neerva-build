@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {SiteFooter} from "@/components/site-chrome";
 import { articles } from "@/modules/blog/articles";
+import {PublishedEditorial} from "@/components/published-editorial";
 
 export const metadata: Metadata = {
   title: "Construction Guides & Buying Advice",
@@ -45,6 +46,7 @@ export default function BlogIndexPage() {
           ["Sell materials","Review storefront and service-area requirements. Approved dealers can sign in and open the dealer dashboard from Account to manage enquiries.","/business-model","Dealer information"]
         ].map(([title,body,href,action])=><article key={href} className="blog-card"><div className="blog-card-content"><h3>{title}</h3><p>{body}</p><Link className="text-link" href={href}>{action} →</Link></div></article>)}</div>
       </section>
+      <PublishedEditorial/>
       <section className="blog-list" aria-labelledby="blog-list-title">
         <div className="blog-list-heading"><div><div className="eyebrow">LATEST GUIDE</div><h2 id="blog-list-title">Useful before you buy.</h2></div><span>{articles.length} {articles.length === 1 ? "article" : "articles"}</span></div>
         <div className="blog-card-grid">

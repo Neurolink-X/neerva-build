@@ -48,6 +48,7 @@ const manifest={
  "/api/admin/dealer-members":["GET","POST"],
  "/api/dealer/overview":["GET"],
  "/api/admin/audit":["GET"],
+ "/api/admin/blog":["GET","POST","PATCH"],
  "/api/admin/catalog/campaigns":["GET","POST","PATCH"],
  "/api/admin/catalog":["GET","POST","PATCH"],
  "/api/admin/dealers":["GET","PATCH"],

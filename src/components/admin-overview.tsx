@@ -12,7 +12,7 @@ const modules=[
  {title:"Dealer businesses",key:"dealers",href:"/admin/dealers",desc:"Dealer directory and branch coverage"},
  {title:"Account profiles",key:"customers",href:"/admin/users",desc:"Review customer profiles and role grants"}
 ];
-const quick=[["Supplier sourcing","/admin/fulfilment","Unassigned material requests"],["Pricing","/admin/pricing","Manage reviewed price rules"],["Marketing","/admin/marketing","Create verified offers"],["Studio library","/admin/studio","Design configuration"],["Payments","/admin/studio-payments","Reconciliation and payment support"],["System health","/admin/system-health","Review platform incidents"],["Activity audit","/admin/audit","Inspect administrative decisions"]];
+const quick=[["Supplier sourcing","/admin/fulfilment","Unassigned material requests"],["Pricing","/admin/pricing","Manage reviewed price rules"],["Marketing","/admin/marketing","Create verified offers"],["Blog & knowledge","/admin/blog","Draft and publish editorial articles"],["Studio library","/admin/studio","Design configuration"],["Payments","/admin/studio-payments","Reconciliation and payment support"],["System health","/admin/system-health","Review platform incidents"],["Activity audit","/admin/audit","Inspect administrative decisions"]];
 export function AdminOverview(){
  const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[error,setError]=useState(""),[revision,setRevision]=useState(0),[loading,setLoading]=useState(true);
  useEffect(()=>{
