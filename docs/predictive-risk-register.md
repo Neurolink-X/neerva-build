@@ -20,3 +20,6 @@ A transaction-locking SQL candidate is in scripts/ops/studio-concurrency-candida
 
 ## Stock reservation candidate
 Added isolated SQL candidate for explicitly mapped RFQ order lines, validated seller branch/service PIN, atomic conditional stock decrement, deterministic row locking, holds, pre-dispatch cancellation release, dispatch consumption, and bounded admin expiry. Existing unmapped orders remain sourcing/confirmation requests and are not stock guarantees. Requires staging concurrency fixtures, reviewed SKU selection UI/API, expiry scheduling and a tracked migration before activation. Expired holds currently require manual order reconciliation; archived SKU release and stale stock-editor behavior require staging validation. Do not deploy the candidate directly.
+
+## Catalog reconciliation
+Read-only exact slug/category/origin/reference-SKU/unit/status reconciliation and unit tests are now linked to the disposable import workflow. Conflicting rows and missing or orphan reference records are reported, not overwritten or published. Production run requires a verified database connection and does not synchronize records by itself.

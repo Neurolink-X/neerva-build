@@ -1,0 +1,20 @@
+// Read-only report. No production writes, no private customer/dealer records.
+import assert from "node:assert/strict";
+import {execFileSync} from "node:child_process";
+import {demoProducts} from "../../src/modules/catalog/marketplace.ts";
+import {defaultCategoryUnit} from "../../src/modules/catalog/category-units.ts";
+import {reconcileCatalog} from "../../src/modules/catalog/reconciliation.ts";
+const db=new URL(process.env.NEERVA_CATALOG_DATABASE_URL??process.env.DB_URL??"postgresql://invalid.invalid");
+assert.equal(db.protocol,"postgresql:");
+assert.equal(db.pathname,"/postgres");
+const local=db.hostname==="127.0.0.1"&&db.port==="54322"&&process.env.NEERVA_E2E_DISPOSABLE==="yes";
+const production=db.hostname==="db.djgghisbkucprqiezrcn.supabase.co"&&db.searchParams.get("sslmode")==="require";
+assert.ok(local||production,"Only disposable local or exact Neerva production DB");
+const sql="select coalesce(jsonb_agg(jsonb_build_object('slug',p.slug,'category',c.slug,'status',p.status,'origin',p.attributes->>'origin','variants',coalesce((select jsonb_agg(jsonb_build_object('sku',v.sku,'unit',v.unit,'status',v.status)) from public.product_variants v where v.product_id=p.id),'[]'::jsonb))),'[]'::jsonb) from public.products p join public.categories c on c.id=p.category_id";
+const env={...process.env,PGDATABASE:db.toString(),PGCONNECT_TIMEOUT:"10",PGOPTIONS:"-c default_transaction_read_only=on -c statement_timeout=20000"};
+delete env.NEERVA_CATALOG_DATABASE_URL;delete env.DB_URL;
+const rows=JSON.parse(execFileSync("psql",["-X","-v","ON_ERROR_STOP=1","-At","-c",sql],{env,encoding:"utf8",maxBuffer:16*1024*1024}).trim());
+const refs=demoProducts.map(p=>({slug:p.slug,category:p.category,unit:defaultCategoryUnit(p.category)}));
+const findings=reconcileCatalog(refs,rows);
+console.log(JSON.stringify({scope:local?"disposable":"production read-only",references:refs.length,databaseRows:rows.length,findings},null,2));
+if(findings.length)process.exitCode=1;

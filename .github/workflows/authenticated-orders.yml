@@ -56,6 +56,7 @@ jobs:
           } >> "$GITHUB_ENV"
           node --experimental-strip-types scripts/catalog/export-draft-catalog.mjs
           node scripts/catalog/verify-draft-import.mjs
+          node --experimental-strip-types scripts/catalog/reconcile-reference-catalog.mjs
           node --input-type=module <<'JS'
           import {createClient} from "@supabase/supabase-js";
           import {randomUUID} from "node:crypto";

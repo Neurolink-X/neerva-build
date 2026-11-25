@@ -112,6 +112,8 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
     setMessage("Choose a JPG, PNG or WebP under 10 MB.");return;
   }
   const ticket=++generation.current;
+  if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}
+  if(url.current?.startsWith("blob:")){URL.revokeObjectURL(url.current);url.current=null;}
   try{
    const dimensions=encodedPhotoDimensions(new Uint8Array(await f.slice(0,1024*1024).arrayBuffer()));
    if(ticket!==generation.current)return;
