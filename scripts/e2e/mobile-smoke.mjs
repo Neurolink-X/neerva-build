@@ -10,11 +10,17 @@ const routes=["/","/design-studio","/design-studio/library","/design-studio/fit"
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
- const failures=[],accessibilityReports=[];
+ const failures=[],accessibilityReports=[],performanceReports=[];
  try{
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
    const page=await ctx.newPage(),errors=[];
+   if(v.w===390)await page.addInitScript(()=>{
+    const metrics={lcp:null,cls:0,sessionStart:0,previousShift:0,sessionScore:0};
+    window.__neervaPerf=metrics;
+    try{new PerformanceObserver(list=>{for(const e of list.getEntries())metrics.lcp=e.startTime;}).observe({type:"largest-contentful-paint",buffered:true});}catch{}
+    try{new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput){if(e.startTime-metrics.previousShift>1000||e.startTime-metrics.sessionStart>5000){metrics.sessionStart=e.startTime;metrics.sessionScore=0;}metrics.previousShift=e.startTime;metrics.sessionScore+=e.value;metrics.cls=Math.max(metrics.cls,metrics.sessionScore);}}).observe({type:"layout-shift",buffered:true});}catch{}
+   });
    page.on("pageerror",error=>errors.push("uncaught at "+new URL(page.url()).pathname+": "+error.message));
    page.on("console",message=>{if(message.type()==="error")errors.push("console at "+new URL(page.url()).pathname+": "+message.text().slice(0,180))});
    for(const route of routes){
@@ -29,6 +35,11 @@ async function main(){
     if(!issues.title)failures.push(v.w+"px "+route+": missing document title");
     if(!issues.lang)failures.push(v.w+"px "+route+": missing document language");
     if(issues.h1<1)failures.push(v.w+"px "+route+": missing main heading");
+    if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer"].includes(route)){
+     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+     const timing=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],m=window.__neervaPerf;return {ttfbMs:n?Math.round(n.responseStart):null,loadMs:n?Math.round(n.loadEventEnd):null,lcpMs:m?.lcp==null?null:Math.round(m.lcp),cls:m?.cls??null};});
+     performanceReports.push({route,width:v.w,...timing,scope:"initial load observation, not field Web Vitals"});
+    }
     if(v.w===390&&["/","/account","/quotes","/materials","/design-studio/fit"].includes(route)){
       try{
         const result=await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21a","wcag21aa"]).analyze();
@@ -505,7 +516,7 @@ async function main(){
   // Negative authorization checks for EVERY protected role API and exposed verb.
   // These are guest-only probes; none may persist an order, payment, offer or role change.
   const protectedMatrix={
-   GET:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
+   GET:["/api/admin/marketplace-readiness","/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
     "/api/admin/orders","/api/admin/pricing","/api/admin/rfqs",
     "/api/admin/studio-payments","/api/admin/studio-settings","/api/admin/studio-support",
     "/api/admin/system-incidents","/api/admin/users","/api/customer/quotes",
@@ -539,6 +550,7 @@ async function main(){
   if(![200,503].includes(cityRules.status()))failures.push("City rules for Kanpur returned "+cityRules.status());
   await req.close();
  }finally{await browser.close()}
+ fs.writeFileSync("test-results/mobile/performance-baseline.json",JSON.stringify({scope:"390px local browser observations; no field INP claim or cross-run comparison",samples:performanceReports},null,2));
  fs.writeFileSync("test-results/mobile/accessibility-baseline.json",JSON.stringify({
   scope:"Automated axe-core WCAG 2.x A/AA sample at 390px; NOT a full manual WCAG certificate.",
   sampled:accessibilityReports,criticalOrSerious:accessibilityReports.flatMap(r=>("violations" in r?r.violations:[])).filter(v=>["critical","serious"].includes(v.impact??"")).length

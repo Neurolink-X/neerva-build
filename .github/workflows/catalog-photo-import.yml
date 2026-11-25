@@ -14,6 +14,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   download-verify:
+    if: github.repository == 'Neurolink-X/neerva-build' && github.ref == 'refs/heads/fix/pr30-catalog-media-gallery-variants-header-20261124'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:

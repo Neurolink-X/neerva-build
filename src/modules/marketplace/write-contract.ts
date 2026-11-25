@@ -20,7 +20,7 @@ export const catalogUpdate=z.discriminatedUnion("kind",[
  z.object({kind:z.literal("variant"),id:uuid,status:state,attributes:attributeValues.optional()}).strict()
 ]);
 export const inventoryWrite=z.object({
- branchId:uuid,variantId:uuid,quantity:z.number().finite().min(0).max(1_000_000),unit:z.enum(allMaterialUnits as [string,...string[]])
+ branchId:uuid,variantId:uuid,quantity:z.number().finite().min(0).max(1_000_000).refine(n=>Math.abs(n*1000-Math.round(n*1000))<0.000001,"Use at most three decimal places"),unit:z.enum(allMaterialUnits as [string,...string[]]),expectedUpdatedAt:z.string().datetime({offset:true}).nullable().optional()
 }).strict();
 const cost=z.number().int().min(0).max(5_000_000_000);
 export const offerWrite=z.object({

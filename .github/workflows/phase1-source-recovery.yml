@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   recover:
-    if: github.repository == 'Neurolink-X/neerva-build'
+    if: github.repository == 'Neurolink-X/neerva-build' && github.event.repository.private == true && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:

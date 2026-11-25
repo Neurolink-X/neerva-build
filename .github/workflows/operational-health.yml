@@ -1,0 +1,36 @@
+name: Neerva operational health
+on:
+  schedule:
+    - cron: '23 3 * * 1,4'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: neerva-operational-health
+  cancel-in-progress: false
+jobs:
+  public-health:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+      - name: Check public routes and latency
+        env:
+          NEERVA_ENFORCE_LATENCY: 'yes'
+        run: |
+          mkdir -p health-evidence
+          set -o pipefail
+          node scripts/ops/benchmark-public.mjs | tee health-evidence/public.json
+      - name: Retain health evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: public-health
+          path: health-evidence/
+          retention-days: 7
+          if-no-files-found: error

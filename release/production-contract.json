@@ -154,13 +154,13 @@
     "supabase/migrations/20261124113117_neerva_operations_incident_recovery_and_dealer_roles.sql"
   ],
   "protectedGitBlobs": {
-    "src/app/api/orders/route.ts": "7f10d7ffc56e431ddcf87006b2bd782c160f10c6",
+    "src/app/api/orders/route.ts": "dcb500db92b45177810e168af7bd7e0d7caf8e23",
     "src/modules/orders/backend.ts": "727869915623cbb664744b696e0637c9d9bd2488",
-    "src/modules/identity/server-auth.ts": "f0f8378ae4bdfd434767cf0bb46999a6a1afcc8e",
+    "src/modules/identity/server-auth.ts": "d249e64b5a7a2329097898ff716da075c4893a1c",
     "src/app/api/admin/catalog/route.ts": "b27fea2bc35403fb8ca8bc19275358555fa703ef",
     "src/app/api/admin/pricing/route.ts": "2423a0a2bb9952b68d434a6d936ea5c768bb22f9",
     "src/app/api/admin/rfqs/route.ts": "d74ea8907d49353a9c29f86b53cd75732c4efde1",
-    "src/app/api/dealer/inventory/route.ts": "82c0b90979d60300a743ba592dd7680b16282152",
+    "src/app/api/dealer/inventory/route.ts": "3d971a8f9500709b43213d6dc9b9b088817d52e1",
     "src/app/api/dealer/quotes/route.ts": "4bdc8035e4ce273503abf8a5034e2da7433ffe6d",
     "src/app/api/customer/quotes/route.ts": "2a260727535f6128b0a445b6c43adaf91baa1433",
     "src/components/material-basket.tsx": "2064be2569dcc76da29b5a4b38ecc5e659758d85",
@@ -173,8 +173,8 @@
     "supabase/migrations/0002_incident_observability_and_tenant_constraints.sql": "62dcb528b22e688434bd76a091c2f1ce6593baed",
     "supabase/migrations/0003_dealer_onboarding.sql": "7ed8801bbcf3f2087411963630140faa5b97cafc",
     "supabase/migrations/0004_design_studio_phase_a.sql": "e0275af4d1ed3156a00e7ce1e8eefc6b143d3a77",
-    "src/app/api/admin/orders/route.ts": "5f1da1df0384bd2730504f11546f1bec68d4e09f",
-    "src/app/api/dealer/orders/route.ts": "d2b979d6e0f9385ce987264e1391bc8de6105096",
+    "src/app/api/admin/orders/route.ts": "707e1dcece529ddbae43aecf1da4152fddbcfa54",
+    "src/app/api/dealer/orders/route.ts": "cf4c6d2b4b3db396a14d499fb15b8447f5ced08c",
     "src/modules/orders/order-contract.ts": "0aa2956aab7ecf01f1ba05c9f9c341e7980d0a7b",
     "supabase/migrations/0016_typescript_order_workflow.sql": "d27e7ef56e8f9060db855d432b3a6bf76b55bde5",
     "supabase/migrations/0017_order_contact_role_scope.sql": "5c2c4fbeaa0f71e3db1227aada41c8cc43f7378d",
@@ -182,7 +182,7 @@
     "src/app/api/admin/overview/route.ts": "d11063e69a5043cccd4890e1259d00f47131df69",
     "src/app/api/admin/dealers/route.ts": "cea7eddba4fe5655c5ba36019ece7e92203aa26a",
     "src/app/api/admin/users/route.ts": "7103b8ac1d22b15c37f1d6d5fb095974cfbf2bd9",
-    "src/modules/marketplace/write-contract.ts": "91fbb77745d6fc925a631ddf2f4d503a905530e9",
+    "src/modules/marketplace/write-contract.ts": "a87e3ef54f9b190e80b7b577c713d411c84d3c27",
     "src/app/api/catalog/route.ts": "545bc533990bc97fb40565c261520756cddc1b84",
     "src/app/api/admin/audit/route.ts": "c06d6a90ee1a071876a6f08bc66c3b089720b43c",
     "src/app/api/admin/account-recovery/route.ts": "8eca1325c8b1f075e4afbe165f9a7aae30f1749d",
@@ -263,5 +263,12 @@
       "reason": "Review bounded cursor parsing, anonymous RLS published-only reads, reference fallback and no inventory or offer claims.",
       "validation": "Static review; pagination tests, release contract, CI and browser regression required before merge."
     }
-  ]
+  ],
+  "reviewedPredictiveRiskChanges20261125": {
+    "paths": [
+      "src/modules/identity/server-auth.ts",
+      "src/app/api/orders/route.ts"
+    ],
+    "scope": "Distinguish authentication outages from expired sessions; compare delivery address for idempotent accepted-offer retries. Static review; runtime tests required."
+  }
 }
