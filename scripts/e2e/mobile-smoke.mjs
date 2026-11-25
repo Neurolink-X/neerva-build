@@ -459,6 +459,14 @@ async function main(){
     await page.waitForFunction(()=>document.querySelectorAll(".room-lab-preview svg g").length===2);
     await page.getByRole("button",{name:"Wall #f1e7d5",exact:true}).click();
     assert.equal(await page.getByRole("button",{name:"Wall #f1e7d5",exact:true}).getAttribute("aria-pressed"),"true");
+    await page.getByLabel("Room alternative name").fill("First layout");
+    await page.getByRole("button",{name:"Save alternative",exact:true}).click();
+    await page.getByRole("button",{name:"Restore First layout",exact:true}).waitFor();
+    await page.getByRole("button",{name:"Interactive 3D",exact:true}).click();
+    await page.getByRole("button",{name:"Evening",exact:true}).click();
+    assert.equal(await page.getByRole("button",{name:"Evening",exact:true}).getAttribute("aria-pressed"),"true");
+    await page.getByRole("button",{name:"Edit floor plan",exact:true}).click();
+    assert.equal(await page.locator(".room-lab-preview svg g").count(),2,"3D and floor plan use same furniture state");
     await page.goto(base+"/my-project",{waitUntil:"load"});
     await page.getByRole("button",{name:/02 Foundation/}).click();
     await page.getByRole("checkbox",{name:"Confirm structural quantities"}).check();
