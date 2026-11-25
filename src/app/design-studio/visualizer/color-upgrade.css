@@ -47,3 +47,11 @@
 .paint-live-workspace:has(.paint-live-tools:empty){grid-template-columns:minmax(0,1fr)}
 @media(min-width:851px){.paint-live-preview{position:sticky;top:12px;align-self:start}}
 @media(max-width:850px){.paint-live-tools .wall-pattern-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.paint-live-tools .wall-pattern-options button{min-width:0}}
+
+/* Shared action layout: no squeezed six-column toolbar, no mid-word splits. */
+.neerva-photo-stage .paint-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:8px;align-items:stretch}
+.neerva-photo-stage .paint-actions button{min-height:44px;white-space:normal;word-break:normal;overflow-wrap:break-word;font-size:14px;line-height:1.35;padding:10px 12px}
+.neerva-photo-stage .paint-wall-actions button:first-child{grid-column:1/-1;text-align:center}.neerva-photo-stage .paint-wall-actions button:last-child{grid-column:1/-1;background:#254738;color:white}.neerva-photo-stage .paint-wall-actions button:last-child:disabled{background:#f5f8f3;color:#526459}
+.neerva-photo-stage .paint-live-preview>div{background:#edf0e9}.paint-live-preview>button{border:1px solid #b6c5b7;background:#f5f8f3;color:#263e32;border-radius:8px;padding:8px 12px;max-width:100%;word-break:normal}
+@media(max-width:600px){.neerva-photo-stage .paint-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.neerva-photo-stage .paint-actions button:last-child{grid-column:1/-1}.neerva-photo-stage .paint-live-tools .wall-pattern-options{grid-template-columns:repeat(2,minmax(0,1fr))}.paint-live-preview{position:sticky;top:0;z-index:2;background:white;padding-block:5px}.paint-live-preview:has(canvas[data-sample="room"]),.paint-live-preview:has(canvas[data-sample="custom"]){position:relative}.paint-live-preview canvas{height:auto}}
+@media(max-width:340px){.neerva-photo-stage .paint-actions{grid-template-columns:minmax(0,1fr)}}

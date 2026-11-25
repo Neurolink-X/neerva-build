@@ -71,7 +71,7 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
   }
   return (
     <div className="product-request-config">
-      <h2>Choose quantity / मात्रा चुनें</h2><p className="option-confirmation-note">Select the unit first, then enter the amount. You can request the final delivered price without paying now.</p><div className="product-choice-grid">
+      <h2>Choose quantity / मात्रा चुनें</h2><p className="option-confirmation-note">Choose quantity and unit, then request your order. No payment now; approve the final delivered price first.</p><div className="product-choice-grid">
         <label>Quantity unit
           <select value={unit} onChange={(event) => setUnit(event.target.value)}>
             {units.map((choice) => <option key={choice} value={choice}>{quantityUnitLabels[choice]}</option>)}
@@ -81,8 +81,8 @@ export function ProductDetailTools({ product }: { product: DemoProduct }) {
           <input type="number" min="0.001" max="1000000" step="0.001" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} />
         </label>
       </div>
-      <p className="option-confirmation-note">Options describe your requirement; the dealer will confirm whether this brand supplies that exact variant, its current stock and the final rate.</p>
-      {validQuantity?<Link className="button button-dark" href={"/checkout?"+new URLSearchParams({category:product.category,product:product.slug,qty:String(quantity),unit})}>Place order with selected quantity →</Link>:<button type="button" className="button button-dark" disabled>Enter a valid quantity to order</button>} <button type="button" className="button button-outline" onClick={addToOrderCart} disabled={!validQuantity}>Add to order cart</button> <Link href="/checkout?cart=1" className="button button-outline">View order cart →</Link><details open={planningOpen} onToggle={e=>setPlanningOpen(e.currentTarget.open)}><summary>Planning a project? Save to material list</summary><p>For estimates and dealer quotes, not an order cart.</p><button type="button" className="button button-orange product-add-button" onClick={saveMaterial} disabled={!validQuantity}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}</details>{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
+      <p className="option-confirmation-note">Neerva confirms your exact size, stock and delivery price before fulfilment.</p>
+      {validQuantity?<Link className="button button-dark" href={"/checkout?"+new URLSearchParams({category:product.category,product:product.slug,qty:String(quantity),unit})}>Request order →</Link>:<button type="button" className="button button-dark" disabled>Enter a valid quantity to order</button>} <button type="button" className="button button-outline" onClick={addToOrderCart} disabled={!validQuantity}>Add to order cart</button> <Link href="/checkout?cart=1" className="button button-outline">View order cart →</Link><details open={planningOpen} onToggle={e=>setPlanningOpen(e.currentTarget.open)}><summary>Planning a project? Save to material list</summary><p>For estimates and dealer quotes, not an order cart.</p><button type="button" className="button button-orange product-add-button" onClick={saveMaterial} disabled={!validQuantity}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}</details>{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
     </div>
   );
 }

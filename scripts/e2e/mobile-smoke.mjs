@@ -111,6 +111,18 @@ async function main(){
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert.ok(overflow<=2,category+" overflow at "+v.w);
    }
+   await page.goto(base+"/materials/plumbing",{waitUntil:"load"});
+   await page.getByRole("link",{name:"Browse electrical →",exact:true}).click();
+   await page.waitForURL("**/materials/electrical");
+   assert.ok(await page.locator(".pipe-use-links a").count()>=8,"direct electrical family routes");
+   assert.ok(await page.locator("#material-ranges .product-card").count()<=12,"bounded initial catalog cards");
+   const firstFamily=page.locator(".pipe-use-links a").first();
+   const destination=await firstFamily.getAttribute("href");
+   assert.ok(destination?.startsWith("/materials/electrical/"),"family link opens exact product, not broad search");
+   await firstFamily.click();
+   await page.waitForURL("**"+destination);
+   assert.ok(await page.locator(".product-request-config").isVisible(),"quantity and order controls on product");
+   assert.equal(await page.getByRole("link",{name:"Request order →",exact:true}).count(),1,"one primary order action");
    await page.goto(base+"/materials",{waitUntil:"load"});
    const catalog=page.locator("#catalog-results");
    await catalog.locator(".product-card").first().waitFor();
@@ -440,6 +452,17 @@ async function main(){
     assert.equal(await page.locator(".paint-live-workspace .paint-adjacent-controls").count(),1,"colour controls are adjacent to live preview");
     const paintLayout=await page.locator(".paint-live-workspace").evaluate(el=>{const canvas=el.querySelector(".paint-live-preview"),palette=el.querySelector(".paint-adjacent-controls");return !!canvas&&!!palette&&canvas.nextElementSibling?.contains(palette)});
     assert.ok(paintLayout,"photo and palette occupy a single workspace");
+    const roomPreview=page.locator(".nbd-photo canvas");
+    await roomPreview.waitFor({state:"visible"});
+    const samplePixel=()=>roomPreview.evaluate(c=>Array.from(c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.32),1,1).data).slice(0,3));
+    await page.getByRole("button",{name:"Select #293f36",exact:true}).click();
+    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas"),p=c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.32),1,1).data;return p[1]>p[0]&&p[1]>p[2]&&p[1]<90});
+    const dark=await samplePixel();
+    await page.getByRole("button",{name:"Select #edf2db",exact:true}).click();
+    await page.waitForFunction(d=>{const c=document.querySelector(".nbd-photo canvas");return c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.32),1,1).data[1]>d[1]+70},dark);
+    await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    const actionSizes=await page.locator(".paint-wall-actions button").evaluateAll(bs=>bs.map(b=>({w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height})));
+    assert.ok(actionSizes.every(b=>b.w>=100&&b.h>=44&&b.h<=100),"wall actions stay readable, never six squeezed columns");
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const preview=page.locator(".nbd-photo canvas");
     await preview.waitFor({state:"visible"});
