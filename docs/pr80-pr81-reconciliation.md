@@ -1,0 +1,3 @@
+# PR 80 / PR 81 reconciliation
+
+Merge the already-tested main implementation from PR 81 into the older PR 80 branch, preserving the richer current implementations of the five overlapping files rather than reverting them. Retain three distinct learning topics from PR 80, expanded into applied site mapping, AI verification, and practical BOQ reading. The seven overlapping legacy construction lesson IDs remain in Git history; the active curriculum uses the newer handbook-linked lessons rather than publishing duplicate short lessons. All new lessons are linked to the relevant handbook stage and use stable progress IDs. Professional content review remains pending.

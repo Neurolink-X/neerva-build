@@ -1,0 +1,21 @@
+
+"use client";
+import {useEffect,useState} from "react";
+import Link from "next/link";
+import {siteCases,findCases,fieldRecordTemplates,fieldTemplateText} from "@/modules/home/site-practice";
+type ChoiceMap=Record<string,number>;
+export function SiteCaseLab({stages}:{stages:readonly {id:string;title:string}[]}){
+ const [query,setQuery]=useState(""),[stage,setStage]=useState("all"),[choices,setChoices]=useState<ChoiceMap>({}),[limit,setLimit]=useState(6);
+ useEffect(()=>{function selectFromHash(){const id=window.location.hash.slice(1),target=siteCases.find(c=>c.id===id);if(target){setStage(target.stage);setQuery("");setLimit(6);window.requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({block:"start"}))}}const t=window.setTimeout(selectFromHash,0);window.addEventListener("hashchange",selectFromHash);return()=>{clearTimeout(t);window.removeEventListener("hashchange",selectFromHash)}},[]);
+ const filtered=findCases(query,stage);
+ const solved=siteCases.filter(c=>choices[c.id]===c.correct).length;
+ return <section className="practice-section" id="case-library"><h2>What would you do on site?</h2><p>These are realistic simulated situations, not verified customer incidents. Decide what to do, see the reasoning, then use the field notes.</p><div className="practice-filters"><label className="knowledge-search">Search site situations<input type="search" value={query} maxLength={100} placeholder="e.g. contractor, ईंट, water" onChange={e=>{setQuery(e.target.value);setLimit(6)}}/></label><label>Construction stage<select value={stage} onChange={e=>{setStage(e.target.value);setLimit(6)}}><option value="all">All stages</option>{stages.map(s=><option value={s.id} key={s.id}>{s.title}</option>)}</select></label></div><p role="status">{filtered.length} situations · {solved} of {siteCases.length} decisions answered correctly in this session</p><div className="practice-cases">{filtered.slice(0,limit).map(c=><article className="practice-case" id={c.id} key={c.id}><h3>{c.title}</h3><p lang="hi">{c.hi}</p><p>{c.situation}</p><p lang="hi">{c.hindi}</p><fieldset><legend>{c.question}</legend>{c.options.map((o,i)=><button type="button" key={o} aria-pressed={choices[c.id]===i} onClick={()=>setChoices(old=>({...old,[c.id]:i}))}>{o}</button>)}</fieldset>{choices[c.id]!==undefined&&<p className="practice-feedback" role="status"><strong>{choices[c.id]===c.correct?"Good decision.":"Reconsider this choice."}</strong> {c.feedback}</p>}<details><summary>Site action, evidence and what to say</summary><h4>What to do</h4><ol>{c.actions.map(a=><li key={a}>{a}</li>)}</ol><h4>What records to request</h4><ul>{c.evidence.map(e=><li key={e}>{e}</li>)}</ul><blockquote>{c.script}</blockquote><CopySiteText value={c.script} label="Copy conversation note"/><Link href={"/build-iq/handbook/"+c.stage}>Read the stage field guide →</Link></details></article>)}</div>{filtered.length>limit&&<button type="button" className="button button-outline" onClick={()=>setLimit(n=>n+6)}>Show more site situations</button>}{!filtered.length&&<p>No matching situation. Try a shorter term.</p>}</section>
+}
+function CopySiteText({value,label}:{value:string;label:string}){
+ const [notice,setNotice]=useState("");
+ async function copy(){try{if(!navigator.clipboard)throw Error("clipboard unavailable");await navigator.clipboard.writeText(value);setNotice("Copied. Review and adapt before sharing.")}catch{setNotice("Clipboard unavailable. Select the text manually.")}}
+ return <div><button className="button button-outline" type="button" onClick={()=>void copy()}>{label}</button><p role="status">{notice}</p></div>
+}
+export function SiteRecordTemplates(){
+ return <section className="practice-section" id="site-records"><h2>Take these records to your site</h2><p>Use editable text templates in a notebook, document or message. They do not certify work and are not stored by Neerva.</p><div className="practice-cases">{fieldRecordTemplates.map(t=><details className="practice-case" key={t.id}><summary>{t.title} · <span lang="hi">{t.hi}</span></summary><ul>{t.fields.map(field=><li key={field}>{field}</li>)}</ul><CopySiteText value={fieldTemplateText(t.id)??""} label="Copy editable record template"/></details>)}</div></section>
+}
