@@ -382,6 +382,16 @@ async function main(){
     await page.getByRole("heading",{name:"Order cart (1)"}).waitFor();
     await page.locator("article.admin-record").first().getByRole("button",{name:"Remove"}).click();
     await page.getByText(/Your order cart is empty/).waitFor();
+    await page.goto(base+"/my-project",{waitUntil:"load"});
+    await page.getByRole("button",{name:/02 Foundation/}).click();
+    await page.getByRole("checkbox",{name:"Confirm structural quantities"}).check();
+    await page.getByLabel("Planned budget (₹)").fill("500000");
+    await page.getByLabel("Amount already spent (₹)").fill("120000");
+    await page.reload({waitUntil:"load"});
+    await page.getByRole("checkbox",{name:"Confirm structural quantities"}).waitFor();
+    assert.ok(await page.getByRole("checkbox",{name:"Confirm structural quantities"}).isChecked(),"project checklist survives reload");
+    assert.equal(await page.getByLabel("Planned budget (₹)").inputValue(),"500000","local budget survives reload");
+    assert.equal(await page.getByRole("link",{name:/Prepare material request/}).getAttribute("href"),"/quotes","project connects to existing guarded quote workflow");
     const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
     assert.equal(visual?.status(),200,"colour editor route");
     await page.getByRole("button",{name:"Sample house exterior"}).click();
