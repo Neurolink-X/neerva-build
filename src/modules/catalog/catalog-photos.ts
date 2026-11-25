@@ -9,6 +9,7 @@ import {categoryImage} from "./public-products.ts";
 
 import {curatedPhotoPaths} from "./curated-photo-paths.ts";
 import {approvedFamilyMedia} from "./media-integrity.ts";
+import {sourceConfirmedPhotos} from "./source-confirmed-photos.ts";
 export type CatalogPhoto={src:string;label:string;alt:string;sourceUrl?:string;license?:string;licenseUrl?:string;credit?:string;kind:"sku"|"listing"|"editorial"|"manufacturer"|"category"};
 const curated:Record<string,string[]>={
 
@@ -43,6 +44,7 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   for(const src of product.images??[])if(approvedSkuImage(src))
    append(src,"Verified seller photo","sku","Seller-reviewed photo of "+product.name);
  for(const m of approvedFamilyMedia(product))append(m.path,m.scope==="sku"?"Reviewed product photo":"Reviewed material photo · not exact SKU",m.scope==="sku"?"manufacturer":"editorial",m.alt,{sourceUrl:m.sourceUrl,license:m.license,licenseUrl:m.licenseUrl,credit:m.credit});
+ for(const m of sourceConfirmedPhotos)if(m.category===product.category&&m.family===(product.familyKey??product.slug))append(m.path,"Source-confirmed material photo · not exact SKU","editorial",m.alt,{sourceUrl:m.sourceUrl,license:m.license,licenseUrl:m.licenseUrl,credit:m.credit});
  if(product.referenceImage)append(product.referenceImage,
   product.familyKey?"Product range":"Product photo",
   "listing","Reference photo of "+product.name+"; exact physical variant unverified");
