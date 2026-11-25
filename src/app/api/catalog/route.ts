@@ -14,7 +14,7 @@ export async function GET(request:Request){
   slug,title,titleHi,description,pricingMode:quoteOnly?"quotation":"published-price-required"
  }));
  if(!url||!key)return NextResponse.json({categories:referenceCategories,products:[],nextCursor:null,source:"reference_only",stockVerified:false,
-   note:"Catalog connection is not configured. Reference taxonomy only; no verified product listings or stock."},{headers});
+   note:"Live products are temporarily unavailable. You can browse reference categories; current stock and prices are not verified."},{headers:{"Cache-Control":"no-store","X-Neerva-Service-State":"degraded","X-Content-Type-Options":"nosniff"}});
  try{
   const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
   const categories=await db.from("categories").select("id,slug,name_en,name_hi,pricing_mode").eq("status","published").order("name_en").limit(100);
@@ -39,7 +39,8 @@ export async function GET(request:Request){
    note:"Published product identities only. Exact availability, price, dealer authorisation and images require separately verified records."
   },{headers});
  }catch{
+  console.error("[neerva.catalog] published data unavailable; inspect database connection and query logs");
   return NextResponse.json({categories:referenceCategories,products:[],nextCursor:null,source:"reference_fallback",stockVerified:false,
-   note:"Live catalog temporarily unavailable; only non-commercial reference categories are shown."},{headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff"}});
+   note:"Live products are temporarily unavailable. You can browse reference categories; current stock and prices are not verified."},{headers:{"Cache-Control":"no-store","X-Content-Type-Options":"nosniff","X-Neerva-Service-State":"degraded"}});
  }
 }
