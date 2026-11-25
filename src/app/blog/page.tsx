@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import {SiteFooter} from "@/components/site-chrome";
 import { articles } from "@/modules/blog/articles";
 
 export const metadata: Metadata = {
@@ -14,7 +15,7 @@ export default function BlogIndexPage() {
     <main className="blog-page">
       <header className="blog-header">
         <Link className="brand" href="/"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link>
-        <nav aria-label="Blog navigation"><Link href="/">Home</Link><Link href="/blog" aria-current="page">Guides</Link><Link className="button button-dark button-small" href="/quotes">Request a quote</Link></nav>
+        <nav aria-label="Blog navigation"><Link href="/">Home</Link><Link href="/blog" aria-current="page">Blog & guides</Link><Link className="button button-dark button-small" href="/quotes">Request a quote</Link></nav>
       </header>
       <section className="blog-hero">
         <div className="eyebrow"><span className="eyebrow-dot" /> THE NEERVA KNOWLEDGE HUB</div>
@@ -59,7 +60,7 @@ export default function BlogIndexPage() {
         </div>
       </section>
       <aside className="blog-note"><span className="blog-note-icon">i</span><p>Construction decisions depend on the material, site and local requirements. Our guides help you prepare questions; they do not replace a qualified professional or product-specific documentation.</p></aside>
-      <footer className="blog-footer"><Link href="/" className="brand brand-footer"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link><span>Build better. Buy smarter.</span><Link href="/materials">Explore materials →</Link></footer>
+      <SiteFooter/>
     </main>
   );
 }
