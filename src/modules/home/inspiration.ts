@@ -1,0 +1,42 @@
+import {familyHomeVisuals} from "./family-home-visuals.ts";
+export type IdeaKind="exterior"|"interior"|"finish";
+export type Idea={id:string;kind:IdeaKind;title:string;titleHi:string;src:string;alt:string;description:string;tip:string;href:string;action:string;source:"concept"|"reference"|"material"};
+export const ideas:readonly Idea[]=[
+ {id:"starter",kind:"exterior",title:"A compact home with character",titleHi:"छोटा सुंदर घर",src:familyHomeVisuals["15x30"].src,alt:familyHomeVisuals["15x30"].alt,description:"Simple lines and a modest footprint for a first family home.",tip:"Keep the entrance clear and make room for natural light.",href:"/design-studio/portfolio?width=15&depth=30&bedrooms=1&floors=1&road=N&parking=false",action:"Explore plot layouts",source:"concept"},
+ {id:"family",kind:"exterior",title:"A growing family's townhouse",titleHi:"परिवार का दो मंजिला घर",src:familyHomeVisuals["18x50"].src,alt:familyHomeVisuals["18x50"].alt,description:"A two-level facade with a balcony and defined entrance.",tip:"Compare room placement, privacy and parking before choosing an elevation.",href:"/design-studio/portfolio?width=18&depth=50&bedrooms=3&floors=2&road=N&parking=true",action:"Explore plot layouts",source:"concept"},
+ {id:"garden",kind:"exterior",title:"A welcoming ground-floor home",titleHi:"आरामदायक एक मंजिला घर",src:familyHomeVisuals["20x40"].src,alt:familyHomeVisuals["20x40"].alt,description:"A practical ground-floor concept for everyday family life.",tip:"Plan future expansion with a structural professional rather than assuming it is possible.",href:"/design-studio/portfolio?width=20&depth=40&bedrooms=2&floors=1&road=N&parking=false",action:"Explore plot layouts",source:"concept"},
+ {id:"modern",kind:"exterior",title:"Contemporary outdoor living",titleHi:"आधुनिक बाहरी डिज़ाइन",src:"/images/studio/house-1.webp",alt:"Contemporary residential exterior",description:"Explore the relationship between facade, openings and outdoor space.",tip:"Adapt the proportions to your own frontage instead of copying a photograph.",href:"/design-studio/visualizer",action:"Try exterior colours",source:"reference"},
+ {id:"villa",kind:"exterior",title:"Light-filled modern residence",titleHi:"रोशनी वाला आधुनिक घर",src:"/images/studio/house-2.webp",alt:"Modern residential exterior",description:"A reference for clean lines and generous glazing.",tip:"Consider privacy, shading, maintenance and local climate.",href:"/design-studio/visualizer",action:"Try exterior colours",source:"reference"},
+ {id:"facade",kind:"exterior",title:"Layered contemporary facade",titleHi:"आधुनिक सामने का डिज़ाइन",src:"/images/studio/house-3.webp",alt:"Contemporary residential facade",description:"Explore contrasting facade finishes and architectural depth.",tip:"Use a restrained accent finish and confirm weather resistance.",href:"/design-studio/visualizer",action:"Try exterior colours",source:"reference"},
+ {id:"living",kind:"interior",title:"An open and airy living room",titleHi:"खुला और हवादार लिविंग रूम",src:"/images/studio/house-4.webp",alt:"Open-plan living room with garden access",description:"A relaxed indoor space with a connection to the outdoors.",tip:"Keep the main walking route free when arranging seating.",href:"/design-studio/visualizer",action:"Explore colour combinations",source:"reference"},
+ {id:"light",kind:"interior",title:"Natural light and calm interiors",titleHi:"प्राकृतिक रोशनी और शांत इंटीरियर",src:"/images/studio/house-5.webp",alt:"Bright living room with glazed doors",description:"A reference for balancing light, furnishings and visual calm.",tip:"Check physical paint samples in morning and evening light.",href:"/design-studio/visualizer",action:"Explore colour combinations",source:"reference"},
+ {id:"kitchen",kind:"interior",title:"A social kitchen",titleHi:"परिवार के लिए रसोई",src:"/images/studio/house-6.webp",alt:"Kitchen with breakfast island",description:"An island-led kitchen inspiration for shared meals and conversation.",tip:"Check circulation space and appliance clearances before copying the layout.",href:"/design-studio",action:"Explore room layouts",source:"reference"},
+ {id:"tiles",kind:"finish",title:"Choose a surface that suits the room",titleHi:"कमरे के लिए सही टाइल",src:"/images/catalog/reference/pexels-photo-40080972.webp",alt:"Representative tile surface",description:"Explore surface finishes, tone and texture together.",tip:"Verify slip resistance, dimensions and application before buying.",href:"/materials/tiles",action:"Explore tile options",source:"material"},
+ {id:"paint",kind:"finish",title:"Build a colour story",titleHi:"रंगों का सुंदर मेल",src:"/images/catalog/reference/pexels-photo-6764238.webp",alt:"Representative painting materials",description:"Combine a main shade with a controlled accent.",tip:"Test a physical shade card; digital previews are approximate.",href:"/design-studio/visualizer",action:"Open paint studio",source:"material"}
+];
+export const palettes=[
+ {id:"warm",name:"Warm minimal",colours:["#f1e7d5","#a68c70","#524639"]},
+ {id:"sage",name:"Natural sage",colours:["#dbe4d1","#80947b","#454f43"]},
+ {id:"coastal",name:"Coastal calm",colours:["#e6edf0","#7797ac","#384d60"]},
+ {id:"earth",name:"Terracotta earth",colours:["#f4dfc7","#bb765b","#68443b"]},
+ {id:"mono",name:"Modern monochrome",colours:["#e9e8e3","#9b9e99","#343d3b"]}
+] as const;
+export type Board={ids:string[];palette:string};
+export const boardKey="neerva-inspiration-v1";
+export function parseBoard(v:unknown):Board{const b=v&&typeof v==="object"?v as Partial<Board>:{};return {ids:Array.isArray(b.ids)?[...new Set(b.ids.slice(0,128).filter(x=>typeof x==="string"&&ideas.some(i=>i.id===x)))].slice(0,ideas.length):[],palette:palettes.some(p=>p.id===b.palette)?b.palette!:"warm"}}
+export function toggleIdea(b:Board,id:string):Board{if(!ideas.some(i=>i.id===id))return b;return {...b,ids:b.ids.includes(id)?b.ids.filter(x=>x!==id):[...b.ids,id]}}
+export function boardQuery(b:Board){const safe=parseBoard(b);return new URLSearchParams({ideas:safe.ids.join(","),palette:safe.palette}).toString()}
+export function boardFromQuery(query:string):Board|null{const p=new URLSearchParams(query);if(!p.has("ideas")&&!p.has("palette"))return null;return parseBoard({ids:(p.get("ideas")??"").slice(0,300).split(","),palette:p.get("palette")})}
+
+export function readBoard(raw:string|null):Board{try{return parseBoard(raw&&raw.length<=4096?JSON.parse(raw):null)}catch{return parseBoard(null)}}
+
+export const libraryKey="neerva-inspiration-library-v2",maxBoards=6;
+export type NamedBoard=Board&{id:string;name:string};
+export type Library={active:string;boards:NamedBoard[]};
+export function defaultLibrary(legacy?:Board):Library{return {active:"default",boards:[{...parseBoard(legacy),id:"default",name:"My first board"}]}}
+export function parseLibrary(raw:unknown,legacy?:Board):Library{const v=raw&&typeof raw==="object"?raw as Partial<Library>:{};const boards:NamedBoard[]=[];if(Array.isArray(v.boards))for(const b of v.boards.slice(0,maxBoards)){if(!b||typeof b.id!=="string"||!/^[a-z0-9-]{1,40}$/.test(b.id)||boards.some(x=>x.id===b.id)||typeof b.name!=="string"||!b.name.trim())continue;boards.push({...parseBoard(b),id:b.id,name:b.name.trim().slice(0,40)})}return boards.length?{active:boards.some(b=>b.id===v.active)?v.active!:boards[0].id,boards}:defaultLibrary(legacy)}
+export function readLibrary(raw:string|null,legacy?:Board){try{return parseLibrary(raw&&raw.length<=8192?JSON.parse(raw):null,legacy)}catch{return defaultLibrary(legacy)}}
+export function activeBoard(l:Library){return l.boards.find(b=>b.id===l.active)??l.boards[0]}
+export function updateBoard(l:Library,b:Board):Library{return {...l,boards:l.boards.map(x=>x.id===l.active?{...x,...parseBoard(b)}:x)}}
+export function addBoard(l:Library,id:string,name:string,board?:Board):Library{if(l.boards.length>=maxBoards||l.boards.some(b=>b.id===id)||!name.trim())return l;return parseLibrary({active:id,boards:[...l.boards,{...parseBoard(board),id,name}]})}
+export function removeBoard(l:Library,id:string):Library{return l.boards.length<=1?l:parseLibrary({...l,boards:l.boards.filter(b=>b.id!==id)})}
