@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import {SiteFooter} from "@/components/site-chrome";
 import { articles } from "@/modules/blog/articles";
 
@@ -49,9 +50,10 @@ export default function BlogIndexPage() {
         <div className="blog-card-grid">
           {articles.map((article) => (
             <article className="blog-card" key={article.slug}>
-              <Link href={`/blog/${article.slug}`} className="blog-card-art" aria-label={`Read ${article.title}`}>
+              <Link href={`/blog/${article.slug}`} className="blog-card-art blog-photo" aria-label={`Read ${article.title}`}>
+                <Image src="/images/catalog/clay-bricks.webp" alt="Illustrative red clay bricks, representative construction material" fill sizes="(max-width:680px) 92vw, 33vw" loading="lazy"/>
                 <span className="blog-art-label">NEERVA FIELD GUIDE · 0{articles.indexOf(article) + 1}</span>
-                <div className="quote-paper" aria-hidden="true"><span>Material</span><i /><span>Delivery</span><i /><span>Full amount</span><b>Clear first.</b></div>
+                
                 <span className="blog-art-arrow" aria-hidden="true">↗</span>
               </Link>
               <div className="blog-card-content"><div className="blog-card-meta"><span>{article.category}</span><span>·</span><span>{article.readMinutes} min read</span></div><h3><Link href={`/blog/${article.slug}`}>{article.title}</Link></h3><p>{article.excerpt}</p><div className="blog-card-bottom"><time dateTime={article.publishedAt}>{new Date(`${article.publishedAt}T00:00:00Z`).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</time><Link href={`/blog/${article.slug}`} className="text-link">Read guide <span>→</span></Link></div></div>
