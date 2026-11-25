@@ -6,6 +6,8 @@ import { catalogCategories } from "@/modules/catalog/catalog";
 import {brandPath,directoryCards} from "@/modules/catalog/brand-pages";
 import {isPublicConstructionProduct} from "@/modules/catalog/discovery-policy";
 import { demoProducts } from "@/modules/catalog/marketplace";
+import {chapters} from "@/modules/home/handbook";
+import {lessons} from "@/modules/home/academy";
 import { studioDesigns } from "@/modules/studio/library";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -18,6 +20,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteUrl}/design-studio`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/studio-pricing`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${siteUrl}/learn`, changeFrequency: "monthly", priority: 0.7 },
+    {url:`${siteUrl}/build-iq`,changeFrequency:"monthly",priority:0.7},
+    ...chapters.map(c=>({url:`${siteUrl}/build-iq/handbook/${c.id}`,lastModified:new Date(c.updated+"T00:00:00Z"),changeFrequency:"monthly" as const,priority:0.65})),
+    ...lessons.map(l=>({url:`${siteUrl}/build-iq/${l.id}`,changeFrequency:"monthly" as const,priority:0.55})),
     { url: `${siteUrl}/learn/plot-size-in-gaj`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/learn/2d-to-3d-house-layout`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/learn/wall-paint-pattern-ideas`, changeFrequency: "monthly", priority: 0.65 },

@@ -421,6 +421,12 @@ async function main(){
     await page.goto(base+"/build-iq",{waitUntil:"load"});
     const academyCount=await page.locator(".academy-grid article").count();
     assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
+    await page.getByRole("searchbox",{name:"Search the construction handbook"}).fill("foundation");
+    await page.getByRole("link",{name:"Soil, foundations & underground",exact:true}).click();
+    await page.getByRole("checkbox").first().check();
+    await page.reload({waitUntil:"load"});
+    await page.waitForFunction(()=>document.querySelector(".handbook-checks input")?.checked===true);
+    await page.goto(base+"/build-iq",{waitUntil:"load"});
     await page.getByRole("link",{name:"Start exploring →"}).click();
     await page.getByText("Optional Build IQ challenge",{exact:true}).click();
     await page.getByRole("button",{name:"Compare their measured dimensions and road access"}).click();
