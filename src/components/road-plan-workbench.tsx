@@ -128,6 +128,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{["Ground floor","First floor","Second floor"][i]}</button>)}
      </div>
+     <div className="nroad-plan-summary" aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.floor===floor).length}</strong> Spaces on this floor</span><span><strong>{plan.plot.widthFt} × {plan.plot.depthFt}</strong> Plot (ft)</span><span><strong>{plan.floors}</strong> Level(s)</span></div>
      <OrientedPlanDrawing plan={plan} floor={floor}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
      {design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
@@ -139,7 +140,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <div className="nroad-palette"><h2>{str("House colour mood","घर की रंग योजना")}</h2>
       <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>setPalette(x.id)}>
        <i style={{background:x.main}}/><span>{hindi?x.hi:x.en}</span></button>)}</div>
-      <p className="nroad-small">Digital colours are approximate; check an actual shade card. Finishes and room paint are not physically simulated here.</p>
+      <p className="nroad-small">Digital colours are approximate; check an actual shade card. Finishes and room paint are not physically simulated here.</p><Link href="/design-studio/visualizer" className="nroad-secondary-link">{str("Try paint on sample homes or your own photo →","सैंपल घर या अपनी फोटो पर रंग आज़माएँ →")}</Link>
      </div>
      {metrics&&<section className="nroad-metrics"><h2>{str("Preliminary quantities — not a BOQ","प्रारंभिक अनुमान — अंतिम BOQ नहीं")}</h2>
       <div><span><strong>{metrics.roomFloorSqFt.toFixed(0)} ft²</strong><small>Room-floor rectangles, all levels</small></span>
