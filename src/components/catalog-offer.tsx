@@ -1,12 +1,11 @@
 "use client";
 import Link from "next/link";
 import {useSyncExternalStore} from "react";
-type Offer={id:string;title:string;terms:string;category:string;slug:string;sku:string;city:string;
- unit:string;prefix:string|null;min:number;basePaise:number;offerPaise:number;endsAt:string};
+import {validPublicOffer,type PublicOffer as Offer} from "@/modules/catalog/public-feed-validation";
 const empty:Offer[]=[],listeners=new Set<()=>void>();
 let offers:Offer[]=empty,active:Promise<void>|null=null,timer:ReturnType<typeof setInterval>|undefined,expiry:ReturnType<typeof setTimeout>|undefined,lastLoaded=0;
 const notify=()=>{for(const listener of listeners)listener()};
-const valid=(o:Offer,now:number)=>o.offerPaise>0&&o.basePaise>o.offerPaise&&Date.parse(o.endsAt)>now;
+const valid=validPublicOffer;
 function removeExpired(){
  const now=Date.now();
  const next=offers.filter(o=>valid(o,now)&&now-lastLoaded<120000);
@@ -27,7 +26,7 @@ function refresh(){
   if(!response.ok)throw Error("Offer feed unavailable");
   const body=await response.json();
   lastLoaded=Date.now();
-  offers=Array.isArray(body?.offers)?body.offers.filter((o:Offer)=>valid(o,lastLoaded)):empty;
+  offers=Array.isArray(body?.offers)?(body.offers as unknown[]).filter((o):o is Offer=>valid(o,lastLoaded)):empty;
  }).catch(()=>{offers=empty;lastLoaded=0}).finally(()=>{clearTimeout(timeout);active=null;notify();scheduleExpiry()});
 }
 function onVisible(){

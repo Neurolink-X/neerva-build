@@ -5,8 +5,8 @@ import {paintReferencePrice} from "@/modules/catalog/paint-references";
 import {tileReferencePrice} from "@/modules/catalog/tile-references";
 import {planningRate} from "@/modules/catalog/planning-rate";
 import {useSyncExternalStore} from "react";
+import {validPublicRate,type PublicRate as Rate} from "@/modules/catalog/public-feed-validation";
 
-type Rate={category:string;slug:string;sku:string;unit:string;paise:number;city:string;prefix:string|null;min:number;until:string|null};
 const listeners=new Set<()=>void>();
 let rates=new Map<string,Rate>(),request:Promise<void>|undefined,lastLoaded=0;
 const rateKey=(category:string,slug:string,sku?:string)=>category+"|"+slug+"|"+(sku??"");
@@ -34,8 +34,8 @@ function refresh(){
   if(!response.ok)throw Error("Price feed unavailable");
   const body=await response.json();
   const next=new Map<string,Rate>(),now=Date.now();
-  if(Array.isArray(body?.prices))for(const r of body.prices as Rate[]){
-   if(!Number.isSafeInteger(r.paise)||r.paise<=0||r.until&&(!Number.isFinite(Date.parse(r.until))||Date.parse(r.until)<=now))continue;
+  if(Array.isArray(body?.prices))for(const r of body.prices as unknown[]){
+   if(!validPublicRate(r,now))continue;
    for(const key of [rateKey(r.category,r.slug,r.sku),rateKey(r.category,r.slug)])if(!next.has(key))next.set(key,r);
   }
   rates=next;lastLoaded=now;
@@ -55,6 +55,8 @@ function currentRate(category:string,slug:string,sku?:string){
 const format=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2});
 export function ProductPrice({category,slug,sku,quoteOnly}:{sku?:string;category:string;slug:string;quoteOnly?:boolean}){
  const rate=useSyncExternalStore(subscribe,()=>currentRate(category,slug,sku),noRate);
+ // A published exact SKU must not inherit a generic historical family price.
+ if(sku&&!rate)return <span>{quoteOnly?"Private quotation":"Request today’s SKU rate"} · Choose your quantity</span>;
  const budget=quoteOnly?null:planningRate(category,slug);
  const fitting=category==="plumbing"&&!quoteOnly?fittingPrice(slug):null;
  if(!rate&&fitting)return <span><strong>{format.format(fitting.rupees)}</strong> / listed piece<br/>{fitting.size} · {fitting.market}, checked 24 Nov 2026. <a href={fitting.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
