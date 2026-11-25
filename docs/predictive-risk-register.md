@@ -43,3 +43,6 @@ Run 45551316570 passed local database bootstrap and both catalog imports (376 ro
 
 ## RFQ acceptance regression
 Run 45551955218 passed catalog bootstrap and build, then failed real RFQ acceptance with HTTP 503. The existing migration and read-only inspected production definition both contain ambiguous `p.application_id=application_id` in a PL/pgSQL function. Rehearsal candidate replaces it with an explicit join, preserving approved/verified dealer, exact PIN, branch, ownership, order locking and amount checks. Extend E2E to exact replay, changed-address conflict, amount and RFQ transition. Log only sanitized database error codes; no payload or personal data. This is a candidate; exact cause is not confirmed by a SQLSTATE in the previous run, and production migration is not applied.
+
+## Release verification after draft transition
+PR #57 ready-for-review event produced skipped jobs after concurrent cancellation (CI 45554827313, authenticated E2E 45554827367, mobile 45554827392, catalog 45554827303). A fresh non-draft synchronization must execute the required checks on the exact new head. Skipped or cancelled jobs are not passing release evidence. Candidate SQL remains rehearsal-only until an approved production migration.
