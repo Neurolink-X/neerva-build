@@ -11,3 +11,6 @@ Static lesson routes and small client islands; no extra dependency, background f
 3. Optional cloud sync only after explicit user choice, authentication, RLS, deletion/export controls, quotas and retention policy.
 4. Community/portfolio publication only after moderation, rights/provenance, abuse controls, reporting and private-by-default drafts. No open user uploads before quotas and security controls.
 5. Add first-party funnel measurement only with disclosed minimal events, privacy review and aggregation; never claim verified leads or sales before actual intake and fulfilment work. Measure meaningful return visits, board saves/shares, learning-to-tool navigation, qualified enquiries and completed orders, not time spent alone.
+
+## Priority delivery
+Room Lab uses a single SVG and up to 12 representative objects, half-foot placement, room bounds and collision checks; it does not simulate real clearance, door swings or render photos. Multiple boards use a versioned six-board library with migration, bounded reads and explicit shared import. The same-brief shortlist keeps up to six IDs and shows at most three plan-matched 2D diagrams on demand; one existing 3D renderer remains active. Cloud synchronization, public moderation and full renovation rendering are separate gated projects.
