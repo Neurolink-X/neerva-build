@@ -97,11 +97,11 @@ async function main(){
     assert.ok(preview&&preview.y+preview.height>0&&preview.y<v.h,"Live room preview remains visible during finish selection");
     await page.goto(base+"/build-iq",{waitUntil:"load"});
     const lab=page.locator(".visual-site-lab");
-    await lab.getByRole("slider").first().focus();
-    await lab.getByRole("slider").first().press("End");
+    await lab.getByRole("slider",{name:/Construction stage/}).focus();
+    await lab.getByRole("slider",{name:/Construction stage/}).press("End");
     assert.ok(await lab.getByRole("heading",{name:"Finishes and handover"}).isVisible());
-    await lab.getByRole("slider").nth(1).focus();
-    await lab.getByRole("slider").nth(1).press("End");
+    await lab.getByRole("slider",{name:/Openings:/}).focus();
+    await lab.getByRole("slider",{name:/Openings:/}).press("End");
     assert.match(await lab.locator(".build-results").innerText(),/20 sq ft/);
     const discovery=page.locator(".academy-discovery");
     await discovery.getByRole("searchbox").fill("zz-no-matching-lesson");
