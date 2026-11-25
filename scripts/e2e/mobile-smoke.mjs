@@ -66,6 +66,19 @@ async function main(){
     }
     if(v.w===360||v.w===430)await page.screenshot({path:path.join("test-results/mobile",v.w+"-"+(route.replaceAll("/","-")||"home")+".png"),fullPage:true,animations:"disabled"});
    }
+   if(v.w===390){
+    await page.goto(base+"/",{waitUntil:"load"});
+    const indicator=page.locator(".neerva-navigation-feedback");
+    await indicator.waitFor({state:"attached"});
+    await page.evaluate(()=>{window.__neervaClickFeedback=null;document.addEventListener("click",event=>{if(event.target instanceof Element&&event.target.closest(".nbh-journey.nbh-primary"))window.__neervaClickFeedback={active:document.querySelector(".neerva-navigation-feedback")?.getAttribute("data-active")==="true",at:performance.now()}},{capture:true,once:true})});
+    await page.locator(".nbh-journey.nbh-primary").click();
+    await page.waitForURL("**/materials");
+    await page.locator(".catalog-discovery").waitFor();
+    await page.waitForFunction(()=>document.querySelector(".neerva-navigation-feedback")?.getAttribute("data-active")!== "true");
+    const nav=await page.evaluate(()=>({feedback:window.__neervaClickFeedback,elapsed:performance.now()-(window.__neervaClickFeedback?.at??performance.now())}));
+    assert.ok(nav.feedback?.active,"internal Link shows feedback synchronously without a full reload");
+    performanceReports.push({route:"/ → /materials",width:v.w,clickToReadyMs:Math.round(nav.elapsed),scope:"local browser route transition, not field latency"});
+   }
    // Check the reported category media regression on every viewport.
    await page.goto(base+"/",{waitUntil:"load"});
    const housePhotos=await page.locator(".nbh-house-strip img,.nbh-studio-photo img,.nbh-photo-hero img").evaluateAll(imgs=>imgs.map(img=>{const src=img.getAttribute("src")??"";return new URL(src,location.origin).searchParams.get("url")??src;}));

@@ -18,7 +18,7 @@ export function SiteFooter({language="en"}:{language?:"en"|"hi"}={}){
  return <footer className="site-footer unified-footer" aria-label="NEERVA BUILD footer">
   <div className="unified-footer-inner">
    <div className="unified-footer-intro"><div><Link className="brand brand-footer" href="/"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link><h2>{hi?"अपने सपनों का घर बनाएं।":"Build with clarity."}</h2><p>{hi?"सामग्री समझें, घर की योजना बनाएं और सही जानकारी के साथ खरीदारी करें।":"Compare materials, plan your home and make informed construction decisions."}</p></div><div className="unified-footer-actions"><Link href="/materials">{hi?"सामग्री देखें":"Explore materials"} <span aria-hidden="true">→</span></Link><Link href="/design-studio">{hi?"घर की योजना बनाएं":"Plan my home"} <span aria-hidden="true">→</span></Link></div></div>
-   <div className="unified-footer-groups">{groups.map(g=><nav key={g.title} aria-label={g.title}><h3>{g.title}</h3><div>{g.links.map(([href,en,hindi])=><Link key={href} href={href}>{hi?hindi:en}</Link>)}</div></nav>)}</div>
+   <div className="unified-footer-groups">{groups.map(g=><nav key={g.title} aria-label={g.title}><h3>{g.title}</h3><div>{g.links.map(([href,en,hindi])=><Link key={href} href={href} prefetch={false} data-intent-prefetch="">{hi?hindi:en}</Link>)}</div></nav>)}</div>
    <div className="unified-footer-bottom"><small>© 2026 NEERVA BUILD · {hi?"भारत के लिए निर्मित":"Made for India"}</small><small>{hi?"निर्माण से पहले पेशेवर जाँच आवश्यक है। स्टॉक, कीमत और डिलीवरी डीलर से पुष्टि करें।":"Concept designs require professional review. Stock, prices and delivery require dealer confirmation."}</small></div>
   </div>
  </footer>;

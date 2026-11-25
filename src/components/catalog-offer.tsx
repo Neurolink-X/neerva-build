@@ -3,7 +3,7 @@ import Link from "next/link";
 import {useSyncExternalStore} from "react";
 import {validPublicOffer,type PublicOffer as Offer} from "@/modules/catalog/public-feed-validation";
 const empty:Offer[]=[],listeners=new Set<()=>void>();
-let offers:Offer[]=empty,active:Promise<void>|null=null,timer:ReturnType<typeof setInterval>|undefined,expiry:ReturnType<typeof setTimeout>|undefined,lastLoaded=0;
+let offers:Offer[]=empty,active:Promise<void>|null=null,timer:ReturnType<typeof setInterval>|undefined,expiry:ReturnType<typeof setTimeout>|undefined,lastLoaded=0,lastAttempt=0;
 const notify=()=>{for(const listener of listeners)listener()};
 const valid=validPublicOffer;
 function removeExpired(){
@@ -19,7 +19,8 @@ function scheduleExpiry(){
 }
 function refresh(){
  removeExpired();scheduleExpiry();
- if(active||!listeners.size||document.visibilityState==="hidden")return;
+ if(active||!listeners.size||document.visibilityState==="hidden"||Date.now()-lastAttempt<60000)return;
+ lastAttempt=Date.now();
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),10000);
  active=fetch("/api/catalog/offers",{cache:"no-cache",signal:controller.signal}).then(async response=>{
