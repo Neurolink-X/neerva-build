@@ -69,6 +69,12 @@ async function main(){
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert.ok(overflow<=2,category+" overflow at "+v.w);
    }
+   await page.goto(base+"/materials?category=hardware",{waitUntil:"load"});
+   assert.equal(await page.locator('#catalog-results a[href="/materials/hardware/wood-adhesive"]').count(),0,"Minor adhesive bottle must not appear in the public grid");
+   await page.goto(base+"/materials/hardware",{waitUntil:"load"});
+   assert.equal(await page.locator('.hardware-showroom a[href="/materials/hardware/wood-adhesive"]').count(),0,"Hardware showroom hides small accessories");
+   await page.goto(base+"/materials/plumbing",{waitUntil:"load"});
+   assert.equal(await page.locator('#fitting-showroom a[href="/materials/plumbing/fitting-gasket"]').count(),0,"Fittings showroom hides minor consumables");
    const redBrick=await page.goto(base+"/materials/bricks-blocks/red-clay-brick",{waitUntil:"load"});
    assert.equal(redBrick?.status(),200,"red brick details");
    assert.match(await page.locator("h1").first().innerText(),/red clay brick/i);

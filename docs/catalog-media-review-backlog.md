@@ -36,3 +36,7 @@ Minor consumables including the generic glue bottle are excluded from public dis
 ## CI investigation and evidence
 
 A previous preview build is READY, but the latest commit's Vercel status points to the build-rate-limit upgrade page. GitHub Actions failed before any job steps were returned and its log blob is missing, including on an explicit CI rerun. The provider cause is not confirmed. Keep all existing mandatory gates; record outcomes in a summary and a non-secret artifact for subsequent runs. Public discovery coverage now checks each visible variant for a usable local product visual instead of treating a remote URL or category image as complete coverage. Strict release audit remains fail-closed.
+
+### Follow-up verification
+
+Direct routes for quote-only minor accessories remain valid, but generated accessory illustrations are no longer returned by catalogVisuals. Regression tests check this explicitly and browser checks cover hidden wood adhesive and gasket in public browsing. The React compatibility gate now has an independently recorded CI outcome. This does not represent a successful CI run until actual evidence is available.

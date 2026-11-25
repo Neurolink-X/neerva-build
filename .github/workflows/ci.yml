@@ -28,6 +28,7 @@ jobs:
           node-version: '24'
           cache: npm
       - name: Validate React runtime and types pairing
+        id: pairing
         run: node scripts/release/react-dependency-pair.mjs
       - name: Install locked dependencies
         id: dependencies
@@ -58,6 +59,7 @@ jobs:
         env:
           CHECKOUT: ${{ steps.checkout.outcome }}
           NODE_SETUP: ${{ steps.node.outcome }}
+          PAIRING: ${{ steps.pairing.outcome }}
           DEPENDENCIES: ${{ steps.dependencies.outcome }}
           SECURITY: ${{ steps.security.outcome }}
           RELEASE: ${{ steps.release.outcome }}
@@ -69,12 +71,12 @@ jobs:
         run: |
           {
             echo '## Release verification outcomes'
-            for key in CHECKOUT NODE_SETUP DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
+            for key in CHECKOUT NODE_SETUP PAIRING DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
               printf '%s: %s\n' "$key" "${!key:-not-run}"
             done
           } | tee -a "$GITHUB_STEP_SUMMARY"
           mkdir -p ci-evidence
-          for key in CHECKOUT NODE_SETUP DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
+          for key in CHECKOUT NODE_SETUP PAIRING DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
             printf '%s=%s\n' "$key" "${!key:-not-run}"
           done > ci-evidence/outcomes.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
