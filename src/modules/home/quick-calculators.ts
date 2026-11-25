@@ -13,7 +13,7 @@ export const calculatorSpecs=[
 export type CalculatorId=typeof calculatorSpecs[number]["id"];
 export function quickEstimate(id:CalculatorId,v:readonly number[]):number|null{
 const spec=calculatorSpecs.find(s=>s.id===id);if(!spec||v.length!==spec.fields.length||v.some(n=>!Number.isFinite(n)||n<0||n>1e9))return null;
-if(spec.fields.some(([label],i)=>label.includes("Allowance (%)")&&v[i]>100))return null;
+if(spec.fields.some(([label],i)=>/allowance \(%\)/i.test(label)&&v[i]>100))return null;
 const [a,b,c,d]=v;let result:number;
 switch(id){case "excavation":result=a*b*c*0.028316846592;break;case "slab":result=a*.09290304*b/1000;break;case "plaster":result=a*.09290304*b/1000*(1+c/100);break;case "paint":if(c<=0||!Number.isInteger(b)||b<1)return null;result=a*.09290304*b/c*(1+d/100);break;case "tiles":if(b<=0||c<=0)return null;result=Math.ceil(a*.09290304/(b*c/1e6)*(1+d/100));break;case "tank":result=a*b*c*1000;break;case "roof":result=(a+b)*.09290304*(1+c/100);break;case "formwork":if(!Number.isInteger(c)||c<1)return null;result=a*b*c;break;case "floor":result=a*(b*(1+d/100)+c);break;case "units":result=a*.09290304;break;default:return null;}return Number.isFinite(result)?result:null;
 }
