@@ -30,6 +30,8 @@ jobs:
       - name: Validate React runtime and types pairing
         id: pairing
         run: node scripts/release/react-dependency-pair.mjs
+      - name: Verify catalog storage and review provenance
+        run: node scripts/catalog/audit-storage.mjs
       - name: Install locked dependencies
         id: dependencies
         run: npm ci --no-audit --no-fund
