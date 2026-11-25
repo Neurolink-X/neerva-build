@@ -10,6 +10,8 @@ import {usableMediaSource} from "../../src/modules/catalog/failed-media-sources.
 import fs from "node:fs";
 import {createHash} from "node:crypto";
 import {approvedMedia} from "../../src/modules/catalog/approved-family-media.ts";
+import {sourceConfirmedPhotos} from "../../src/modules/catalog/source-confirmed-photos.ts";
+import {manufacturerPhotoSource} from "../../src/modules/catalog/manufacturer-photo-sources.ts";
 import sharp from "sharp";
 const families=groupCatalogByPhoto(demoProducts);
 const byCategory={},products=[],local=new Map(),usage=new Map();
@@ -49,7 +51,7 @@ report.lowResolutionWorklist=products.filter(p=>p.flags.some(f=>f.startsWith("Lo
 // Validate the actual bytes and every variant, not just the first family member.
 const integrityFailures=[];
 const approvedPaths=new Set();
-for(const media of approvedMedia){
+for(const media of [...approvedMedia,...sourceConfirmedPhotos]){
   if(approvedPaths.has(media.path))integrityFailures.push({path:media.path,reason:"Duplicate approved path"});
   approvedPaths.add(media.path);
   try{
@@ -105,13 +107,21 @@ integrityFailures.push(...report.generatedVisuals.invalid);
 // Separate exact reviewed SKU coverage from family/reference coverage. The same
 // family photograph cannot prove every size, grade, pack or brand variant.
 const exactSkuWorklist=[];
+const visualSourcingWorklist=[];
+const categoryPriority=["cement","steel","bricks-blocks","plumbing","electrical","tiles","hardware","paint","aggregates"];
 for(const product of demoProducts){
  const media=approvedFamilyMedia(product);
  const hasExact=media.some(m=>m.scope==="sku"&&m.family===product.slug)
   || (product.verification==="merchant_verified"&&product.imageVerified===true&&catalogPhotos(product).some(p=>p.kind==="sku"));
+ const actual=catalogPhotos(product),visuals=catalogVisuals(product);
+ const localPhoto=(await Promise.all(actual.map(async x=>x.src.startsWith("/")&&x.kind!=="category"&&!(await checkLocal(x.src))))).some(Boolean);
+ const generated=visuals.some(x=>x.kind==="generated");
+ if(!hasExact||!localPhoto)visualSourcingWorklist.push({category:product.category,slug:product.slug,family:product.familyKey??product.slug,name:product.name,brand:product.brand,route:"/materials/"+product.category+"/"+product.slug,priority:categoryPriority.indexOf(product.category)<7?"P0":"P1",hiddenAccessory:!isPublicConstructionProduct(product),status:hasExact&&localPhoto?"exact-local":localPhoto?"local-reference":generated?"illustration-only":actual.length?"remote-or-category-reference":"missing",officialProductSource:manufacturerPhotoSource(product.category,product.slug)??product.manufacturerReference??null,otherSource:product.referenceSource??null,exactSku:hasExact,localPhoto,generated,nextAction:localPhoto?"verify exact SKU and rights":generated?"source real photograph; illustration is not proof":product.brand.match(/^(?:local\b|brand to confirm$|dealer-listed brand$|mill to confirm$)/i)?"source licensed photo or commission generic illustration":"request manufacturer/dealer photo and permission"}); 
  if(!hasExact)exactSkuWorklist.push({category:product.category,slug:product.slug,brand:product.brand,name:product.name,reason:catalogPhotos(product).length?"reference-photo-only":"missing-photo",source:product.manufacturerReference??product.referenceSource??null});
 }
 report.exactSkuPhotography={totalVariants:demoProducts.length,verifiedVariants:demoProducts.length-exactSkuWorklist.length,remainingVariants:exactSkuWorklist.length,worklist:exactSkuWorklist,scope:"Static catalog only; verified exact SKU identity is distinct from family imagery."};
+report.visualSourcingWorklist=visualSourcingWorklist.sort((a,b)=>categoryPriority.indexOf(a.category)-categoryPriority.indexOf(b.category)||a.slug.localeCompare(b.slug));
+report.sourceConfirmedReferences={assets:sourceConfirmedPhotos.length,families:new Set(sourceConfirmedPhotos.map(x=>x.category+":"+x.family)).size,scope:"Licensed source-page-confirmed family references; independent visual review pending, not exact SKU photographs."};
 report.variantWorklist=variantWorklist;
 report.integrityFailures=integrityFailures;
 report.totals.variantsWithoutConfiguredPhoto=variantWorklist.filter(v=>v.flags.includes("missing-photo")).length;
@@ -133,7 +143,7 @@ report.releaseReadiness={regressionFailures,hardFailures,integrityFailures,stric
 ]};
 report.releaseReadiness.ready=!report.releaseReadiness.strictFailures.length&&!regressionFailures.length&&!hardFailures.length&&!integrityFailures.length;
 
-fs.mkdirSync("catalog-audit",{recursive:true});fs.writeFileSync("catalog-audit/report.json",JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify({totals:report.totals,coverageTarget:report.coverageTarget,byCategory,brandsMissing:brands.filter(b=>b.logoStatus==="fallback").map(b=>b.name),localFileIssues:report.localFileIssues,publicDiscovery:{families:report.publicDiscovery.families,hiddenAccessoryFamilies:report.publicDiscovery.hiddenAccessoryFamilies,missingVisualCount:report.publicDiscovery.missingVisualCount,missingVariants:report.publicDiscovery.missingVisualVariants.length},generatedVisuals:{assets:report.generatedVisuals.assets,bytes:report.generatedVisuals.bytes,missingVisualCount:report.generatedVisuals.missingVisualCount,priorityMissingCount:report.generatedVisuals.priorityMissingCount,missingVariantCount:report.generatedVisuals.missingVariantCount,byCategory:report.generatedVisuals.byCategory}},null,2));
+fs.mkdirSync("catalog-audit",{recursive:true});fs.writeFileSync("catalog-audit/report.json",JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify({sourceConfirmedReferences:report.sourceConfirmedReferences,visualSourcingRows:report.visualSourcingWorklist.length,totals:report.totals,coverageTarget:report.coverageTarget,byCategory,brandsMissing:brands.filter(b=>b.logoStatus==="fallback").map(b=>b.name),localFileIssues:report.localFileIssues,publicDiscovery:{families:report.publicDiscovery.families,hiddenAccessoryFamilies:report.publicDiscovery.hiddenAccessoryFamilies,missingVisualCount:report.publicDiscovery.missingVisualCount,missingVariants:report.publicDiscovery.missingVisualVariants.length},generatedVisuals:{assets:report.generatedVisuals.assets,bytes:report.generatedVisuals.bytes,missingVisualCount:report.generatedVisuals.missingVisualCount,priorityMissingCount:report.generatedVisuals.priorityMissingCount,missingVariantCount:report.generatedVisuals.missingVariantCount,byCategory:report.generatedVisuals.byCategory}},null,2));
 
 if(!report.coverageTarget.met)console.warn("Coverage release target NOT MET: "+report.coverageTarget.remainingToTarget+" additional families still required. Audit completion alone is not a release approval.");
 
