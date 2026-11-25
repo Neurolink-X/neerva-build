@@ -6,7 +6,18 @@ updates:
       interval: weekly
     open-pull-requests-limit: 3
     groups:
+      react-compatible-stack:
+        patterns:
+          - react
+          - react-dom
+          - '@types/react'
+          - '@types/react-dom'
       patch-updates:
+        exclude-patterns:
+          - react
+          - react-dom
+          - '@types/react'
+          - '@types/react-dom'
         update-types:
           - patch
   - package-ecosystem: github-actions
