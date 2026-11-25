@@ -4,6 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
+import {assessPerformance} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
 const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
@@ -52,7 +53,9 @@ async function main(){
     if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer"].includes(route)){
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
      const timing=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],m=window.__neervaPerf;return {ttfbMs:n?Math.round(n.responseStart):null,loadMs:n?Math.round(n.loadEventEnd):null,lcpMs:m?.lcp==null?null:Math.round(m.lcp),cls:m?.cls??null};});
-     performanceReports.push({route,width:v.w,...timing,scope:"initial load observation, not field Web Vitals"});
+     const budget=assessPerformance(timing);
+     performanceReports.push({route,width:v.w,...timing,budget,scope:"initial load observation, not field Web Vitals"});
+     for(const issue of budget.failures)failures.push("Severe local performance regression "+route+": "+issue);
     }
     if(v.w===390&&["/","/account","/quotes","/materials","/design-studio/fit"].includes(route)){
       try{
@@ -745,6 +748,9 @@ async function main(){
    const res=await req.request.get(base+route);
    if(![200,503].includes(res.status()))failures.push("Public API "+route+" unexpected status "+res.status());
   }
+  const securityHeaders=(await req.request.get(base+"/")).headers();
+  for(const [key,value] of Object.entries({"x-content-type-options":"nosniff","x-frame-options":"DENY","x-permitted-cross-domain-policies":"none"})){if(securityHeaders[key]!==value)failures.push("Security header missing or invalid: "+key);}
+  if(!securityHeaders["content-security-policy"]?.includes("frame-ancestors 'none'"))failures.push("Clickjacking CSP protection missing");
   const missingCity=await req.request.get(base+"/api/studio/city-rules");
   if(missingCity.status()!==400)failures.push("City rules must reject requests lacking a supported city, received "+missingCity.status());
   const cityRules=await req.request.get(base+"/api/studio/city-rules?city=Kanpur");
