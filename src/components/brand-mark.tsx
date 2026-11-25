@@ -15,7 +15,7 @@ export function BrandMark({name,small=false}:{name:string;small?:boolean}){
   if(pack?.referenceImage){const src=pack.referenceImage;return <span className={small?"nb-brand-name nb-brand-name-small":"nb-brand-name"} title="Product reference photo, not the company logo" style={{display:"inline-flex",alignItems:"center",gap:8,maxWidth:"100%"}}><Image src={src} alt={name+" product reference photo"} width={small?36:48} height={small?36:48} unoptimized style={{objectFit:"contain",flexShrink:0}} onError={()=>setFailed(old=>[...old,src])}/><span>{name}</span></span>;}
   return <span className={small?"nb-brand-name nb-brand-name-small":"nb-brand-name"}>{name}</span>;
  }
- return <span className={small?"nb-brand-mark nb-brand-mark-small":"nb-brand-mark"} title="Brand name for identification only; dealer authorisation not implied">
+ return <span className={small?"nb-brand-mark nb-brand-mark-small":"nb-brand-mark"} title={media.logoAttribution+" · Brand identification only; dealer authorisation not implied"}>
   <Image src={media.logo} alt={name+" brand logo · brand identification, not dealership proof"}
    width={small?88:145} height={small?33:54} sizes={small?"88px":"145px"} unoptimized referrerPolicy="no-referrer"
    onError={()=>setFailed(old=>old.includes(media.logo)?old:[...old,media.logo])}
