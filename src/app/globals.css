@@ -162,3 +162,12 @@
 @media(max-width:650px){.site-footer nav{gap:5px}.site-footer nav a{min-height:44px;font-size:13px}.site-footer nav:last-of-type{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 16px}.site-footer nav:last-of-type strong{grid-column:1/-1}.blog-header nav{font-size:12px}.blog-header nav .button{font-size:11px}.blog-list-heading{flex-wrap:wrap;gap:12px}.blog-hero-meta{flex-wrap:wrap}.blog-card-grid{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:350px){.site-footer{grid-template-columns:minmax(0,1fr)}.site-footer nav:last-of-type{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.category-card,.blog-card,.button{transition:none}.category-card:hover,.blog-card:hover,.button:hover{transform:none}}
+
+/* Editorial and architectural photography: stable frames and readable captions. */
+.nstudio-photo,.nbh-family-photo{isolation:isolate}
+.blog-card-art.blog-photo{background:#e7ede4;aspect-ratio:16/9;height:auto;min-height:160px;isolation:isolate}
+.blog-card-art.blog-photo img{object-fit:cover;object-position:center}
+.blog-card-art.blog-photo:before,.blog-card-art.blog-photo:after{display:none}
+.blog-card-art.blog-photo .blog-art-label{z-index:1;background:#173528;color:#fff;padding:7px 10px;border-radius:6px;line-height:1.4}
+.blog-card-art.blog-photo .blog-art-arrow{z-index:1;background:white;color:#254738}
+@media(max-width:680px){.blog-card-art.blog-photo{aspect-ratio:16/10}}
