@@ -34,3 +34,6 @@ Corrected malformed SQL dollar delimiters in the reservation candidate, added le
 
 ## Snapshot consistency
 Dealer stock form and API now use optimistic timestamp checks, reject stale updates even after release, and validate decimal precision. Legacy four-field clients are accepted only while the atomic-stock flag is off. Direct database writes remain subject to existing RLS and candidate hold guards; complete enforcement of snapshot tokens at the database boundary still requires a reviewed migration. RFQ retries with changed payload now return conflict instead of returning the earlier unrelated request. Tests added, not yet executed.
+
+## Actual CI finding
+Public runner run 45551147209 executed 204 tests; 203 passed, one L-shaped plan note assertion failed. Preserve the cadastral survey warning in alternate architectural and compact plans, and include the notch identity in their IDs. Regression coverage extends the check to both notch directions. No geometry or test assertions were removed.
