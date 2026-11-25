@@ -43,6 +43,9 @@ async function main(){
    }
    // Check the reported category media regression on every viewport.
    await page.goto(base+"/",{waitUntil:"load"});
+   const housePhotos=await page.locator(".nbh-house-strip img,.nbh-studio-photo img,.nbh-photo-hero img").evaluateAll(imgs=>imgs.map(img=>{const src=img.getAttribute("src")??"";return new URL(src,location.origin).searchParams.get("url")??src;}));
+   assert.equal(new Set(housePhotos).size,housePhotos.length,"No repeated house photograph across home sections");
+   assert.equal(await page.locator(".nbh-family-card").count(),4,"Practical family and material planning choices");
    const categoryCards=page.locator(".nbh-material-card");
    assert.equal(await categoryCards.count(),9,"all home material categories");
    await categoryCards.first().scrollIntoViewIfNeeded();

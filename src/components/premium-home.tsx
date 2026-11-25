@@ -3,7 +3,7 @@
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {homeVisuals,homeReferencePhotos} from "@/modules/home/assets";
+import {homeVisuals,studioExterior,constructionExterior} from "@/modules/home/assets";
 import {HomeShowcase} from "@/components/home-showcase";
 import {brandPath,directoryCards} from "@/modules/catalog/brand-pages";
 import {brandMediaFor} from "@/modules/catalog/brand-media";
@@ -14,7 +14,7 @@ type Language="en"|"hi";
 const copy={
  en:{
  eyebrow:"BUILT FOR INDIA · BUILT FOR EVERY DREAM",
- title1:"Build your dream home.",title2:"Build a stronger India.",subhead:"Every great India begins with strong foundations. Explore materials, plan your plot and compare clear specifications—without hidden cost surprises or false stock promises.",
+ title1:"Build a home for your family.",title2:"Plan around your budget.",subhead:"From compact family homes to larger modern houses, compare construction materials, plan your own plot and prepare a clear delivered-cost request. Start small, build in stages and confirm the real costs before ordering.",
  design:"Plan my home",designDesc:"Floor plans and colours",visual:"Browse material brands",visualDesc:"Compare grades, sizes and packs",quote:"Prepare material quote",quoteDesc:"Final offer needs verification",
  search:"Search construction materials",searchHint:"Cement, TMT, bricks or pipes",searchGo:"Search",
  trust1:"Clear material specifications",trust2:"Dealer status shown honestly",trust3:"Review charges before accepting",
@@ -35,7 +35,7 @@ const copy={
  },
  hi:{
  eyebrow:"मेरा घर · विकसित भारत का सपना",
- title1:"हर घर मजबूत बने।",title2:"भारत का कल बेहतर बने।",subhead:"अपने सपनों के घर के लिए सही नक्शा, सरिया, सीमेंट और अन्य सामग्री समझें। सभी शुल्क और सप्लायर की पुष्टि के बाद ही आगे बढ़ें।",
+ title1:"अपने परिवार का घर बनाएं।",title2:"अपने बजट के हिसाब से।",subhead:"छोटे परिवार के घर से बड़े आधुनिक घर तक, अपने प्लॉट का नक्शा और सही निर्माण सामग्री चुनें। चरणों में निर्माण करें और ऑर्डर से पहले पूरे खर्च की पुष्टि करें।",
  design:"घर का प्लान बनाएं",designDesc:"प्लान और रंग की जानकारी",visual:"सामग्री और ब्रांड देखें",visualDesc:"ग्रेड, नाप और पैक",quote:"कोटेशन तैयार करें",quoteDesc:"ऑर्डर से पहले पुष्टि",
  search:"निर्माण सामग्री खोजें",searchHint:"सीमेंट, सरिया, ईंट या पाइप",searchGo:"खोजें",
  trust1:"सामग्री की पूरी जानकारी",trust2:"डीलर की स्थिति स्पष्ट",trust3:"स्वीकार करने से पहले सभी शुल्क देखें",
@@ -148,6 +148,7 @@ export function PremiumHome(){
    </div>
   </section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
+  <section className="nbh-section nbh-family-needs" aria-labelledby="family-needs-title"><div className="nbh-section-head"><div><p className="nbh-eyebrow">{lang==="hi"?"हर परिवार के लिए":"BUILT AROUND REAL FAMILY NEEDS"}</p><h2 id="family-needs-title">{lang==="hi"?"आप किस तरह का घर बनाना चाहते हैं?":"What are you building for your family?"}</h2><p>{lang==="hi"?"प्लॉट, जरूरत और बजट के हिसाब से शुरुआत करें। ये उदाहरण हैं, स्वीकृत नक्शे या तय खर्च नहीं।":"Start with a practical brief, not a luxury-house assumption. Plot sizes are examples, not guaranteed approved layouts or costs."}</p></div></div><div className="nbh-family-grid">{([{label:"Compact starter home",hi:"छोटा अपना घर",size:"15 × 30 ft · 1–2 BHK",desc:"Prioritise everyday rooms, ventilation and a simple finish.",descHi:"जरूरी कमरे, हवा और साधारण फिनिश को प्राथमिकता दें।",width:15,depth:30,bedrooms:2,floors:1},{label:"Family home",hi:"परिवार का घर",size:"18 × 50 ft · 2–3 BHK",desc:"Plan bedrooms, kitchen, toilets and room for family needs.",descHi:"बेडरूम, रसोई, बाथरूम और परिवार की जरूरतें चुनें।",width:18,depth:50,bedrooms:3,floors:2},{label:"Room to grow",hi:"बढ़ते परिवार का घर",size:"20 × 40 ft · G + 1",desc:"Consider a phased build and future rooms with an engineer.",descHi:"इंजीनियर के साथ चरणों में निर्माण और आगे के कमरे सोचें।",width:20,depth:40,bedrooms:2,floors:2}] as const).map(item=><article className="nbh-family-card" key={item.label}><span className="nbh-family-icon"><Icon name="home"/></span><h3>{lang==="hi"?item.hi:item.label}</h3><strong>{item.size}</strong><p>{lang==="hi"?item.descHi:item.desc}</p><Link href={"/design-studio/portfolio?"+new URLSearchParams({width:String(item.width),depth:String(item.depth),bedrooms:String(item.bedrooms),floors:String(item.floors),road:"N",parking:"false"})}>{lang==="hi"?"इस आकार के प्लान देखें":"Explore plans for this plot"} <Icon name="arrow"/></Link></article>)}<article className="nbh-family-card nbh-family-material"><span className="nbh-family-icon"><Icon name="cart"/></span><h3>{lang==="hi"?"पहले सामग्री का खर्च देखें":"Materials-first budget"}</h3><strong>{lang==="hi"?"चरणों में खरीदारी":"Buy in stages"}</strong><p>{lang==="hi"?"सरिया, सीमेंट, ईंट, पाइप और फिनिश की जरूरत अलग तैयार करें।":"Plan steel, cement, bricks, pipes and finishes separately; compare delivered costs."}</p><Link href="/materials">{lang==="hi"?"सामग्री चुनें":"Explore materials"} <Icon name="arrow"/></Link></article></div><p className="nbh-fineprint">{lang==="hi"?"निर्माण से पहले स्थानीय नियम, संरचना और लागत की विशेषज्ञ से पुष्टि जरूरी है।":"No fixed budget or room fit is promised. Verify structural design, setbacks and actual costs with qualified professionals."}</p></section>
   <section className="nbh-brands-strip" aria-label="Construction manufacturer reference directory">
    <div><strong>{lang==="hi"?"निर्माण सामग्री के ब्रांड":"Explore established material brands"}</strong><p>{lang==="hi"?"ब्रांड लोगो केवल पहचान के लिए हैं। स्टॉक और अधिकृत डीलर की पुष्टि अलग जरूरी है।":"Original brand marks where source-verified; names are references, not authorised dealership or product stock."}</p></div>
    <div className="nbh-brand-links">{([["ACC","cement"],["UltraTech","cement"],["Ambuja","cement"],["Ramco","cement"],["Priya","cement"],["Maha","cement"],["Birla Super","cement"],["JSW Neosteel","steel"],["Asian Paints","paint"],["Berger","paint"],["Nerolac","paint"],["Dr. Fixit","paint"],["Astral","plumbing"],["Supreme","plumbing"],["Polycab","electrical"]] as const).map(([name,category])=><Link href={brandPath(category,name)} key={name} aria-label={"Explore "+name+" materials"}>{!brandMediaFor(name)&&directoryCards(category).find(card=>card.name===name)?.image?<span style={{display:"inline-flex",alignItems:"center",gap:6}}><Image src={directoryCards(category).find(card=>card.name===name)!.image!} alt={name+" product reference, not logo"} width={40} height={48} style={{objectFit:"contain"}}/><span>{name}</span></span>:<BrandMark name={name} small/>}</Link>)}</div>
@@ -205,23 +206,23 @@ export function PremiumHome(){
      <nav className="nbh-studio-more" aria-label="Other home design tools"><Link href="/design-studio/fit">{lang==="hi"?"प्लॉट फिट जांचें":"Check plot fit"}</Link><Link href="/design-studio/visualizer">{lang==="hi"?"दीवार के रंग आज़माएं":"Try wall colours"}</Link><Link href="/studio-pricing">{lang==="hi"?"मुफ्त और प्रीमियम":"Free & premium"}</Link></nav>
     </div>
      <div className="nbh-studio-photo">
-      <Image src={homeReferencePhotos[0].src} fill sizes="(max-width: 980px) 100vw, 49vw" loading="lazy" alt="Licensed contemporary house photograph used only as exterior inspiration; not a Neerva-generated house or the selected floor plan"/>
+      <Image src={studioExterior.src} fill sizes="(max-width: 980px) 100vw, 49vw" loading="lazy" alt="Licensed contemporary house photograph used only as exterior inspiration; not a Neerva-generated house or the selected floor plan"/>
       <div className="nbh-studio-photo-caption"><strong>{lang==="hi"?"घर की शैली का उदाहरण":"Exterior inspiration"}</strong><span>{lang==="hi"?"असली फोटो, चुने हुए नक्शे का 3D रेंडर नहीं":"Real photo, not a render of your selected plan"}</span></div>
      </div>
    </div>
   </section>
   <section className="nbh-colour nbh-build-section" id="construction">
     <div><div className="nbh-house-frame nbh-photo-hero">
-     <Image src={homeVisuals.hero} fill loading="lazy" sizes="(max-width:720px) 100vw, 48vw" alt="Real photograph of a premium contemporary residence, used as style inspiration, not a NEERVA-generated house or an exact plan render" className="nbh-house-photo"/>
+     <Image src={constructionExterior.src} fill loading="lazy" sizes="(max-width:720px) 100vw, 48vw" alt="Real photograph of a premium contemporary residence, used as style inspiration, not a NEERVA-generated house or an exact plan render" className="nbh-house-photo"/>
      <span className="nbh-photo-veil" aria-hidden="true"/>
-     <div className="nbh-photo-credit"><span className="nbh-photo-pill">REAL HOUSE PHOTOGRAPHY</span><strong>Contemporary homes. Build a plan for your own site.</strong><small>Exterior style inspiration · exact rooms, doors and gates appear in the matched 2D/3D studio</small></div>
+     <div className="nbh-photo-credit"><span className="nbh-photo-pill">REAL HOUSE PHOTOGRAPHY</span><strong>{lang==="hi"?"बुनियाद से फिनिश तक, अपने बजट में योजना बनाएं":"From foundation to finish, plan your spending."}</strong><small>{lang==="hi"?"घर की शैली का उदाहरण; वास्तविक खर्च और नक्शा अलग जांचें":"Exterior inspiration only; review your own plot and material requirements separately."}</small></div>
     </div>
     <p className="nbh-image-note">Licensed residential photograph, not a NEERVA-built home or a visualisation of a selected floor plan. <Link href="/design-studio/fit">Find designs for your plot →</Link></p></div>
    <div className="nbh-colour-copy">
     <p className="nbh-eyebrow">03 / FROM FOUNDATION TO FINISH</p>
     <h2>{lang==="hi"?"सामग्री से बनता घर":"See your construction stages"}</h2>
     <p>{lang==="hi"?"स्टील और सीमेंट से शुरुआत, फिर ईंट, पाइप और फिनिशिंग। हर चरण की सामग्री और नाप चुनें। अंतिम स्टॉक, कीमत और डिलीवरी की पुष्टि जरूरी है।":"From steel and cement to bricks, pipes and finishes: choose the right materials for each construction stage, then get a verified supplier quotation."}</p>
-    <div className="nbh-build-steps"><span>01 · Structure</span><span>02 · Plumbing & masonry</span><span>03 · Finishes</span></div>
+    <div className="nbh-build-steps nbh-stage-links"><Link href="/materials/steel">{lang==="hi"?"01 · सरिया और स्ट्रक्चर":"01 · Steel & structure"}</Link><Link href="/materials/cement">{lang==="hi"?"02 · सीमेंट":"02 · Cement"}</Link><Link href="/materials/bricks-blocks">{lang==="hi"?"03 · ईंट और दीवार":"03 · Bricks & masonry"}</Link><Link href="/materials/plumbing">{lang==="hi"?"04 · पाइप और पानी":"04 · Plumbing"}</Link><Link href="/materials/hardware">{lang==="hi"?"05 · हार्डवेयर":"05 · Hardware"}</Link><Link href="/materials/tiles">{lang==="hi"?"06 · टाइल और फिनिश":"06 · Tiles & finishes"}</Link></div>
     <p className="nbh-fineprint">Concept only. Verify with a licensed architect/engineer and local authority approval. The comparison shows a simulated transformation of one design.</p>
     <div className="nbh-build-actions"><Link className="nbh-outline-link" href="/materials">Explore construction materials <Icon name="arrow"/></Link><Link href="/design-studio/visualizer">{t.colourLink} →</Link></div>
    </div>

@@ -17,3 +17,7 @@ Rejected: industrial valve bore photos, distant crusher dust pile, reddish soil 
 - Replace category-only single pipe and screw images with visually inspected local pipe stack, tile samples and sealant gun photography; add PVC elbows, hose, tile surfaces, trowel and level category previews. These do not constitute new individual SKU photos.
 - Add direct existing product shortcuts, red clay brick priority and responsive photo sizing. Surface previews can be cropped; named packs stay contained.
 - Inspected remaining staged photos: brass nipple with technical drawing is not GI; Chubb lock image shows only installed lockcase/strike and no lever set; annotated hinge does not establish stainless grade; thread-seal tape has no Viking identity; pipe clamp photo is woodworking equipment. Do not publish them as exact missing SKUs.
+
+## Family-home and catalog follow-up
+
+Distinct house photography reserved for the planner and construction section; hero gallery excludes both. Practical compact, family, phased and materials-first entry points use existing routes. HDPE coil and installed drawer handle source photos were visually inspected and licence pages reviewed; original bytes are not yet imported. A street-facing Indian house photo is staged for further crop/privacy review. Do not count candidates as completed photos.
