@@ -440,6 +440,13 @@ async function main(){
     assert.ok(await page.locator(".knowledge-answers details").count()>=2,"Hindi search returns site answers");
     await page.getByRole("button",{name:"हिंदी",exact:true}).click();
     await page.getByText("1000 वर्ग फीट में कितना सरिया लगेगा?",{exact:true}).waitFor();
+    await page.goto(base+"/build-iq/site-practice",{waitUntil:"load"});
+    await page.getByRole("searchbox",{name:"Search site situations"}).fill("ईंट");
+    await page.getByRole("button",{name:"80",exact:true}).click();
+    await page.getByText("Good decision.",{exact:true}).waitFor();
+    await page.getByText(/Supplier B is ₹500 lower/).waitFor();
+    await page.getByLabel("Rejected or damaged units").fill("50");
+    await page.getByText("Total accepted shortfall",{exact:true}).locator("..").getByText("100",{exact:true}).waitFor();
     await page.goto(base+"/inspiration",{waitUntil:"load"});
     await page.getByRole("button",{name:"Interiors",exact:true}).click();
     assert.equal(await page.locator(".inspiration-card").count(),3,"interior discovery filter");

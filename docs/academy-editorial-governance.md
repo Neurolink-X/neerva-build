@@ -14,3 +14,6 @@ Learning progress, practical checklists, real scenarios, local calculators, desi
 
 ## Material atlas
 Fifteen material records and twenty glossary terms are separated from the stage curriculum, with stable anchors, chapter/lesson links, example arithmetic and source scope. BIS and BEE authority directories are reference starting points (BIS concrete standards directory, BEE residential building energy code), not verified clause-level professional review. Atlas editorial revision and review date must be updated with reviewed changes.
+
+## Site Practice Lab
+Twelve authored simulated situations cover all twelve handbook stages. Separate situational judgement, action steps, evidence requests and conversation scripts from theory. Quotes and delivery tools accept user-entered amounts, explicitly distinguish taxes/charges and rejected/missing stock, and do not execute purchasing. Treat scenarios as editorial educational material; qualified site review and real project evidence remain necessary. Keep numerical examples illustrative and stable case IDs.

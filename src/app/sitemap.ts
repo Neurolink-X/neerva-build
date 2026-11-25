@@ -22,6 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteUrl}/learn`, changeFrequency: "monthly", priority: 0.7 },
     {url:`${siteUrl}/build-iq`,changeFrequency:"monthly",priority:0.7},
     {url:`${siteUrl}/build-iq/material-atlas`,changeFrequency:"monthly",priority:0.65},
+    {url:`${siteUrl}/build-iq/site-practice`,changeFrequency:"monthly",priority:0.65},
     ...chapters.map(c=>({url:`${siteUrl}/build-iq/handbook/${c.id}`,lastModified:new Date(c.updated+"T00:00:00Z"),changeFrequency:"monthly" as const,priority:0.65})),
     ...lessons.map(l=>({url:`${siteUrl}/build-iq/${l.id}`,changeFrequency:"monthly" as const,priority:0.55})),
     { url: `${siteUrl}/learn/plot-size-in-gaj`, changeFrequency: "monthly", priority: 0.7 },
