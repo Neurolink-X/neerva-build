@@ -330,5 +330,181 @@ export const generatedVisuals:readonly GeneratedVisual[]=[
     "path": "/images/catalog/generated/window-weather-strip.webp",
     "alt": "Coiled rubber weather strip",
     "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "generic-pex",
+    "alt": "Red PEX water tubing coil",
+    "width": 308,
+    "height": 308,
+    "bytes": 14084,
+    "sha256": "5f02be92a51c3a6d5d2b5bea30222809a2f7b7d8ed4f6ca4ef49be16cdd7cfbf",
+    "path": "/images/catalog/generated/generic-pex.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "generic-casing",
+    "alt": "Blue slotted borewell casing example; confirm slotted or plain format",
+    "width": 307,
+    "height": 308,
+    "bytes": 7180,
+    "sha256": "daeb727f2f16d3dc8099b71bd5f541b3b8c0d29f2676efd600a0ecf24c19deaa",
+    "path": "/images/catalog/generated/generic-casing.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "generic-rainwater",
+    "alt": "White rainwater downpipe with socket",
+    "width": 307,
+    "height": 308,
+    "bytes": 1272,
+    "sha256": "8a97244b5c9db566d7da7c7ab78bfaa42a708dbdc38383428760c53ad9635e67",
+    "path": "/images/catalog/generated/generic-rainwater.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "generic-underground-drain",
+    "alt": "Orange underground drainage pipe with socket seal",
+    "width": 308,
+    "height": 308,
+    "bytes": 5260,
+    "sha256": "2c466cddfa161ca18dd53c39719bc258848d00c8f40c29990bf7da1468932281",
+    "path": "/images/catalog/generated/generic-underground-drain.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "generic-suction-hose",
+    "alt": "Green reinforced suction hose; rating not shown",
+    "width": 308,
+    "height": 307,
+    "bytes": 17774,
+    "sha256": "2c81764e4dc6991505dc45b1d8e995725cf4b74a62999daff53f7a8d26978065",
+    "path": "/images/catalog/generated/generic-suction-hose.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-saddle",
+    "alt": "Brass service saddle with clamp",
+    "width": 307,
+    "height": 307,
+    "bytes": 8634,
+    "sha256": "b061bfeb00b42a1d06ad2e14d940ebdf985c3d7a95a868fa7dc5383680dcaed5",
+    "path": "/images/catalog/generated/fitting-saddle.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-grommet",
+    "alt": "Black rubber pipe penetration grommet",
+    "width": 307,
+    "height": 307,
+    "bytes": 4438,
+    "sha256": "5b3fedc36e312bb7b908ccf1782c455f3b3f58597a302470181fe003a7fc34d3",
+    "path": "/images/catalog/generated/fitting-grommet.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-gi-nipple",
+    "alt": "Metal threaded pipe nipple; galvanization to confirm",
+    "width": 308,
+    "height": 307,
+    "bytes": 7494,
+    "sha256": "1f4e97ec697aaaefa4b90f28547e60517606c2e0a870bf6eb9b2f13f5666a36e",
+    "path": "/images/catalog/generated/fitting-gi-nipple.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-pressure-switch",
+    "alt": "Enclosed pump pressure switch",
+    "width": 308,
+    "height": 307,
+    "bytes": 4954,
+    "sha256": "a0bb7e0d86322416b4eee0b722fd12142e59ffd4a5a10e7e5553bc0f4906027c",
+    "path": "/images/catalog/generated/fitting-pressure-switch.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-float-switch",
+    "alt": "Electrical float switch with attached cable",
+    "width": 307,
+    "height": 307,
+    "bytes": 6928,
+    "sha256": "5c8faa82126b471130e304b084a562037c4320d6818ed6609154bd8c24078a92",
+    "path": "/images/catalog/generated/fitting-float-switch.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-pump-union",
+    "alt": "Brass threaded pump union",
+    "width": 307,
+    "height": 307,
+    "bytes": 9056,
+    "sha256": "414356fbf3a888c59cd025687add3230cc7af8e9d69b4e81131d26ecac85b750",
+    "path": "/images/catalog/generated/fitting-pump-union.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-strainer",
+    "alt": "Perforated metal suction strainer",
+    "width": 308,
+    "height": 307,
+    "bytes": 10916,
+    "sha256": "2fc44f8b6e8723392fc911a12dd55255974f81539e1f2dfb7a8e830a3c2b9c00",
+    "path": "/images/catalog/generated/fitting-strainer.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "wood-adhesive",
+    "alt": "Unbranded woodworking adhesive bottle",
+    "width": 308,
+    "height": 308,
+    "bytes": 1724,
+    "sha256": "392464723465864f3bd1661cd7a5b721b8b1fb7498b0501ae7dc5c0881d22282",
+    "path": "/images/catalog/generated/wood-adhesive.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "door-pull-handle",
+    "alt": "Tubular metal door pull handle",
+    "width": 307,
+    "height": 308,
+    "bytes": 1646,
+    "sha256": "a869251b22122514046b511a96794f452d00a4619e497b754f930bbd833052be",
+    "path": "/images/catalog/generated/door-pull-handle.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "door-floor-spring",
+    "alt": "Concealed floor spring door closer",
+    "width": 307,
+    "height": 308,
+    "bytes": 4710,
+    "sha256": "94f0ca7e1cd8f997ad598141c8fd411038b09ffa8343addb8c9ab00b9abc9326",
+    "path": "/images/catalog/generated/door-floor-spring.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "window-friction-stay",
+    "alt": "Metal window friction stay hinge",
+    "width": 308,
+    "height": 308,
+    "bytes": 4250,
+    "sha256": "c6470c537cb712bec54dde212b87099f803d339d82b42ba5afc18508bb0fceb6",
+    "path": "/images/catalog/generated/window-friction-stay.webp",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
   }
 ];
