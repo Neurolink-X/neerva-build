@@ -442,14 +442,23 @@ async function main(){
     assert.equal(await plan3D.getAttribute("data-plan-id"),sixthId,"3D must use the same PlanModel as selected 2D");
     assert.equal(await plan2D.getAttribute("data-selected-floor"),"0");
     const viewerBounds=await plan3D.evaluate(viewer=>{
-      const buttons=[...viewer.querySelectorAll(".nbd-buttons button")];
+      const buttons=[...viewer.querySelectorAll(".nbd-buttons button")].filter(button=>button.getClientRects().length>0&&button.getBoundingClientRect().height>0);
       const viewport=document.documentElement.clientWidth;
       const visual=viewer.querySelector("canvas, svg")?.getBoundingClientRect();
       return {fits:visual&&visual.left>=0&&visual.right<=viewport+1,
         targets:buttons.map(button=>button.getBoundingClientRect().height)};
     });
     assert.ok(viewerBounds.fits,"hydrated 3D preview fits the page");
-    assert.ok(viewerBounds.targets.every(height=>height>=44),"3D modes have full touch targets");
+    assert.ok(viewerBounds.targets.length>=3&&viewerBounds.targets.every(height=>height>=44),"visible 3D modes have full touch targets");
+    const qualityOptions=plan3D.locator(".nbd-quality-options");
+    if(await qualityOptions.count()){
+      assert.equal(await qualityOptions.getAttribute("open"),null,"advanced quality is initially collapsed");
+      await qualityOptions.locator("summary").click();
+      const qualityTargets=await qualityOptions.locator("button").evaluateAll(buttons=>buttons.map(button=>button.getBoundingClientRect().height));
+      assert.equal(qualityTargets.length,2,"both rendering quality choices remain available");
+      assert.ok(qualityTargets.every(height=>height>=44),"expanded quality controls have full touch targets");
+      await qualityOptions.locator("summary").click();
+    }
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"0","3D cutaway must start on the selected ground floor");
     assert.ok(Number(await plan3D.getAttribute("data-wall-cells"))>0,"3D selected floor must contain actual mesh walls");
     await page.locator(".nroad-variants button").first().click();
