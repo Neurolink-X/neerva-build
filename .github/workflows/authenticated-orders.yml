@@ -93,11 +93,15 @@ jobs:
         run: node --experimental-strip-types scripts/ops/disposable-recovery-drill.mjs --preflight
       - run: npm run build
         env:
+          NEERVA_RFQ_INTAKE_ENABLED: "true"
+          NEXT_PUBLIC_RFQ_INTAKE_ENABLED: "true"
           NEERVA_STUDIO_PAYMENTS_ENABLED: "true"
           NEERVA_OPERATOR_TERMS_VERIFIED: "true"
           NEERVA_ATOMIC_STOCK_CONFIRMATION: "true"
       - name: Execute authenticated order lifecycle
         env:
+          NEERVA_RFQ_INTAKE_ENABLED: "true"
+          NEXT_PUBLIC_RFQ_INTAKE_ENABLED: "true"
           NEERVA_STUDIO_PAYMENTS_ENABLED: "true"
           NEERVA_OPERATOR_TERMS_VERIFIED: "true"
           NEERVA_ATOMIC_STOCK_CONFIRMATION: "true"

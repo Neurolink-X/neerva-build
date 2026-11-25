@@ -691,6 +691,8 @@ async function main(){
     assert.equal(await page.locator(".home-stage-comparison").count(),1,"construction stages replace static colour mood");
     const quick=page.locator(".nbh-quick-quote");
     await quick.locator("select[name=category]").selectOption("steel");
+    assert.match(await quick.locator("input[name=material]").getAttribute("placeholder"),/TMT/);
+    assert.equal(await quick.locator("select[name=unit]").inputValue(),"kg");
     await quick.locator("input[name=material]").fill("TMT 12 mm");
     await quick.locator("input[name=quantity]").fill("25");
     await quick.locator("input[name=pincode]").fill("208001");
@@ -699,6 +701,12 @@ async function main(){
     assert.equal(prefill.status(),200,"quote prefill is routed, never submitted as order");
     const resultHtml=await prefill.text();
     assert.match(resultHtml,/TMT 12 mm/,"draft material preserved");
+    await quick.locator("input[name=city]").fill("Kanpur");
+    await quick.locator("button[type=submit]").click();
+    await page.waitForURL("**/quotes?**");
+    assert.equal(await page.locator("input[name=materialDescription]").inputValue(),"TMT 12 mm");
+    assert.equal(await page.locator("select[name=unit]").inputValue(),"kg");
+    await page.goto(base+"/",{waitUntil:"load"});
     const newCatalog=await page.request.get(base+"/materials/paint");
     assert.equal(newCatalog.status(),200,"new paint category exists");
     const reveal=page.getByRole("slider",{name:/construction-stage/});
@@ -729,7 +737,7 @@ async function main(){
     }
     await page.locator("#nbh-studio-preset").selectOption("30x40");
     const roadOptions=page.locator(".nbh-studio-options");
-    await roadOptions.locator("summary").click();
+    if(!(await roadOptions.evaluate(el=>el.open)))await roadOptions.locator("summary").click();
     await roadOptions.locator("#nbh-studio-floors").selectOption("3");
     await roadOptions.locator("#nbh-studio-road").selectOption("W");
     assert.match((await page.locator(".nbh-studio-generate[href]").getAttribute("href"))??"",/width=30&depth=40&floors=3&road=W/,

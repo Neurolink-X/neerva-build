@@ -27,6 +27,14 @@ async function call(role,path,method="GET",body){
  const data=await r.json();
  return {status:r.status,data};
 }
+const rfqPayload={idempotencyKey:randomUUID(),categorySlug:"cement",materialDescription:"Disposable PPC cement 50 kg",quantity:10,unit:"bag",city:"Kanpur",pincode:"208001",contactName:"Disposable fixture",phone:"9000000000",privacyAccepted:true};
+assert.equal((await call(null,"/api/rfqs","POST",rfqPayload)).status,401);
+assert.equal((await call(customer,"/api/rfqs","POST",{...rfqPayload,unit:"litre"})).status,400);
+const rfq=await call(customer,"/api/rfqs","POST",rfqPayload);assert.equal(rfq.status,201,JSON.stringify(rfq.data));assert.ok(rfq.data.requestId);
+const retryRfq=await call(customer,"/api/rfqs","POST",rfqPayload);assert.equal(retryRfq.status,200);assert.equal(retryRfq.data.requestId,rfq.data.requestId);
+assert.equal((await call(customer,"/api/admin/rfqs")).status,403);
+for(const [actor,endpoint,visible] of [[customer,"/api/customer/quotes",true],[other,"/api/customer/quotes",false],[admin,"/api/admin/rfqs",true]]){const list=await call(actor,endpoint);assert.equal(list.status,200);assert.equal(list.data.requests.some(q=>q.id===rfq.data.requestId),visible,"RFQ visibility must match role");}
+console.log("RFQ API submission, persistence, duplicate protection and admin visibility verified in disposable database");
 const route="/api/direct-orders",adminRoute="/api/admin/direct-orders";
 assert.equal((await call(null,route)).status,401);
 assert.equal((await call(customer,adminRoute)).status,403);
