@@ -305,3 +305,5 @@
 .nbh-house-strip img,.nbh-studio-photo img{object-position:center}
 .nbh-house-strip,.nbh-studio-photo,.nbh-house-frame{isolation:isolate}
 @media(max-width:600px){.nbh-house-strip>div{aspect-ratio:4/3}.nbh-studio-photo-caption{left:12px;right:12px;bottom:12px}}
+
+.nbh-project-discovery{display:flex;align-items:center;justify-content:space-between;gap:18px;background:#e8eee4;border:1px solid #d4e0d1;border-radius:16px;margin:12px auto;padding:clamp(18px,3vw,32px);max-width:min( calc(100% - 32px), 1400px)}.nbh-project-discovery h2{margin:5px 0 8px}.nbh-project-discovery p:not(.nbh-eyebrow){font-size:14px;line-height:1.55;color:#53665a;margin:0}.nbh-project-discovery .button{flex:none;display:inline-flex;align-items:center;gap:8px;max-width:100%}.nbh-project-discovery svg{width:16px;height:16px}@media(max-width:680px){.nbh-project-discovery{flex-direction:column;align-items:stretch}.nbh-project-discovery .button{justify-content:center}}
