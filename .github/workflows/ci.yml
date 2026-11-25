@@ -22,6 +22,11 @@ jobs:
       - name: Production dependency security audit
         run: npm audit --omit=dev --audit-level=moderate
       - run: npm run release:verify
+      - name: Validate lint toolchain and installed peer graph
+        run: |
+          node scripts/release/eslint-toolchain.mjs
+          node --test scripts/release/eslint-toolchain.test.mjs
+          npm ls eslint eslint-config-next next --all
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:contracts
