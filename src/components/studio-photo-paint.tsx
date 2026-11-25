@@ -202,9 +202,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   <canvas data-sample={scene==="facade"?sampleId:scene} ref={canvas} role="img" aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Photo of your wall. Tap four corners clockwise to choose a painting region"} onPointerDown={addPoint}
     style={{transform:wallZoom,transformOrigin:wallCentre,display:ready?"block":"none",width:"100%",height:"auto",cursor:scene!=="facade"&&points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   </div>
-  </div>{colourControls}</div>
-  {ready&&scene==="facade"&&<div className="paint-actions"><button type="button" aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?"Show new paint":"View original"}</button><button type="button" disabled={originalVisible} onClick={saveImage}>Save colour preview</button><button type="button" onClick={()=>{setFacadeStyles({});setTarget("all");setMode("paint");setCloseUp(false);setShowOriginal(false)}}>Reset exterior sections</button></div>}
-  {mode==="design"&&<><label>Wall design <select value={pattern} onChange={e=>{setPattern(e.target.value as Pattern);setShowOriginal(false)}}>
+  </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><label>Wall design <select value={pattern} onChange={e=>{setPattern(e.target.value as Pattern);setShowOriginal(false)}}>
    {patternKeys.filter(key=>key!=="plain").map(key=><option key={key} value={key}>{finishes[key].name}</option>)}
   </select></label>
   <label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Pattern strength · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
@@ -215,6 +213,8 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
     </svg><span>{finishes[key].name}</span>
    </button>)}
   </div></>}
+</div></div>
+  {ready&&scene==="facade"&&<div className="paint-actions"><button type="button" aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?"Show new paint":"View original"}</button><button type="button" disabled={originalVisible} onClick={saveImage}>Save colour preview</button><button type="button" onClick={()=>{setFacadeStyles({});setTarget("all");setMode("paint");setCloseUp(false);setShowOriginal(false)}}>Reset exterior sections</button></div>}
   {ready&&scene!=="facade"&&<div className="nbd-buttons" style={{flexWrap:"wrap"}}>
    <button type="button" disabled={!valid||originalVisible} onClick={()=>{
     const wall={points,colour:base,pattern:effectivePattern,accent,opacity,mask:currentMask};
