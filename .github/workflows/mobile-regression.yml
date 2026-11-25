@@ -31,7 +31,7 @@ jobs:
       - name: Install temporary browser test driver
         run: npm install --prefix "$RUNNER_TEMP/neerva-browser" --no-save --package-lock=false --ignore-scripts --no-audit --no-fund playwright@1.58.2 @axe-core/playwright@4.10.2
       - name: Cache Chromium browser
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ runner.os }}-1.58.2
@@ -40,7 +40,7 @@ jobs:
       - run: npm run release:verify
       - run: npm run test:contracts
       - name: Restore trusted Next.js incremental cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: .next/cache
           key: neerva-next-v1-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts', 'tsconfig.json') }}
