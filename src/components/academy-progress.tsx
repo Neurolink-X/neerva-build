@@ -7,7 +7,7 @@ function load(){try{return readProgress(localStorage.getItem(progressKey))}catch
 export function AcademyProgress({total}:{total:number}){
  const [p,setP]=useState(empty);
  useEffect(()=>{const timer=window.setTimeout(()=>setP(load()),0);return()=>clearTimeout(timer)},[]);
- return <div className="academy-progress"><div><strong>{p.completed.length} of {total} lessons explored</strong><small>Your progress stays on this device.</small></div><progress aria-label="Learning progress" value={p.completed.length} max={total}/></div>
+ return <div className="academy-progress"><div><strong>{p.completed.length} of {total} lessons explored</strong><small>Your progress stays on this device.</small><small>{p.practiced.length} knowledge checks answered correctly.</small></div><progress aria-label="Learning progress" value={p.completed.length} max={total}/></div>
 }
 type Practice={id:string;question:string;options:readonly {label:string;feedback:string}[];correct:number};
 export function AcademyPractice({lesson,next}:{lesson:Practice;next?:string}){

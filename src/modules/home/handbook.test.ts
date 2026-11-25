@@ -1,0 +1,6 @@
+
+import test from "node:test";import assert from "node:assert/strict";
+import {chapters,chapterById,sourceDirectory,findChapters,reviewState} from "./handbook.ts";
+import {lessons} from "./academy.ts";
+test("every handbook chapter has stable identity, reference ownership, examples and practical checks",()=>{assert.equal(new Set(chapters.map(c=>c.id)).size,chapters.length);assert.ok(chapters.length>=12);for(const c of chapters){assert.match(c.id,/^[a-z][a-z-]+$/);assert.ok(c.principles.length>=3&&c.checks.length>=3&&c.risks.length>=2&&c.example.en&&c.example.hi);assert.ok(c.lessons.every(id=>lessons.some(l=>l.id===id)));assert.ok(c.sources.every(id=>Object.hasOwn(sourceDirectory,id)));assert.ok(c.updated<c.reviewDue&&c.revision>=1);assert.equal(chapterById(c.id),c);assert.ok(c.tool.startsWith("/"));}assert.ok(lessons.every(l=>chapters.some(c=>c.lessons.includes(l.id))))});
+test("search supports both languages and flags overdue review without claiming professional approval",()=>{assert.ok(findChapters("नींव").some(c=>c.id==="ground"));assert.ok(findChapters("steel").some(c=>c.id==="structure"));assert.equal(findChapters("no-such-topic-123").length,0);assert.equal(reviewState(chapters[0],"2027-05-25"),"review-due");assert.equal(reviewState(chapters[0],"2026-11-25"),"editorial-draft")});
