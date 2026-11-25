@@ -9,7 +9,7 @@ import {MaterialIdentity} from "./material-identity";
 export function isApprovedSkuPhoto(path:string):boolean{
  return /^\/images\/catalog\/sku\/[a-z0-9][a-z0-9/_-]{3,160}\.(?:webp|avif|png|jpe?g)$/i.test(path)&&!path.includes("..");
 }
-export function CatalogMaterialImage({category,name,compact=false,product}:{category:string;name:string;compact?:boolean;product?:DemoProduct}){
+export function CatalogMaterialImage({category,name,compact=false,product,sizes}:{category:string;name:string;compact?:boolean;product?:DemoProduct;sizes?:string}){
  const [failed,setFailed]=useState<string[]>([]);
  const media=product?catalogVisuals(product):[];
  const categorySrc=categoryImage(category);
@@ -22,7 +22,7 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{cate
  const safeSrc=isPipe&&current?.kind==="category"?undefined:src;
  const surfacePreview=category==="tiles"&&product&&current?.kind!=="sku"&&Boolean(safeSrc);
  return <div className={"catalog-media-frame"+(compact?" compact":"")}><div className={"catalog-material-image"+(compact?" compact":"")+(surfacePreview?" tile-surface-photo":current?.kind==="generated"||current?.kind==="sku"||current?.kind==="listing"||current?.kind==="manufacturer"?" pack-photo":"")}>
-  {safeSrc?<Image src={safeSrc} alt={compact?"":current?.alt??name} fill sizes={compact?"(max-width:680px) 50vw, 33vw":"(max-width:350px) 100vw, (max-width:680px) 90vw, (max-width:1100px) 50vw, 33vw"}
+  {safeSrc?<Image src={safeSrc} alt={compact?"":current?.alt??name} fill sizes={sizes??(compact?"(max-width:680px) 50vw, 33vw":"(max-width:350px) 100vw, (max-width:680px) 90vw, (max-width:1100px) 50vw, 33vw")}
    quality={75} loading="lazy" unoptimized={current?.kind==="generated"} referrerPolicy="no-referrer" onError={()=>setFailed(previous=>previous.includes(safeSrc)?previous:[...previous,safeSrc])}/>:
    <MaterialIdentity name={name} category={category} brand={product?.brand} product={product}/>}
  </div>
