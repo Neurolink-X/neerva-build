@@ -142,7 +142,7 @@ export function PremiumHome(){
   <label>{lang==="hi"?"पिनकोड":"Pincode"}<input required name="pincode" inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} placeholder="208001"/></label>
   <label>{lang==="hi"?"डिलीवरी शहर":"Delivery city"}<input required minLength={2} maxLength={80} name="city" placeholder={lang==="hi"?"जैसे लखनऊ":"e.g. Lucknow"} autoComplete="address-level2"/></label><button type="submit">{lang==="hi"?"ड्राफ्ट तैयार करें →":"Review material request →"}</button>
  </div>
- <small>Step 1 of 2 · Review your details next. Nothing is sent or saved to the server yet.</small>
+ <small>Step 1 of 2 · Review your details next. No quotation is submitted or stored as a request until you confirm.</small>
 </form>
 {suggestions.length>0?<div className="nbh-suggestions" aria-label="Search suggestions">{suggestions.map(item=><Link key={item.id} href={item.href}>{lang==="hi"?item.hi:item.en}<Icon name="arrow"/></Link>)}</div>:null}
     <div className="nbh-chip-line"><span>{t.categories}</span>{popular.map(([name,href])=><Link key={name} href={href}>{name}</Link>)}</div>
