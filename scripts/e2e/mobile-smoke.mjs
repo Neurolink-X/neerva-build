@@ -382,6 +382,13 @@ async function main(){
     await page.getByRole("heading",{name:"Order cart (1)"}).waitFor();
     await page.locator("article.admin-record").first().getByRole("button",{name:"Remove"}).click();
     await page.getByText(/Your order cart is empty/).waitFor();
+    await page.goto(base+"/build-iq",{waitUntil:"load"});
+    await page.getByRole("button",{name:/Daily 3-question challenge/}).click();
+    for(let i=0;i<3;i++)await page.locator(".iq-options button").first().click();
+    await page.getByRole("heading",{name:/Your result:/}).waitFor();
+    await page.getByRole("button",{name:/Practice all 12 questions/}).click();
+    assert.equal(await page.locator(".iq-options button").count(),4,"practice round offers four choices");
+    assert.equal(await page.locator(".iq-progress progress").getAttribute("value"),"0","replay resets answers");
     await page.goto(base+"/my-project",{waitUntil:"load"});
     await page.getByRole("button",{name:/02 Foundation/}).click();
     await page.getByRole("checkbox",{name:"Confirm structural quantities"}).check();
