@@ -11,3 +11,5 @@ test("resource and budget scenarios",()=>{assert.equal(quickEstimate("rainwater"
 test("lifecycle, specified proportions and pack planning",()=>{assert.equal(quickEstimate("lifecycle",[100000,5000,20]),200000);assert.equal(quickEstimate("lifecycle",[100000,5000,101]),null);assert.equal(quickEstimate("mortar",[100,1,4]),20);assert.equal(quickEstimate("mortar",[100,0,4]),null);assert.equal(quickEstimate("packs",[100,20,5]),6);assert.equal(quickEstimate("packs",[100,0,5]),null)});
 
 test("openable area ratio",()=>{assert.equal(quickEstimate("ventilation",[20,2]),10);assert.equal(quickEstimate("ventilation",[0,2]),null)});
+
+test("modular pitch count",()=>{assert.equal(quickEstimate("module-grid",[3600,600]),6);assert.equal(quickEstimate("module-grid",[3700,600]),6);assert.equal(quickEstimate("module-grid",[3600,0]),null)});
