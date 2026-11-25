@@ -44,6 +44,8 @@ const order=created.data.order;
 assert.ok(order?.id&&order.code);
 assert.equal(order.status,"received");
 assert.equal(created.data.paymentTaken,false);
+assert.equal((await call(customer,route,"PATCH",{orderId:order.id,expectedStatus:"received",status:"delivered"})).status,400);
+assert.equal((await call(admin,adminRoute,"PATCH",{orderId:order.id,expectedStatus:"preparing",status:"out_for_delivery"})).status,409,"A stale expected state may not advance the order");
 const repeat=await call(customer,route,"POST",payload);
 assert.equal(repeat.status,200);assert.equal(repeat.data.duplicate,true);assert.equal(repeat.data.order.id,order.id);
 assert.equal((await call(customer,route,"POST",{...payload,notes:"Changed payload"})).status,409);

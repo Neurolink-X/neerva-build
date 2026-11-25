@@ -12,3 +12,5 @@ These are risks, not reported production incidents. No production data or permis
 | Colour | Header-based 16MP decode budget, 1280px retained bitmap, stale request and cleanup guards | Real low-memory devices, malformed/animated files and rapid selection |
 | Pincode | Exact service-area checks at quote acceptance, validated delivery policy | Cross-dealer/unsupported PIN and stale coverage tests |
 No stock reservation, automatic settlement or certified architectural drawings are introduced by these changes.
+
+Extended disposable regression suite: concurrent Studio checkout and UTR submissions, cancellation after claim, duplicate refund, entitlement revocation, malformed PINs, invalid and stale direct-order transitions. These tests are configured, not yet executed. Claim-versus-cancel at exactly the same instant still needs a reviewed database locking migration; stock reservation requires explicit SKU/branch linkage and fulfillment semantics.
