@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import {assessPerformance} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
+const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -50,7 +50,7 @@ async function main(){
     });
     interactionReports.push({route,width:v.w,total:interaction.total,unnamed:interaction.unnamed,smallCount:interaction.small.length,small:interaction.small.slice(0,25),primaryTooShort:interaction.primaryTooShort});
     if(interaction.primaryTooShort.length)failures.push(v.w+"px "+route+": primary action height below 44px "+JSON.stringify(interaction.primaryTooShort));
-    if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer"].includes(route)){
+    if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer","/room-lab","/build-iq","/inspiration"].includes(route)){
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
      const timing=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],m=window.__neervaPerf;return {ttfbMs:n?Math.round(n.responseStart):null,loadMs:n?Math.round(n.loadEventEnd):null,lcpMs:m?.lcp==null?null:Math.round(m.lcp),cls:m?.cls??null};});
      const budget=assessPerformance(timing);
@@ -86,6 +86,34 @@ async function main(){
     const invalid=await page.request.get(base+"/materials/no-such-category");
     try{assert.equal(invalid.status(),404,"missing catalog pages must keep real HTTP 404");}finally{await invalid.dispose();}
     performanceReports.push({route:"/ → /materials",width:v.w,clickToReadyMs:Math.round(nav.elapsed),scope:"local browser route transition, not field latency"});
+   }
+   // Room preview and Academy controls must work on phone and desktop.
+   if(v.w===390||v.w===1440){
+    await page.goto(base+"/room-lab",{waitUntil:"load"});
+    await page.getByRole("button",{name:"Edit floor plan",exact:true}).click();
+    const finish=page.locator(".room-lab-swatches button").first();
+    await finish.scrollIntoViewIfNeeded();
+    const preview=await page.locator(".room-lab-preview svg").boundingBox();
+    assert.ok(preview&&preview.y+preview.height>0&&preview.y<v.h,"Live room preview remains visible during finish selection");
+    await page.goto(base+"/build-iq",{waitUntil:"load"});
+    const lab=page.locator(".visual-site-lab");
+    await lab.getByRole("slider").first().focus();
+    await lab.getByRole("slider").first().press("End");
+    assert.ok(await lab.getByRole("heading",{name:"Finishes and handover"}).isVisible());
+    await lab.getByRole("slider").nth(1).focus();
+    await lab.getByRole("slider").nth(1).press("End");
+    assert.match(await lab.locator(".build-results").innerText(),/20 sq ft/);
+    const discovery=page.locator(".academy-discovery");
+    await discovery.getByRole("searchbox").fill("zz-no-matching-lesson");
+    assert.match(await discovery.innerText(),/0 lessons found/);
+    await discovery.getByRole("searchbox").fill("");
+    const link=discovery.locator(".academy-discovery-results a").first();
+    const href=await link.getAttribute("href");
+    const start=Date.now();
+    await link.click();
+    await page.waitForURL("**"+href);
+    await page.locator(".academy-lesson h1").waitFor();
+    performanceReports.push({route:"/build-iq → "+href,width:v.w,clickToReadyMs:Date.now()-start,scope:"local browser navigation"});
    }
    // Check the reported category media regression on every viewport.
    await page.goto(base+"/",{waitUntil:"load"});
@@ -431,7 +459,7 @@ async function main(){
     await page.waitForFunction(()=>document.querySelector(".handbook-checks input")?.checked===true);
     await page.goto(base+"/build-iq",{waitUntil:"load"});
     await page.getByRole("link",{name:"Start exploring →"}).click();
-    await page.getByText("Optional Build IQ challenge",{exact:true}).click();
+    await page.getByText("Quick knowledge check",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Compare their measured dimensions and road access"}).click();
     await page.getByText("That's right.",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Mark lesson explored"}).click();
@@ -473,15 +501,17 @@ async function main(){
     await page.getByLabel("Active board").selectOption({label:"My first board"});
     assert.equal(await page.locator(".inspiration-card").count(),1,"original saved board remains intact");
     await page.goto(base+"/room-lab",{waitUntil:"load"});
+    await page.getByRole("button",{name:"Edit floor plan",exact:true}).click();
     await page.getByRole("button",{name:/^Sofa/}).click();
     await page.getByRole("button",{name:/^Double bed/}).click();
     assert.equal(await page.locator(".room-lab-preview svg g").count(),2,"furniture added to room");
     await page.reload({waitUntil:"load"});
+    await page.getByRole("button",{name:"Edit floor plan",exact:true}).click();
     await page.waitForFunction(()=>document.querySelectorAll(".room-lab-preview svg g").length===2);
     await page.getByRole("button",{name:"Wall #f1e7d5",exact:true}).click();
     assert.equal(await page.getByRole("button",{name:"Wall #f1e7d5",exact:true}).getAttribute("aria-pressed"),"true");
-    await page.getByLabel("Room alternative name").fill("First layout");
-    await page.getByRole("button",{name:"Save alternative",exact:true}).click();
+    await page.getByLabel("Name your design").fill("First layout");
+    await page.getByRole("button",{name:"Save design",exact:true}).click();
     await page.getByRole("button",{name:"Restore First layout",exact:true}).waitFor();
     await page.getByRole("button",{name:"Wall #dbe4d1",exact:true}).click();
     await page.getByRole("button",{name:"Restore First layout",exact:true}).click();
@@ -661,6 +691,8 @@ async function main(){
     assert.equal(await page.locator(".home-stage-comparison").count(),1,"construction stages replace static colour mood");
     const quick=page.locator(".nbh-quick-quote");
     await quick.locator("select[name=category]").selectOption("steel");
+    assert.match(await quick.locator("input[name=material]").getAttribute("placeholder"),/TMT/);
+    assert.equal(await quick.locator("select[name=unit]").inputValue(),"kg");
     await quick.locator("input[name=material]").fill("TMT 12 mm");
     await quick.locator("input[name=quantity]").fill("25");
     await quick.locator("input[name=pincode]").fill("208001");
@@ -669,6 +701,12 @@ async function main(){
     assert.equal(prefill.status(),200,"quote prefill is routed, never submitted as order");
     const resultHtml=await prefill.text();
     assert.match(resultHtml,/TMT 12 mm/,"draft material preserved");
+    await quick.locator("input[name=city]").fill("Kanpur");
+    await quick.locator("button[type=submit]").click();
+    await page.waitForURL("**/quotes?**");
+    assert.equal(await page.locator("input[name=materialDescription]").inputValue(),"TMT 12 mm");
+    assert.equal(await page.locator("select[name=unit]").inputValue(),"kg");
+    await page.goto(base+"/",{waitUntil:"load"});
     const newCatalog=await page.request.get(base+"/materials/paint");
     assert.equal(newCatalog.status(),200,"new paint category exists");
     const reveal=page.getByRole("slider",{name:/construction-stage/});
@@ -699,7 +737,7 @@ async function main(){
     }
     await page.locator("#nbh-studio-preset").selectOption("30x40");
     const roadOptions=page.locator(".nbh-studio-options");
-    await roadOptions.locator("summary").click();
+    if(!(await roadOptions.evaluate(el=>el.open)))await roadOptions.locator("summary").click();
     await roadOptions.locator("#nbh-studio-floors").selectOption("3");
     await roadOptions.locator("#nbh-studio-road").selectOption("W");
     assert.match((await page.locator(".nbh-studio-generate[href]").getAttribute("href"))??"",/width=30&depth=40&floors=3&road=W/,

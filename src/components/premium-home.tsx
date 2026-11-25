@@ -11,6 +11,8 @@ import {brandMediaFor} from "@/modules/catalog/brand-media";
 import {BrandMark} from "@/components/brand-mark";
 import {categoryChoices,categoryGuidance,categoryChoiceHref,categoryPreviewCredits} from "@/modules/catalog/category-discovery";
 
+import {categoryUnits,defaultCategoryUnit,quantityUnitLabels,categoryMaterialHints,isMaterialCategory,type MaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
+const materialExamples:Record<MaterialCategory,string>={cement:"UltraTech PPC 50 kg",steel:"Fe 500D TMT 12 mm", "bricks-blocks":"Red clay brick 230 × 110 × 75 mm",plumbing:"CPVC pipe 25 mm",electrical:"Copper wire 2.5 sq mm",aggregates:"20 mm gitti",paint:"Interior emulsion 20 L",tiles:"Vitrified tile 600 × 600 mm",hardware:"Tile adhesive 20 kg"};
 type Language="en"|"hi";
 const copy={
  en:{
@@ -92,6 +94,7 @@ const popular=[["cement","/materials/cement"],["TMT","/materials/steel"],["brick
 export function PremiumHome(){
  const [lang,setLang]=useState<Language>("en");
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
+ const [quoteCategory,setQuoteCategory]=useState<MaterialCategory>("cement"),[quoteUnit,setQuoteUnit]=useState<MaterialQuantityUnit>("bag"),[quoteMaterial,setQuoteMaterial]=useState("");
  const [plot,setPlot]=useState("18x50");
  const [customWidth,setCustomWidth]=useState("18"),[customDepth,setCustomDepth]=useState("50");
  const [homeFloors,setHomeFloors]=useState<1|2|3>(2);
@@ -133,13 +136,13 @@ export function PremiumHome(){
     <form className="nbh-search" action="/materials" method="get" onSubmit={submitSearch} role="search"><Icon name="search"/><input aria-label={t.search} name="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.searchHint} maxLength={80}/><button type="submit">{t.searchGo}</button></form>
     <form className="nbh-quick-quote" action="/quotes" method="get">
  <strong>{lang==="hi"?"जल्दी कोटेशन ड्राफ्ट तैयार करें":"Prepare a material enquiry in under one minute"}</strong>
- <div className="nbh-quick-fields"><label className="nbh-quick-category">{lang==="hi"?"श्रेणी":"Category"}<select name="category" defaultValue="cement"><option value="cement">Cement</option><option value="steel">TMT / Steel</option><option value="bricks-blocks">Bricks / AAC</option><option value="plumbing">Pipes</option><option value="electrical">Electrical</option><option value="aggregates">Morang / Balu / Gitti</option><option value="paint">Paint</option><option value="tiles">Tiles</option><option value="hardware">Hardware</option></select></label>
-  <label>{lang==="hi"?"सामग्री":"Material"}<input required minLength={3} maxLength={180} name="material" placeholder="e.g. UltraTech PPC 50 kg"/></label>
-  <label>{lang==="hi"?"मात्रा":"Quantity"}<input required type="number" min=".001" max="1000000" step=".001" defaultValue="10" name="quantity"/></label>
+ <div className="nbh-quick-fields"><label className="nbh-quick-category">{lang==="hi"?"श्रेणी":"Category"}<select name="category" value={quoteCategory} onChange={e=>{const value=e.target.value;if(isMaterialCategory(value)){setQuoteCategory(value);setQuoteUnit(defaultCategoryUnit(value));setQuoteMaterial("")}}}><option value="cement">Cement</option><option value="steel">TMT / Steel</option><option value="bricks-blocks">Bricks / AAC</option><option value="plumbing">Pipes</option><option value="electrical">Electrical</option><option value="aggregates">Morang / Balu / Gitti</option><option value="paint">Paint</option><option value="tiles">Tiles</option><option value="hardware">Hardware</option></select></label>
+  <label>{lang==="hi"?"सामग्री":"Material"}<input required minLength={3} maxLength={180} name="material" value={quoteMaterial} onChange={e=>setQuoteMaterial(e.target.value)} placeholder={"e.g. "+materialExamples[quoteCategory]} aria-describedby="nbh-material-hint"/><small id="nbh-material-hint">{categoryMaterialHints[quoteCategory]}</small></label>
+  <label>{lang==="hi"?"मात्रा":"Quantity"}<input required type="number" min=".001" max="1000000" step=".001" placeholder="10" name="quantity"/></label><label>{lang==="hi"?"इकाई":"Unit"}<select name="unit" value={quoteUnit} onChange={e=>setQuoteUnit(e.target.value as MaterialQuantityUnit)}>{categoryUnits(quoteCategory).map(unit=><option key={unit} value={unit}>{quantityUnitLabels[unit]}</option>)}</select></label>
   <label>{lang==="hi"?"पिनकोड":"Pincode"}<input required name="pincode" inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} placeholder="208001"/></label>
-  <label>{lang==="hi"?"डिलीवरी शहर":"Delivery city"}<input required minLength={2} maxLength={80} name="city" placeholder={lang==="hi"?"जैसे लखनऊ":"e.g. Lucknow"} autoComplete="address-level2"/></label><button type="submit">{lang==="hi"?"ड्राफ्ट तैयार करें →":"Prepare request →"}</button>
+  <label>{lang==="hi"?"डिलीवरी शहर":"Delivery city"}<input required minLength={2} maxLength={80} name="city" placeholder={lang==="hi"?"जैसे लखनऊ":"e.g. Lucknow"} autoComplete="address-level2"/></label><button type="submit">{lang==="hi"?"ड्राफ्ट तैयार करें →":"Review material request →"}</button>
  </div>
- <small>Draft only. No stock, price, order or delivery is confirmed.</small>
+ <small>Step 1 of 2 · Review your details next. No quotation is submitted or stored as a request until you confirm.</small>
 </form>
 {suggestions.length>0?<div className="nbh-suggestions" aria-label="Search suggestions">{suggestions.map(item=><Link key={item.id} href={item.href}>{lang==="hi"?item.hi:item.en}<Icon name="arrow"/></Link>)}</div>:null}
     <div className="nbh-chip-line"><span>{t.categories}</span>{popular.map(([name,href])=><Link key={name} href={href}>{name}</Link>)}</div>
@@ -175,7 +178,7 @@ export function PremiumHome(){
 
     </div>
     <div className="nbh-studio-planner">
-     <div className="nbh-studio-planner-head"><span>{lang==="hi"?"चरण 1 / 2":"STEP 1 OF 2"}</span><h3>{lang==="hi"?"अपने प्लॉट से शुरुआत करें":"Start with your plot"}</h3><p>{lang==="hi"?"पहले प्लॉट का साइज चुनें। अगली स्क्रीन पर कमरों और पार्किंग के हिसाब से नक्शे बनेंगे।":"Choose the actual plot size first. The next screen creates room layouts using your selected dimensions."}</p></div>
+     <div className="nbh-studio-planner-head"><span>{lang==="hi"?"चरण 1 / 2":"STEP 1 OF 2 · PLOT DETAILS"}</span><h3>{lang==="hi"?"अपने प्लॉट से शुरुआत करें":"Start with your plot"}</h3><p>{lang==="hi"?"पहले प्लॉट का साइज चुनें। अगली स्क्रीन पर कमरों और पार्किंग के हिसाब से नक्शे बनेंगे।":"Choose the actual plot size first. The next screen creates room layouts using your selected dimensions."}</p></div>
      <label className="nbh-studio-primary-label" htmlFor="nbh-studio-preset">{lang==="hi"?"प्लॉट का आकार (फीट)":"Plot dimensions (feet)"}</label>
      <select className="nbh-studio-preset" id="nbh-studio-preset" value={plot} onChange={e=>setPlot(e.target.value)}>
       <option value="18x50">18 × 50 ft</option>
@@ -192,8 +195,8 @@ export function PremiumHome(){
       <label htmlFor="nbh-studio-depth">{lang==="hi"?"लंबाई (फीट)":"Plot depth (ft)"}<input id="nbh-studio-depth" type="number" inputMode="decimal" min="15" max="250" step="0.5" value={customDepth} onChange={e=>setCustomDepth(e.target.value)} required/></label>
      </div>}
      {!plotValid&&<p className="nbh-studio-error" role="alert">{lang==="hi"?"चौड़ाई 10–200 फीट और लंबाई 15–250 फीट रखें।":"Enter both dimensions: frontage 10–200 ft and depth 15–250 ft."}</p>}
-     <details className="nbh-studio-options">
-      <summary>{lang==="hi"?"वैकल्पिक: मंज़िल और सड़क की दिशा":"Optional: floors and road-facing direction"}</summary>
+     <details className="nbh-studio-options" open>
+      <summary>{lang==="hi"?"वैकल्पिक: मंज़िल और सड़क की दिशा":"Floors and road-facing direction"}</summary>
       <div className="nbh-studio-option-grid">
        <label htmlFor="nbh-studio-floors">{lang==="hi"?"मंज़िल":"Floors"}<select id="nbh-studio-floors" value={homeFloors} onChange={e=>setHomeFloors(Number(e.target.value) as 1|2|3)}><option value={1}>Ground</option><option value={2}>G + 1</option><option value={3}>G + 2</option></select></label>
        <label htmlFor="nbh-studio-road">{lang==="hi"?"सड़क की दिशा":"Road-facing direction"}<select id="nbh-studio-road" value={homeRoad} onChange={e=>setHomeRoad(e.target.value as "N"|"E"|"S"|"W")}><option value="N">North</option><option value="E">East</option><option value="S">South</option><option value="W">West</option></select></label>
@@ -202,9 +205,9 @@ export function PremiumHome(){
      <div className="nbh-studio-result" aria-live="polite">
       <span>{lang==="hi"?"चुना हुआ प्लॉट":"SELECTED PLOT"}</span>
       <strong>{plotValid?String(portfolioDimensions.width)+" × "+String(portfolioDimensions.depth)+" ft":"—"}</strong>
-      <small>{homeFloors===1?"Ground":"G + "+String(homeFloors-1)} · {homeRoad==="N"?"North":homeRoad==="E"?"East":homeRoad==="S"?"South":"West"} facing</small>
+      <small>{homeFloors===1?"Ground":"G + "+String(homeFloors-1)} · {homeRoad==="N"?"North":homeRoad==="E"?"East":homeRoad==="S"?"South":"West"} facing</small>{plotValid&&<small>{(presetWidth*presetDepth).toLocaleString("en-IN",{maximumFractionDigits:2})} sq ft · {(presetWidth*presetDepth/9).toLocaleString("en-IN",{maximumFractionDigits:2})} sq gaj</small>}
      </div>
-     {plotValid?<Link className="nbh-studio-generate" href={portfolioHref}>{lang==="hi"?"इस प्लॉट के लिए नक्शे बनाएं":"Generate matching 2D + 3D plans"} <Icon name="arrow"/></Link>:<span className="nbh-studio-generate nbh-studio-disabled" aria-disabled="true">{lang==="hi"?"पहले सही नाप भरें":"Enter valid dimensions to continue"}</span>}
+     {plotValid?<Link className="nbh-studio-generate" href={portfolioHref}>{lang==="hi"?"इस प्लॉट के लिए नक्शे बनाएं":"Continue to room requirements"} <Icon name="arrow"/></Link>:<span className="nbh-studio-generate nbh-studio-disabled" aria-disabled="true">{lang==="hi"?"पहले सही नाप भरें":"Enter valid dimensions to continue"}</span>}
      <p className="nbh-studio-trust">{lang==="hi"?"24 तक वैध कॉन्सेप्ट लेआउट; वास्तविक संख्या आपके प्लॉट और कमरों की शर्तों पर निर्भर है।":"Up to 24 checked concept layouts; actual availability depends on plot and room constraints."}</p>
      <nav className="nbh-studio-more" aria-label="Other home design tools"><Link href="/design-studio/fit">{lang==="hi"?"प्लॉट फिट जांचें":"Check plot fit"}</Link><Link href="/design-studio/visualizer">{lang==="hi"?"दीवार के रंग आज़माएं":"Try wall colours"}</Link><Link href="/studio-pricing">{lang==="hi"?"मुफ्त और प्रीमियम":"Free & premium"}</Link></nav>
     </div>

@@ -1,6 +1,8 @@
+import {GlobalPractice} from "@/components/global-practice";
 import type {Metadata} from "next";
 import {SiteHeader,SiteFooter} from "@/components/site-chrome";
 import {InspirationStudio} from "@/components/inspiration-studio";
 import "./inspiration.css";
+import Link from "next/link";
 export const metadata:Metadata={title:"Dream Home Inspiration & Mood Boards",description:"Explore home exteriors, interiors, material finishes and colour combinations. Create and share a private inspiration board.",alternates:{canonical:"/inspiration"}};
-export default function InspirationPage(){return <main className="catalog-page"><SiteHeader/><InspirationStudio/><SiteFooter/></main>}
+export default function InspirationPage(){return <main className="catalog-page"><SiteHeader/><InspirationStudio/><section className="catalog-page" style={{maxWidth:1120,margin:"2rem auto",padding:"1rem"}}><GlobalPractice section="inspiration"/><h2>Global design principles · China &amp; Japan</h2><p>Adapt ideas to Indian climate, household needs and approved drawings.</p><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,240px),1fr))",gap:"1rem"}}>{[["China · coordinated modular planning","Repeat compatible dimensions, coordinate service routes and verify component connections before ordering."],["Japan · compact flexible living","Use adaptable furniture, clear circulation and storage that does not obstruct exits."],["Japan · repairable homes","Keep service access, inspection records and moisture protection in mind. Structural details require local engineering."]].map(([title,body])=><article key={title}><h3>{title}</h3><p>{body}</p><Link href="/room-lab">Try a room layout →</Link></article>)}</div><Link href="/build-iq#global-construction">Explore the engineering principles →</Link></section><SiteFooter/></main>}

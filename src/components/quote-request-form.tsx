@@ -13,7 +13,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
  const [message,setMessage]=useState<Message|null>(null);
  const [draftCopied,setDraftCopied]=useState(false);
  const [category,setCategory]=useState(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates");
- const [unit,setUnit]=useState<MaterialQuantityUnit>(isAllowedCategoryUnit(defaultCategory,defaultUnit)?defaultUnit:defaultCategoryUnit(defaultCategory));
+ const [unit,setUnit]=useState<MaterialQuantityUnit>(isAllowedCategoryUnit(category,defaultUnit)?defaultUnit:defaultCategoryUnit(category));
  const selectedUnits=categoryUnits(category);
  function changeCategory(value:string){if(!isMaterialCategory(value))return;setCategory(value);setUnit(defaultCategoryUnit(value));setMessage(null);}
  async function copyDraft(){
@@ -71,7 +71,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
     setMessage({kind:"error",text:"Request status could not be confirmed. Keep the form and retry."});
    }else{
     setMessage({kind:"success",text:"Your material request was securely recorded. No dealer offer or delivery is guaranteed yet.",reference:result.requestId});
-    element.reset();requestKeys.current.delete(fingerprint);setCategory("aggregates");setUnit(defaultCategoryUnit("aggregates"));
+    element.reset();requestKeys.current.delete(fingerprint);setCategory(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates");setUnit(isAllowedCategoryUnit(defaultCategory,defaultUnit)?defaultUnit:defaultCategoryUnit(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates"));
    }
   }catch{setMessage({kind:"error",text:"Network issue. Your details remain in the form; retry with the same request reference."})}
   finally{submissionLock.current=false;setBusy(false)}
