@@ -46,3 +46,6 @@ Run 45551955218 passed catalog bootstrap and build, then failed real RFQ accepta
 
 ## Release verification after draft transition
 PR #57 ready-for-review event produced skipped jobs after concurrent cancellation (CI 45554827313, authenticated E2E 45554827367, mobile 45554827392, catalog 45554827303). A fresh non-draft synchronization must execute the required checks on the exact new head. Skipped or cancelled jobs are not passing release evidence. Candidate SQL remains rehearsal-only until an approved production migration.
+
+## PostgreSQL backup tool compatibility
+Authenticated E2E 45555379686 reached the recovery drill, which failed because server 17.11 was newer than runner pg_dump 16.16. Install the exact detected server-major client in the disposable workflow if missing, select explicit dump/restore paths, validate both versions before creating fixtures and retain checksum verification. No production DB changes. New E2E evidence required before merge.
