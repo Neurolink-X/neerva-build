@@ -123,3 +123,18 @@ test("source-confirmed licensed references are locally stored and restricted to 
   assert.ok(demoProducts.filter(p=>p.category!==m.category||(p.familyKey??p.slug)!==m.family).every(p=>catalogPhotos(p).every(x=>x.src!==m.path)));
  }
 });
+
+
+test("cement discovery uses local branded pack and red clay never uses mixed grey brick photo",async()=>{
+ const {categoryImage}=await import("./public-products.ts");
+ const {catalogVisuals}=await import("./catalog-visuals.ts");
+ const {readFileSync}=await import("node:fs");
+ assert.equal(categoryImage("cement"),"/images/catalog/reference/ultratech-ppc-cement.webp");
+ for(const path of [categoryImage("cement")!,"/images/catalog/reference/acc-suraksha-power-ppc-cement-50-kg-bag.webp","/images/catalog/clay-bricks.webp"]){
+  const bytes=readFileSync("public"+path);assert.ok(bytes.length>5000&&bytes.length<100000,path);
+ }
+ const clay=demoProducts.filter(p=>p.category==="bricks-blocks"&&(p.slug==="red-clay-brick"||p.familyKey==="generic-clay"));
+ assert.ok(clay.length>0);
+ for(const p of clay){const media=catalogVisuals(p);assert.equal(media[0]?.src,"/images/catalog/clay-bricks.webp",p.slug);assert.match(media[0]?.label??"",/illustrative/);assert.ok(media.every(m=>!m.src.endsWith("/bricks-red.jpg")));}
+ const acc=demoProducts.find(p=>p.slug==="opc-cement-53-grade")!;assert.ok(catalogPhotos(acc).every(m=>!m.src.endsWith("/cement-stack.jpg")));
+});

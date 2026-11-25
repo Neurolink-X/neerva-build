@@ -23,11 +23,10 @@ const curated:Record<string,string[]>={
  "steel:fe-500d-tmt-10mm":["steel-bundle","steel-close"],
  "steel:generic-fe500d":["steel-close","steel-bundle"],
  "steel:generic-fe550d":["steel-bundle","steel-close"],
- "bricks-blocks:red-clay-brick":["bricks-red"],
- "bricks-blocks:generic-clay":["bricks-red"],
 
 
- "cement:opc-cement-53-grade":["cement-stack"],
+
+
  "cement:generic-cement":["cement-stack"],
  "electrical:frls-wire-15sqmm":["wire-coil","wire-install"],
  "electrical:generic-wire":["wire-coil","wire-install"],
@@ -71,6 +70,11 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   return entries; // No unrelated tile image as a substitute for a named design.
  }
  if(entries.length)return entries;
+ // The old mixed grey masonry photo does not depict red fired clay clearly.
+ if(product.category==="bricks-blocks"&&(product.slug==="red-clay-brick"||product.familyKey==="generic-clay")){
+  append("/images/catalog/clay-bricks.webp","Red clay brick · illustrative view","category","Representative red fired-clay bricks; batch and dimensions not verified");
+  return entries;
+ }
  if(product.familyKey==="generic-hollow"||product.slug==="aac-block-600x200"){
   const hollow=product.familyKey==="generic-hollow";
   append("/images/catalog/material/"+(hollow?"hollow":"aac")+".webp","Material illustration","category",hollow?"Hollow concrete masonry block with open cores":"Solid aerated concrete masonry block");
@@ -80,6 +84,8 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   append("/images/catalog/material/fly-ash.webp","Fly-ash brick · illustrative view","category","Illustrative solid grey fly-ash masonry bricks");
   return entries;
  }
+ // Do not imply a generic cement stack is a named brand pack.
+ if(product.category==="cement"&&!/^(?:local\b|brand to confirm$|dealer-listed brand$|mill to confirm$)/i.test(product.brand))return entries;
  for(const key of editorialKeys(product)){
   const src=curatedPhotoPaths[key];
   append(src,"Real material photo · not exact SKU","editorial",

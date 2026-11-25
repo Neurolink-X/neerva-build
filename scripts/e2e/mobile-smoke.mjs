@@ -83,14 +83,14 @@ async function main(){
    await page.goto(base+"/",{waitUntil:"load"});
    const categoryCards=page.locator(".nbh-material-card");
    assert.equal(await categoryCards.count(),9,"all home material categories");
-   assert.ok((await categoryCards.evaluateAll(cards=>cards.every(c=>c.querySelectorAll(".nbh-material-main-photo img").length===1&&c.querySelectorAll(".nbh-material-image img").length===(c.querySelector(".nbh-hardware-preview")?3:1)))),"one primary image per category card");
+   assert.ok((await categoryCards.evaluateAll(cards=>cards.every(c=>c.querySelectorAll(".nbh-material-main-photo img").length===(c.querySelector(".nbh-cement-preview")?2:1)&&c.querySelectorAll(".nbh-material-image img").length===(c.querySelector(".nbh-hardware-preview")?3:c.querySelector(".nbh-cement-preview")?2:1)))),"one primary image per category card");
    await categoryCards.first().scrollIntoViewIfNeeded();
    assert.equal(await page.locator('.nbh-material-choices a[href="/materials/bricks-blocks/red-clay-brick"]').count(),1);
    const mediaIssues=await categoryCards.evaluateAll(cards=>cards.flatMap(card=>{
     const img=card.querySelector(".nbh-material-main-photo img");
     const frame=card.querySelector(".nbh-material-image");
     const a=card.getBoundingClientRect(),b=frame?.getBoundingClientRect();
-    return !img||!b||getComputedStyle(img).objectFit!==(frame.classList.contains("nbh-hardware-preview")?"contain":"cover")||b.width<100||b.height<75||b.right>a.right+1?["invalid category image frame"]:[];
+    return !img||!b||getComputedStyle(img).objectFit!==(frame.matches(".nbh-hardware-preview,.nbh-cement-preview")?"contain":"cover")||b.width<100||b.height<75||b.right>a.right+1?["invalid category image frame"]:[];
    }));
    assert.deepEqual(mediaIssues,[],"home category media fills frame at "+v.w);
    assert.equal(await page.locator(".nbh-material-options[open]").count(),0,"compact category choices closed initially");
@@ -313,6 +313,17 @@ async function main(){
     await photoThumbs.nth(1).click();
     assert.notEqual(await page.locator(".product-gallery-stage img").getAttribute("src"),firstHeroSource,"second thumbnail displays different image");
     await page.waitForFunction(()=>{const img=document.querySelector(".product-gallery-stage img");return !!img&&img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin;},null,{timeout:15000});
+    await page.getByRole("button",{name:"View large photo",exact:true}).click();
+    const large=page.getByRole("dialog",{name:/Large photo of/});
+    await large.waitFor({state:"visible"});
+    const largeImage=large.locator(".product-photo-dialog-stage img");
+    await largeImage.evaluate(img=>img.decode());
+    assert.ok(await largeImage.evaluate(img=>img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin),"large photo uses local decoded media");
+    const previousLarge=await largeImage.getAttribute("src");
+    await large.getByRole("button",{name:"Next large photo"}).click();
+    assert.notEqual(await largeImage.getAttribute("src"),previousLarge,"large viewer follows selected photograph");
+    await page.keyboard.press("Escape");
+    await large.waitFor({state:"hidden"});
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     const pack=page.locator(".product-gallery-stage img");
     // load does not guarantee deferred/lazy product images have decoded on mobile.
