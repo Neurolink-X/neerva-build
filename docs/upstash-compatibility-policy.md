@@ -1,0 +1,2 @@
+# Upstash compatible upgrades
+PR #67 failed npm ci because rate limit 2.2.1 requires Redis ^1.38.2 while 1.35.3 is locked. Keep the currently verified 2.0.7 / 1.35.3 pair until a coordinated upgrade regenerates the lockfile from registry metadata. No force or legacy-peer-deps. Dependabot groups both packages; CI validates root lock and peer range before installation. This PR is a compatibility policy fix, not the originally requested version bump.

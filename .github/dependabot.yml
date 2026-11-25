@@ -24,12 +24,26 @@ updates:
         patterns:
           - tailwindcss
           - '@tailwindcss/postcss'
+      upstash-compatible-stack:
+        patterns:
+          - '@upstash/ratelimit'
+          - '@upstash/redis'
+      three-compatible-stack:
+        patterns:
+          - three
+          - '@types/three'
       patch-updates:
         exclude-patterns:
           - react
           - react-dom
           - '@types/react'
           - '@types/react-dom'
+          - '@upstash/ratelimit'
+          - '@upstash/redis'
+          - three
+          - '@types/three'
+          - tailwindcss
+          - '@tailwindcss/postcss'
         update-types:
           - patch
   - package-ecosystem: github-actions
