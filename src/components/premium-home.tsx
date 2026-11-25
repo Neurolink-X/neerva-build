@@ -122,7 +122,7 @@ export function PremiumHome(){
   <section className="nbh-hero" aria-labelledby="nbh-h1">
    <div className="nbh-hero-copy">
     <p className="nbh-eyebrow"><span className="nbh-dot"/> {t.eyebrow}</p>
-    <h1 id="nbh-h1">{t.title1}<span>{t.title2}</span></h1>
+    <h1 id="nbh-h1" lang={lang}>{t.title1}<span>{t.title2}</span></h1>
     <p className="nbh-sub">{t.subhead}</p>
     <Link href="/family-homes" className="nbh-family-entry">{lang==="hi"?"बजट और परिवार के अनुसार घर की योजना →":"Planning a family home on a budget? →"}</Link>
     <div className="nbh-journeys">
