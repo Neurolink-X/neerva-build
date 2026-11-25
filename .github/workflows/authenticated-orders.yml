@@ -43,6 +43,9 @@ jobs:
           set -a
           source "$RUNNER_TEMP/neerva-local.env"
           set +a
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          echo "::add-mask::$ANON_KEY"
+          echo "::add-mask::$DB_URL"
           [[ "$API_URL" == "http://127.0.0.1:54321" ]]
           [[ "$DB_URL" == *"127.0.0.1:54322/"* ]]
           {
@@ -67,6 +70,7 @@ jobs:
           for(const role of ["CUSTOMER","OTHER_CUSTOMER","ADMIN","DEALER_A","DEALER_B"]){
             const email=role.toLowerCase()+"-"+randomUUID()+"@example.test";
             const password=randomUUID()+"Aa1!";
+            console.log("::add-mask::"+password);
             const {data,error}=await client.auth.admin.createUser({email,password,email_confirm:true});
             if(error||!data.user)throw Error("Fixture creation failed: "+role);
             if(role.startsWith("DEALER_")){
@@ -118,6 +122,7 @@ jobs:
             catalog-sync/summary.json
             catalog-sync/draft-import.sql
           if-no-files-found: ignore
+          retention-days: 7
       - name: Destroy local test stack
         if: always()
         run: npx --yes supabase@2.122.1 stop --no-backup
