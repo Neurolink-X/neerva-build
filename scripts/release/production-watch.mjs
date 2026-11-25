@@ -1,0 +1,48 @@
+// Read-only fixed-origin production smoke. No credentials, no mutations, no arbitrary targets.
+const origins=new Set(["https://neerva-build.vercel.app","https://neerva.in"]);
+const origin="https://neerva-build.vercel.app";
+const paths=["/","/materials","/build-iq","/api/catalog?limit=1","/api/studio/config"];
+async function get(path){
+ let url=new URL(path,origin);
+ for(let redirect=0;redirect<=2;redirect++){
+  const response=await fetch(url,{redirect:"manual",cache:"no-store",signal:AbortSignal.timeout(12000),headers:{Accept:path.startsWith("/api/")?"application/json":"text/html"}});
+  if([301,302,303,307,308].includes(response.status)){
+   const location=response.headers.get("location");
+   await response.body?.cancel();
+   if(!location||redirect===2)throw Error("Invalid or excessive redirect");
+   const next=new URL(location,url);
+   if(!origins.has(next.origin)||next.username||next.password||next.pathname!==url.pathname||next.search!==url.search)throw Error("Unexpected redirect destination");
+   url=next;continue;
+  }
+  return response;
+ }
+ throw Error("Redirect limit exceeded");
+}
+async function probe(path){
+ for(let attempt=0;attempt<2;attempt++){
+  let response;
+  try{
+   response=await get(path);
+   if(response.status!==200)throw Error("HTTP "+response.status);
+   const content=response.headers.get("content-type")??"";
+   if(path.startsWith("/api/")){
+    if(!content.includes("application/json"))throw Error("Unexpected API content type");
+    const body=await response.json();
+    if(path.startsWith("/api/catalog")&&(body.source!=="published_database"||!Array.isArray(body.products)))return {path,status:"degraded",detail:"Published catalog unavailable or unverified"};
+    if(path==="/api/studio/config"&&(body.ready!==true||body.unavailable===true))return {path,status:"degraded",detail:"Live studio configuration unavailable"};
+   }else{
+    if(!content.includes("text/html"))throw Error("Unexpected page content type");
+    if(response.headers.get("x-content-type-options")!=="nosniff"||response.headers.get("x-frame-options")!=="DENY")throw Error("Security headers missing");
+    await response.body?.cancel();
+   }
+   return {path,status:"ok"};
+  }catch(error){
+   if(response?.body&&!response.bodyUsed)await response.body.cancel().catch(()=>{});
+   if(attempt===0){await new Promise(resolve=>setTimeout(resolve,1000));continue}
+   return {path,status:"failed",detail:error instanceof Error&&/^HTTP \d{3}$/.test(error.message)?error.message:"Page, network, response or security check failed"};
+  }
+ }
+}
+const results=await Promise.all(paths.map(probe));
+for(const result of results)console.log(JSON.stringify(result));
+if(results.some(r=>r?.status!=="ok"))process.exitCode=1;

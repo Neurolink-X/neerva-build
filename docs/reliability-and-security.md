@@ -5,3 +5,5 @@
 - CI local-browser performance target LCP 2.5s, CLS .1, TTFB .8s; severe ceilings 8s/.25/4s block smoke. Missing samples are reported, not treated as measured success. Local timings are not actual field measurements.
 - Security header checks run in browser CI; service worker script revalidates rather than serving stale code. CSP is currently restrictive for framing/forms/objects but not a full script-src policy; test a report-only nonce policy before enforcing it.
 - Remaining: production field telemetry/alerting, privileged account MFA enforcement, CSP rollout, penetration tests, independent backups/restore drills and reviewed rollback procedures. No promise of uninterrupted operation or immunity from attackers.
+
+- A daily GitHub Actions read-only production watch (03:23 UTC, 08:53 IST) and manual dispatch use fixed approved origins, bounded timeouts and one retry. Catalog/config degradation fails the job instead of reporting healthy. No install or production deployment; consumes a small amount of GitHub runner allowance. GitHub Actions notifications depend on account preferences. It does not provide continuous uptime monitoring or automated rollback.
