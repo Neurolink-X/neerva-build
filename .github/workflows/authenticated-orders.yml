@@ -1,6 +1,7 @@
 name: Authenticated isolated order E2E
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches: [main]
     paths:
       - 'src/modules/orders/**'
@@ -20,6 +21,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   authenticated:
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -96,6 +98,7 @@ jobs:
             catalog-sync/summary.json
             catalog-sync/draft-import.sql
           if-no-files-found: ignore
+          retention-days: 7
       - name: Destroy local test stack
         if: always()
         run: npx --yes supabase@2.122.1 stop --no-backup

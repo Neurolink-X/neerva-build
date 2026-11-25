@@ -1,3 +1,4 @@
+import {isPublicConstructionProduct} from "@/modules/catalog/discovery-policy";
 import type {Metadata} from "next";
 import Link from "next/link";
 import {notFound} from "next/navigation";
@@ -29,7 +30,7 @@ function selection({category,brand}:Params){
   const title=card?`${card.name} · ${card.department??material.title}`:`${material.title} dealer listings`;
   const image=card?(card.image??card.rangeImage??null):categoryCover(category);
   const path=card?brandPath(category,card.name):dealerPath(category);
-  const products=card?getProductsByCategory(category).filter(p=>p.brand===card.name):[];
+  const products=card?getProductsByCategory(category).filter(p=>p.brand===card.name&&isPublicConstructionProduct(p)):[];
   const description=card?`${title}. ${products.length?"Explore "+products.map(p=>p.name).slice(0,2).join(" and ")+".":"Prepare a brand-specific enquiry."} Review specifications and request local pricing.`:`Browse published ${material.title.toLowerCase()} variants by SKU and unit. Prepare a dealer enquiry with your quantity and delivery pincode.`;
   return {material,card,title,image,path,products,description};
 }
