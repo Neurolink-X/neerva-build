@@ -295,3 +295,13 @@
 .nbh-footer-expanded nav a{display:flex;align-items:center;min-height:40px;padding-block:3px}.nbh-footer-expanded .nbh-fineprint{color:#c4d2c6!important}.nbh-footer-bottom small{min-width:0;overflow-wrap:anywhere;border:0;padding:0}
 @media(max-width:700px){.nbh-footer-expanded{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:20px 14px}.nbh-footer-brand,.nbh-footer-bottom{grid-column:1/-1}.nbh-footer-expanded nav{min-width:0;gap:4px}.nbh-footer-expanded nav a{line-height:1.45;font-size:13px;min-height:44px}.nbh-footer-expanded nav:last-of-type{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px}.nbh-footer-expanded nav:last-of-type strong{grid-column:1/-1}}
 @media(max-width:350px){.nbh-footer-expanded{grid-template-columns:minmax(0,1fr)!important}.nbh-footer-expanded nav:last-of-type{grid-template-columns:minmax(0,1fr)}}
+
+/* Keep image grids stable and preserve uncropped packaging in named-brand previews. */
+.nbh-material-image{isolation:isolate;background:#f3f5f0}
+.nbh-material-image.nbh-cement-preview{background:white}
+.nbh-cement-preview .nbh-material-main-photo{height:100%;min-width:0}
+.nbh-cement-preview .nbh-material-main-photo img{object-fit:contain;padding:clamp(5px,1vw,12px)}
+.nbh-house-strip>div{aspect-ratio:16/9}
+.nbh-house-strip img,.nbh-studio-photo img{object-position:center}
+.nbh-house-strip,.nbh-studio-photo,.nbh-house-frame{isolation:isolate}
+@media(max-width:600px){.nbh-house-strip>div{aspect-ratio:4/3}.nbh-studio-photo-caption{left:12px;right:12px;bottom:12px}}
