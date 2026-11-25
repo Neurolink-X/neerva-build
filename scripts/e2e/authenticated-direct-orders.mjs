@@ -71,7 +71,7 @@ assert.equal((await call(null,"/api/admin/marketplace-readiness")).status,401);
 assert.equal((await call(customer,"/api/admin/marketplace-readiness")).status,403);
 const readiness=await call(admin,"/api/admin/marketplace-readiness");
 assert.equal(readiness.status,200);
-assert.notEqual(readiness.data.findings.find(r=>r.key==="inventory").state,"unknown","Inventory has a composite primary key");
+assert.equal(readiness.data.findings.find(r=>r.key==="inventory").state,"unknown","Global inventory is not visible under tenant-only RLS");
 assert.equal((await call(customer,"/api/dealer/inventory")).status,403);
 assert.equal((await call(customer,"/api/admin/studio-payments")).status,403);
 console.log(JSON.stringify({scope:"authenticated disposable staging API workflow; no physical dispatch or payment",completed:order.code,cancelled:cancel.data.order.code,checks:["guest denial","role isolation","validation","idempotency","admin fallback","price acceptance","delivery state","tracking","cancellation"]}));

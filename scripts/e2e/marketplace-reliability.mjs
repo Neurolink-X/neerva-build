@@ -25,9 +25,34 @@ for(const [i,actor] of [a,b].entries()){
  assert.ok(!list.data.branches.some(x=>x.id===branches[1-i]),"Cross-dealer branch leaked");
  const foreign=await call(actor,"/api/dealer/inventory","POST",{branchId:branches[1-i],variantId:randomUUID(),quantity:1,unit:"bag"});
  assert.equal(foreign.status,403,"Cross-tenant write must fail");
- const direct=await actor.client.from("merchant_branches").select("id").eq("id",branches[1-i]);
- assert.ifError(direct.error);assert.equal(direct.data.length,0,"RLS leaked unrelated branch");
+ const foreignBranch=await actor.client.from("merchant_branches").select("tenant_id").eq("id",branches[1-i]).single();
+ assert.ifError(foreignBranch.error); // Approved branch identity is intentionally public.
+ const direct=await actor.client.from("tenant_memberships").select("tenant_id").eq("tenant_id",foreignBranch.data.tenant_id);
+ assert.ifError(direct.error);assert.equal(direct.data.length,0,"RLS leaked unrelated private memberships");
 }
+// Use only an explicitly published synthetic SKU on the disposable instance.
+const catalog="/api/admin/catalog";
+const taxonomy=await call(d,catalog);
+assert.equal(taxonomy.status,200);
+const category=taxonomy.data.categories.find(x=>x.slug==="cement");assert.ok(category);
+if(category.status!=="published")assert.equal((await call(d,catalog,"PATCH",{kind:"category",id:category.id,status:"published"})).status,200);
+const suffix=randomUUID().slice(0,8);
+const fixture=await call(d,catalog,"POST",{action:"create",kind:"product",categoryId:category.id,slug:"test-stock-"+suffix,name:"Disposable cement fixture",description:"Local integration test only",attributes:{}});
+assert.equal(fixture.status,201);
+assert.equal((await call(d,catalog,"PATCH",{kind:"product",id:fixture.data.item.id,status:"published"})).status,200);
+const variant=await call(d,catalog,"POST",{action:"create",kind:"variant",productId:fixture.data.item.id,sku:"TEST-"+suffix,unit:"bag",attributes:{}});
+assert.equal(variant.status,201);
+const variantId=variant.data.item.id;
+assert.equal((await call(d,catalog,"PATCH",{kind:"variant",id:variantId,status:"published"})).status,200);
+const stock={branchId:branches[0],variantId,quantity:10,unit:"bag"};
+assert.equal((await call(a,"/api/dealer/inventory","POST",stock)).status,200);
+assert.equal((await call(a,"/api/dealer/inventory","POST",{...stock,unit:"kg"})).status,409);
+assert.equal((await call(a,"/api/dealer/inventory","POST",{...stock,quantity:-1})).status,400);
+assert.equal((await call(b,"/api/dealer/inventory","POST",stock)).status,403);
+const own=await call(a,"/api/dealer/inventory");
+assert.ok(own.data.inventory.some(x=>x.variant_id===variantId&&Number(x.available_quantity)===10));
+const privateStock=await b.client.from("inventory").select("branch_id,variant_id,available_quantity").eq("branch_id",branches[0]).eq("variant_id",variantId);
+assert.ifError(privateStock.error);assert.equal(privateStock.data.length,0,"Cross-tenant private stock leaked");
 const product="home_studio";
 const config=await call(d,"/api/admin/studio-settings");
 assert.equal(config.status,200);
@@ -55,4 +80,4 @@ assert.equal((await status()).data.paid,true);
 assert.equal((await call(d,"/api/admin/studio-payments","PATCH",review)).status,409);
 assert.equal((await call(d,"/api/admin/studio-payments","PATCH",{...review,action:"refunded"})).status,200);
 assert.equal((await status()).data.paid,false);
-console.log(JSON.stringify({scope:"disposable fixtures; no real money, bank verification or dispatch",checks:["dealer branch isolation","cross-tenant writes denied","RLS read isolation","payment idempotency","foreign claim denied","duplicate claim denied","admin verification","refund revokes access"]}));
+console.log(JSON.stringify({scope:"disposable fixtures; no real money, bank verification or dispatch",checks:["dealer branch isolation","cross-tenant writes denied","RLS read isolation","valid stock write","negative and incorrect-unit stock rejection","cross-tenant stock privacy","payment idempotency","foreign claim denied","duplicate claim denied","admin verification","refund revokes access"]}));

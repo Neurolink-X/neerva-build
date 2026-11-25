@@ -8,9 +8,11 @@ export async function GET(request:Request){
  // On-demand only. A timeout is unknown, never a fabricated zero.
  const deadline=AbortSignal.timeout(5000);
  const entries=await Promise.all(Object.entries(readinessTables).map(async ([key,table])=>{
-  try{const {count,error}=await auth.client.from(table).select(key==="inventory"?"branch_id":"id",{count:"exact",head:true}).abortSignal(deadline);
+  // Inventory RLS is tenant-scoped, even for an admin; never report its partial count as global.
+  if(key==="inventory")return [key,null] as const;
+  try{const {count,error}=await auth.client.from(table).select("id",{count:"exact",head:true}).abortSignal(deadline);
    return [key,error?null:count] as const;
   }catch{return [key,null] as const;}
  }));
- return apiData({findings:assessReadiness(Object.fromEntries(entries) as ReadinessCounts),scope:"Administrator RLS-visible counts; not proof of published stock, completed orders or security",checkedAt:new Date().toISOString()});
+ return apiData({findings:assessReadiness(Object.fromEntries(entries) as ReadinessCounts),scope:"Administrator RLS-visible counts; inventory global count unavailable under tenant-only policy; not proof of published stock, completed orders or security",checkedAt:new Date().toISOString()});
 }
