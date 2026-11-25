@@ -1,0 +1,14 @@
+import {z} from "zod";
+import {revalidateTag,revalidatePath} from "next/cache";
+import {requireAdmin,apiData,apiFailed} from "@/modules/identity/server-auth";
+import {boundedJson} from "@/modules/identity/bounded-json";
+import {postSchema,slugSchema,summaryColumns,detailColumns,editorialTag,editorialPath} from "@/modules/blog/editorial";
+export const dynamic="force-dynamic";
+const fail=(status:number,error:string)=>Response.json({error},{status,headers:{"Cache-Control":"private, no-store"}});
+export async function GET(request:Request){const auth=await requireAdmin(request);if(auth instanceof Response)return auth;const q=new URL(request.url).searchParams,slug=q.get("slug");if(slug!==null){if(!slugSchema.safeParse(slug).success)return fail(400,"Invalid slug.");const {data,error}=await auth.client.from("editorial_posts").select(detailColumns).eq("slug",slug).maybeSingle();return error?apiFailed():data?apiData({post:data}):fail(404,"Post not found.")}
+ const page=Number(q.get("page")??0);if(!Number.isInteger(page)||page<0||page>10000)return fail(400,"Invalid page.");
+ const {data,error}=await auth.client.from("editorial_posts").select(summaryColumns).order("updated_at",{ascending:false}).order("slug").range(page*20,page*20+19);return error?apiFailed():apiData({posts:data??[],hasMore:(data??[]).length===20})}
+const editSchema=z.object({post:postSchema,expectedVersion:z.number().int().min(1)}).strict();
+function invalidate(slug:string){revalidateTag(editorialTag,{expire:0});revalidatePath("/blog");revalidatePath(editorialPath(slug))}
+export async function POST(request:Request){const auth=await requireAdmin(request);if(auth instanceof Response)return auth;let raw:unknown;try{raw=await boundedJson(request,64000)}catch{return fail(400,"Malformed or oversized JSON.")}const parsed=postSchema.safeParse(raw);if(!parsed.success)return fail(400,parsed.error.issues[0]?.message??"Invalid article.");const {data,error}=await auth.client.from("editorial_posts").insert(parsed.data).select(detailColumns).single();if(error)return error.code==="23505"?fail(409,"This slug already exists. Open it for editing."):apiFailed();invalidate(parsed.data.slug);return apiData({post:data})}
+export async function PATCH(request:Request){const auth=await requireAdmin(request);if(auth instanceof Response)return auth;let raw:unknown;try{raw=await boundedJson(request,64000)}catch{return fail(400,"Malformed or oversized JSON.")}const parsed=editSchema.safeParse(raw);if(!parsed.success)return fail(400,parsed.error.issues[0]?.message??"Invalid article.");const {post,expectedVersion}=parsed.data;const {data,error}=await auth.client.from("editorial_posts").update(post).eq("slug",post.slug).eq("version",expectedVersion).select(detailColumns).maybeSingle();if(error)return apiFailed();if(!data)return fail(409,"Article changed or no longer exists. Reload before saving.");invalidate(post.slug);return apiData({post:data})}
