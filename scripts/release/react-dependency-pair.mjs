@@ -15,7 +15,7 @@ export function reactIssues(manifest,lock){
   if(!stable.test(version??""))issues.push(`${name} must be an exact stable release`);
   if(packages[""]?.[section]?.[name]!==version||packages[`node_modules/${name}`]?.version!==version)issues.push(`${name} manifest/lock mismatch`);
   for(const [path,entry] of Object.entries(packages)){
-   if(path.endsWith(`/node_modules/${name}`)&&entry.version!==version)issues.push(`Duplicate incompatible ${name} at ${path}`);
+   if(path.endsWith(`/node_modules/${name}`)&&entry?.version!==version)issues.push(`Duplicate incompatible ${name} at ${path}`);
   }
  }
  if(versions.react!==versions["react-dom"])issues.push("React and React DOM must use the same runtime release");

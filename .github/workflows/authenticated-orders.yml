@@ -4,6 +4,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches: [main]
     paths:
+      - 'package.json'
+      - 'package-lock.json'
       - 'src/modules/orders/**'
       - 'src/modules/identity/**'
       - 'src/app/api/**'
