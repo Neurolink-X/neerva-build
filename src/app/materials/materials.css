@@ -134,3 +134,5 @@
 .catalog-material-image.tile-surface-photo img{object-fit:cover;padding:0;background:#f3f1eb}.catalog-material-image.tile-surface-photo .catalog-image-note{max-width:calc(100% - 16px)}
 
 .catalog-category-credits{margin:12px 0 20px;font-size:12px;color:#526758}.catalog-category-credits summary{cursor:pointer;padding:8px 0}.catalog-category-credits a{text-decoration:underline}.catalog-category-credits p{overflow-wrap:anywhere}
+
+.catalog-material-image.pack-photo img{object-fit:contain;padding:3px;background:#fff}.catalog-material-image.pack-photo{background:#fff}

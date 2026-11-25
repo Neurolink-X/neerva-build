@@ -62,3 +62,5 @@
 .tile-show-card .catalog-material-image.pack-photo img{object-fit:contain!important;padding:4px;background:#fff}
 .tile-show-card .catalog-image-note{max-width:calc(100% - 16px);white-space:normal;overflow-wrap:anywhere}
 @media(max-width:640px){.tile-swatch .catalog-material-image{height:clamp(145px,43vw,205px)}}
+
+.tile-show-card .catalog-material-image.pack-photo img{object-fit:contain!important;padding:3px;background:#fff}
