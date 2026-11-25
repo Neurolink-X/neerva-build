@@ -16,7 +16,7 @@ permissions:
   contents: read
 jobs:
   stage:
-    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
+    if: ${{ github.repository == 'Neurolink-X/neerva-build' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
     runs-on: ubuntu-latest
     timeout-minutes: 7
     steps:
