@@ -165,8 +165,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    camera.position.copy(focus).add(mode==="walkthrough"
     ?new THREE.Vector3(0,.1,Math.min(D*.38,2.4)).applyAxisAngle(up,angle)
     :direction);
-   const right=new THREE.Vector3().crossVectors(up,direction).normalize();
-   const screenUp=new THREE.Vector3().crossVectors(direction,right);
+   let activeDirection=direction.clone();
    const corners:THREE.Vector3[]=[];
    const low=showSite?-.3:(selectedFloor??0)*height-.1;
    const high=mode==="exterior"||selectedFloor===undefined?top+1:(selectedFloor+1)*height;
@@ -187,9 +186,12 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
     camera.aspect=w/h;
     if(mode!=="walkthrough"){
      const tanY=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-     const fit=Math.max(...corners.map(point=>point.dot(direction)+1.12*Math.max(
+     const currentDirection=camera.position.clone().sub(controls.target).normalize();
+     if(currentDirection.lengthSq()>.1&&Math.abs(currentDirection.dot(up))<.999999)activeDirection=currentDirection;
+     const right=new THREE.Vector3().crossVectors(up,activeDirection).normalize(),screenUp=new THREE.Vector3().crossVectors(activeDirection,right);
+     const fit=Math.max(...corners.map(point=>point.dot(activeDirection)+1.12*Math.max(
       Math.abs(point.dot(right))/(tanY*camera.aspect),Math.abs(point.dot(screenUp))/tanY)));
-     const offset=previousFit?camera.position.clone().sub(controls.target).multiplyScalar(fit/previousFit):direction.clone().multiplyScalar(fit);
+     const offset=previousFit?camera.position.clone().sub(controls.target).multiplyScalar(fit/previousFit):activeDirection.clone().multiplyScalar(fit);
      controls.maxDistance=fit*3;
      camera.far=Math.max(300,fit*5);
      camera.position.copy(controls.target).add(offset);
@@ -202,11 +204,11 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    cameraView.current=(view)=>{
     if(!controls||mode==="walkthrough")return;
     const v=({front:[0,.6,-1],rear:[0,.6,1],left:[-1,.6,0],right:[1,.6,0],top:[0,1,-.001]} as const)[view];
-    const dir=new THREE.Vector3(...v).normalize().applyAxisAngle(up,angle);
+    const dir=new THREE.Vector3(v[0],v[1],v[2]).normalize().applyAxisAngle(up,angle);
     const rightVector=new THREE.Vector3().crossVectors(up,dir).normalize(),upVector=new THREE.Vector3().crossVectors(dir,rightVector);
     const tanY=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
     const fit=Math.max(...corners.map(p=>p.dot(dir)+1.18*Math.max(Math.abs(p.dot(rightVector))/(tanY*camera.aspect),Math.abs(p.dot(upVector))/tanY)));
-    controls.target.copy(focus);controls.maxDistance=Math.max(fit*3,10);camera.far=Math.max(300,fit*5);camera.updateProjectionMatrix();
+    activeDirection=dir;previousFit=fit;controls.target.copy(focus);controls.maxDistance=Math.max(fit*3,10);camera.far=Math.max(300,fit*5);camera.updateProjectionMatrix();
     camera.position.copy(focus).addScaledVector(dir,fit);controls.update();schedule();
    };
    observer=new ResizeObserver(resize);observer.observe(target);resize();
