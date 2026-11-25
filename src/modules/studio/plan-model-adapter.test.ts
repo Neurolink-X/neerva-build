@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {generateRoadPlans,generateSpatialPortfolio,planSignature,pickDiverse} from "./road-generator.ts";
 import {siteAreaSqFt,rectInsideShape} from "./site-shape.ts";
-import {validatePlan} from "./plan-model.ts";
+import {validatePlan,planGeometryDigest} from "./plan-model.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {buildingWallCells} from "./geometry.ts";
 import type {PlanBrief} from "./plan-model.ts";
@@ -63,4 +63,15 @@ test("portfolio parity for all supported outlines, road orientations and every s
    }
   }
  }
+});
+
+
+test("geometry identity changes for physical edits but not facade colour",async()=>{
+ const p=generateRoadPlans(brief).plans[0];assert.ok(p);const original=await planGeometryDigest(p);
+ assert.match(original,/^[a-f0-9]{64}$/);
+ assert.equal(await planGeometryDigest({...p,facade:{...p.facade,main:"#000000"}}),original);
+ assert.equal(await planGeometryDigest({...p,rooms:[...p.rooms].reverse(),openings:[...p.openings].reverse()}),original);
+ assert.notEqual(await planGeometryDigest({...p,setbacks:{...p.setbacks,leftFt:1}}),original);
+ const moved={...p,openings:p.openings.map(o=>({...o}))};const door=moved.openings.find(o=>o.kind==="door"&&o.connectsTo)!;door.atFt+=.1;
+ assert.notEqual(await planGeometryDigest(moved),original);assert.ok(validatePlan(moved).some(x=>/Unpaired door|Door outside shared wall/.test(x)));
 });
