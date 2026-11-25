@@ -1,4 +1,5 @@
 import {z} from "zod";
+import {planBriefSchema as brief} from "@/modules/studio/plan-brief-schema";
 import {requireAuth,apiFailed} from "@/modules/identity/server-auth";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
 import {planMetrics} from "@/modules/studio/plan-model";
@@ -6,12 +7,7 @@ import {parseStudioConfig,permittedStudioReport} from "@/modules/studio/studio-c
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const hdr={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const fail=(code:number,error:string)=>Response.json({error},{status:code,headers:hdr});
-const brief=z.object({widthFt:z.number().finite().min(10).max(200),depthFt:z.number().finite().min(15).max(250),
- roadSide:z.enum(["N","E","S","W"]),floors:z.union([z.literal(1),z.literal(2),z.literal(3)]),
- bedrooms:z.number().int().min(1).max(3),parking:z.boolean(),
- setbacks:z.object({frontFt:z.number().min(0).max(30),rearFt:z.number().min(0).max(30),
-  leftFt:z.number().min(0).max(30),rightFt:z.number().min(0).max(30)}).strict()}).strict();
-const home=z.object({product:z.literal("home_studio"),brief,option:z.number().int().min(0).max(23)}).strict();
+const home=z.object({product:z.literal("home_studio"),brief,option:z.number().int().min(0).max(23),planId:z.string().min(5).max(200).optional()}).strict();
 const colour=z.object({product:z.literal("colour_studio"),
  base:z.string().regex(/^#[0-9a-fA-F]{6}$/),accent:z.string().regex(/^#[0-9a-fA-F]{6}$/),
  room:z.string().trim().min(3).max(60)}).strict();
@@ -47,7 +43,7 @@ export async function POST(req:Request){
    disclaimer:"Digital shades are approximate. Compare real manufacturer shade cards and lighting before purchase."},{headers:hdr});
  }
  const plans=generateSpatialPortfolio(p.brief,24).plans;
- const plan=plans[p.option];if(!plan)return fail(409,"The selected plan no longer fits this plot. Select a valid configuration.");
+ const plan=plans[p.option];if(!plan||(p.planId&&plan.id!==p.planId))return fail(409,"The selected plan no longer fits this plot. Select a valid configuration.");
  const metrics=planMetrics(plan);
  return Response.json({product:p.product,planId:plan.id,plot:plan.plot,floors:plan.floors,variant:plan.variant,
   rooms:plan.rooms.map(r=>({floor:r.floor,room:r.label,kind:r.kind,xFt:r.x,yFt:r.y,widthFt:r.w,depthFt:r.d})),
