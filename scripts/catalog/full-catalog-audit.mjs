@@ -1,5 +1,7 @@
 import {demoProducts,brandDirectory} from "../../src/modules/catalog/marketplace.ts";
 import {catalogPhotos} from "../../src/modules/catalog/catalog-photos.ts";
+import {catalogVisuals} from "../../src/modules/catalog/catalog-visuals.ts";
+import {generatedVisuals} from "../../src/modules/catalog/generated-visuals.ts";
 import {approvedFamilyMedia} from "../../src/modules/catalog/media-integrity.ts";
 import {brandMediaFor} from "../../src/modules/catalog/brand-media.ts";
 import {groupCatalogByPhoto} from "../../src/modules/catalog/media-usage.ts";
@@ -71,6 +73,12 @@ for(const {primary,variants} of families){
     if(flags.length)variantWorklist.push({category:variant.category,slug:variant.slug,family:primary.slug,name:variant.name,brand:variant.brand,flags});
   }
 }
+// Generated illustrations are tracked separately from verified photographs.
+report.generatedVisuals={assets:generatedVisuals.length,bytes:generatedVisuals.reduce((n,m)=>n+m.bytes,0),invalid:[],missingVisualFamilies:[],familiesWithGeneratedFallback:0,byCategory:{}};
+for(const m of generatedVisuals){try{const bytes=fs.readFileSync("public"+m.path);const meta=await sharp(bytes).metadata();await sharp(bytes).resize(1,1).raw().toBuffer();if(meta.format!=="webp"||meta.width!==m.width||meta.height!==m.height||m.width<280||m.height<280||bytes.length!==m.bytes||bytes.length>35000||createHash("sha256").update(bytes).digest("hex")!==m.sha256)throw Error("Generated asset integrity failure");if(!demoProducts.some(p=>p.category===m.category&&(p.familyKey??p.slug)===m.family))throw Error("Unknown generated product family");}catch(e){report.generatedVisuals.invalid.push({family:m.family,error:String(e)});}}
+for(const {primary:p,variants} of families){const media=catalogVisuals(p);const c=report.generatedVisuals.byCategory[p.category]??={families:0,withGeneratedFallback:0,withoutVisual:0};c.families++;if(media.some(m=>m.kind==="generated")){c.withGeneratedFallback++;report.generatedVisuals.familiesWithGeneratedFallback++;}if(!media.length){c.withoutVisual++;report.generatedVisuals.missingVisualFamilies.push({category:p.category,slug:p.slug,brand:p.brand,name:p.name,variants:variants.map(v=>v.slug)});}}
+report.generatedVisuals.missingVisualCount=report.generatedVisuals.missingVisualFamilies.length;
+integrityFailures.push(...report.generatedVisuals.invalid);
 report.variantWorklist=variantWorklist;
 report.integrityFailures=integrityFailures;
 report.totals.variantsWithoutConfiguredPhoto=variantWorklist.filter(v=>v.flags.includes("missing-photo")).length;
@@ -89,7 +97,7 @@ report.releaseReadiness={regressionFailures,hardFailures,integrityFailures,stric
 ]};
 report.releaseReadiness.ready=!report.releaseReadiness.strictFailures.length&&!regressionFailures.length&&!hardFailures.length&&!integrityFailures.length;
 
-fs.mkdirSync("catalog-audit",{recursive:true});fs.writeFileSync("catalog-audit/report.json",JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify({totals:report.totals,coverageTarget:report.coverageTarget,byCategory,brandsMissing:brands.filter(b=>b.logoStatus==="fallback").map(b=>b.name),localFileIssues:report.localFileIssues},null,2));
+fs.mkdirSync("catalog-audit",{recursive:true});fs.writeFileSync("catalog-audit/report.json",JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify({totals:report.totals,coverageTarget:report.coverageTarget,byCategory,brandsMissing:brands.filter(b=>b.logoStatus==="fallback").map(b=>b.name),localFileIssues:report.localFileIssues,generatedVisuals:{assets:report.generatedVisuals.assets,bytes:report.generatedVisuals.bytes,missingVisualCount:report.generatedVisuals.missingVisualCount,byCategory:report.generatedVisuals.byCategory}},null,2));
 
 if(!report.coverageTarget.met)console.warn("Coverage release target NOT MET: "+report.coverageTarget.remainingToTarget+" additional families still required. Audit completion alone is not a release approval.");
 

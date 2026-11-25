@@ -84,3 +84,8 @@ test("customer category shortcuts open existing distinct catalog products and us
  }
  assert.equal(categoryChoices["bricks-blocks"][0].slug,"red-clay-brick");
 });
+
+test("generated visuals are separate from real photos, lightweight and exactly mapped",async()=>{
+ const {generatedVisuals}=await import("./generated-visuals.ts");const {catalogVisuals}=await import("./catalog-visuals.ts");const {readFileSync}=await import("node:fs");const {createHash}=await import("node:crypto");const sharp=(await import("sharp")).default;
+ const paths=new Set<string>();for(const m of generatedVisuals){assert.ok(!paths.has(m.path));paths.add(m.path);const p=demoProducts.find(p=>p.category===m.category&&(p.familyKey??p.slug)===m.family);assert.ok(p,m.family);const bytes=readFileSync("public"+m.path);assert.ok(bytes.length<=35000);assert.equal(bytes.length,m.bytes);assert.equal(createHash("sha256").update(bytes).digest("hex"),m.sha256);const meta=await sharp(bytes).metadata();assert.equal(meta.format,"webp");assert.equal(meta.width,m.width);assert.equal(meta.height,m.height);assert.ok(!catalogPhotos(p).some(x=>x.src===m.path));if(!catalogPhotos(p).some(x=>x.src.startsWith("/")&&x.kind!=="category"))assert.ok(catalogVisuals(p).some(x=>x.src===m.path&&x.kind==="generated"));}
+});

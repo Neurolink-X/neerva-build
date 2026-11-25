@@ -21,3 +21,7 @@ Rejected: industrial valve bore photos, distant crusher dust pile, reddish soil 
 ## Family-home and catalog follow-up
 
 Distinct house photography reserved for the planner and construction section; hero gallery excludes both. Practical compact, family, phased and materials-first entry points use existing routes. HDPE coil and installed drawer handle source photos were visually inspected and licence pages reviewed; original bytes are not yet imported. A street-facing Indian house photo is staged for further crop/privacy review. Do not count candidates as completed photos.
+
+## Generated fallback batch 01
+
+16 separately cropped unbranded AI-generated product-type illustrations (75,376 bytes combined) are local WebP. Ten generic plumbing families and six local hardware families. These 307–308 px discovery illustrations are not high-resolution manufacturer photos. Existing actual local reviewed images take precedence. Category montage is replaced by one photo with product shortcuts below. Real-photo release backlog remains open.

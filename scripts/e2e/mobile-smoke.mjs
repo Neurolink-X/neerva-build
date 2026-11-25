@@ -48,6 +48,7 @@ async function main(){
    assert.equal(await page.locator(".nbh-family-card").count(),4,"Practical family and material planning choices");
    const categoryCards=page.locator(".nbh-material-card");
    assert.equal(await categoryCards.count(),9,"all home material categories");
+   assert.ok((await categoryCards.evaluateAll(cards=>cards.every(c=>c.querySelectorAll(".nbh-material-image img").length===1))),"one primary image per category card");
    await categoryCards.first().scrollIntoViewIfNeeded();
    assert.equal(await page.locator('.nbh-material-choices a[href="/materials/bricks-blocks/red-clay-brick"]').count(),1);
    const mediaIssues=await categoryCards.evaluateAll(cards=>cards.flatMap(card=>{
