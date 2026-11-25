@@ -12,3 +12,10 @@ Admin-only on-demand marketplace readiness counts with explicit unknown/empty/pr
 - Verify domain migration preconditions, existing assignments, TLS, auth redirects, rollback and canonical origin before executing existing migration script.
 - Real authenticated order, inventory, payment/refund and dealer isolation tests plus low-memory mobile Studio tests are required. No real payment or dispatch from tests.
 - Free-tier quota monitoring and restore drills remain necessary. No new paid tool is introduced.
+
+## Executable follow-up
+- `scripts/ops/plan-fk-indexes.sql` outputs deduplicated concurrent index candidates from current schema; execute only reviewed statements after staging evidence, outside a transaction. Re-run advisors and verify query plans.
+- `scripts/ops/migrate-primary-domain.mjs` now requires exact approved production SHA and backup confirmation and attempts rollback of all domains moved in that invocation if cutover verification fails. It is not a substitute for DNS and auth redirect review.
+- `scripts/e2e/marketplace-reliability.mjs` uses disposable local identities and synthetic UTR claims; never verifies a real bank payment.
+- `scripts/ops/disposable-recovery-drill.mjs` validates backup/restore of a draft-catalog snapshot in an isolated schema. It does not establish production disaster recovery.
+- Public health checks run twice weekly with bounded GET requests and fail on errors or latency-budget breaches; native GitHub workflow failure notifications depend on user settings and available runner quota.
