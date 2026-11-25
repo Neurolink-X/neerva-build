@@ -1,6 +1,7 @@
 import type {StudioDesign,DesignRoom} from "./library.ts";
 import type {PlanModel,RoomKind} from "./plan-model.ts";
 import {planMetrics} from "./plan-model.ts";
+import {siteAreaSqFt} from "./site-shape.ts";
 const kindMap:Record<RoomKind,DesignRoom["kind"]>={
  parking:"parking",verandah:"open",living:"living",dining:"living",kitchen:"kitchen",
  bedroom:"bedroom",bath:"bath",stairs:"stairs",corridor:"living",utility:"utility",
@@ -20,7 +21,7 @@ export function studioDesignFromPlan(p:PlanModel):StudioDesign{
  }));
  return {
   id:p.id,slug:p.id,title:`Road-first ${p.plot.widthFt} × ${p.plot.depthFt} concept`,titleHi:"सड़क की तरफ सही प्रवेश वाला प्लान",
-  style:"warm-modern",plot:{widthFt:p.plot.widthFt,depthFt:p.plot.depthFt,areaSqFt:p.plot.widthFt*p.plot.depthFt},
+  style:"warm-modern",plot:{widthFt:p.plot.widthFt,depthFt:p.plot.depthFt,areaSqFt:siteAreaSqFt(p.plot.widthFt,p.plot.depthFt,p.plot.siteShape??{kind:"rectangle"})},
   facing:facing[p.plot.roadSide],floors:p.floors,
   bedrooms:p.rooms.filter(r=>r.kind==="bedroom").length,
   bathrooms:p.rooms.filter(r=>r.kind==="bath").length,

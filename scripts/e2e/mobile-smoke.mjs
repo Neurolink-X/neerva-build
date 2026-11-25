@@ -10,7 +10,7 @@ const routes=["/","/design-studio","/design-studio/library","/design-studio/fit"
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
- const failures=[],accessibilityReports=[],performanceReports=[];
+ const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
  try{
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
@@ -35,6 +35,20 @@ async function main(){
     if(!issues.title)failures.push(v.w+"px "+route+": missing document title");
     if(!issues.lang)failures.push(v.w+"px "+route+": missing document language");
     if(issues.h1<1)failures.push(v.w+"px "+route+": missing main heading");
+    // Record actual visible interactive targets without clicking destructive or authenticated actions.
+    const interaction=await page.evaluate(()=>{
+     const elements=[...document.querySelectorAll('a[href],button,summary,input[type="submit"],input[type="button"],[role="button"]')].filter(el=>{
+      const rect=el.getBoundingClientRect(),style=getComputedStyle(el);return rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&!el.closest("[inert],[aria-hidden=true]");
+     });
+     const entries=elements.map(el=>{
+      const rect=el.getBoundingClientRect(),labelledBy=(el.getAttribute("aria-labelledby")??"").split(/\s+/).filter(Boolean).map(id=>document.getElementById(id)?.textContent??"").join(" ");
+      const label=(el.getAttribute("aria-label")||labelledBy||el.textContent||el.getAttribute("value")||el.querySelector("img[alt]")?.getAttribute("alt")||el.getAttribute("title")||"").trim().slice(0,100);
+      return {tag:el.tagName.toLowerCase(),label,href:el.getAttribute("href"),width:Math.round(rect.width),height:Math.round(rect.height),disabled:el.matches(":disabled,[aria-disabled=true]"),primary:el.matches(".button,.header-install,.nbh-outline-link,.nbh-studio-generate")};
+     });
+     return {total:entries.length,unnamed:entries.filter(x=>!x.label),small:entries.filter(x=>!x.disabled&&(x.width<44||x.height<44)),primaryTooShort:entries.filter(x=>x.primary&&!x.disabled&&x.height<43)};
+    });
+    interactionReports.push({route,width:v.w,total:interaction.total,unnamed:interaction.unnamed,smallCount:interaction.small.length,small:interaction.small.slice(0,25),primaryTooShort:interaction.primaryTooShort});
+    if(interaction.primaryTooShort.length)failures.push(v.w+"px "+route+": primary action height below 44px "+JSON.stringify(interaction.primaryTooShort));
     if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer"].includes(route)){
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
      const timing=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],m=window.__neervaPerf;return {ttfbMs:n?Math.round(n.responseStart):null,loadMs:n?Math.round(n.loadEventEnd):null,lcpMs:m?.lcp==null?null:Math.round(m.lcp),cls:m?.cls??null};});
@@ -69,14 +83,14 @@ async function main(){
    await page.goto(base+"/",{waitUntil:"load"});
    const categoryCards=page.locator(".nbh-material-card");
    assert.equal(await categoryCards.count(),9,"all home material categories");
-   assert.ok((await categoryCards.evaluateAll(cards=>cards.every(c=>c.querySelectorAll(".nbh-material-main-photo img").length===1&&c.querySelectorAll(".nbh-material-image img").length===(c.querySelector(".nbh-hardware-preview")?3:1)))),"one primary image per category card");
+   assert.ok((await categoryCards.evaluateAll(cards=>cards.every(c=>c.querySelectorAll(".nbh-material-main-photo img").length===(c.querySelector(".nbh-cement-preview")?2:1)&&c.querySelectorAll(".nbh-material-image img").length===(c.querySelector(".nbh-hardware-preview")?3:c.querySelector(".nbh-cement-preview")?2:1)))),"one primary image per category card");
    await categoryCards.first().scrollIntoViewIfNeeded();
    assert.equal(await page.locator('.nbh-material-choices a[href="/materials/bricks-blocks/red-clay-brick"]').count(),1);
    const mediaIssues=await categoryCards.evaluateAll(cards=>cards.flatMap(card=>{
     const img=card.querySelector(".nbh-material-main-photo img");
     const frame=card.querySelector(".nbh-material-image");
     const a=card.getBoundingClientRect(),b=frame?.getBoundingClientRect();
-    return !img||!b||getComputedStyle(img).objectFit!==(frame.classList.contains("nbh-hardware-preview")?"contain":"cover")||b.width<100||b.height<75||b.right>a.right+1?["invalid category image frame"]:[];
+    return !img||!b||getComputedStyle(img).objectFit!==(frame.matches(".nbh-hardware-preview,.nbh-cement-preview")?"contain":"cover")||b.width<100||b.height<75||b.right>a.right+1?["invalid category image frame"]:[];
    }));
    assert.deepEqual(mediaIssues,[],"home category media fills frame at "+v.w);
    assert.equal(await page.locator(".nbh-material-options[open]").count(),0,"compact category choices closed initially");
@@ -299,6 +313,17 @@ async function main(){
     await photoThumbs.nth(1).click();
     assert.notEqual(await page.locator(".product-gallery-stage img").getAttribute("src"),firstHeroSource,"second thumbnail displays different image");
     await page.waitForFunction(()=>{const img=document.querySelector(".product-gallery-stage img");return !!img&&img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin;},null,{timeout:15000});
+    await page.getByRole("button",{name:"View large photo",exact:true}).click();
+    const large=page.getByRole("dialog",{name:/Large photo of/});
+    await large.waitFor({state:"visible"});
+    const largeImage=large.locator(".product-photo-dialog-stage img");
+    await largeImage.evaluate(img=>img.decode());
+    assert.ok(await largeImage.evaluate(img=>img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin),"large photo uses local decoded media");
+    const previousLarge=await largeImage.getAttribute("src");
+    await large.getByRole("button",{name:"Next large photo"}).click();
+    assert.notEqual(await largeImage.getAttribute("src"),previousLarge,"large viewer follows selected photograph");
+    await page.keyboard.press("Escape");
+    await large.waitFor({state:"hidden"});
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     const pack=page.locator(".product-gallery-stage img");
     // load does not guarantee deferred/lazy product images have decoded on mobile.
@@ -570,6 +595,7 @@ async function main(){
   if(![200,503].includes(cityRules.status()))failures.push("City rules for Kanpur returned "+cityRules.status());
   await req.close();
  }finally{await browser.close()}
+ fs.writeFileSync("test-results/mobile/interaction-baseline.json",JSON.stringify({scope:"Visible controls on tested routes; inline text links may legitimately be smaller. Protected actions are not executed by this inventory.",samples:interactionReports},null,2));
  fs.writeFileSync("test-results/mobile/performance-baseline.json",JSON.stringify({scope:"390px local browser observations; no field INP claim or cross-run comparison",samples:performanceReports},null,2));
  fs.writeFileSync("test-results/mobile/accessibility-baseline.json",JSON.stringify({
   scope:"Automated axe-core WCAG 2.x A/AA sample at 390px; NOT a full manual WCAG certificate.",

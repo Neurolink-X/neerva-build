@@ -139,7 +139,12 @@ export function validatePlan(p:PlanModel):string[]{
   if(!r||!dest)continue;
   const edge=sharedEdge(r,dest);
   if(!edge||edge.aSide!==o.side){errors.push("Door not on actual shared wall "+o.id);continue}
-  const paired=p.openings.some(other=>other.roomId===dest.id&&other.connectsTo===r.id&&other.side===edge.bSide&&other.kind==="door");
+  const origin=(room:Room,side:Side)=>side==="front"||side==="rear"?room.x:room.y;
+  const start=origin(r,o.side)+o.atFt;
+  // Generator coordinates are rounded to six decimals; tolerate only rounding noise.
+  const doorEps=1e-5;
+  if(start<edge.from-doorEps||start+o.widthFt>edge.from+edge.length+doorEps){errors.push("Door outside shared wall "+o.id);continue;}
+  const paired=p.openings.some(other=>other.roomId===dest.id&&other.connectsTo===r.id&&other.side===edge.bSide&&other.kind==="door"&&Math.abs(origin(dest,other.side)+other.atFt-start)<doorEps&&Math.abs(other.widthFt-o.widthFt)<doorEps&&Math.abs(other.sillFt-o.sillFt)<doorEps&&Math.abs(other.heightFt-o.heightFt)<doorEps);
   if(!paired){errors.push("Unpaired door "+o.id);continue}
   links.get(r.id)?.add(dest.id);links.get(dest.id)?.add(r.id);
  }
@@ -189,3 +194,17 @@ export function recolorMasked(source:Uint8ClampedArray,mask:Uint8ClampedArray,ta
 }
 
 
+
+/** Geometry identity, independent of cosmetic finishes; checked by both client and server.
+ * Not an authorization token. Server still regenerates and validates every plan. */
+export async function planGeometryDigest(p:PlanModel):Promise<string>{
+ const shape=p.plot.siteShape??{kind:"rectangle"};
+ const canonical=JSON.stringify([p.version,p.plot.widthFt,p.plot.depthFt,p.plot.roadSide,shape.kind,shape.kind==="rectangle"?[]:[shape.notchWidthFt,shape.notchDepthFt],p.floors,
+  [p.setbacks.frontFt,p.setbacks.rearFt,p.setbacks.leftFt,p.setbacks.rightFt],
+  [p.walls.externalFt,p.walls.internalFt,p.walls.heightFt,p.walls.parapetFt],
+  p.rooms.map(r=>JSON.stringify([r.id,r.kind,r.floor,r.x,r.y,r.w,r.d])).sort(),
+  p.openings.map(o=>JSON.stringify([o.roomId,o.kind,o.side,o.atFt,o.widthFt,o.sillFt,o.heightFt,o.connectsTo??null])).sort(),
+  [p.gate.xFt,p.gate.widthFt,p.pedestrianGate.xFt,p.pedestrianGate.widthFt],p.stairs.roomIds,p.parking?.roomId??null,p.balcony?.roomId??null]);
+ const bytes=await globalThis.crypto.subtle.digest("SHA-256",new TextEncoder().encode(canonical));
+ return Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,"0")).join("");
+}

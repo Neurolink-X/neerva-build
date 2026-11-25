@@ -104,3 +104,5 @@
  .nroad-controls,.nroad-results{width:100%}
  .nroad-diagram svg,.nroad-elevation svg{height:auto;min-inline-size:0;max-inline-size:100%}
 }
+
+.nroad-plan-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}.nroad-plan-summary span{display:grid;gap:4px;background:#f4f7f0;padding:10px;border:1px solid #d5dfd3;border-radius:10px;color:#526354;font-size:12px;overflow-wrap:anywhere}.nroad-plan-summary strong{font-size:clamp(15px,2vw,21px);color:#234538}.nroad .nbd-buttons[aria-label="3D camera views"]{grid-template-columns:repeat(auto-fit,minmax(min(100%,6rem),1fr))}.nroad .nbd-buttons button:focus-visible{outline:3px solid #a46b35;outline-offset:2px}@media(max-width:600px){.nroad-plan-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}

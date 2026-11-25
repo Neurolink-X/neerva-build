@@ -2,6 +2,7 @@ import {buildingWallCells} from "@/modules/studio/geometry";
 import type {StudioDesign} from "@/modules/studio/library";
 import type {PlanModel} from "@/modules/studio/plan-model";
 import {roadRect,roadPoint,siteDimensions} from "@/modules/studio/plan-coordinate";
+import {siteOutline} from "@/modules/studio/site-shape";
 
 export function PlanAxonometric({plan,design,floor}:{plan:PlanModel;design:StudioDesign;floor?:number}){
  const {widthFt:w,depthFt:d,roadSide}=plan.plot;
@@ -23,6 +24,7 @@ export function PlanAxonometric({plan,design,floor}:{plan:PlanModel;design:Studi
  const top=(floor===undefined?plan.floors:1)*height;
  const bounds=[-size.d*.86-2,-top-2,(size.w+size.d)*.86+4,(size.w+size.d)*.5+top+4];
  return <svg viewBox={bounds.join(" ")} style={{width:"100%",maxHeight:460}} role="img" aria-label={"Axonometric view of "+(floor===undefined?"all floors":"floor "+(floor+1))}>
+  {(floor===undefined||floor===0)&&<polygon points={siteOutline(w,d,plan.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,roadSide)).map(p=>project(p.x,p.y,-.2)).join(" ")} fill="#ede8d8" stroke="#526954" strokeWidth=".25"><title>Measured plot boundary</title></polygon>}
   {[...plates,...walls].sort((a,b)=>a.level-b.level||a.depth-b.depth).map(face=><polygon key={face.key} points={face.points} fill={face.fill} stroke="#605e52" strokeWidth=".12"><title>{face.label}</title></polygon>)}
  </svg>;
 }
