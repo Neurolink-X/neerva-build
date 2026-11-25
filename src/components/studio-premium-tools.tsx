@@ -7,8 +7,8 @@ import "@/app/studio-pricing/pricing.css";
 import {useStudioSettings} from "@/components/use-studio-settings";
 import type {StudioProduct} from "@/modules/studio/paid-products";
 const esc=(s:unknown)=>String(s??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]??ch));
-type Props={product:StudioProduct;brief?:PlanBrief;option?:number;base?:string;accent?:string;room?:string};
-export function StudioPremiumTools({product,brief,option=0,base="#b6c7a3",accent="#c4925f",room="Home colour concept"}:Props){
+type Props={product:StudioProduct;brief?:PlanBrief;option?:number;planId?:string;base?:string;accent?:string;room?:string};
+export function StudioPremiumTools({product,brief,option=0,planId,base="#b6c7a3",accent="#c4925f",room="Home colour concept"}:Props){
  const [busy,setBusy]=useState(false),[message,setMessage]=useState("");
  const {ready,config}=useStudioSettings(product);
  async function exportReport(){
@@ -17,7 +17,7 @@ export function StudioPremiumTools({product,brief,option=0,base="#b6c7a3",accent
    const client=createNeervaBrowserClient();
    const jwt=(await client?.auth.getSession())?.data.session?.access_token;
    if(!jwt){setMessage("Sign in to use your paid Studio report.");return;}
-   const payload=product==="home_studio"?{product,brief,option}:{product,base,accent,room};
+   const payload=product==="home_studio"?{product,brief,option,planId}:{product,base,accent,room};
    const r=await fetch("/api/studio/premium-report",{method:"POST",
     headers:{Authorization:"Bearer "+jwt,"Content-Type":"application/json"},body:JSON.stringify(payload)});
    const data=await r.json();
