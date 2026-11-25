@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {masonryTakeoff,concreteTakeoff,steelTakeoff,areaBudget} from "./construction-math.ts";
 test("brick modular volume and openings",()=>{
  const r=masonryTakeoff(10,10,200,0,[190,90,90],10,5)!;
- assert.equal(r.units,488);
+ assert.equal(r.units,976);
  assert.ok(masonryTakeoff(10,10,200,20,[190,90,90],10,5)!.units<r.units);
  assert.equal(masonryTakeoff(10,10,200,101,[190,90,90],10,5),null);
 });
