@@ -19,8 +19,12 @@ jobs:
           node-version: 24
           cache: npm
       - name: Validate React runtime and types pairing
-        run: node scripts/release/react-dependency-pair.mjs
+        run: |
+          node scripts/release/react-dependency-pair.mjs
+          node --test scripts/release/react-dependency-pair.test.mjs
       - run: npm ci --no-audit --no-fund
+      - name: Validate installed React peer dependency graph
+        run: npm ls react react-dom @types/react @types/react-dom --all
       - name: Production dependency security audit
         run: npm audit --omit=dev --audit-level=moderate
       - run: npm run release:verify
