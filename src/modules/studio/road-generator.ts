@@ -349,10 +349,11 @@ function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
   addWindow(plan);
   if(validatePlan(plan).length===0)plans.push(plan);
  }
- return {plans:plans.slice(0,limit),blockers:plans.length?[]:["Room sizes or access could not be validated within the available footprint."]};
+ return {plans:pickDiverse(plans,limit),blockers:plans.length?[]:["Room sizes or access could not be validated within the available footprint."]};
 }
 export function planSignature(p:PlanModel):string{
- return p.rooms.map(r=>[r.floor,r.id,r.kind,r.x,r.y,r.w,r.d].join(":")).sort().join("|")+"#"+p.facade.kit+"#"+p.facade.massing;
+ // IDs, labels, room names and exterior finishes cannot manufacture a new floor plan.
+ return p.rooms.map(r=>[r.floor,r.x,r.y,r.w,r.d].join(":")).sort().join("|");
 }
 export function pickDiverse(plans:readonly PlanModel[],limit=3):PlanModel[]{
  const unique=new Set<string>();return [...plans].sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id)).filter(p=>{
@@ -411,7 +412,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
     const p=family?buildArchitecturalFamily(brief,variant,family,prog):build(brief,variant,recipe),
      errors=validatePlan(p);
     if(errors.length)continue;
-    const geometry=p.rooms.map(r=>[r.floor,r.kind,r.x,r.y,r.w,r.d].join(":")).sort().join("|");
+    const geometry=planSignature(p);
     if(seen.has(geometry))continue;
     // Distinct room labels do not mean distinct buildings. Deduplicate the actual
     // 3D wall mesh geometry, including doors/windows, before advertising a plan.
