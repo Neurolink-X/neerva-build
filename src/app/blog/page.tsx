@@ -51,7 +51,7 @@ export default function BlogIndexPage() {
           {articles.map((article) => (
             <article className="blog-card" key={article.slug}>
               <Link href={`/blog/${article.slug}`} className="blog-card-art blog-photo" aria-label={`Read ${article.title}`}>
-                <Image src="/images/catalog/clay-bricks.webp" alt="Illustrative red clay bricks, representative construction material" fill sizes="(max-width:680px) 92vw, 33vw" loading="lazy"/>
+                <Image src={article.category==="Platform guide"?"/images/studio/house-1.webp":"/images/catalog/tmt-bars.webp"} alt={article.category==="Platform guide"?"Residential exterior, photographic inspiration":"Steel reinforcement, representative construction material"} fill sizes="(max-width:680px) 92vw, 33vw" loading="lazy"/>
                 <span className="blog-art-label">NEERVA FIELD GUIDE · 0{articles.indexOf(article) + 1}</span>
                 
                 <span className="blog-art-arrow" aria-hidden="true">↗</span>
