@@ -137,8 +137,8 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   };
   img.onerror=()=>{if(generation.current!==ticket){release();return;}release();image.current=null;setReady(false);setMessage("Image could not be opened. Try another photo.")};
   img.src=next;
- },[]);
- const openRoom=useCallback(()=>{setScene("room");openPhoto("/images/studio/paint-room.webp",[{x:40/420,y:34/280},{x:373/420,y:37/280},{x:373/420,y:215/280},{x:40/420,y:215/280}],roomMask)},[openPhoto]);
+ },[setCloseUp,setPreset,setWalls,setEditing,setReady,setHistory,setShowOriginal,setMessage]);
+ const openRoom=useCallback(()=>{setScene("room");openPhoto("/images/studio/paint-room.webp",[{x:40/420,y:34/280},{x:373/420,y:37/280},{x:373/420,y:215/280},{x:40/420,y:215/280}],roomMask)},[openPhoto,setScene]);
  function openFacade(id:FacadeSampleId=sampleId){
   if(scene==="facade"&&ready&&id===sampleId)return;
   const next=facadeSamples.find(s=>s.id===id)??facadeSamples[0];
