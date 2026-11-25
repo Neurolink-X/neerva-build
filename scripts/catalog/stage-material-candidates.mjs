@@ -20,7 +20,7 @@ for(const item of candidates){try{
  let expected="https://upload.wikimedia.org/wikipedia/commons/"+hash[0]+"/"+hash.slice(0,2)+"/"+encodeURIComponent(filename);
  if(item.origin==="manufacturer"){
   const u=new URL(item.url),source=new URL(item.source);
-  const valid=(u.hostname==="www.magicrete.in"&&source.hostname==="www.magicrete.in"&&u.pathname.startsWith("/assets/uploads/"))||(u.hostname==="images.orientbell.com"&&source.hostname==="www.orientbell.com"&&u.pathname.startsWith("/media/catalog/product/"));
+  const valid=(u.hostname==="www.magicrete.in"&&source.hostname==="www.magicrete.in"&&u.pathname.startsWith("/assets/uploads/"))||(u.hostname==="images.orientbell.com"&&source.hostname==="www.orientbell.com"&&u.pathname.startsWith("/media/catalog/product/"))||(u.hostname==="media.myklaticrete.com"&&source.hostname==="myklaticrete.com"&&u.pathname==="/mykl/2024/08/Group-1000006165-7.png");
   if(!valid||u.protocol!=="https:"||source.protocol!=="https:"||u.username||u.password||u.port||u.search||u.hash)throw Error("Unapproved manufacturer origin");
   expected=u.href;
  }else if(item.url&&decodeURI(expected)!==decodeURI(item.url))throw Error("Unexpected Wikimedia source");
