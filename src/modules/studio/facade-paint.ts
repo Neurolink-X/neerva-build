@@ -18,7 +18,7 @@ export const facadeZones=[
  zone("right","Right facade",[[972,62],[1226,62],[1226,282],[1172,282],[1172,410],[972,410]], [rect(982,115,189,132),rect(982,319,189,91)]),
  zone("balcony","Balcony frame",[[527,47],[970,47],[970,75],[555,75],[555,251],[970,251],[970,286],[527,286]]),
  zone("entry","Entrance frame",[[527,287],[554,287],[554,396],[527,396]]),
- zone("boundary","Boundary wall",[[281,419],[631,419],[631,432],[281,432]])
+ zone("boundary","Boundary top band",[[281,419],[631,419],[631,432],[281,432]])
 ] as const;
 export type FacadeStyles=Partial<Record<Exclude<FacadeTarget,"all">,PaintStyle>>;
 export function stylesForTarget(saved:FacadeStyles,target:FacadeTarget,style:PaintStyle):FacadeStyles{
