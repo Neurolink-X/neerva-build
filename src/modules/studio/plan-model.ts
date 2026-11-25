@@ -141,8 +141,10 @@ export function validatePlan(p:PlanModel):string[]{
   if(!edge||edge.aSide!==o.side){errors.push("Door not on actual shared wall "+o.id);continue}
   const origin=(room:Room,side:Side)=>side==="front"||side==="rear"?room.x:room.y;
   const start=origin(r,o.side)+o.atFt;
-  if(start<edge.from-EPS||start+o.widthFt>edge.from+edge.length+EPS){errors.push("Door outside shared wall "+o.id);continue;}
-  const paired=p.openings.some(other=>other.roomId===dest.id&&other.connectsTo===r.id&&other.side===edge.bSide&&other.kind==="door"&&Math.abs(origin(dest,other.side)+other.atFt-start)<EPS&&Math.abs(other.widthFt-o.widthFt)<EPS&&Math.abs(other.sillFt-o.sillFt)<EPS&&Math.abs(other.heightFt-o.heightFt)<EPS);
+  // Generator coordinates are rounded to six decimals; tolerate only rounding noise.
+  const doorEps=1e-5;
+  if(start<edge.from-doorEps||start+o.widthFt>edge.from+edge.length+doorEps){errors.push("Door outside shared wall "+o.id);continue;}
+  const paired=p.openings.some(other=>other.roomId===dest.id&&other.connectsTo===r.id&&other.side===edge.bSide&&other.kind==="door"&&Math.abs(origin(dest,other.side)+other.atFt-start)<doorEps&&Math.abs(other.widthFt-o.widthFt)<doorEps&&Math.abs(other.sillFt-o.sillFt)<doorEps&&Math.abs(other.heightFt-o.heightFt)<doorEps);
   if(!paired){errors.push("Unpaired door "+o.id);continue}
   links.get(r.id)?.add(dest.id);links.get(dest.id)?.add(r.id);
  }
