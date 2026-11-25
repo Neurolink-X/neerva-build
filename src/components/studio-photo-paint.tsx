@@ -3,7 +3,7 @@ import {useCallback,useEffect,useRef,useState,type ChangeEvent,type PointerEvent
 import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type MaskCorner} from "@/modules/studio/mask-editor";
 import {encodedPhotoDimensions,photoDimensionsAllowed,maxPreviewSide} from "@/modules/studio/photo-budget";
 import {finishes,patternKeys,type Pattern,type Motif} from "@/modules/studio/wall-patterns";
-import Image from "next/image";
+import NextImage from "next/image";
 import {facadeSamples,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
 type Wall={mask?:PhotoMask;points:MaskCorner[];colour:string;accent:string;pattern:Pattern;opacity?:number};
@@ -192,7 +192,7 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
  }
  return <section className="nbd-photo" aria-label="Private wall colour preview">
   <div className="paint-source"><button type="button" aria-pressed={scene==="room"} onClick={openRoom}>Sample room</button><button type="button" aria-pressed={scene==="facade"} onClick={()=>openFacade()}>Sample house exterior</button><label>Use my home photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label></div>
-  {scene==="facade"&&<div className="paint-sample-gallery" role="group" aria-label="Choose sample house">{facadeSamples.map(s=><button key={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><Image src={s.src} alt="" fill sizes="(max-width:600px) 30vw, 180px" loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
+  {scene==="facade"&&<div className="paint-sample-gallery" role="group" aria-label="Choose sample house">{facadeSamples.map(s=><button key={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={s.src} alt="" fill sizes="(max-width:600px) 30vw, 180px" loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
   <div className="paint-mode" role="group" aria-label="Paint preview mode"><button type="button" aria-pressed={mode==="paint"} onClick={()=>chooseMode("paint")}>Plain paint</button><button type="button" aria-pressed={mode==="design"} onClick={()=>chooseMode("design")}>Paint + design</button></div>
   {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}</button>)}</div>}
   <p role="status">{ready&&scene==="facade"?"Full exterior applies the chosen shade to all marked surfaces. Choose a section for a separate accent or pattern. Unmarked details are preserved.":points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
