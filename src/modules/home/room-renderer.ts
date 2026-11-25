@@ -1,5 +1,6 @@
 
 import * as THREE from "three";
+import {RoundedBoxGeometry} from "three/addons/geometries/RoundedBoxGeometry.js";
 import {furniture,type RoomLab,type Piece} from "./room-lab";
 export type RoomScene={update:(room:RoomLab,light:"day"|"evening",angle:number,zoom:number)=>void;dispose:()=>void};
 const wood="#987557", ivory="#f5eee1";
@@ -9,7 +10,7 @@ function clearGroup(group:THREE.Group){
  group.clear();geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());textures.forEach(t=>t.dispose());
 }
 function box(parent:THREE.Group,w:number,h:number,d:number,x:number,y:number,z:number,color:string,roughness=.82){
- const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color,roughness}));
+ const mesh=new THREE.Mesh((roughness>.7&&Math.min(w,h,d)>.2?new RoundedBoxGeometry(w,h,d,2,Math.min(.09,w/8,h/8,d/8)):new THREE.BoxGeometry(w,h,d)),new THREE.MeshStandardMaterial({color,roughness}));
  mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;
 }
 function furnitureModel(p:Piece){
