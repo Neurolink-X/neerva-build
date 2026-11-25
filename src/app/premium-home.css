@@ -327,3 +327,5 @@
 @media(min-width:1000px){.nbh-explore-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 @media(max-width:760px){.nbh-hero h1:lang(en){font-size:clamp(24px,7.1vw,44px);letter-spacing:-.045em;text-wrap:balance}.nbh-hero h1:lang(en) span{text-wrap:balance}.nbh-hero h1:lang(hi){text-wrap:balance}}
+
+.nbh-quick-fields label{min-width:0}.nbh-quick-fields label small{display:block;font-size:11px;line-height:1.4;font-weight:400;margin-top:4px}.nbh-quick-fields :is(input,select){min-width:0;width:100%;box-sizing:border-box}.nbh-studio-result small{line-height:1.5}.nbh :is(.nbh-quick-quote,.nbh-studio-planner,.nbh-journey){transition:box-shadow 140ms ease,border-color 140ms ease}@media(hover:hover) and (pointer:fine){.nbh :is(.nbh-quick-quote,.nbh-studio-planner,.nbh-journey):hover{box-shadow:0 6px 20px #25473818}}@media(prefers-reduced-motion:reduce){.nbh :is(.nbh-quick-quote,.nbh-studio-planner,.nbh-journey){transition:none}}
