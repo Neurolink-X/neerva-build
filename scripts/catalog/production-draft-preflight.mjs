@@ -1,0 +1,37 @@
+// Read-only by default. Requires freshly verified disposable evidence before explicit production import.
+import assert from "node:assert/strict";
+import {execFileSync} from "node:child_process";
+import {readFileSync} from "node:fs";
+import {createHash} from "node:crypto";
+const url=new URL(process.env.NEERVA_CATALOG_DATABASE_URL??"postgresql://invalid.invalid");
+assert.equal(url.protocol,"postgresql:");
+assert.equal(url.hostname,"db.djgghisbkucprqiezrcn.supabase.co","Only the isolated Neerva production project is allowed");
+assert.equal(url.pathname,"/postgres");assert.equal(url.searchParams.get("sslmode"),"require");
+const execute=process.argv.includes("--execute");
+const sql=readFileSync("catalog-sync/draft-import.sql","utf8");
+const evidence=JSON.parse(readFileSync("catalog-sync/summary.json","utf8"));
+const sha=execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim();
+assert.match(sha,/^[0-9a-f]{40}$/);
+assert.equal(evidence.verification,"passed");assert.equal(evidence.repeatedImports,2);
+assert.ok(Number.isSafeInteger(evidence.referenceRows)&&evidence.referenceRows>0);
+assert.equal(evidence.counts.draftProducts,evidence.referenceRows);
+assert.equal(evidence.counts.draftVariants,evidence.referenceRows);
+const digest=createHash("sha256").update(sql).digest("hex");
+assert.equal(evidence.sqlSha256,digest,"Export must match tested SQL bytes");
+assert.equal(evidence.sourceCommit,sha,"Evidence must match current commit");
+const env={...process.env,PGHOST:url.hostname,PGPORT:url.port||"5432",PGDATABASE:decodeURIComponent(url.pathname.slice(1)),PGUSER:decodeURIComponent(url.username),PGPASSWORD:decodeURIComponent(url.password),PGSSLMODE:url.searchParams.get("sslmode")||"disable",PGCONNECT_TIMEOUT:"10",PGOPTIONS:"-c statement_timeout=60000 -c lock_timeout=3000"};
+delete env.NEERVA_CATALOG_DATABASE_URL;delete env.PGSERVICE;delete env.PGSERVICEFILE;delete env.PGHOSTADDR;
+const psql=(args)=>execFileSync("psql",["-X","-v","ON_ERROR_STOP=1",...args],{env,encoding:"utf8",stdio:["ignore","pipe","pipe"]}).trim();
+const count=()=>JSON.parse(psql(["-At","-c","select json_build_object('products',(select count(*) from public.products),'variants',(select count(*) from public.product_variants),'inventory',(select count(*) from public.inventory),'prices',(select count(*) from public.pricing_rules))"]));
+const before=count();
+if(!execute){console.log(JSON.stringify({mode:"preflight",sha,digest,referenceRows:evidence.referenceRows,before}));process.exit(0);}
+assert.equal(process.env.NEERVA_APPROVED_CATALOG_SHA,sha);
+assert.equal(process.env.NEERVA_CATALOG_BACKUP_CONFIRMED,"yes");
+assert.equal(process.env.NEERVA_CATALOG_MAINTENANCE_CONFIRMED,"yes","Approved quiet write window required");
+assert.equal(before.products,0,"Fresh initial sync only; existing catalog requires a reviewed reconciliation");
+assert.equal(before.variants,0);
+psql(["-f","catalog-sync/draft-import.sql"]);
+const after=count();
+assert.equal(after.products,evidence.referenceRows);assert.equal(after.variants,evidence.referenceRows);
+assert.equal(after.inventory,before.inventory);assert.equal(after.prices,before.prices);
+console.log(JSON.stringify({mode:"draft-import",sha,digest,before,after}));

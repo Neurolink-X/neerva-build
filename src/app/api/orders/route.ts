@@ -1,3 +1,4 @@
+import {isSameOfferReplay} from "@/modules/orders/replay-identity";
 import {requireAuth} from "@/modules/identity/server-auth";
 import {acceptOfferInput,customerOrderStatusInput,ORDER_FIELDS,ORDER_RESPONSE_HEADERS,parseOrderJson,failOrder,safeOrderError,statusForOrderError} from "@/modules/orders/order-contract";
 
@@ -36,9 +37,10 @@ export async function POST(request:Request){
    if(error.code==="23505"){
     const lookup=await auth.client.from("orders").select(ORDER_FIELDS)
      .eq("customer_id",auth.userId).eq("idempotency_key",idempotencyKey).maybeSingle();
-    if(!lookup.error&&lookup.data?.quote_offer_id===offerId)
+    if(!lookup.error&&isSameOfferReplay(lookup.data,offerId,deliveryAddress))
      return Response.json({order:lookup.data,duplicate:true,paymentTaken:false},{headers:ORDER_RESPONSE_HEADERS});
    }
+   if(statusForOrderError(error)===503)console.error("[orders.accept] database error",/^[A-Z0-9]{5,8}$/.test(error.code??"")?error.code:"UNKNOWN");
    return failOrder(statusForOrderError(error),safeOrderError(error));
   }
   if(!saved)return failOrder(503,"Could not confirm that your order request was saved.");

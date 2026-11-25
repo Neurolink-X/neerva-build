@@ -21,6 +21,10 @@ export const homeReferencePhotos=[
  // Unsplash photo-1600585152220-90363fe7e115
  {src:"/images/studio/house-6.webp",name:"Kitchen with breakfast island",type:"residence"}
 ] as const;
+// Reserve different photos for the planner and construction section. The hero gallery must not reuse them.
+export const studioExterior=homeReferencePhotos[1];
+export const constructionExterior=homeReferencePhotos[2];
+export const heroGalleryPhotos=homeReferencePhotos.filter(p=>p.src!==studioExterior.src&&p.src!==constructionExterior.src);
 export const homeVisuals={
  hero:homeReferencePhotos[0].src,
  construction:photo("photo-1504307651254-35680f356dfd"),

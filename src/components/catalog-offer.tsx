@@ -1,23 +1,43 @@
 "use client";
 import Link from "next/link";
 import {useSyncExternalStore} from "react";
-type Offer={id:string;title:string;terms:string;category:string;slug:string;sku:string;city:string;
- unit:string;prefix:string|null;min:number;basePaise:number;offerPaise:number;endsAt:string};
+import {validPublicOffer,type PublicOffer as Offer} from "@/modules/catalog/public-feed-validation";
 const empty:Offer[]=[],listeners=new Set<()=>void>();
-let offers:Offer[]=empty,active:Promise<void>|null=null,timer:ReturnType<typeof setInterval>|undefined;
+let offers:Offer[]=empty,active:Promise<void>|null=null,timer:ReturnType<typeof setInterval>|undefined,expiry:ReturnType<typeof setTimeout>|undefined,lastLoaded=0;
 const notify=()=>{for(const listener of listeners)listener()};
+const valid=validPublicOffer;
+function removeExpired(){
+ const now=Date.now();
+ const next=offers.filter(o=>valid(o,now)&&now-lastLoaded<120000);
+ if(next.length!==offers.length){offers=next.length?next:empty;notify();}
+}
+function scheduleExpiry(){
+ clearTimeout(expiry);
+ if(!listeners.size||!offers.length)return;
+ const next=Math.min(lastLoaded+120000,...offers.map(o=>Date.parse(o.endsAt)));
+ expiry=setTimeout(()=>{removeExpired();scheduleExpiry();},Math.max(1,next-Date.now()));
+}
 function refresh(){
- if(active)return;
- active=fetch("/api/catalog/offers",{cache:"no-store"}).then(async response=>{
-  const body=response.ok?await response.json():null;
-  offers=Array.isArray(body?.offers)?body.offers.filter((o:Offer)=>
-   o.offerPaise>0&&o.basePaise>o.offerPaise&&Date.parse(o.endsAt)>Date.now()):empty;
- }).catch(()=>{offers=empty}).finally(()=>{active=null;notify()});
+ removeExpired();scheduleExpiry();
+ if(active||!listeners.size||document.visibilityState==="hidden")return;
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),10000);
+ active=fetch("/api/catalog/offers",{cache:"no-cache",signal:controller.signal}).then(async response=>{
+  if(!response.ok)throw Error("Offer feed unavailable");
+  const body=await response.json();
+  lastLoaded=Date.now();
+  offers=Array.isArray(body?.offers)?(body.offers as unknown[]).filter((o):o is Offer=>valid(o,lastLoaded)):empty;
+ }).catch(()=>{offers=empty;lastLoaded=0}).finally(()=>{clearTimeout(timeout);active=null;notify();scheduleExpiry()});
+}
+function onVisible(){
+ if(document.visibilityState!=="visible")return;
+ removeExpired();scheduleExpiry();
+ if(Date.now()-lastLoaded>=60000)refresh();
 }
 function subscribe(listener:()=>void){
  listeners.add(listener);
- if(listeners.size===1){refresh();timer=setInterval(refresh,60000)}
- return ()=>{listeners.delete(listener);if(listeners.size===0&&timer)clearInterval(timer)};
+ if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);timer=setInterval(refresh,60000)}
+ return ()=>{listeners.delete(listener);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;document.removeEventListener("visibilitychange",onVisible)}};
 }
 const money=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2});
 const date=new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Kolkata"});

@@ -1,3 +1,4 @@
+import {isPublicConstructionProduct} from "./discovery-policy.ts";
 import {brandDirectory, getCategory, getProductsByCategory} from "./marketplace.ts";
 import {groupCatalogByPhoto} from "./media-usage.ts";
 import {categoryImage} from "./public-products.ts";
@@ -40,7 +41,7 @@ export const brandIdentityEvidence:Record<string,{manufacturer:string;source:str
 };
 export function directoryCards(category:string){
   return brandDirectory.filter(b=>b.category===category).map(({name})=>{
-    const products=getProductsByCategory(category).filter(p=>p.brand===name);
+    const products=getProductsByCategory(category).filter(p=>p.brand===name&&isPublicConstructionProduct(p));
     const pictured=products.find(p=>p.referenceImage&&usableMediaSource(p.referenceImage));
     const paint=category==="paint"?products.map(p=>paintReference(p.slug)).find(p=>p?.image&&usableMediaSource(p.image)):undefined;
     const hardware=category==="hardware"?products.map(p=>hardwareReference(p.slug)).find(p=>p?.image&&usableMediaSource(p.image)):undefined;

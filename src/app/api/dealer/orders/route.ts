@@ -1,3 +1,4 @@
+import {stockConfirmationEnabled} from "@/modules/orders/stock-confirmation";
 import {requireDealer} from "@/modules/identity/server-auth";
 import {dealerOrderStatusInput,ORDER_FIELDS,ORDER_RESPONSE_HEADERS,parseOrderJson,failOrder,safeOrderError,statusForOrderError} from "@/modules/orders/order-contract";
 export const dynamic="force-dynamic";export const runtime="nodejs";
@@ -27,6 +28,7 @@ export async function PATCH(request:Request){
  const input=dealerOrderStatusInput.safeParse(await parseOrderJson(request,1500));
  if(!input.success)return failOrder(400,"Invalid dealer order action.");
  const {orderId,expectedStatus,status}=input.data;
+ if(status==="confirmed"&&stockConfirmationEnabled(process.env))return failOrder(409,"Assigned dealer must use atomic stock confirmation.");
  try{
   // The SQL trigger independently enforces owner/manager/dispatch permissions,
   // verified dealer approval and legal state transitions inside the transaction.

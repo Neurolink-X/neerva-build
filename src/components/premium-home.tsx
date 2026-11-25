@@ -3,11 +3,12 @@
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {homeVisuals,homeReferencePhotos} from "@/modules/home/assets";
+import {homeVisuals,studioExterior,constructionExterior} from "@/modules/home/assets";
 import {HomeShowcase} from "@/components/home-showcase";
 import {brandPath,directoryCards} from "@/modules/catalog/brand-pages";
 import {brandMediaFor} from "@/modules/catalog/brand-media";
 import {BrandMark} from "@/components/brand-mark";
+import {categoryChoices,categoryGuidance,categoryChoiceHref,categoryPreviewCredits} from "@/modules/catalog/category-discovery";
 
 type Language="en"|"hi";
 const copy={
@@ -76,13 +77,13 @@ function Icon({name}:{name:IconName}){
 }
 const items=[
  {id:"steel",en:"TMT & steel",hi:"सरिया / TMT",description:"Grade, diameter and weight",descriptionHi:"ग्रेड, मोटाई और वजन",image:homeVisuals.steel,href:"/materials/steel"},
- {id:"cement",en:"Cement",hi:"सीमेंट",description:"ACC, UltraTech, Ramco, Priya, Maha and Birla Super · 50 kg bags",descriptionHi:"ACC, UltraTech, Ramco, Priya, Maha और Birla Super · 50 किलो बैग",image:"/images/catalog/reference/acc-suraksha-power-ppc-cement-50-kg-bag.webp",href:"/materials/cement"},
- {id:"bricks",en:"Bricks & blocks",hi:"ईंट और ब्लॉक",description:"Clay, fly ash and AAC",descriptionHi:"मिट्टी, फ्लाई ऐश, AAC",image:homeVisuals.bricks,href:"/materials/bricks-blocks"},
+ {id:"cement",en:"Cement",hi:"सीमेंट",description:"ACC, UltraTech, Ramco, Priya, Maha and Birla Super · 50 kg bags",descriptionHi:"ACC, UltraTech, Ramco, Priya, Maha और Birla Super · 50 किलो बैग",image:homeVisuals.cement,href:"/materials/cement"},
+ {id:"bricks",en:"Bricks & blocks",hi:"ईंट और ब्लॉक",description:"Red clay brick (Lal eent), fly ash, AAC and hollow blocks",descriptionHi:"लाल ईंट, फ्लाई ऐश ईंट, AAC और खोखले ब्लॉक",image:homeVisuals.bricks,href:"/materials/bricks-blocks"},
  {id:"pipes",en:"Pipes",hi:"पाइप",description:"CPVC, uPVC, SWR, HDPE, borewell & fittings",descriptionHi:"CPVC, uPVC, SWR, HDPE, बोरवेल और फिटिंग",image:homeVisuals.pipes,href:"/materials/plumbing"},
  {id:"paint",en:"Paint & waterproofing",hi:"पेंट व वॉटरप्रूफिंग",description:"Interior, exterior, putty, primers & leak protection",descriptionHi:"इंटीरियर, एक्सटीरियर, पुट्टी और वॉटरप्रूफिंग",image:homeVisuals.paint,href:"/materials/paint"},
  {id:"electrical",en:"Electrical",hi:"इलेक्ट्रिकल",description:"Wires, rigid & flexible conduits, cable ducts",descriptionHi:"वायर, कंड्यूट और केबल डक्ट",image:homeVisuals.electrical,href:"/materials/electrical"},
  {id:"aggregates",en:"Morang, balu & gitti",hi:"मौरंग, बालू व गिट्टी",description:"Coarse & fine sand, M-sand, 10–63 mm gitti",descriptionHi:"मोटी व बारीक बालू, एम-सैंड, 10–63 मिमी गिट्टी",image:homeVisuals.aggregates,href:"/materials/aggregates"},
- {id:"tiles",en:"Tiles & flooring",hi:"टाइल्स व फ्लोरिंग",description:"Size, finish and pack",descriptionHi:"नाप, फिनिश और पैक",image:homeVisuals.tiles,href:"/materials/tiles"},
+ {id:"tiles",en:"Tiles & flooring",hi:"टाइल्स व फ्लोरिंग",description:"Floor, wall, wood-look, marble-look and bathroom tiles",descriptionHi:"फर्श, दीवार, वुड लुक, मार्बल लुक और बाथरूम टाइल",image:homeVisuals.tiles,href:"/materials/tiles"},
  {id:"hardware",en:"Hardware & adhesives",hi:"हार्डवेयर व एडहेसिव",description:"Adhesives, locks, hinges, cabinet fittings & site tools",descriptionHi:"एडहेसिव, लॉक, कब्जे, फिटिंग और औज़ार",image:homeVisuals.hardware,href:"/materials/hardware"},
 ] as const;
 const popular=[["cement","/materials/cement"],["TMT","/materials/steel"],["bricks","/materials/bricks-blocks"],["pipes","/materials/plumbing"]] as const;
@@ -122,6 +123,7 @@ export function PremiumHome(){
     <p className="nbh-eyebrow"><span className="nbh-dot"/> {t.eyebrow}</p>
     <h1 id="nbh-h1">{t.title1}<span>{t.title2}</span></h1>
     <p className="nbh-sub">{t.subhead}</p>
+    <Link href="/family-homes" className="nbh-family-entry">{lang==="hi"?"बजट और परिवार के अनुसार घर की योजना →":"Planning a family home on a budget? →"}</Link>
     <div className="nbh-journeys">
      <Link className="nbh-journey nbh-primary" href="/materials"><span className="nbh-jicon"><Icon name="cart"/></span><span><strong>{t.visual}</strong><small>{t.visualDesc}</small></span><Icon name="arrow"/></Link>
      <Link className="nbh-journey" href="/design-studio"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
@@ -147,12 +149,13 @@ export function PremiumHome(){
    </div>
   </section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
+
   <section className="nbh-brands-strip" aria-label="Construction manufacturer reference directory">
    <div><strong>{lang==="hi"?"निर्माण सामग्री के ब्रांड":"Explore established material brands"}</strong><p>{lang==="hi"?"ब्रांड लोगो केवल पहचान के लिए हैं। स्टॉक और अधिकृत डीलर की पुष्टि अलग जरूरी है।":"Original brand marks where source-verified; names are references, not authorised dealership or product stock."}</p></div>
    <div className="nbh-brand-links">{([["ACC","cement"],["UltraTech","cement"],["Ambuja","cement"],["Ramco","cement"],["Priya","cement"],["Maha","cement"],["Birla Super","cement"],["JSW Neosteel","steel"],["Asian Paints","paint"],["Berger","paint"],["Nerolac","paint"],["Dr. Fixit","paint"],["Astral","plumbing"],["Supreme","plumbing"],["Polycab","electrical"]] as const).map(([name,category])=><Link href={brandPath(category,name)} key={name} aria-label={"Explore "+name+" materials"}>{!brandMediaFor(name)&&directoryCards(category).find(card=>card.name===name)?.image?<span style={{display:"inline-flex",alignItems:"center",gap:6}}><Image src={directoryCards(category).find(card=>card.name===name)!.image!} alt={name+" product reference, not logo"} width={40} height={48} style={{objectFit:"contain"}}/><span>{name}</span></span>:<BrandMark name={name} small/>}</Link>)}</div>
   </section>
   <section className="nbh-section nbh-materials" id="materials"><div className="nbh-section-head"><div><p className="nbh-eyebrow">01 / MATERIALS</p><h2>{t.category}</h2><p>{t.catDesc}</p></div><Link href="/materials" className="nbh-section-link">{t.navMaterials} <Icon name="arrow"/></Link></div>
-   <div className="nbh-category-grid">{items.map(item=><Link href={item.href} className="nbh-material-card" key={item.id}><div className="nbh-material-image">{item.image?<Image src={item.image} fill sizes="(max-width:600px) 48vw, (max-width:1000px) 30vw, 16vw" alt={"Representative "+item.en+" category "+(item.image.endsWith(".svg")?"illustration":"material photo")+", not verified branded SKU"} loading="lazy"/>:<div className="nbh-photo-pending" role="img" aria-label="Representative category illustration pending">SKU photo pending review</div>}</div><div className="nbh-material-info"><h3>{lang==="hi"?item.hi:item.en}</h3><p>{lang==="hi"?item.descriptionHi:item.description}</p><span>{item.id==="paint"?t.paintLabel:t.options} <Icon name="arrow"/></span></div></Link>)}</div>
+   <div className="nbh-category-grid">{items.map(item=>{const category=item.href.split("/").pop()!;const choices=categoryChoices[category]??[];const guidance=categoryGuidance[category];return <article className="nbh-material-card" key={item.id}><Link href={item.href} className="nbh-material-image" aria-label={lang==="hi"?item.hi:item.en}><div className="nbh-material-main-photo"><Image src={item.image} fill sizes="(max-width:600px) 48vw, (max-width:1000px) 33vw, 30vw" alt={"Representative "+item.en+" category image, not an exact product"} loading="lazy"/></div></Link><div className="nbh-material-info"><h3><Link href={item.href}>{lang==="hi"?item.hi:item.en}</Link></h3><p>{lang==="hi"?item.descriptionHi:item.description}</p>{choices.length>0&&<div className="nbh-material-choices" aria-label={lang==="hi"?"सामग्री के विकल्प":"Product choices"}>{choices.map(choice=><Link key={choice.slug} href={categoryChoiceHref(category,choice.slug)}>{lang==="hi"?choice.hi:choice.en}</Link>)}</div>}{guidance&&<p className="nbh-material-guidance">{guidance[lang]}</p>}<Link className="nbh-material-cta" href={item.href}>{item.id==="paint"?t.paintLabel:t.options} <Icon name="arrow"/></Link></div>{categoryPreviewCredits[category]&&<details className="nbh-material-credits"><summary>{lang==="hi"?"फोटो स्रोत":"Photo credits"}</summary>{categoryPreviewCredits[category].map(credit=><p key={credit.source}><a href={credit.source} target="_blank" rel="noopener noreferrer">{credit.author}</a> · <a href={credit.licenseUrl} target="_blank" rel="noopener noreferrer">{credit.license}</a> · {lang==="hi"?"आकार बदला गया":"resized/cropped preview"}</p>)}</details>}</article>})}</div>
    <div className="nbh-pipe-quick" style={{display:"flex",flexWrap:"wrap",gap:12,marginTop:18}}>{([["CPVC","plumbing","CPVC"],["uPVC pressure","plumbing","uPVC cold water pressure pipe"],["SWR","plumbing","uPVC SWR"],["HDPE","plumbing","HDPE water supply pipe"],["Borewell","plumbing","Borewell column pipe"],["PVC conduit","electrical","Rigid electrical conduit"],["Flexible conduit","electrical","Flexible corrugated electrical conduit"],["Cable ducts","electrical","DWC HDPE cable duct"]] as const).map(([label,category,search])=><Link className="nbh-outline-link" key={label} href={"/materials?"+new URLSearchParams({category,search})+"#catalog-results"}>{label} <Icon name="arrow"/></Link>)}</div>
    <p className="nbh-fineprint">{t.disclaimer}</p>
   </section>
@@ -204,14 +207,14 @@ export function PremiumHome(){
      <nav className="nbh-studio-more" aria-label="Other home design tools"><Link href="/design-studio/fit">{lang==="hi"?"प्लॉट फिट जांचें":"Check plot fit"}</Link><Link href="/design-studio/visualizer">{lang==="hi"?"दीवार के रंग आज़माएं":"Try wall colours"}</Link><Link href="/studio-pricing">{lang==="hi"?"मुफ्त और प्रीमियम":"Free & premium"}</Link></nav>
     </div>
      <div className="nbh-studio-photo">
-      <Image src={homeReferencePhotos[0].src} fill sizes="(max-width: 980px) 100vw, 49vw" loading="lazy" alt="Licensed contemporary house photograph used only as exterior inspiration; not a Neerva-generated house or the selected floor plan"/>
+      <Image src={studioExterior.src} fill sizes="(max-width: 980px) 100vw, 49vw" loading="lazy" alt="Licensed contemporary house photograph used only as exterior inspiration; not a Neerva-generated house or the selected floor plan"/>
       <div className="nbh-studio-photo-caption"><strong>{lang==="hi"?"घर की शैली का उदाहरण":"Exterior inspiration"}</strong><span>{lang==="hi"?"असली फोटो, चुने हुए नक्शे का 3D रेंडर नहीं":"Real photo, not a render of your selected plan"}</span></div>
      </div>
    </div>
   </section>
   <section className="nbh-colour nbh-build-section" id="construction">
     <div><div className="nbh-house-frame nbh-photo-hero">
-     <Image src={homeVisuals.hero} fill loading="lazy" sizes="(max-width:720px) 100vw, 48vw" alt="Real photograph of a premium contemporary residence, used as style inspiration, not a NEERVA-generated house or an exact plan render" className="nbh-house-photo"/>
+     <Image src={constructionExterior.src} fill loading="lazy" sizes="(max-width:720px) 100vw, 48vw" alt="Real photograph of a premium contemporary residence, used as style inspiration, not a NEERVA-generated house or an exact plan render" className="nbh-house-photo"/>
      <span className="nbh-photo-veil" aria-hidden="true"/>
      <div className="nbh-photo-credit"><span className="nbh-photo-pill">REAL HOUSE PHOTOGRAPHY</span><strong>Contemporary homes. Build a plan for your own site.</strong><small>Exterior style inspiration · exact rooms, doors and gates appear in the matched 2D/3D studio</small></div>
     </div>

@@ -1,4 +1,5 @@
 import {createClient,type SupabaseClient} from "@supabase/supabase-js";
+import {authFailureStatus} from "@/modules/identity/auth-failure";
 import {activeDealerTenantIds} from "@/modules/identity/dealer-tenant-access";
 /** Server-only, user-JWT authenticated access; RLS remains enforced. Never use service-role in these routes. */
 export type AuthResult={userId:string;client:SupabaseClient};
@@ -14,7 +15,8 @@ export async function requireAuth(request:Request):Promise<AuthResult|Response>{
  try{
    const client=createClient(url,key,{global:{headers:{Authorization:"Bearer "+match[1]}},auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false}});
    const {data,error}=await client.auth.getUser(match[1]);
-   if(error||!data.user)return failure("Your session is invalid or expired.",401);
+   if(error){const status=authFailureStatus(error);return failure(status===401?"Your session is invalid or expired.":"Authentication service is temporarily unavailable. Please retry.",status);}
+   if(!data.user)return failure("Your session is invalid or expired.",401);
    const access=await client.rpc("neerva_account_access_allowed");
    if(access.error)return failure("Account access verification unavailable.",503);
    if(access.data!==true)return failure("Account restricted. Contact support.",403);

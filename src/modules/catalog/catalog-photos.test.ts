@@ -70,3 +70,43 @@ test("generic pump parts retain correct image identity without guessed brands",(
 
 
 test("downloaded tool, garden hose and pressure gauge stay on their own families",()=>{for(const [family,source] of [["generic-garden-hose","Garden_hose.jpg"],["spirit-level","Tool-level.jpg"],["fitting-pressure-gauge","Pressure_gauge.jpg"]]){const p=demoProducts.find(p=>(p.familyKey??p.slug)===family)!;assert.ok(p,family);const m=catalogPhotos(p).find(x=>x.sourceUrl?.endsWith(source));assert.ok(m,family);assert.equal(m.kind,"editorial");assert.ok(m.src.startsWith("/images/catalog/approved/"));}const suction=demoProducts.find(p=>p.familyKey==="generic-suction-hose")!;assert.ok(catalogPhotos(suction).every(m=>!m.sourceUrl?.endsWith("Garden_hose.jpg")));});
+
+test("customer category shortcuts open existing distinct catalog products and use local category images",async()=>{
+ const {categoryChoices,categorySecondaryImages,categoryChoiceHref}=await import("./category-discovery.ts");
+ const {categoryImage}=await import("./public-products.ts");
+ const {getProduct}=await import("./marketplace.ts");
+ const fs=await import("node:fs");
+ for(const [category,choices] of Object.entries(categoryChoices)){
+  assert.equal(new Set(choices.map(c=>c.slug)).size,choices.length);
+  for(const choice of choices){assert.ok(getProduct(category,choice.slug),categoryChoiceHref(category,choice.slug));assert.ok(choice.hi&&choice.en);}
+  const src=categoryImage(category);assert.ok(src&&fs.existsSync("public"+src));
+  for(const photo of categorySecondaryImages[category]??[])assert.ok(fs.existsSync("public"+photo),photo);
+ }
+ assert.equal(categoryChoices["bricks-blocks"][0].slug,"red-clay-brick");
+});
+
+test("generated visuals are separate from real photos, lightweight and exactly mapped",async()=>{
+ const {generatedVisuals}=await import("./generated-visuals.ts");const {catalogVisuals}=await import("./catalog-visuals.ts");const {readFileSync}=await import("node:fs");const {createHash}=await import("node:crypto");const sharp=(await import("sharp")).default;
+ const {isPublicConstructionProduct}=await import("./discovery-policy.ts");
+ const paths=new Set<string>();for(const m of generatedVisuals){assert.ok(!paths.has(m.path));paths.add(m.path);const p=demoProducts.find(p=>p.category===m.category&&(p.familyKey??p.slug)===m.family);assert.ok(p,m.family);const bytes=readFileSync("public"+m.path);assert.ok(bytes.length<=35000);assert.equal(bytes.length,m.bytes);assert.equal(createHash("sha256").update(bytes).digest("hex"),m.sha256);const meta=await sharp(bytes).metadata();assert.equal(meta.format,"webp");assert.equal(meta.width,m.width);assert.equal(meta.height,m.height);assert.ok(!catalogPhotos(p).some(x=>x.src===m.path));if(!isPublicConstructionProduct(p))assert.ok(catalogVisuals(p).every(x=>x.kind!=="generated"),p.slug);else if(!catalogPhotos(p).some(x=>x.src.startsWith("/")&&x.kind!=="category"))assert.ok(catalogVisuals(p).some(x=>x.src===m.path&&x.kind==="generated"));}
+});
+
+ test("new pipe and hardware visuals resolve only their explicit generic product families",async()=>{
+ const {catalogVisuals}=await import("./catalog-visuals.ts");
+ const {isPublicConstructionProduct}=await import("./discovery-policy.ts");
+ for(const family of ["generic-pex","generic-casing","generic-rainwater","generic-underground-drain","generic-suction-hose","fitting-saddle","fitting-grommet","fitting-gi-nipple","fitting-pressure-switch","fitting-float-switch","fitting-pump-union","fitting-strainer","wood-adhesive","door-pull-handle","door-floor-spring","window-friction-stay"]){
+ const variants=demoProducts.filter(p=>(p.familyKey??p.slug)===family);assert.ok(variants.length,family);
+ for(const p of variants){const media=catalogVisuals(p);if(!isPublicConstructionProduct(p)){assert.ok(media.every(m=>m.kind!=="generated"),p.slug);continue;}assert.equal(media[0]?.kind,"generated",p.slug);assert.equal(media[0]?.src,"/images/catalog/generated/"+family+".webp",p.slug);assert.match(media[0]?.label??"",/AI-generated/);}
+ }
+ });
+
+
+test("construction-first catalog filters small accessories without deleting direct product routes",async()=>{
+ const {isPublicConstructionProduct}=await import("./discovery-policy.ts");
+ const {getProduct}=await import("./marketplace.ts");
+ for(const [category,slug] of [["hardware","wood-adhesive"],["hardware","tile-grout-sponge"],["hardware","fevikwik-203"],["plumbing","fitting-gasket"]]){const p=getProduct(category,slug);assert.ok(p,slug);assert.equal(isPublicConstructionProduct(p),false,slug);}
+ for(const [category,slug] of [["hardware","roff-t01-nca"],["hardware","door-mortise-lock"],["plumbing","generic-cpvc-20mm"],["plumbing","fitting-float-valve"],["plumbing","fitting-elbow90"],["bricks-blocks","red-clay-brick"]]){const p=getProduct(category,slug);assert.ok(p,slug);assert.equal(isPublicConstructionProduct(p),true,slug);}
+});
+
+
+test("family home concepts are distinct local lightweight WebP images, not exact plan renders",async()=>{const {familyHomeVisuals}=await import("../home/family-home-visuals.ts");const {readFileSync}=await import("node:fs");const {createHash}=await import("node:crypto");const sharp=(await import("sharp")).default;assert.deepEqual(Object.keys(familyHomeVisuals).sort(),["15x30","18x50","20x40"]);const hashes=new Set<string>();for(const m of Object.values(familyHomeVisuals)){const bytes=readFileSync("public"+m.src);assert.equal(bytes.length,m.bytes);assert.ok(bytes.length<=30000);assert.equal(createHash("sha256").update(bytes).digest("hex"),m.sha256);const info=await sharp(bytes).metadata();assert.equal(info.format,"webp");assert.equal(info.width,m.width);assert.equal(info.height,m.height);assert.ok(!hashes.has(m.sha256));hashes.add(m.sha256);assert.match(m.source,/AI-generated architectural inspiration/);}});

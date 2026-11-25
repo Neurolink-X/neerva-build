@@ -2,6 +2,7 @@
 import assert from "node:assert/strict";
 import {execFileSync} from "node:child_process";
 import {readFileSync,writeFileSync} from "node:fs";
+import {createHash} from "node:crypto";
 const url=new URL(process.env.DB_URL??"postgresql://invalid.invalid");
 assert.ok(["127.0.0.1","localhost"].includes(url.hostname)&&url.port==="54322"&&url.protocol==="postgresql:","Local database only");
 const query=sql=>execFileSync("psql",[url.toString(),"-X","-v","ON_ERROR_STOP=1","-At","-c",sql],{encoding:"utf8"}).trim();
@@ -20,5 +21,5 @@ for(let attempt=0;attempt<2;attempt++){
  assert.equal(current.inventory,before.inventory);
  assert.equal(current.prices,before.prices);
 }
-writeFileSync("catalog-sync/summary.json",JSON.stringify({...summary,verification:"passed",repeatedImports:2,counts:count()},null,2)+"\n");
+writeFileSync("catalog-sync/summary.json",JSON.stringify({...summary,verification:"passed",repeatedImports:2,counts:count(),sqlSha256:createHash("sha256").update(readFileSync("catalog-sync/draft-import.sql")).digest("hex"),sourceCommit:execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim()},null,2)+"\n");
 console.log("Draft catalog import and idempotency verified",summary.referenceRows);
