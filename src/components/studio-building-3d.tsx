@@ -8,6 +8,7 @@ import {PlanAxonometric} from "./plan-axonometric";
 import {DesignPlanArt} from "@/components/studio-design-gallery";
 import type {PlanModel} from "@/modules/studio/plan-model";
 import {threeRoadRotation} from "@/modules/studio/plan-coordinate";
+import {nonRoadBoundaryEdges} from "@/modules/studio/site-shape";
 const FT=.3048;
 type Mode="exterior"|"dollhouse"|"walkthrough";
 export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design:StudioDesign;colour:string;planModel?:PlanModel;selectedFloor?:number}){
@@ -101,7 +102,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    const top=design.floors*height;
    if(planModel){
     for(const r of planModel.rooms.filter(r=>r.floor===design.floors-1&&!["parking","verandah","balcony","terrace"].includes(r.kind))){
-     roof(xCoord(r.x+r.w/2),top+.08,zCoord(r.y+r.d/2),r.w*FT+.04,.18,r.d*FT+.04);
+     roof(xCoord(r.x+r.w/2),top+.08,zCoord(r.y+r.d/2),r.w*FT,.18,r.d*FT);
     }
    }else roof(cx,top+.08,cz,W+.25,.18,D+.25);
    if(!planModel){
@@ -117,7 +118,11 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
     }
    }
    if(showSite){
-    const fenceH=.85;box(-width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(width/2,-.13+fenceH/2,0,.12,fenceH,depth,concrete);box(0,-.13+fenceH/2,depth/2,width,fenceH,.12,concrete);
+    const fenceH=.85;
+    for(const {start,end} of nonRoadBoundaryEdges(design.plot.widthFt,design.plot.depthFt,shape)){
+     const dx=Math.abs(end.x-start.x)*FT,dz=Math.abs(end.y-start.y)*FT;
+     box(xCoord((start.x+end.x)/2),-.13+fenceH/2,zCoord((start.y+end.y)/2),dx||.12,fenceH,dz||.12,concrete);
+    }
     const gates=planModel?[
      {start:planModel.gate.xFt,width:planModel.gate.widthFt},
      {start:planModel.pedestrianGate.xFt,width:planModel.pedestrianGate.widthFt}
