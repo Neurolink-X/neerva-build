@@ -9,7 +9,9 @@ const listeners=new Set<()=>void>();
 const notify=()=>{for(const f of listeners)f()};
 async function fetchSettings(){
  if(active)return active;
- active=fetch("/api/studio/config",{cache:"no-store"})
+ const controller=new AbortController();
+ const timeout=window.setTimeout(()=>controller.abort(),10000);
+ active=fetch("/api/studio/config",{cache:"no-store",signal:controller.signal})
  .then(async r=>{
   if(!r.ok)throw Error("Studio settings temporarily unavailable");
   const payload=await r.json();
@@ -21,9 +23,9 @@ async function fetchSettings(){
       price_paise:r.pricePaise,checkout_enabled:r.checkoutEnabled,is_published:r.published,
       free_preview_count:r.freePreviewCount,version:r.version});
    }).filter((x:StudioSetting|null):x is StudioSetting=>x!==null):[];
-  snapshot=payload.ready&&products.length===2?{ready:true,products}:failed;
+  snapshot=payload.ready===true&&products.length===2&&new Set(products.map((p:StudioSetting)=>p.product)).size===2?{ready:true,products}:failed;
  }).catch(()=>{snapshot=failed})
- .finally(()=>{active=null;notify()});
+ .finally(()=>{window.clearTimeout(timeout);active=null;notify()});
  return active;
 }
 function subscribe(listener:()=>void){
@@ -32,15 +34,15 @@ function subscribe(listener:()=>void){
   void fetchSettings();
   window.addEventListener("focus",refresh);
   window.addEventListener("studio-config-changed",refresh);
-  window.addEventListener("visibilitychange",onVisibility);
-  polling=window.setInterval(()=>void fetchSettings(),60000);
+  document.addEventListener("visibilitychange",onVisibility);
+  polling=window.setInterval(()=>{if(document.visibilityState==="visible")void fetchSettings()},60000);
  }
  return ()=>{
   listeners.delete(listener);
   if(!listeners.size){
    window.removeEventListener("focus",refresh);
    window.removeEventListener("studio-config-changed",refresh);
-   window.removeEventListener("visibilitychange",onVisibility);
+   document.removeEventListener("visibilitychange",onVisibility);
    if(polling!==null)window.clearInterval(polling);
    polling=null;
   }

@@ -5,6 +5,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 3
+    # Revisit the ESLint major upgrade once all installed Next.js plugins support it.
+    ignore:
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
     groups:
       react-compatible-stack:
         patterns:

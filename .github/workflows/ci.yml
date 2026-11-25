@@ -31,19 +31,33 @@ jobs:
           cache: npm
       - name: Validate React runtime and types pairing
         id: pairing
-        run: node scripts/release/react-dependency-pair.mjs
+        run: |
+          node scripts/release/react-dependency-pair.mjs
+          node --test scripts/release/react-dependency-pair.test.mjs
+          node --experimental-strip-types --test src/modules/studio/checkout-status.test.ts
       - name: Verify catalog storage and review provenance
         id: storage
         run: node scripts/catalog/audit-storage.mjs
       - name: Install locked dependencies
         id: dependencies
         run: npm ci --no-audit --no-fund
+      - name: Validate installed React peer dependency graph
+        run: npm ls react react-dom @types/react @types/react-dom --all
+      - name: Full dependency advisory inventory (diagnostic)
+        run: |
+          npm audit --json > "$RUNNER_TEMP/neerva-dependency-audit.json" || true
+          node -e 'const a=require(process.argv[1]); if(a.error || !a.metadata) { console.log("Full advisory inventory unavailable"); } else { console.log("Full dependency advisory counts:",a.metadata.vulnerabilities); }' "$RUNNER_TEMP/neerva-dependency-audit.json"
       - name: Production dependency security audit
         id: security
         run: npm audit --omit=dev --audit-level=moderate
       - name: Release verification
         id: release
         run: npm run release:verify
+      - name: Validate lint toolchain and installed peer graph
+        run: |
+          node scripts/release/eslint-toolchain.mjs
+          node --test scripts/release/eslint-toolchain.test.mjs
+          npm ls eslint eslint-config-next next --all
       - name: Lint
         id: lint
         run: npm run lint
