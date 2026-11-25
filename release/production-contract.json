@@ -154,9 +154,9 @@
     "supabase/migrations/20261124113117_neerva_operations_incident_recovery_and_dealer_roles.sql"
   ],
   "protectedGitBlobs": {
-    "src/app/api/orders/route.ts": "7f10d7ffc56e431ddcf87006b2bd782c160f10c6",
+    "src/app/api/orders/route.ts": "696b92b7e488e83b1a98bb65cb447ffab8be046e",
     "src/modules/orders/backend.ts": "727869915623cbb664744b696e0637c9d9bd2488",
-    "src/modules/identity/server-auth.ts": "f0f8378ae4bdfd434767cf0bb46999a6a1afcc8e",
+    "src/modules/identity/server-auth.ts": "d249e64b5a7a2329097898ff716da075c4893a1c",
     "src/app/api/admin/catalog/route.ts": "11657a7ecf0beeb112cabaae1839ab0131929570",
     "src/app/api/admin/pricing/route.ts": "2423a0a2bb9952b68d434a6d936ea5c768bb22f9",
     "src/app/api/admin/rfqs/route.ts": "d74ea8907d49353a9c29f86b53cd75732c4efde1",
@@ -251,5 +251,12 @@
       "reason": "Distinct additive foreign-key lookup index; avoids a duplicate numbered migration or RLS drift.",
       "validation": "Release source hash, migration preflight and database index inspection"
     }
-  ]
+  ],
+  "reviewedPredictiveRiskChanges20261125": {
+    "paths": [
+      "src/modules/identity/server-auth.ts",
+      "src/app/api/orders/route.ts"
+    ],
+    "scope": "Distinguish authentication outages from expired sessions; compare delivery address for idempotent accepted-offer retries. Static review; runtime tests required."
+  }
 }

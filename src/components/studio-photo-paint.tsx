@@ -1,6 +1,7 @@
 "use client";
 import {useCallback,useEffect,useRef,useState,type ChangeEvent,type PointerEvent as ReactPointerEvent} from "react";
 import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type MaskCorner} from "@/modules/studio/mask-editor";
+import {encodedPhotoDimensions,photoDimensionsAllowed,maxPreviewSide} from "@/modules/studio/photo-budget";
 import {finishes,patternKeys,type Pattern,type Motif} from "@/modules/studio/wall-patterns";
 type PhotoMask={outline:number[][];holes?:number[][][]};
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
@@ -47,7 +48,7 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
  const [pattern,setPattern]=useState<Pattern>("plain"),[accent,setAccent]=useState("#c4925f");
  const [override,setOverride]=useState<{source:string;value:string}|null>(null);
  const base=override?.source===colour?override.value:colour;
- const canvas=useRef<HTMLCanvasElement>(null),image=useRef<HTMLImageElement|null>(null),url=useRef<string|null>(null);
+ const canvas=useRef<HTMLCanvasElement>(null),image=useRef<HTMLCanvasElement|null>(null),url=useRef<string|null>(null),pending=useRef<HTMLImageElement|null>(null),generation=useRef(0);
  const [history,setHistory]=useState(emptyMaskHistory),[ready,setReady]=useState(false);
  const [closeUp,setCloseUp]=useState(false);
  const [showOriginal,setShowOriginal]=useState(false),[message,setMessage]=useState("Choose a local photo, then mark four corners of one wall clockwise.");
@@ -78,33 +79,45 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   }
  },[points,base,accent,pattern,walls,editing,ready,showOriginal,valid,currentMask]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask)=>{
+  const ticket=++generation.current;
+  if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}
+  if(image.current){image.current.width=0;image.current.height=0;}
   setCloseUp(false);setPreset(corners&&mask?{points:corners,mask}:null);
   if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);
   setWalls([]);setEditing(null);url.current=next;image.current=null;setReady(false);
   setHistory(emptyMaskHistory());setShowOriginal(false);
-  const img=new Image();
+  const img=new Image();pending.current=img;
+  const release=()=>{img.onload=null;img.onerror=null;img.src="";if(pending.current===img)pending.current=null;if(url.current===next&&next.startsWith("blob:")){URL.revokeObjectURL(next);url.current=null;}};
   img.onload=()=>{
-   if(url.current!==next)return;
-   const el=canvas.current;if(!el)return;
-   const scale=Math.min(1,1280/Math.max(img.naturalWidth,img.naturalHeight));
-   el.width=Math.max(1,Math.round(img.naturalWidth*scale));
-   el.height=Math.max(1,Math.round(img.naturalHeight*scale));
-   image.current=img;setReady(true);
+   if(generation.current!==ticket){release();return;}
+   const el=canvas.current;if(!el){release();return;}
+   if(!photoDimensionsAllowed(img.naturalWidth,img.naturalHeight)){release();setMessage("Photo dimensions are too large. Resize the image before trying again.");return;}
+   const scale=Math.min(1,maxPreviewSide/Math.max(img.naturalWidth,img.naturalHeight));
+   const source=document.createElement("canvas");source.width=Math.max(1,Math.round(img.naturalWidth*scale));source.height=Math.max(1,Math.round(img.naturalHeight*scale));
+   const context=source.getContext("2d");if(!context){release();setMessage("Photo preview unavailable on this device.");return;}
+   try{context.drawImage(img,0,0,source.width,source.height);}catch{release();setMessage("Could not prepare this photo. Try a smaller image.");return;}
+   el.width=source.width;el.height=source.height;image.current=source;release();setReady(true);
    if(corners){setHistory({points:corners,redo:[]});setMessage("Wall selected. Try a colour or pattern below.");return}
    setMessage("Tap the top-left corner first, then top-right, bottom-right and bottom-left. Avoid windows or doors if possible.");
   };
-  img.onerror=()=>{if(url.current!==next)return;image.current=null;setReady(false);setMessage("Image could not be opened. Try another photo.")};
+  img.onerror=()=>{if(generation.current!==ticket){release();return;}release();image.current=null;setReady(false);setMessage("Image could not be opened. Try another photo.")};
   img.src=next;
  },[]);
  const openRoom=useCallback(()=>{openPhoto("/images/studio/paint-room.webp",[{x:40/420,y:34/280},{x:373/420,y:37/280},{x:373/420,y:215/280},{x:40/420,y:215/280}],roomMask)},[openPhoto]);
  function openFacade(){openPhoto("/images/studio/finished.webp",[{x:474/750,y:32/250},{x:598/750,y:32/250},{x:598/750,y:200/250},{x:474/750,y:200/250}],facadeMask)}
- useEffect(()=>{const frame=requestAnimationFrame(openRoom);return ()=>{cancelAnimationFrame(frame);if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null}},[openRoom]);
- function load(e:ChangeEvent<HTMLInputElement>){
+ useEffect(()=>{const frame=requestAnimationFrame(openRoom);return ()=>{++generation.current;cancelAnimationFrame(frame);if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
+ async function load(e:ChangeEvent<HTMLInputElement>){
   const f=e.target.files?.[0];e.target.value="";if(!f)return;
   if(!["image/jpeg","image/png","image/webp"].includes(f.type)||f.size>10*1024*1024){
     setMessage("Choose a JPG, PNG or WebP under 10 MB.");return;
   }
-  openPhoto(URL.createObjectURL(f));
+  const ticket=++generation.current;
+  try{
+   const dimensions=encodedPhotoDimensions(new Uint8Array(await f.slice(0,1024*1024).arrayBuffer()));
+   if(ticket!==generation.current)return;
+   if(!dimensions||!photoDimensionsAllowed(dimensions.width,dimensions.height)){setMessage("Choose a still photo up to 16 megapixels. Resize unsupported or larger files first.");return;}
+   openPhoto(URL.createObjectURL(f));
+  }catch{if(ticket===generation.current)setMessage("Could not read this photo. Try another image.");}
  }
  function addPoint(e:ReactPointerEvent<HTMLCanvasElement>){
   if(!ready||points.length>=4)return;
