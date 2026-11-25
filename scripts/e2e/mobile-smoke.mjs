@@ -45,7 +45,11 @@ async function main(){
    await page.goto(base+"/",{waitUntil:"load"});
    const housePhotos=await page.locator(".nbh-house-strip img,.nbh-studio-photo img,.nbh-photo-hero img").evaluateAll(imgs=>imgs.map(img=>{const src=img.getAttribute("src")??"";return new URL(src,location.origin).searchParams.get("url")??src;}));
    assert.equal(new Set(housePhotos).size,housePhotos.length,"No repeated house photograph across home sections");
-   assert.equal(await page.locator(".nbh-family-card").count(),4,"Practical family and material planning choices");
+   assert.equal(await page.locator(".nbh-family-card").count(),0,"Keep the premium homepage focused");
+   assert.equal(await page.locator(".nbh-family-entry").count(),1,"Family planning entry point");
+   await page.goto(base+"/family-homes",{waitUntil:"load"});
+   assert.equal(await page.locator(".nbh-family-card").count(),4,"Separate family planning page");
+   await page.goto(base+"/",{waitUntil:"load"});
    const categoryCards=page.locator(".nbh-material-card");
    assert.equal(await categoryCards.count(),9,"all home material categories");
    assert.ok((await categoryCards.evaluateAll(cards=>cards.every(c=>c.querySelectorAll(".nbh-material-image img").length===1))),"one primary image per category card");
