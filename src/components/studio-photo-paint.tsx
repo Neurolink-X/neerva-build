@@ -3,7 +3,8 @@ import {useCallback,useEffect,useRef,useState,type ChangeEvent,type PointerEvent
 import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type MaskCorner} from "@/modules/studio/mask-editor";
 import {encodedPhotoDimensions,photoDimensionsAllowed,maxPreviewSide} from "@/modules/studio/photo-budget";
 import {finishes,patternKeys,type Pattern,type Motif} from "@/modules/studio/wall-patterns";
-import {facadeZones,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget} from "@/modules/studio/facade-paint";
+import Image from "next/image";
+import {facadeSamples,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
 type Wall={mask?:PhotoMask;points:MaskCorner[];colour:string;accent:string;pattern:Pattern;opacity?:number};
 function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinted?:HTMLCanvasElement){
@@ -45,6 +46,9 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
  const [pattern,setPattern]=useState<Pattern>("bands"),[accent,setAccent]=useState("#c4925f");
  const [mode,setMode]=useState<"paint"|"design">("paint"),[opacity,setOpacity]=useState(.78);
  const [scene,setScene]=useState<"room"|"facade"|"custom">("room"),[target,setTarget]=useState<FacadeTarget>("all"),[facadeStyles,setFacadeStyles]=useState<FacadeStyles>({});
+ const [sampleId,setSampleId]=useState<FacadeSampleId>("family");
+ const sample=facadeSamples.find(s=>s.id===sampleId)??facadeSamples[0];
+ const facadeZones=sample.zones;
  const [originalKey,setOriginalKey]=useState("");
 
  const [override,setOverride]=useState<{source:string;value:string}|null>(null);
@@ -57,7 +61,7 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
  const points=history.points,valid=validWallMask(points);
  const effectivePattern=activePattern(mode,pattern);
  const currentStyle:PaintStyle={colour:base,accent,pattern:effectivePattern,opacity};
- const styleKey=JSON.stringify([base,accent,effectivePattern,opacity,target]);
+ const styleKey=JSON.stringify([base,accent,effectivePattern,opacity,target,sampleId]);
  const originalVisible=showOriginal&&originalKey===styleKey;
  const focusPoints=scene==="facade"?facadeZones.find(z=>z.id===target)?.points??[]:points;
  const canInspect=focusPoints.length===4&& (scene==="facade"||valid);
@@ -72,7 +76,7 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   ctx.clearRect(0,0,w,h);ctx.drawImage(img,0,0,w,h);
   if(!originalVisible){
    if(scene==="facade"){
-    const styles=stylesForTarget(facadeStyles,target,{colour:base,accent,pattern:effectivePattern,opacity});
+    const styles=stylesForTarget(facadeStyles,target,{colour:base,accent,pattern:effectivePattern,opacity},facadeZones);
     let original:ImageData|undefined;
     const shades=tintCache.current;
     for(const zone of facadeZones){
@@ -107,7 +111,7 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
     ctx.fillText(String(i+1),p.x*w+9,p.y*h-8);ctx.fillStyle="#ffe16a";
    }ctx.restore();
   }
- },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles]);
+ },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask)=>{
   const ticket=++generation.current;
   tintCache.current.clear();
@@ -135,10 +139,14 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   img.src=next;
  },[]);
  const openRoom=useCallback(()=>{setScene("room");openPhoto("/images/studio/paint-room.webp",[{x:40/420,y:34/280},{x:373/420,y:37/280},{x:373/420,y:215/280},{x:40/420,y:215/280}],roomMask)},[openPhoto]);
- function openFacade(){if(scene==="facade"&&ready)return;setScene("facade");setTarget("all");setFacadeStyles({});setMode("paint");openPhoto("/images/studio/finished.webp");}
+ function openFacade(id:FacadeSampleId=sampleId){
+  if(scene==="facade"&&ready&&id===sampleId)return;
+  const next=facadeSamples.find(s=>s.id===id)??facadeSamples[0];
+  setScene("facade");setSampleId(next.id);setTarget("all");setFacadeStyles({});setMode("paint");openPhoto(next.src);
+ }
  function chooseTarget(next:FacadeTarget){
   if(next===target)return;
-  const saved=stylesForTarget(facadeStyles,target,currentStyle);
+  const saved=stylesForTarget(facadeStyles,target,currentStyle,facadeZones);
   setFacadeStyles(saved);setTarget(next);setShowOriginal(false);setCloseUp(false);
   const style=next==="all"?undefined:saved[next];
   if(style){setAccent(style.accent);setOpacity(style.opacity);setMode(style.pattern==="plain"?"paint":"design");if(style.pattern!=="plain")setPattern(style.pattern);
@@ -146,7 +154,7 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
  }
  function chooseMode(next:"paint"|"design"){
   if(next==="design"&&mode==="paint"&&scene==="facade"&&target==="all"){
-   setFacadeStyles(stylesForTarget(facadeStyles,target,currentStyle));setTarget("right");setCloseUp(false);
+   setFacadeStyles(stylesForTarget(facadeStyles,target,currentStyle,facadeZones));setTarget("right");setCloseUp(false);
   }
   setMode(next);setShowOriginal(false);
  }
@@ -183,13 +191,14 @@ export function StudioPhotoPaint({colour,onColourChange}:{colour:string;onColour
   },"image/png");
  }
  return <section className="nbd-photo" aria-label="Private wall colour preview">
-  <div className="paint-source"><button type="button" aria-pressed={scene==="room"} onClick={openRoom}>Sample room</button><button type="button" aria-pressed={scene==="facade"} onClick={openFacade}>Sample house exterior</button><label>Use my home photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label></div>
+  <div className="paint-source"><button type="button" aria-pressed={scene==="room"} onClick={openRoom}>Sample room</button><button type="button" aria-pressed={scene==="facade"} onClick={()=>openFacade()}>Sample house exterior</button><label>Use my home photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label></div>
+  {scene==="facade"&&<div className="paint-sample-gallery" role="group" aria-label="Choose sample house">{facadeSamples.map(s=><button key={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><Image src={s.src} alt="" fill sizes="(max-width:600px) 30vw, 180px" loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
   <div className="paint-mode" role="group" aria-label="Paint preview mode"><button type="button" aria-pressed={mode==="paint"} onClick={()=>chooseMode("paint")}>Plain paint</button><button type="button" aria-pressed={mode==="design"} onClick={()=>chooseMode("design")}>Paint + design</button></div>
   {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}</button>)}</div>}
   <p role="status">{ready&&scene==="facade"?"Full exterior applies the chosen shade to all marked surfaces. Choose a section for a separate accent or pattern. Unmarked details are preserved.":points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
   {ready&&canInspect&&<button type="button" aria-pressed={closeUp} onClick={()=>setCloseUp(v=>!v)}>{closeUp?"See whole scene":"Inspect selected wall"}</button>}
   <div style={{overflow:"hidden",borderRadius:12}}>
-  <canvas ref={canvas} role="img" aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Photo of your wall. Tap four corners clockwise to choose a painting region"} onPointerDown={addPoint}
+  <canvas data-sample={scene==="facade"?sampleId:scene} ref={canvas} role="img" aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Photo of your wall. Tap four corners clockwise to choose a painting region"} onPointerDown={addPoint}
     style={{transform:wallZoom,transformOrigin:wallCentre,display:ready?"block":"none",width:"100%",height:"auto",cursor:scene!=="facade"&&points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   </div>
   {ready&&scene==="facade"&&<div className="paint-actions"><button type="button" aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?"Show new paint":"View original"}</button><button type="button" disabled={originalVisible} onClick={saveImage}>Save colour preview</button><button type="button" onClick={()=>{setFacadeStyles({});setTarget("all");setMode("paint");setCloseUp(false);setShowOriginal(false)}}>Reset exterior sections</button></div>}
