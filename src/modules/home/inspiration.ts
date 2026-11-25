@@ -29,3 +29,14 @@ export function boardQuery(b:Board){const safe=parseBoard(b);return new URLSearc
 export function boardFromQuery(query:string):Board|null{const p=new URLSearchParams(query);if(!p.has("ideas")&&!p.has("palette"))return null;return parseBoard({ids:(p.get("ideas")??"").slice(0,300).split(","),palette:p.get("palette")})}
 
 export function readBoard(raw:string|null):Board{try{return parseBoard(raw&&raw.length<=4096?JSON.parse(raw):null)}catch{return parseBoard(null)}}
+
+export const libraryKey="neerva-inspiration-library-v2",maxBoards=6;
+export type NamedBoard=Board&{id:string;name:string};
+export type Library={active:string;boards:NamedBoard[]};
+export function defaultLibrary(legacy?:Board):Library{return {active:"default",boards:[{...parseBoard(legacy),id:"default",name:"My first board"}]}}
+export function parseLibrary(raw:unknown,legacy?:Board):Library{const v=raw&&typeof raw==="object"?raw as Partial<Library>:{};const boards:NamedBoard[]=[];if(Array.isArray(v.boards))for(const b of v.boards.slice(0,maxBoards)){if(!b||typeof b.id!=="string"||!/^[a-z0-9-]{1,40}$/.test(b.id)||boards.some(x=>x.id===b.id)||typeof b.name!=="string"||!b.name.trim())continue;boards.push({...parseBoard(b),id:b.id,name:b.name.trim().slice(0,40)})}return boards.length?{active:boards.some(b=>b.id===v.active)?v.active!:boards[0].id,boards}:defaultLibrary(legacy)}
+export function readLibrary(raw:string|null,legacy?:Board){try{return parseLibrary(raw&&raw.length<=8192?JSON.parse(raw):null,legacy)}catch{return defaultLibrary(legacy)}}
+export function activeBoard(l:Library){return l.boards.find(b=>b.id===l.active)??l.boards[0]}
+export function updateBoard(l:Library,b:Board):Library{return {...l,boards:l.boards.map(x=>x.id===l.active?{...x,...parseBoard(b)}:x)}}
+export function addBoard(l:Library,id:string,name:string,board?:Board):Library{if(l.boards.length>=maxBoards||l.boards.some(b=>b.id===id)||!name.trim())return l;return parseLibrary({active:id,boards:[...l.boards,{...parseBoard(board),id,name}]})}
+export function removeBoard(l:Library,id:string):Library{return l.boards.length<=1?l:parseLibrary({...l,boards:l.boards.filter(b=>b.id!==id)})}
