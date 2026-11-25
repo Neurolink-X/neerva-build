@@ -7,6 +7,7 @@ on:
         type: boolean
         default: true
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches: [main]
     paths:
       - 'src/modules/catalog/**'
@@ -23,6 +24,7 @@ permissions:
   contents: read
 jobs:
   audit:
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
     runs-on: ubuntu-latest
     timeout-minutes: 8
     steps:

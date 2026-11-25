@@ -2,6 +2,7 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   push:
     branches: [main, feat/platform-foundation]
   workflow_dispatch:
@@ -15,6 +16,7 @@ concurrency:
 
 jobs:
   verify:
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -54,9 +56,22 @@ jobs:
       - name: Unit and regression tests
         id: tests
         run: npm test
+      - name: Restore trusted Next.js incremental cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .next/cache
+          key: neerva-next-v1-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts', 'tsconfig.json') }}
+          restore-keys: |
+            neerva-next-v1-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}-
       - name: Production build
         id: build
         run: npm run build
+      - name: Save incremental cache from successful main build
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/cache/save@v4
+        with:
+          path: .next/cache
+          key: neerva-next-v1-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts', 'tsconfig.json') }}
       - name: Record verification outcomes
         if: always()
         env:
@@ -88,5 +103,5 @@ jobs:
         with:
           name: ci-verification-outcomes
           path: ci-evidence/outcomes.txt
-          retention-days: 14
+          retention-days: 7
           if-no-files-found: warn

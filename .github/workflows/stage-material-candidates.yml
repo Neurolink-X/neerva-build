@@ -1,8 +1,10 @@
 name: Stage material photo and brand candidates
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches: [main]
     paths: ['scripts/catalog/material-photo-review-candidates.json', '.github/workflows/stage-material-candidates.yml']
+  workflow_dispatch:
   push:
     branches: ['feat/catalog-media-integrity']
     paths: ['scripts/catalog/material-photo-review-candidates.json']
@@ -14,7 +16,7 @@ permissions:
   contents: read
 jobs:
   stage:
-    if: github.repository == 'Neurolink-X/neerva-build'
+    if: ${{ (github.event_name != 'pull_request' || github.event.pull_request.draft == false) }}
     runs-on: ubuntu-latest
     timeout-minutes: 7
     steps:
