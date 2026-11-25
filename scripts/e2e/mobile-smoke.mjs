@@ -78,6 +78,24 @@ async function main(){
      await page.setViewportSize({width:v.w,height:v.h});
     }
    }
+   if(v.w===390||v.w===1440){
+    // A fresh context ensures a direct brand route never relies on materials CSS from prior navigation.
+    const brandContext=await browser.newContext({viewport:{width:v.w,height:v.h}});
+    try{
+     const brandPage=await brandContext.newPage();
+     const response=await brandPage.goto(base+"/brands/cement/ultratech",{waitUntil:"load",timeout:60000});
+     assert.equal(response?.status(),200,"direct brand detail route");
+     const cards=brandPage.locator(".br-card .tile-swatch .catalog-material-image");
+     assert.ok(await cards.count()>0,"brand range must contain product cards");
+     const errors=await cards.evaluateAll(items=>items.flatMap(el=>{
+      const container=el.getBoundingClientRect(),card=el.closest(".br-card").getBoundingClientRect();
+      const child=el.querySelector("img,.catalog-material-identity");
+      const inside=child?.getBoundingClientRect();
+      return getComputedStyle(el).position!=="relative"||container.height<100||container.left<card.left-1||container.right>card.right+1||(inside&&(inside.left<container.left-1||inside.right>container.right+1||inside.top<container.top-1||inside.bottom>container.bottom+1))?["uncontained brand media"]:[];
+     }));
+     assert.deepEqual(errors,[],"direct brand route positions media and specification fallback safely");
+    }finally{await brandContext.close();}
+   }
    if(v.w===390){
     // Verify role shells, legal/support destinations, and catalog routes not in the
     // repeated five-viewport sample. Status checks avoid creating fake test orders.
@@ -188,11 +206,27 @@ async function main(){
     assert.equal(await page.locator(".product-gallery-caption").count(),1,"gallery has a single truthful caption below the photo");
     assert.equal(await page.locator(".product-gallery-stage .catalog-image-note").count(),0,"no duplicate overlaid labels in product photo");
     assert.equal(await page.locator(".city-select").count(),0,"header does not show a fake location picker");
+    // CPVC has no identity-reviewed manufacturer photo yet. Do not require
+    // unrelated generic pipe images to satisfy the gallery regression.
+    const cpvcStage=page.locator(".product-gallery-stage");
+    if(await cpvcStage.locator("img").count()===0){
+      assert.match(await page.locator(".product-gallery-caption").innerText(),/Product specifications/);
+      assert.equal(await page.locator(".product-gallery-thumbs button").count(),0);
+    }else{
+      assert.ok(await cpvcStage.locator("img").getAttribute("alt"),"CPVC photo has a meaningful description");
+    }
+    // The approved 20 mm aggregate family has two distinct bundled photos.
+    // Keep the real multi-view gallery test, including local decoding.
+    await page.goto(base+"/materials/aggregates/gitti-20mm",{waitUntil:"load"});
+    const hero=page.locator(".product-gallery-stage img");
+    await hero.scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>{const img=document.querySelector(".product-gallery-stage img");return !!img&&img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin;},null,{timeout:15000});
     const photoThumbs=page.locator(".product-gallery-thumbs button");
     assert.ok(await photoThumbs.count()>=2,"catalog product has distinct locally cached material photo views");
     const firstHeroSource=await page.locator(".product-gallery-stage img").getAttribute("src");
     await photoThumbs.nth(1).click();
     assert.notEqual(await page.locator(".product-gallery-stage img").getAttribute("src"),firstHeroSource,"second thumbnail displays different image");
+    await page.waitForFunction(()=>{const img=document.querySelector(".product-gallery-stage img");return !!img&&img.complete&&img.naturalWidth>0&&new URL(img.currentSrc).origin===location.origin;},null,{timeout:15000});
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     const pack=page.locator(".product-gallery-stage img");
     // load does not guarantee deferred/lazy product images have decoded on mobile.
@@ -216,6 +250,7 @@ async function main(){
     assert.equal(cat?.status(),200,"steel category route");
     const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"load"});
     assert.equal(details?.status(),200,"specific material detail route");
+    await page.getByText("Planning a project? Save to material list",{exact:true}).click();
     const add=page.getByRole("button",{name:"Add to material list"});
     assert.equal(await add.count(),1,"a product must provide an actionable add button");
     await add.click();
@@ -227,6 +262,29 @@ async function main(){
     const prepareQuote=page.getByRole("link",{name:/Prepare dealer quote/});
     await prepareQuote.waitFor({timeout:15000});
     assert.match((await prepareQuote.getAttribute("href"))??"",/^\/quotes\?/,"list quote link should target quote preparation");
+    // Exercise a genuine guest order-cart journey, without creating a production order.
+    await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
+    await page.locator(".product-request-config input[type=number]").fill("3");
+    await page.getByRole("button",{name:"Add to order cart",exact:true}).click();
+    await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"load"});
+    await page.getByRole("button",{name:"Add to order cart",exact:true}).click();
+    await page.getByRole("link",{name:/View order cart/}).click();
+    await page.getByRole("heading",{name:"Order cart (2)"}).waitFor();
+    const firstCart=page.locator("article.admin-record").first();
+    await firstCart.locator("input[name=quantity]").fill("5");
+    await firstCart.getByRole("button",{name:"Update quantity"}).click();
+    await page.reload({waitUntil:"load"});
+    await page.getByRole("heading",{name:"Order cart (2)"}).waitFor();
+    assert.equal(await page.locator("article.admin-record input[name=quantity]").first().inputValue(),"5","quantity persists after reload");
+    await page.getByRole("button",{name:"Continue to checkout"}).click();
+    const signIn=page.getByRole("link",{name:/Sign in and continue/});
+    await signIn.waitFor();
+    assert.equal(new URL(await signIn.getAttribute("href"),base).searchParams.get("next"),"/checkout?cart=1","cart survives the sign-in return");
+    await page.getByRole("button",{name:/Edit cart/}).click();
+    await page.locator("article.admin-record").last().getByRole("button",{name:"Remove"}).click();
+    await page.getByRole("heading",{name:"Order cart (1)"}).waitFor();
+    await page.locator("article.admin-record").first().getByRole("button",{name:"Remove"}).click();
+    await page.getByText(/Your order cart is empty/).waitFor();
     const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
     assert.equal(visual?.status(),200,"colour editor route");
     await page.getByRole("button",{name:"Sample house exterior"}).click();
@@ -395,15 +453,15 @@ async function main(){
     "/api/admin/orders","/api/admin/pricing","/api/admin/rfqs",
     "/api/admin/studio-payments","/api/admin/studio-settings","/api/admin/studio-support",
     "/api/admin/system-incidents","/api/admin/users","/api/customer/quotes",
-    "/api/dealer/inventory","/api/dealer/quotes","/api/dealer/orders","/api/orders",
+    "/api/dealer/inventory","/api/dealer/quotes","/api/dealer/orders","/api/orders","/api/direct-orders",
     "/api/studio/payments","/api/studio/projects","/api/studio/support"],
    POST:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/pricing",
     "/api/admin/rfqs","/api/admin/users","/api/dealer/inventory","/api/dealer/quotes",
-    "/api/orders","/api/rfqs","/api/studio/payments","/api/studio/payments/claim",
+    "/api/orders","/api/direct-orders","/api/rfqs","/api/studio/payments","/api/studio/payments/claim",
     "/api/studio/premium-report","/api/studio/projects","/api/studio/support"],
    PATCH:["/api/admin/catalog/campaigns","/api/admin/catalog","/api/admin/fulfilment",
     "/api/admin/pricing","/api/admin/studio-payments","/api/admin/studio-settings",
-    "/api/admin/studio-support","/api/admin/users","/api/admin/orders","/api/dealer/orders","/api/orders"],
+    "/api/admin/studio-support","/api/admin/users","/api/admin/orders","/api/dealer/orders","/api/orders","/api/direct-orders"],
    DELETE:["/api/studio/payments"]
   };
   for(const [method,routes] of Object.entries(protectedMatrix)){

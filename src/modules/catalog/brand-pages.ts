@@ -1,7 +1,8 @@
 import {brandDirectory, getCategory, getProductsByCategory} from "./marketplace.ts";
 import {groupCatalogByPhoto} from "./media-usage.ts";
 import {categoryImage} from "./public-products.ts";
-import {hardwareReference} from "./hardware-references.ts";
+import {hardwareReference,hardwareGroups} from "./hardware-references.ts";
+import {usableMediaSource} from "./failed-media-sources.ts";
 import {paintReference} from "./paint-references.ts";
 import {localBrandAsset} from "./brand-media.ts";
 
@@ -40,13 +41,17 @@ export const brandIdentityEvidence:Record<string,{manufacturer:string;source:str
 export function directoryCards(category:string){
   return brandDirectory.filter(b=>b.category===category).map(({name})=>{
     const products=getProductsByCategory(category).filter(p=>p.brand===name);
-    const pictured=products.find(p=>p.referenceImage);
-    const paint=category==="paint"?products.map(p=>paintReference(p.slug)).find(p=>p?.image):undefined;
-    const hardware=category==="hardware"?products.map(p=>hardwareReference(p.slug)).find(p=>p?.image):undefined;
+    const pictured=products.find(p=>p.referenceImage&&usableMediaSource(p.referenceImage));
+    const paint=category==="paint"?products.map(p=>paintReference(p.slug)).find(p=>p?.image&&usableMediaSource(p.image)):undefined;
+    const hardware=category==="hardware"?products.map(p=>hardwareReference(p.slug)).find(p=>p?.image&&usableMediaSource(p.image)):undefined;
     const range=rangeMedia[category+":"+name]??(hardware?.image&&hardware.source?{image:hardware.image,alt:name+" retailer product reference",source:hardware.source}:undefined)??(paint?.image?{image:paint.image,alt:name+" manufacturer product photograph",source:paint.source}:undefined);
     const identity=brandIdentityEvidence[category+":"+name]??null;
-    return {name,category,href:brandPath(category,name),count:products.length,familyCount:groupCatalogByPhoto(products).length,identity,
-      image:pictured?.referenceImage??null,alt:pictured?.name??"",rangeImage:range?localBrandAsset(range.image):null,rangeAlt:range?.alt??"",rangeSource:range?.source??null,
+    const groups=[...new Set(products.map(p=>hardwareReference(p.slug)?.group).filter((g):g is NonNullable<typeof g>=>Boolean(g)))];
+    const department=category==="hardware"&&groups.length===1?hardwareGroups[groups[0]]:undefined;
+    const buyingGuide=category==="hardware"&&groups.every(g=>["doors","furniture","windows"].includes(g))&&groups.length?"Confirm mounting dimensions, lock backset, finish, handedness and compatible door or cabinet thickness.":category==="hardware"&&groups.length&&groups.every(g=>["adhesives","tiling","sealants"].includes(g))?"Confirm substrate, tile type, adhesive class, pack weight and installation instructions.":undefined;
+    const safeRange=range&&usableMediaSource(range.image)?range:undefined;
+    return {name,category,href:brandPath(category,name),count:products.length,familyCount:groupCatalogByPhoto(products).length,identity,department,buyingGuide,
+      image:pictured?.referenceImage??null,alt:pictured?.name??"",rangeImage:safeRange?localBrandAsset(safeRange.image):null,rangeAlt:safeRange?.alt??"",rangeSource:safeRange?.source??null,
       detail:pictured?.name??products[0]?.name??`Request ${name} ${getCategory(category)?.title.toLowerCase()}`};
   });
 }

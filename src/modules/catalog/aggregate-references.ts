@@ -2,6 +2,7 @@ import type {DemoProduct} from "./marketplace.ts";
 export type AggregateGroup="morang"|"balu"|"gitti";
 type Row=[string,string,string,AggregateGroup,string,string,string];
 const rows:Row[]=[
+ ["concrete-sand","Concrete sand","कंक्रीट की बालू","balu","Sand intended for concrete; verify grading and natural or manufactured origin","Concrete only with approved mix design","Sieve analysis, fines, moisture, source and mix approval"],
   [
     "morang-coarse-sand",
     "Morang / coarse sand",

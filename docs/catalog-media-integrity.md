@@ -1,0 +1,7 @@
+# Media integrity release process
+
+- Existing local reference media remains intact. Never label a retailer pack as merchant-verified stock.
+- New approved assets use approved-family-media.ts; store unique WebP files below public/images/catalog/approved/ with their SHA-256-derived filename. Record source type, URL, licence/permission, dimensions, bytes, alternative text, view and scope. An SKU record must match the exact slug; family records are explicitly representative. Do not publish unreviewed candidates. Prefer one primary and two distinct secondary views. The automated test validates files, hashes, dimensions metadata, view uniqueness and family identity; humans must verify image content and rights.
+- Candidate source registry: scripts/catalog/media-source-candidates.json. This is not a publication manifest. Existing staged brand assets remain private until rights approval. No new remote downloads are claimed.
+- Missing exact photos render material-specific specification cards, never a photo of the wrong product. Aggregate group samples and generic pipe cross-family images are no longer used for individual grades. Admin catalog contains a reference media coverage audit; existing protected product upload remains available for real merchant photos.
+- Future work: acquire and visually inspect missing exact photos, populate manifest, verify actual images against metadata, publish rights-cleared brand assets, and expand photo coverage. A reference catalog must not imply real dealer stock.

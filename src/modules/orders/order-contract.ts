@@ -41,14 +41,25 @@ export function failOrder(status:number,error:string){
  return Response.json({error},{status,headers:ORDER_RESPONSE_HEADERS});
 }
 export async function parseOrderJson(req:Request,maxBytes=4096):Promise<unknown|null>{
- if(!req.headers.get("content-type")?.toLowerCase().includes("application/json"))return null;
- const length=Number(req.headers.get("content-length")??0);
- if(!Number.isFinite(length)||length>maxBytes)return null;
+ if(req.headers.get("content-type")?.split(";")[0].trim().toLowerCase()!=="application/json")return null;
+ if(!Number.isSafeInteger(maxBytes)||maxBytes<=0)return null;
+ const length=req.headers.get("content-length");
+ if(length!==null&&(!/^\d+$/.test(length)||!Number.isSafeInteger(Number(length))||Number(length)>maxBytes))return null;
+ if(!req.body)return null;
+ const reader=req.body.getReader();
  try{
-  const text=await req.text();
-  if(Buffer.byteLength(text,"utf8")>maxBytes)return null;
+  const decoder=new TextDecoder("utf-8",{fatal:true});
+  let total=0,text="";
+  for(;;){
+   const {done,value}=await reader.read();
+   if(done)break;
+   total+=value.byteLength;
+   if(total>maxBytes){void reader.cancel().catch(()=>{});return null;}
+   text+=decoder.decode(value,{stream:true});
+  }
+  text+=decoder.decode();
   return JSON.parse(text) as unknown;
- }catch{return null;}
+ }catch{return null;}finally{reader.releaseLock();}
 }
 export function statusForOrderError(error:{code?:string;message?:string}|null|undefined):number{
  if(!error)return 503;

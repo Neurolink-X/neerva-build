@@ -22,10 +22,10 @@ import "../../brands/brands.css";
 const pipeApplications = [
  {title:"Hot & cold water",description:"Water supply to kitchens, bathrooms and tanks",category:"plumbing",families:["generic-cpvc","generic-upvc-pressure","generic-ppr","generic-pex","generic-hdpe"]},
  {title:"Bathroom fitting lines",description:"Basin, shower, floor drain and waste connections",category:"plumbing",families:["generic-cpvc","generic-plumbing-fitting","generic-trap","generic-coupler"]},
- {title:"Water tank & pump connections",description:"Inlet, outlet, overflow, isolation valves and pump lines",category:"plumbing",families:["generic-upvc-pressure","generic-hdpe","generic-ball-valve","generic-union","generic-suction-hose"]},
+ {title:"Water tank & pump connections",description:"Inlet, outlet, overflow, isolation valves and pump lines",category:"plumbing",families:["generic-upvc-pressure","generic-hdpe","generic-ball-valve","generic-union","generic-suction-hose","generic-tank-inlet-pipe","generic-pump-delivery-pipe","generic-flex-pump-connector"]},
  {title:"Drainage & rainwater",description:"Soil, waste, rainwater and buried drainage",category:"plumbing",families:["generic-upvc","generic-rainwater","generic-underground-drain","generic-trap"]},
  {title:"Borewell & outdoor",description:"Pump connections, casing, garden and suction",category:"plumbing",families:["generic-column","generic-casing","generic-suction-hose","generic-garden-hose"]},
- {title:"Plumbing fittings",description:"Compatible joints, valves and installation accessories",category:"plumbing",families:["generic-plumbing-fitting","generic-tee","generic-coupler","generic-reducer","generic-union","generic-ball-valve","generic-pipe-clamp","generic-solvent"]},
+ {title:"Plumbing fittings",description:"Compatible joints, valves and installation accessories",category:"plumbing",families:["generic-plumbing-fitting","generic-pvc-elbow90","generic-tee","generic-coupler","generic-reducer","generic-union","generic-ball-valve","generic-pipe-clamp","generic-solvent"]},
  {title:"Electrical conduit & cable ducts",description:"Separate systems for protected electrical wiring",category:"electrical",families:["generic-conduit","generic-heavy-conduit","generic-flex-conduit","generic-dwc-duct","generic-casing-capping","generic-conduit-bend","generic-conduit-coupler","generic-junction-box","generic-conduit-clamp"]}
 ];
 function PipeApplications({category}:{category:string}){

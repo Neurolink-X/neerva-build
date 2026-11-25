@@ -1,0 +1,427 @@
+[
+  {
+    "key": "red-coarse-sand",
+    "filename": "A_Coarse_sand_typical_reddish_in_nature.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/b/bd/A_Coarse_sand_typical_reddish_in_nature.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:A_Coarse_sand_typical_reddish_in_nature.jpg",
+    "credit": "Liteekanem1",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "aggregates:morang-coarse-sand",
+    "note": "Red coarse sand candidate only, not proof of locally sourced morang"
+  },
+  {
+    "key": "crushed-stone-stockpile",
+    "filename": "Crushed_stones_gravel.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/7/72/Crushed_stones_gravel.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Crushed_stones_gravel.jpg",
+    "credit": "Microrao",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "aggregates:crushed-aggregate-bulk",
+    "note": "General stockpile; do not assign nominal size"
+  },
+  {
+    "key": "concrete-sand-stockpile",
+    "filename": "Concrete_sand_stockpile_(6256991062).jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Concrete_sand_stockpile_(6256991062).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Concrete_sand_stockpile_(6256991062).jpg",
+    "credit": "Peter Craven",
+    "license": "CC BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "target": "aggregates:river-sand-bulk",
+    "note": "Concrete sand stockpile; river origin not demonstrated; map only after review"
+  },
+  {
+    "key": "godrej-historic-wordmark",
+    "filename": "Godrej_Logo.svg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/9/97/Godrej_Logo.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Godrej_Logo.svg",
+    "credit": "Globus / Godrej press kit",
+    "license": "PD-textlogo; trademark restrictions apply",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-textlogo",
+    "target": "hardware:Godrej",
+    "note": "Historic brand mark; verify current locks brand identity and trademark use before approval"
+  },
+  {
+    "key": "pvc-elbows",
+    "filename": "PvcElbows.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File:PvcElbows.JPG",
+    "credit": "REisemann3937",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-elbow90",
+    "note": "Confirm elbow angle and material visually; not branded SKU."
+  },
+  {
+    "key": "tank-float-valve",
+    "filename": "Ball_valve_cold_water_tank.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Ball_valve_cold_water_tank.jpg",
+    "credit": "Stubacca",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-float-valve",
+    "note": "Installed ballcock reference, not a shutoff ball valve."
+  },
+  {
+    "key": "ball-valve",
+    "filename": "Valve_(ball).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Valve_(ball).jpg",
+    "credit": "DenysDM",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "target": "plumbing:fitting-ball-valve",
+    "note": "Confirm domestic application compatibility; no pressure rating implied."
+  },
+  {
+    "key": "ball-valve-detail",
+    "filename": "Valve_(ball)_detailed.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Valve_(ball)_detailed.jpg",
+    "credit": "DenysDM",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "target": "plumbing:fitting-ball-valve",
+    "note": "Separate close-up from same photographer; visually compare before approval."
+  },
+  {
+    "key": "upvc-rainwater",
+    "filename": "UPVC_pipe_and_fitting.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:UPVC_pipe_and_fitting.jpg",
+    "credit": "Mekalshan",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "plumbing:generic-rainwater",
+    "note": "Rainwater fitting, not pressure pipe."
+  },
+  {
+    "key": "stone-dust",
+    "filename": "The_stone_dust_pile_Gelligaer_Quarry_-_geograph.org.uk_-_88548.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:The_stone_dust_pile_Gelligaer_Quarry_-_geograph.org.uk_-_88548.jpg",
+    "credit": "nantcoly",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "target": "aggregates:crusher-dust",
+    "note": "Quarry stockpile only; no local grade claim."
+  },
+  {
+    "key": "hose-clamp",
+    "filename": "Hoseclamps.screw.agr.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Hoseclamps.screw.agr.jpg",
+    "credit": "ArnoldReinhold",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-hose-clamp",
+    "note": "Review screw-band clamps; no exact brand or diameter claim"
+  },
+  {
+    "key": "seal-parts",
+    "filename": "Mechanical_seal_part01.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Mechanical_seal_part01.jpg",
+    "credit": "Miya.m",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-mechanical-seal",
+    "note": "Seal parts for water system; not complete pump assembly"
+  },
+  {
+    "key": "pressure-gauge",
+    "filename": "Pressure_gauge.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Pressure_gauge.jpg",
+    "credit": "Omnibus-Trip",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-pressure-gauge",
+    "note": "Review dial units and use; no claim of pump rating"
+  },
+  {
+    "key": "river-sand-close",
+    "filename": "A_close-up_of_river_sand.JPG",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/64/A_close-up_of_river_sand.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File:A_close-up_of_river_sand.JPG",
+    "credit": "Thamizhpparithi Maari",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "aggregates:river-sand-bulk",
+    "note": "Visually reviewed river sand close-up; local origin, grading and supplier not verified; retry with adaptive compression"
+  },
+  {
+    "key": "garden-hose-coil",
+    "filename": "Garden_hose.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/c/cd/Garden_hose.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Garden_hose.jpg",
+    "credit": "Nandhp",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:generic-garden-hose",
+    "note": "Visually reviewed coiled green garden hose; not pump suction hose or verified size"
+  },
+  {
+    "key": "spirit-level-tool",
+    "filename": "Tool-level.jpg",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Tool-level.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Tool-level.jpg",
+    "credit": "Evan-Amos",
+    "license": "Public domain dedication",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-self",
+    "target": "hardware:spirit-level",
+    "note": "Visually reviewed spirit level; generic, not an exact manufacturer model"
+  },
+  {
+    "key": "pipe-nipple-reference",
+    "filename": "Pipe_nipple.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Pipe_nipple.jpg",
+    "credit": "Луносвет",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-gi-nipple",
+    "note": "Review material and threads before assigning; do not assume galvanized steel from image alone."
+  },
+  {
+    "key": "installed-conduit",
+    "filename": "Usage_of_electrical_counduit.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File:Usage_of_electrical_counduit.JPG",
+    "credit": "Dmitry G",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "electrical:generic-conduit",
+    "note": "Installed underground conduit; verify material and intended family before approval."
+  },
+  {
+    "key": "sail-corporate-mark",
+    "filename": "Steel_Authority_of_India_logo.svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Steel_Authority_of_India_logo.svg",
+    "credit": "Steel Authority of India",
+    "license": "PD-textlogo; trademark restrictions apply",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-textlogo",
+    "target": "steel:SAIL",
+    "note": "Manufacturer-origin corporate mark from 2009 document; compare with current official SAIL identity before public use."
+  },
+  {
+    "key": "notched-adhesive-trowel",
+    "filename": "Knickzahnkelle.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File:Knickzahnkelle.JPG",
+    "credit": "Carolin Heuckmann",
+    "license": "CC BY-SA 3.0 DE",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/de/",
+    "target": "hardware:notched-trowel",
+    "note": "Manufacturer-origin square notched adhesive trowel with VRT permission; check watermark and exact geometry."
+  },
+  {
+    "key": "float-switch-generic",
+    "filename": "Float_switch.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Float_switch.jpg",
+    "credit": "TankunCha",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "target": "plumbing:fitting-float-switch",
+    "note": "Check cable and float switch type before mapping; never infer electrical rating."
+  },
+  {
+    "key": "sealant-gun-generic",
+    "filename": "Silikonpistole_(fcm).jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Silikonpistole_(fcm).jpg",
+    "credit": "Frank C. Müller",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "hardware:sealant-gun",
+    "note": "Manual cartridge gun with nozzle; review actual photo before publishing."
+  },
+  {
+    "key": "pump-impeller-range",
+    "filename": "Pump_Impellers-1.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Pump_Impellers-1.jpg",
+    "credit": "Meisam",
+    "license": "CC BY-SA 3.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "target": "plumbing:fitting-impeller",
+    "note": "Multiple impeller types; review suitability for representative pump spare only, not exact model."
+  },
+  {
+    "key": "polycab-current-mark",
+    "filename": "Polycab India logo.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Polycab_India_logo.png",
+    "credit": "Polycab India",
+    "license": "PD-textlogo; trademark restrictions apply",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-textlogo",
+    "target": "electrical:Polycab",
+    "note": "Review current brand identity and original source before publication; not a product photo."
+  },
+  {
+    "key": "hettich-brand-mark",
+    "filename": "Logo of Hettich (company).svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Logo_of_Hettich_(company).svg",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Logo_of_Hettich_(company).svg",
+    "target": "hardware:Hettich",
+    "note": "Corporate mark, confirm trademark and source license before publication"
+  },
+  {
+    "key": "berger-brand-mark",
+    "filename": "Berger Paints logo.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Berger_Paints_logo.png",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Berger_Paints_logo.png",
+    "target": "paint:Berger",
+    "note": "Confirm current corporate identity and reuse status"
+  },
+  {
+    "key": "nerolac-brand-mark",
+    "filename": "Nerolac-logo.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Nerolac-logo.webp",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Nerolac-logo.webp",
+    "target": "paint:Nerolac",
+    "note": "Verify copyright provenance before publication"
+  },
+  {
+    "key": "gate-valve-installed",
+    "filename": "GateValve.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File:GateValve.JPG",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:GateValve.JPG",
+    "target": "plumbing:fitting-gate-valve",
+    "note": "Domestic water gate valve, installed example; review identity and license"
+  },
+  {
+    "key": "sealant-gun-application",
+    "filename": "Caulking.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Caulking.jpg",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Caulking.jpg",
+    "target": "hardware:sealant-gun",
+    "note": "Application view, not the same exact retail gun; verify license"
+  },
+  {
+    "key": "ptfe-tape-primary",
+    "filename": "PTFE tape.jpg",
+    "target": "plumbing:fitting-ptfe",
+    "note": "Review roll of PTFE thread seal tape; no exact brand",
+    "source": "https://commons.wikimedia.org/wiki/File:PTFE_tape.jpg",
+    "credit": "Headlock0225",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  {
+    "key": "ptfe-tape-secondary",
+    "filename": "Thread seal tape.jpg",
+    "target": "plumbing:fitting-ptfe",
+    "note": "Separate roll or alternate angle; verify identity and license",
+    "source": "https://commons.wikimedia.org/wiki/File:Thread_seal_tape.jpg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Thread_seal_tape.jpg"
+  },
+  {
+    "key": "ptfe-installed-view",
+    "filename": "PTFE Tape.png",
+    "target": "plumbing:fitting-ptfe",
+    "note": "Installed tape on threaded brass fitting; application view",
+    "source": "https://commons.wikimedia.org/wiki/File:PTFE_Tape.png",
+    "credit": "Kees08",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  {
+    "key": "mortise-lock-reference",
+    "filename": "Mortise-lock.jpg",
+    "target": "hardware:door-mortise-lock",
+    "note": "Mechanism reference only; not full lever set",
+    "source": "https://commons.wikimedia.org/wiki/File:Mortise-lock.jpg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Mortise-lock.jpg"
+  },
+  {
+    "key": "butt-hinge-reference",
+    "filename": "Butt Hinge annotated.jpg",
+    "target": "hardware:ss-butt-hinge-3in",
+    "note": "Review annotation and material; not verified stainless steel or size",
+    "source": "https://commons.wikimedia.org/wiki/File:Butt_Hinge_annotated.jpg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Butt_Hinge_annotated.jpg"
+  },
+  {
+    "key": "hose-fitting-reference",
+    "filename": "Stainless hose fittings different shapes and sizes.png",
+    "target": "plumbing:fitting-hose-barb",
+    "note": "Review individual fitting identity; no dimensions claim",
+    "source": "https://commons.wikimedia.org/wiki/File:Stainless_hose_fittings_different_shapes_and_sizes.png",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Stainless_hose_fittings_different_shapes_and_sizes.png"
+  },
+  {
+    "key": "pipe-clamp-reference",
+    "filename": "Pipe clamp 1.jpg",
+    "target": "plumbing:fitting-pipe-strap",
+    "note": "Review actual clamp type, reject woodworking tools",
+    "source": "https://commons.wikimedia.org/wiki/File:Pipe_clamp_1.jpg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Pipe_clamp_1.jpg"
+  },
+  {
+    "key": "pidilite-corporate-logo",
+    "filename": "Pidilite Industries logo.svg",
+    "target": "hardware:Pidilite",
+    "note": "Verify logo license and current corporate identity",
+    "source": "https://commons.wikimedia.org/wiki/File:Pidilite_Industries_logo.svg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Pidilite_Industries_logo.svg"
+  },
+  {
+    "key": "magicrete-aac-original",
+    "filename": "magicrete-aac-original.png",
+    "target": "bricks-blocks:magicrete-aac",
+    "url": "https://www.magicrete.in/assets/uploads/2026/04/productdetil/untitled--672-x-536-px-_1776240797.png",
+    "source": "https://www.magicrete.in/walling-solutions/aac-products/aac-blocks",
+    "origin": "manufacturer",
+    "credit": "Manufacturer",
+    "license": "Publication rights not yet verified",
+    "licenseUrl": "https://www.magicrete.in/walling-solutions/aac-products/aac-blocks",
+    "note": "Manufacturer original; verify resolution, exact model, distinct view and permission before publication."
+  },
+  {
+    "key": "orientbell-oak-original",
+    "filename": "orientbell-oak-original.jpg",
+    "target": "tiles:orientbell-oak",
+    "url": "https://images.orientbell.com/media/catalog/product/d/r/dr_dgvt_lugano_oak_wood_ivory_-f1.jpg",
+    "source": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "origin": "manufacturer",
+    "credit": "Manufacturer",
+    "license": "Publication rights not yet verified",
+    "licenseUrl": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "note": "Manufacturer original; verify resolution, exact model, distinct view and permission before publication."
+  },
+  {
+    "key": "orientbell-oak-second",
+    "filename": "orientbell-oak-second.jpg",
+    "target": "tiles:orientbell-oak",
+    "url": "https://images.orientbell.com/media/catalog/product/d/r/dr_dgvt_lugano_oak_wood_ivory-2.jpg",
+    "source": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "origin": "manufacturer",
+    "credit": "Manufacturer",
+    "license": "Publication rights not yet verified",
+    "licenseUrl": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "note": "Manufacturer original; verify resolution, exact model, distinct view and permission before publication."
+  },
+  {
+    "key": "orientbell-oak-third",
+    "filename": "orientbell-oak-third.jpg",
+    "target": "tiles:orientbell-oak",
+    "url": "https://images.orientbell.com/media/catalog/product/d/r/dr_dgvt_lugano_oak_wood_ivory-3.jpg",
+    "source": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "origin": "manufacturer",
+    "credit": "Manufacturer",
+    "license": "Publication rights not yet verified",
+    "licenseUrl": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "note": "Manufacturer original; verify resolution, exact model, distinct view and permission before publication."
+  }
+]

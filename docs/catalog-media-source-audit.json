@@ -1,0 +1,4907 @@
+{
+  "basis": "b3fb117f753cb20214f4e25c1d0d1efc3facfeda",
+  "scope": "Static source-level audit, using actual data construction and media selection logic adapted from TS to JS. All 56 hardware reference identities cross-checked. No browser network checks or merchant verification.",
+  "totals": {
+    "products": 376,
+    "families": 264,
+    "noPhoto": 181,
+    "brandEntries": 51,
+    "missingBrandEntries": 31
+  },
+  "byCategory": {
+    "cement": {
+      "families": 12,
+      "variants": 15,
+      "noPhoto": 0,
+      "remote": 0,
+      "threeReviewed": 0,
+      "incompleteDetails": 0,
+      "noProductSource": 2
+    },
+    "aggregates": {
+      "families": 17,
+      "variants": 17,
+      "noPhoto": 11,
+      "remote": 0,
+      "threeReviewed": 0,
+      "incompleteDetails": 0,
+      "noProductSource": 16
+    },
+    "hardware": {
+      "families": 64,
+      "variants": 64,
+      "noPhoto": 58,
+      "remote": 0,
+      "threeReviewed": 0,
+      "incompleteDetails": 0,
+      "noProductSource": 28
+    },
+    "plumbing": {
+      "families": 101,
+      "variants": 164,
+      "noPhoto": 79,
+      "remote": 13,
+      "threeReviewed": 0,
+      "incompleteDetails": 0,
+      "noProductSource": 63
+    },
+    "electrical": {
+      "families": 19,
+      "variants": 43,
+      "noPhoto": 13,
+      "remote": 0,
+      "threeReviewed": 0,
+      "incompleteDetails": 0,
+      "noProductSource": 12
+    },
+    "paint": {
+      "families": 26,
+      "variants": 26,
+      "noPhoto": 15,
+      "remote": 8,
+      "threeReviewed": 0,
+      "incompleteDetails": 0,
+      "noProductSource": 2
+    },
+    "steel": {
+      "families": 6,
+      "variants": 20,
+      "noPhoto": 0,
+      "remote": 0,
+      "threeReviewed": 0,
+      "incompleteDetails": 0,
+      "noProductSource": 4
+    },
+    "bricks-blocks": {
+      "families": 6,
+      "variants": 14,
+      "noPhoto": 0,
+      "remote": 0,
+      "threeReviewed": 0,
+      "incompleteDetails": 0,
+      "noProductSource": 5
+    },
+    "tiles": {
+      "families": 13,
+      "variants": 13,
+      "noPhoto": 5,
+      "remote": 4,
+      "threeReviewed": 0,
+      "incompleteDetails": 0,
+      "noProductSource": 2
+    }
+  },
+  "missingBrands": [
+    {
+      "name": "Jindal Panther",
+      "category": "steel",
+      "note": "TMT discovery example"
+    },
+    {
+      "name": "SAIL",
+      "category": "steel",
+      "note": "TMT discovery example"
+    },
+    {
+      "name": "JK Cement",
+      "category": "cement",
+      "note": "Cement discovery example"
+    },
+    {
+      "name": "Astral",
+      "category": "plumbing",
+      "note": "Pipes discovery example"
+    },
+    {
+      "name": "Polycab",
+      "category": "electrical",
+      "note": "Electrical discovery example"
+    },
+    {
+      "name": "TRUEGRIT",
+      "category": "aggregates",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Priya",
+      "category": "cement",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Maha",
+      "category": "cement",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Birla Super",
+      "category": "cement",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Kohinoor",
+      "category": "plumbing",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Anchor Panasonic",
+      "category": "electrical",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Hettich",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Ebco",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Ashirvad",
+      "category": "plumbing",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Orientbell",
+      "category": "tiles",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Astral",
+      "category": "electrical",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Berger",
+      "category": "paint",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Nerolac",
+      "category": "paint",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Dr. Fixit",
+      "category": "paint",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "JK Cement",
+      "category": "paint",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Roff",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Birla White",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "DOWSIL",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Pidilite",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Liftor",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Godrej",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Europa",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Freemans",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Haks",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Jon Bhandari",
+      "category": "hardware",
+      "note": "Product specifications available"
+    },
+    {
+      "name": "Taparia",
+      "category": "hardware",
+      "note": "Product specifications available"
+    }
+  ],
+  "products": [
+    {
+      "category": "cement",
+      "slug": "acc-suraksha-power-ppc-cement-50-kg-bag",
+      "name": "Adani ACC Suraksha Power PPC Cement, 50 Kg Bag",
+      "brand": "ACC",
+      "variants": [
+        "acc-suraksha-power-ppc-cement-50-kg-bag"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/acc-suraksha-power-ppc-cement-50-kg-bag.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "ppc-cement-50kg",
+      "name": "Ultratech PPC Cement, 50 Kg Bag",
+      "brand": "UltraTech",
+      "variants": [
+        "ppc-cement-50kg"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/ultratech-ppc-cement.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "generic-p-sand-plastering-sand-triple-washed-30kg-bag-professional-construction-landscaping-grade",
+      "name": "TRUEGRIT Triple Washed M-Sand (Plastering Grade / P-Sand)",
+      "brand": "TRUEGRIT",
+      "variants": [
+        "generic-p-sand-plastering-sand-triple-washed-30kg-bag-professional-construction-landscaping-grade"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/generic-p-sand-plastering-sand-triple-washed-30kg-bag-professional-construction-landscaping-grade.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "priya-ppc-cement",
+      "name": "Priya PPC Cement, 50 Kg Bag",
+      "brand": "Priya",
+      "variants": [
+        "priya-ppc-cement"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/priya-ppc-cement.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "maha-ppc-cement",
+      "name": "Maha PPC Cement, 50 Kg Bag",
+      "brand": "Maha",
+      "variants": [
+        "maha-ppc-cement"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/maha-ppc-cement.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "ramco-supergrade-ppc-cement",
+      "name": "Ramco Supergrade PPC Cement, 50 Kg Bag",
+      "brand": "Ramco",
+      "variants": [
+        "ramco-supergrade-ppc-cement"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/ramco-supergrade-ppc-cement.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "maha-opc-53-cement",
+      "name": "Maha Cement OPC 53 Grade Cement, 50 Kg Bag",
+      "brand": "Maha",
+      "variants": [
+        "maha-opc-53-cement"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/maha-opc-53-cement.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "birla-super-opc53-cement",
+      "name": "Birla Super OPC 53 Grade Cement, 50 Kg Bag",
+      "brand": "Birla Super",
+      "variants": [
+        "birla-super-opc53-cement"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/birla-super-opc53-cement.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "priya-opc53-grade-cement",
+      "name": "Priya OPC 53 Grade Cement, 50 Kg Bag",
+      "brand": "Priya",
+      "variants": [
+        "priya-opc53-grade-cement"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/priya-opc53-grade-cement.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "ramco-opc53-grade-cement",
+      "name": "Ramco Cement OPC 53 Grade, 50 Kg Bag",
+      "brand": "Ramco",
+      "variants": [
+        "ramco-opc53-grade-cement"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/ramco-opc53-grade-cement.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "jsw-aac-block-adhesive-block-grip-40-kg-bag-1",
+      "name": "JSW Block Grip AAC Block Jointing Mortar/Adhesive, 40 Kg Bag",
+      "brand": "JSW",
+      "variants": [
+        "jsw-aac-block-adhesive-block-grip-40-kg-bag-1"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/jsw-aac-block-adhesive-block-grip-40-kg-bag-1.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "kohinoor-waste-pvc-pipe-32mm",
+      "name": "Kohinoor Sink Waste PVC Pipe, 32mm",
+      "brand": "Kohinoor",
+      "variants": [
+        "kohinoor-waste-pvc-pipe-32mm"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/kohinoor-waste-pvc-pipe-32mm.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "kei-homecab-90mtr-wire",
+      "name": "KEI Homecab FR Wire, 90m",
+      "brand": "KEI",
+      "variants": [
+        "kei-homecab-90mtr-wire"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/kei-homecab-90mtr-wire.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "anchor-panasonic-advance-fr-wire",
+      "name": "Anchor Panasonic Advance FR Wire, 90m",
+      "brand": "Anchor Panasonic",
+      "variants": [
+        "anchor-panasonic-advance-fr-wire"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/anchor-panasonic-advance-fr-wire.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "anchor-panasonic-fireguard-fr-lsh-wire",
+      "name": "Anchor Panasonic Fireguard FR-LSH Wire, 180m",
+      "brand": "Anchor Panasonic",
+      "variants": [
+        "anchor-panasonic-fireguard-fr-lsh-wire"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/anchor-panasonic-fireguard-fr-lsh-wire.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-tractor-emulsion",
+      "name": "Asian Paints Tractor Emulsion, Base White",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-tractor-emulsion"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/asian-paints-tractor-emulsion.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-ace-base-white",
+      "name": "Asian Paints Ace Exterior Emulsion, Base White",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-ace-base-white"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/asian-paints-ace-base-white.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-apex-base-white",
+      "name": "Asian Paints Apex Dust Proof Exterior Emulsion, Base White",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-apex-base-white"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/asian-paints-apex-base-white.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "hettich-slide-on-3447-non-silent-hinge-regular-close",
+      "name": "Hettich Slide On 3447 Non-Silent Hinge, Regular Close",
+      "brand": "Hettich",
+      "variants": [
+        "hettich-slide-on-3447-non-silent-hinge-regular-close"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/hettich-slide-on-3447-non-silent-hinge-regular-close.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "hettich-0-crank-soft-close-hinges-25mm-9281432",
+      "name": "Hettich Onsys 4447i Soft Close Hinges, 1 Set (2 Nos)",
+      "brand": "Hettich",
+      "variants": [
+        "hettich-0-crank-soft-close-hinges-25mm-9281432"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/hettich-0-crank-soft-close-hinges-25mm-9281432.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "ebco-slip-on-hinge-euro-regular-close-hinges-1-set-2-nos",
+      "name": "Ebco Slip On Hinge, Regular Close, 1 Set (2 Nos)",
+      "brand": "Ebco",
+      "variants": [
+        "ebco-slip-on-hinge-euro-regular-close-hinges-1-set-2-nos"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/ebco-slip-on-hinge-euro-regular-close-hinges-1-set-2-nos.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-laticrete-dwa-215-tile-adhesive-10-kg",
+      "name": "MYK Laticrete DWA 215 Tile Adhesive, 10 Kg",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-laticrete-dwa-215-tile-adhesive-10-kg"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/myk-laticrete-dwa-215-tile-adhesive-10-kg.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-laticrete-305-tile-adhesive-30kg",
+      "name": "MYK Laticrete 305 Tile Adhesive, Grey, 30 Kg Bag",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-laticrete-305-tile-adhesive-30kg"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/myk-laticrete-305-tile-adhesive-30kg.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "steel",
+      "slug": "jsw-neosteel-550d-8mm",
+      "name": "JSW Neosteel Fe 550D · 8 mm",
+      "brand": "JSW Neosteel",
+      "variants": [
+        "jsw-neosteel-550d-8mm",
+        "jsw-neosteel-550d-10mm",
+        "jsw-neosteel-550d-12mm",
+        "jsw-neosteel-550d-16mm",
+        "jsw-neosteel-550d-20mm",
+        "jsw-neosteel-550d-25mm"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/jsw-550d-range.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "bricks-blocks",
+      "slug": "magicrete-aac-75mm",
+      "name": "Magicrete AAC block · 75 mm",
+      "brand": "Magicrete",
+      "variants": [
+        "magicrete-aac-75mm",
+        "magicrete-aac-100mm",
+        "magicrete-aac-150mm",
+        "magicrete-aac-200mm",
+        "magicrete-aac-225mm"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/magicrete-aac.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "kajaria-k-12631",
+      "name": "Kajaria K 12631 · 600 × 1200 mm",
+      "brand": "Kajaria",
+      "variants": [
+        "kajaria-k-12631"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/kajaria-k-12631.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "ashirvad-cpvc-half",
+      "name": "Ashirvad FlowGuard Plus CPVC SDR-11 pipe · ½ inch",
+      "brand": "Ashirvad",
+      "variants": [
+        "ashirvad-cpvc-half",
+        "ashirvad-cpvc-three-quarter",
+        "ashirvad-cpvc-one",
+        "ashirvad-cpvc-one-quarter"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/ashirvad-pipe.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "ashirvad-elbow-half",
+      "name": "Ashirvad FlowGuard Plus CPVC 45° elbow · ½ inch",
+      "brand": "Ashirvad",
+      "variants": [
+        "ashirvad-elbow-half"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/ashirvad-elbow.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "ashirvad-threaded-tee-half",
+      "name": "Ashirvad FlowGuard Plus CPVC Brass threaded tee · ½ × ½ inch",
+      "brand": "Ashirvad",
+      "variants": [
+        "ashirvad-threaded-tee-half"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/ashirvad-tee.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-star",
+      "name": "Orientbell DGVT NEXA Star White",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-star"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/orientbell-star.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-opal",
+      "name": "Orientbell FT Opal Crema",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-opal"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/orientbell-opal.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-oak",
+      "name": "Orientbell DR DGVT Lugano Oak Wood Ivory",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-oak"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/orientbell-oak.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "jk-super-ppc",
+      "name": "JK Super Cement PPC",
+      "brand": "JK Cement",
+      "variants": [
+        "jk-super-ppc"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/jk-super-ppc.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "astral-aquarius-upvc",
+      "name": "Aquarius uPVC plumbing system",
+      "brand": "Astral",
+      "variants": [
+        "astral-aquarius-upvc"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "astral-drainmaster-swr",
+      "name": "Drainmaster PVC SWR system",
+      "brand": "Astral",
+      "variants": [
+        "astral-drainmaster-swr"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "astral-hdpe-pro",
+      "name": "HDPE Pro pipe system",
+      "brand": "Astral",
+      "variants": [
+        "astral-hdpe-pro"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "astral-casewell",
+      "name": "Case-Well uPVC casing pipes",
+      "brand": "Astral",
+      "variants": [
+        "astral-casewell"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "astral-wireguard",
+      "name": "Wire Guard PVC electrical conduit",
+      "brand": "Astral",
+      "variants": [
+        "astral-wireguard"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "astral-telerex",
+      "name": "TeleRex cable protection duct",
+      "brand": "Astral",
+      "variants": [
+        "astral-telerex"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "supreme-aquagold",
+      "name": "Aqua Gold uPVC pipes and fittings",
+      "brand": "Supreme",
+      "variants": [
+        "supreme-aquagold"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "supreme-lifeline",
+      "name": "Lifeline CPVC hot and cold water system",
+      "brand": "Supreme",
+      "variants": [
+        "supreme-lifeline"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "supreme-indogreen",
+      "name": "Indo Green PPR piping system",
+      "brand": "Supreme",
+      "variants": [
+        "supreme-indogreen"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "supreme-swr",
+      "name": "SWR pipe and drainage system",
+      "brand": "Supreme",
+      "variants": [
+        "supreme-swr"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "supreme-cableshield",
+      "name": "Cableshield electrical conduit",
+      "brand": "Supreme",
+      "variants": [
+        "supreme-cableshield"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "supreme-cableguard",
+      "name": "Cableguard DWC HDPE cable duct",
+      "brand": "Supreme",
+      "variants": [
+        "supreme-cableguard"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "finolex-cpvc-range",
+      "name": "CPVC plumbing pipes and fittings",
+      "brand": "Finolex",
+      "variants": [
+        "finolex-cpvc-range"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "finolex-swr-range",
+      "name": "SWR pipes and fittings",
+      "brand": "Finolex",
+      "variants": [
+        "finolex-swr-range"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "finolex-astm-upvc",
+      "name": "ASTM uPVC pipes and fittings",
+      "brand": "Finolex",
+      "variants": [
+        "finolex-astm-upvc"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-calacatta-marble",
+      "name": "Orientbell Super Gloss Endless Calacatta Marble",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-calacatta-marble"
+      ],
+      "photoCount": 2,
+      "photos": [
+        {
+          "src": "https://images.orientbell.com/media/catalog/product/s/u/super_gloss_endless_calacatta_marble_f1.jpg",
+          "kind": "manufacturer"
+        },
+        {
+          "src": "https://images.orientbell.com/media/catalog/product/s/u/super_gloss_endless_calacatta_marble_1.jpg",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-lumber-oak",
+      "name": "Orientbell DR DGVT Lumber Oak Wood",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-lumber-oak"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://images.orientbell.com/media/catalog/product/d/r/dr_dgvt_lumber_oak_wood_f1.jpg",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-safegrip-creama",
+      "name": "Orientbell DGVT SafeGrip Rustic Creama",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-safegrip-creama"
+      ],
+      "photoCount": 2,
+      "photos": [
+        {
+          "src": "https://images.orientbell.com/media/catalog/product/d/g/dgvt_safegrip_rustic_creama_f1.jpg",
+          "kind": "manufacturer"
+        },
+        {
+          "src": "https://images.orientbell.com/media/catalog/product/d/g/dgvt_safegrip_rustic_creama.jpg",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-grace-wood",
+      "name": "Orientbell HFM Anti-Skid EC Grace Wood Brown",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-grace-wood"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://images.orientbell.com/media/catalog/product/h/f/hfm_anti-skid_ec_grace_wood_brown__ceramic_tile_floor_tile_300x300_mm.jpg",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-sandy-cube",
+      "name": "Orientbell SHG Sandy Cube HL",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-sandy-cube"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-orobico-marble",
+      "name": "Orientbell Super Gloss Orobico Marble",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-orobico-marble"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "orientbell-venezia-wood",
+      "name": "Orientbell Anti-Skid EC Venezia Wood DK",
+      "brand": "Orientbell",
+      "variants": [
+        "orientbell-venezia-wood"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-royale-shyne",
+      "name": "Asian Paints Royale Shyne Luxury Emulsion",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-royale-shyne"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://static.asianpaints.com/content/dam/asian_paints/products/packshots/interior-walls-royale-shyne-luxury-emulsion-asian-paints.png.transform/cc-width-230-height-273/image.png",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-royale-matt",
+      "name": "Asian Paints Royale Matt",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-royale-matt"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://static.asianpaints.com/content/dam/asian_paints/products/packshots/interior-walls-royale-matt-asian-paints.png.transform/cc-width-230-height-273/image.png",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-royale-luxury",
+      "name": "Asian Paints Royale Luxury Emulsion",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-royale-luxury"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-apcolite-premium",
+      "name": "Asian Paints Apcolite Premium Emulsion",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-apcolite-premium"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-tractor-advanced",
+      "name": "Asian Paints Tractor Emulsion Advanced",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-tractor-advanced"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-neobharat-latex",
+      "name": "Asian Paints NeoBharat Latex Interior Paint",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-neobharat-latex"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-apex-dust-proof-ultraa",
+      "name": "Asian Paints Apex Dust Proof Ultraa",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-apex-dust-proof-ultraa"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-damp-proof",
+      "name": "Asian Paints SmartCare Damp Proof",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-damp-proof"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-damp-proof-xtreme",
+      "name": "Asian Paints SmartCare Damp Proof Xtreme",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-damp-proof-xtreme"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-damp-sheath-interior",
+      "name": "Asian Paints SmartCare Damp Sheath Interior Advanced",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-damp-sheath-interior"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-waterproof-putty",
+      "name": "Asian Paints SmartCare Waterproofing Putty",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-waterproof-putty"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-damp-block-2k",
+      "name": "Asian Paints SmartCare Damp Block 2K",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-damp-block-2k"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "asian-paints-crack-seal",
+      "name": "Asian Paints SmartCare Crack Seal",
+      "brand": "Asian Paints",
+      "variants": [
+        "asian-paints-crack-seal"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "berger-easy-clean",
+      "name": "Berger Easy Clean",
+      "brand": "Berger",
+      "variants": [
+        "berger-easy-clean"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://images.bergerpaints.com/s3fs-public/2023-08/Easy%20Clean%20can_0.png?format=webp&quality=75&width=640",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "nerolac-beauty-gold-washable-plus",
+      "name": "Nerolac Beauty Gold Washable Plus",
+      "brand": "Nerolac",
+      "variants": [
+        "nerolac-beauty-gold-washable-plus"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.nerolac.com/sites/default/files/2025-10/Beauty%20Gold%20Washable%20Plus.png",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "nerolac-excel-total",
+      "name": "Nerolac Excel Total",
+      "brand": "Nerolac",
+      "variants": [
+        "nerolac-excel-total"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "dr-fixit-lw-plus",
+      "name": "Dr. Fixit Pidiproof LW+",
+      "brand": "Dr. Fixit",
+      "variants": [
+        "dr-fixit-lw-plus"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://drfixit-stg.s3.ap-south-1.amazonaws.com/assets/images/products/hdpi/16191739476082a23b4efc6.webp",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "dr-fixit-pidifin-2k",
+      "name": "Dr. Fixit Pidifin 2K",
+      "brand": "Dr. Fixit",
+      "variants": [
+        "dr-fixit-pidifin-2k"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://drfixit-stg.s3.ap-south-1.amazonaws.com/assets/images/products/hdpi/1715087528663a28a81cb0b.webp",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "dr-fixit-roofseal-ultra",
+      "name": "Dr. Fixit Roofseal Ultra",
+      "brand": "Dr. Fixit",
+      "variants": [
+        "dr-fixit-roofseal-ultra"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://drfixit-stg.s3.ap-south-1.amazonaws.com/assets/images/products/hdpi/17370904466789e58e64e3b.webp",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "dr-fixit-pidicrete-urp",
+      "name": "Dr. Fixit Pidicrete URP",
+      "brand": "Dr. Fixit",
+      "variants": [
+        "dr-fixit-pidicrete-urp"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://drfixit-stg.s3.ap-south-1.amazonaws.com/assets/images/products/hdpi/16191739266082a22686c0b.webp",
+          "kind": "manufacturer"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "jk-cement-wallmaxx-putty",
+      "name": "JK Cement WallMaxX Wall Putty",
+      "brand": "JK Cement",
+      "variants": [
+        "jk-cement-wallmaxx-putty"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t01-nca",
+      "name": "Roff T01 NCA grey tile adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t01-nca"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-303-grey",
+      "name": "MYK Laticrete 303 grey tile adhesive",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-303-grey"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-335-white",
+      "name": "MYK Laticrete 335 Super Flex white tile & stone adhesive",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-335-white"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "birla-tx1-white",
+      "name": "Birla White TX1 white tile adhesive",
+      "brand": "Birla White",
+      "variants": [
+        "birla-tx1-white"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t02-nsa",
+      "name": "Roff T02 NSA grey tile adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t02-nsa"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t09-nsa",
+      "name": "Roff T09 NSA white tile adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t09-nsa"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "smartcare-tile-adhesive",
+      "name": "Asian Paints SmartCare grey tile adhesive",
+      "brand": "Asian Paints",
+      "variants": [
+        "smartcare-tile-adhesive"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t03-vfa",
+      "name": "Roff T03 VFA grey tile adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t03-vfa"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-315-plus",
+      "name": "MYK Laticrete 315 Plus tile adhesive",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-315-plus"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "birla-tx2-white",
+      "name": "Birla White TX2 white tile adhesive",
+      "brand": "Birla White",
+      "variants": [
+        "birla-tx2-white"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t20-ultra",
+      "name": "Roff T20 Extrofix Ultra white adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t20-ultra"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t04-vfa",
+      "name": "Roff T04 VFA white adhesive",
+      "brand": "Roff",
+      "variants": [
+        "roff-t04-vfa"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "myk-sp100-grout",
+      "name": "MYK Laticrete SP-100 epoxy grout system",
+      "brand": "MYK Laticrete",
+      "variants": [
+        "myk-sp100-grout"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-t34-grout",
+      "name": "Roff T34 Starlike epoxy grout",
+      "brand": "Roff",
+      "variants": [
+        "roff-t34-grout"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "roff-tile-spacers",
+      "name": "Roff Tile spacers",
+      "brand": "Roff",
+      "variants": [
+        "roff-tile-spacers"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "dowsil-789",
+      "name": "DOWSIL 789 silicone weatherproofing sealant",
+      "brand": "DOWSIL",
+      "variants": [
+        "dowsil-789"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "fevikwik-203",
+      "name": "Pidilite Fevikwik 203 instant adhesive",
+      "brand": "Pidilite",
+      "variants": [
+        "fevikwik-203"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "ebco-dv1",
+      "name": "Ebco DV1 door viewer",
+      "brand": "Ebco",
+      "variants": [
+        "ebco-dv1"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "liftor-magnetic-stopper",
+      "name": "Liftor Magnetic door stopper / catcher",
+      "brand": "Liftor",
+      "variants": [
+        "liftor-magnetic-stopper"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "godrej-cylindrical-keyless",
+      "name": "Godrej Stainless steel cylindrical lock",
+      "brand": "Godrej",
+      "variants": [
+        "godrej-cylindrical-keyless"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "europa-drawer-lock",
+      "name": "Europa Cupboard / drawer lock",
+      "brand": "Europa",
+      "variants": [
+        "europa-drawer-lock"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "ebco-drawer-slide",
+      "name": "Ebco Telescopic drawer slide",
+      "brand": "Ebco",
+      "variants": [
+        "ebco-drawer-slide"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "freemans-5m-tape",
+      "name": "Freemans 5 m measuring tape",
+      "brand": "Freemans",
+      "variants": [
+        "freemans-5m-tape"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "haks-plaster-trowel",
+      "name": "Haks Plaster trowel / gurmala",
+      "brand": "Haks",
+      "variants": [
+        "haks-plaster-trowel"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "jon-soft-mallet",
+      "name": "Jon Bhandari Two-way soft-face mallet",
+      "brand": "Jon Bhandari",
+      "variants": [
+        "jon-soft-mallet"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "taparia-long-nose",
+      "name": "Taparia Econ-series long nose plier",
+      "brand": "Taparia",
+      "variants": [
+        "taparia-long-nose"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "taparia-side-cutter",
+      "name": "Taparia Side cutting plier",
+      "brand": "Taparia",
+      "variants": [
+        "taparia-side-cutter"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "taparia-two-in-one",
+      "name": "Taparia Two-in-one screwdriver",
+      "brand": "Taparia",
+      "variants": [
+        "taparia-two-in-one"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "taparia-pipe-wrench",
+      "name": "Taparia Pipe wrench",
+      "brand": "Taparia",
+      "variants": [
+        "taparia-pipe-wrench"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "supreme-floor-protection",
+      "name": "Supreme Duraprotector-XF floor protection sheet",
+      "brand": "Supreme",
+      "variants": [
+        "supreme-floor-protection"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "tile-leveling-system",
+      "name": "Tile leveling clips and reusable wedges",
+      "brand": "Local supplier",
+      "variants": [
+        "tile-leveling-system"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "notched-trowel",
+      "name": "Notched tile adhesive trowel",
+      "brand": "Local supplier",
+      "variants": [
+        "notched-trowel"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "rubber-grout-float",
+      "name": "Rubber grout float",
+      "brand": "Local supplier",
+      "variants": [
+        "rubber-grout-float"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "tile-grout-sponge",
+      "name": "Tile cleaning sponge",
+      "brand": "Local supplier",
+      "variants": [
+        "tile-grout-sponge"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "wood-adhesive",
+      "name": "Woodworking PVA adhesive",
+      "brand": "Local supplier",
+      "variants": [
+        "wood-adhesive"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "acrylic-gap-sealant",
+      "name": "Paintable acrylic gap sealant",
+      "brand": "Local supplier",
+      "variants": [
+        "acrylic-gap-sealant"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "pu-joint-sealant",
+      "name": "Polyurethane construction joint sealant",
+      "brand": "Local supplier",
+      "variants": [
+        "pu-joint-sealant"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "sealant-gun",
+      "name": "Manual cartridge sealant gun",
+      "brand": "Local supplier",
+      "variants": [
+        "sealant-gun"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "ss-butt-hinge-3in",
+      "name": "Stainless steel butt hinge",
+      "brand": "Local supplier",
+      "variants": [
+        "ss-butt-hinge-3in"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "door-pull-handle",
+      "name": "Door pull handle",
+      "brand": "Local supplier",
+      "variants": [
+        "door-pull-handle"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "door-al-drop",
+      "name": "Door aldrope latch",
+      "brand": "Local supplier",
+      "variants": [
+        "door-al-drop"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "door-closer",
+      "name": "Hydraulic door closer",
+      "brand": "Local supplier",
+      "variants": [
+        "door-closer"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "door-floor-spring",
+      "name": "Floor spring door closer",
+      "brand": "Local supplier",
+      "variants": [
+        "door-floor-spring"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "door-mortise-lock",
+      "name": "Mortise lock and lever handle set",
+      "brand": "Local supplier",
+      "variants": [
+        "door-mortise-lock"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "cabinet-pull-handle",
+      "name": "Cabinet pull handle",
+      "brand": "Local supplier",
+      "variants": [
+        "cabinet-pull-handle"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "cabinet-knob",
+      "name": "Cabinet knob",
+      "brand": "Local supplier",
+      "variants": [
+        "cabinet-knob"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "cabinet-magnetic-catch",
+      "name": "Magnetic cabinet catch",
+      "brand": "Local supplier",
+      "variants": [
+        "cabinet-magnetic-catch"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "wardrobe-rod-support",
+      "name": "Wardrobe rod and supports",
+      "brand": "Local supplier",
+      "variants": [
+        "wardrobe-rod-support"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "window-friction-stay",
+      "name": "Window friction stay hinge",
+      "brand": "Local supplier",
+      "variants": [
+        "window-friction-stay"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "window-latch",
+      "name": "Window sash latch",
+      "brand": "Local supplier",
+      "variants": [
+        "window-latch"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "sliding-window-roller",
+      "name": "Sliding window roller",
+      "brand": "Local supplier",
+      "variants": [
+        "sliding-window-roller"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "window-weather-strip",
+      "name": "Window weather strip",
+      "brand": "Local supplier",
+      "variants": [
+        "window-weather-strip"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "spirit-level",
+      "name": "Spirit level",
+      "brand": "Local supplier",
+      "variants": [
+        "spirit-level"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "fiberglass-mesh",
+      "name": "Alkali-resistant plaster reinforcement mesh",
+      "brand": "Local supplier",
+      "variants": [
+        "fiberglass-mesh"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "corner-bead",
+      "name": "Plaster corner bead",
+      "brand": "Local supplier",
+      "variants": [
+        "corner-bead"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "masking-tape",
+      "name": "Painter masking tape",
+      "brand": "Local supplier",
+      "variants": [
+        "masking-tape"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-pvc-elbow90-20mm",
+      "name": "PVC 90° elbow fitting · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-pvc-elbow90-20mm",
+        "generic-pvc-elbow90-25mm",
+        "generic-pvc-elbow90-32mm",
+        "generic-pvc-elbow90-40mm",
+        "generic-pvc-elbow90-50mm"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/6162d659d451abcad4e54c55.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-tank-inlet-pipe-20mm",
+      "name": "Water tank inlet and outlet connection pipe · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-tank-inlet-pipe-20mm",
+        "generic-tank-inlet-pipe-25mm",
+        "generic-tank-inlet-pipe-32mm",
+        "generic-tank-inlet-pipe-40mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-pump-delivery-pipe-25mm",
+      "name": "Pump discharge / delivery pipe · 25 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-pump-delivery-pipe-25mm",
+        "generic-pump-delivery-pipe-32mm",
+        "generic-pump-delivery-pipe-40mm",
+        "generic-pump-delivery-pipe-50mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-flex-pump-connector-25mm",
+      "name": "Flexible pump connection hose · 25 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-flex-pump-connector-25mm",
+        "generic-flex-pump-connector-32mm",
+        "generic-flex-pump-connector-40mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-upvc-pressure-20mm",
+      "name": "uPVC cold water pressure pipe · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-upvc-pressure-20mm",
+        "generic-upvc-pressure-25mm",
+        "generic-upvc-pressure-32mm",
+        "generic-upvc-pressure-40mm",
+        "generic-upvc-pressure-50mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-ppr-20mm",
+      "name": "PPR hot/cold water pipe · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-ppr-20mm",
+        "generic-ppr-25mm",
+        "generic-ppr-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-pex-16mm",
+      "name": "PEX water supply tubing · 16 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-pex-16mm",
+        "generic-pex-20mm",
+        "generic-pex-25mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-column-25mm",
+      "name": "Borewell column pipe · 25 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-column-25mm",
+        "generic-column-32mm",
+        "generic-column-40mm",
+        "generic-column-50mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-casing-110mm",
+      "name": "Borewell casing pipe · 110 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-casing-110mm",
+        "generic-casing-125mm",
+        "generic-casing-160mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-rainwater-75mm",
+      "name": "Rainwater downpipe · 75 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-rainwater-75mm",
+        "generic-rainwater-90mm",
+        "generic-rainwater-110mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-underground-drain-110mm",
+      "name": "Underground drainage pipe · 110 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-underground-drain-110mm",
+        "generic-underground-drain-160mm",
+        "generic-underground-drain-200mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-suction-hose-25mm",
+      "name": "Flexible suction hose · 25 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-suction-hose-25mm",
+        "generic-suction-hose-32mm",
+        "generic-suction-hose-50mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-garden-hose-12mm",
+      "name": "Garden water hose · 12 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-garden-hose-12mm",
+        "generic-garden-hose-19mm",
+        "generic-garden-hose-25mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-tee-20mm",
+      "name": "Plumbing tee fitting · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-tee-20mm",
+        "generic-tee-25mm",
+        "generic-tee-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-coupler-20mm",
+      "name": "Plumbing coupling / socket · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-coupler-20mm",
+        "generic-coupler-25mm",
+        "generic-coupler-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-reducer-25-20mm",
+      "name": "Plumbing reducer fitting · 25 × 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-reducer-25-20mm",
+        "generic-reducer-32-25mm",
+        "generic-reducer-40-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-union-20mm",
+      "name": "Plumbing union fitting · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-union-20mm",
+        "generic-union-25mm",
+        "generic-union-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-ball-valve-20mm",
+      "name": "Water supply ball valve · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-ball-valve-20mm",
+        "generic-ball-valve-25mm",
+        "generic-ball-valve-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-trap-bottle-trap",
+      "name": "Drainage trap · Bottle trap",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-trap-bottle-trap",
+        "generic-trap-p-trap",
+        "generic-trap-floor-trap"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-pipe-clamp-20mm",
+      "name": "Pipe clamp and hanger · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-pipe-clamp-20mm",
+        "generic-pipe-clamp-25mm",
+        "generic-pipe-clamp-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-solvent-cpvc",
+      "name": "Pipe solvent cement · CPVC",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-solvent-cpvc",
+        "generic-solvent-upvc"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-heavy-conduit-20mm",
+      "name": "Heavy-duty rigid PVC electrical conduit · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-heavy-conduit-20mm",
+        "generic-heavy-conduit-25mm",
+        "generic-heavy-conduit-32mm",
+        "generic-heavy-conduit-40mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-flex-conduit-16mm",
+      "name": "Flexible corrugated electrical conduit · 16 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-flex-conduit-16mm",
+        "generic-flex-conduit-20mm",
+        "generic-flex-conduit-25mm",
+        "generic-flex-conduit-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-dwc-duct-40mm",
+      "name": "DWC HDPE cable duct · 40 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-dwc-duct-40mm",
+        "generic-dwc-duct-50mm",
+        "generic-dwc-duct-63mm",
+        "generic-dwc-duct-90mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-casing-capping-20mm",
+      "name": "Electrical casing and capping · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-casing-capping-20mm",
+        "generic-casing-capping-25mm",
+        "generic-casing-capping-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-conduit-bend-20mm",
+      "name": "Electrical conduit bend · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-conduit-bend-20mm",
+        "generic-conduit-bend-25mm",
+        "generic-conduit-bend-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-conduit-coupler-20mm",
+      "name": "Electrical conduit coupler · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-conduit-coupler-20mm",
+        "generic-conduit-coupler-25mm",
+        "generic-conduit-coupler-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-junction-box-2-way",
+      "name": "Electrical conduit junction box · 2 way",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-junction-box-2-way",
+        "generic-junction-box-3-way",
+        "generic-junction-box-4-way"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-conduit-clamp-20mm",
+      "name": "Electrical conduit saddle / clamp · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-conduit-clamp-20mm",
+        "generic-conduit-clamp-25mm",
+        "generic-conduit-clamp-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-cpvc-15mm",
+      "name": "CPVC hot/cold water pipe · 15 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-cpvc-15mm",
+        "generic-cpvc-20mm",
+        "generic-cpvc-25mm",
+        "generic-cpvc-32mm",
+        "generic-cpvc-40mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-upvc-75mm",
+      "name": "uPVC SWR/drainage pipe · 75 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-upvc-75mm",
+        "generic-upvc-90mm",
+        "generic-upvc-110mm",
+        "generic-upvc-160mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-hdpe-25mm",
+      "name": "HDPE water supply pipe · 25 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-hdpe-25mm",
+        "generic-hdpe-32mm",
+        "generic-hdpe-40mm",
+        "generic-hdpe-63mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "generic-plumbing-fitting-20mm",
+      "name": "CPVC elbow fitting · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-plumbing-fitting-20mm",
+        "generic-plumbing-fitting-25mm",
+        "generic-plumbing-fitting-32mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "steel",
+      "slug": "generic-fe500d-8mm",
+      "name": "TMT reinforcement Fe 500D · 8 mm",
+      "brand": "Mill to confirm",
+      "variants": [
+        "generic-fe500d-8mm",
+        "generic-fe500d-10mm",
+        "generic-fe500d-12mm",
+        "generic-fe500d-16mm",
+        "generic-fe500d-20mm",
+        "generic-fe500d-25mm"
+      ],
+      "photoCount": 2,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/steel-close.jpg",
+          "kind": "editorial"
+        },
+        {
+          "src": "/images/catalog/editorial/steel-bundle.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "steel",
+      "slug": "generic-fe550d-8mm",
+      "name": "TMT reinforcement Fe 550D · 8 mm",
+      "brand": "Mill to confirm",
+      "variants": [
+        "generic-fe550d-8mm",
+        "generic-fe550d-10mm",
+        "generic-fe550d-12mm",
+        "generic-fe550d-16mm",
+        "generic-fe550d-20mm"
+      ],
+      "photoCount": 2,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/steel-bundle.jpg",
+          "kind": "editorial"
+        },
+        {
+          "src": "/images/catalog/editorial/steel-close.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "bricks-blocks",
+      "slug": "generic-clay-standard",
+      "name": "Red fired clay brick · Standard",
+      "brand": "Local kiln to confirm",
+      "variants": [
+        "generic-clay-standard",
+        "generic-clay-wire-cut"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/bricks-red.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "bricks-blocks",
+      "slug": "generic-fly-ash-standard",
+      "name": "Fly-ash masonry brick · Standard",
+      "brand": "Local plant to confirm",
+      "variants": [
+        "generic-fly-ash-standard",
+        "generic-fly-ash-large"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/material/fly-ash.webp",
+          "kind": "category"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "bricks-blocks",
+      "slug": "generic-hollow-100mm",
+      "name": "Hollow concrete masonry block · 100 mm",
+      "brand": "Local plant to confirm",
+      "variants": [
+        "generic-hollow-100mm",
+        "generic-hollow-150mm",
+        "generic-hollow-200mm"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/material/hollow.webp",
+          "kind": "category"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "generic-cement-ppc",
+      "name": "Cement · PPC",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-cement-ppc",
+        "generic-cement-opc-43",
+        "generic-cement-opc-53",
+        "generic-cement-psc"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/cement-stack.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-wire-1-5sqmm",
+      "name": "Building copper wire FR/FR-LSH · 1.5 sq mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-wire-1-5sqmm",
+        "generic-wire-2-5sqmm",
+        "generic-wire-4sqmm",
+        "generic-wire-6sqmm"
+      ],
+      "photoCount": 2,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/wire-coil.jpg",
+          "kind": "editorial"
+        },
+        {
+          "src": "/images/catalog/editorial/wire-install.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "generic-conduit-20mm",
+      "name": "Rigid electrical conduit · 20 mm",
+      "brand": "Brand to confirm",
+      "variants": [
+        "generic-conduit-20mm",
+        "generic-conduit-25mm",
+        "generic-conduit-32mm"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/25e4fd4de4887c15c5eb1a32.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-tank-nipple",
+      "name": "Ashirvad Threaded tank nipple / bulkhead fitting",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-tank-nipple"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Tank-nipple-with-one-side-pipe-fitment.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-elbow90",
+      "name": "Ashirvad 90° elbow",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-elbow90"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Elbow-90%E2%81%B0.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-tee",
+      "name": "Ashirvad Equal tee",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-tee"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-socket",
+      "name": "Ashirvad Coupler / socket",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-socket"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-reducer",
+      "name": "Ashirvad Reducer coupler",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-reducer"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-union",
+      "name": "Ashirvad Detachable union",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-union"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-ball-valve",
+      "name": "Ashirvad Ball valve",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-ball-valve"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Ball-Valve.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-pipe-strap",
+      "name": "Ashirvad Metal pipe clamp / strap",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-pipe-strap"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Powder-coated-clamp.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-solvent",
+      "name": "Ashirvad CPVC solvent cement",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-solvent"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/1-Step-CPVC-Solvent-Cement-Yellow-Coloured.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-ptfe",
+      "name": "Viking PTFE thread seal tape",
+      "brand": "Viking",
+      "variants": [
+        "fitting-ptfe"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-reducer-tee",
+      "name": "Ashirvad Reducer tee",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-reducer-tee"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Reducer-TEE.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-end-cap",
+      "name": "Ashirvad End cap",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-end-cap"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-brass-elbow",
+      "name": "Ashirvad Brass threaded elbow",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-brass-elbow"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-sweep",
+      "name": "Ashirvad Long-radius sweep bend",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-sweep"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Sweep-bend-Socket-at-both-sides.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-plug",
+      "name": "Ashirvad Threaded end plug",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-plug"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CP-Valves-_-Accessories_Spare_Concealed-valve_Threaded-end-plug.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-male-brass",
+      "name": "Ashirvad Male brass threaded adapter (MABT)",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-male-brass"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_MABT.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-male-plastic",
+      "name": "Ashirvad Male plastic threaded adapter (MAPT)",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-male-plastic"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Male-Adaptor-Plastic-Threaded.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-female-plastic",
+      "name": "Ashirvad Female plastic threaded adapter (FAPT)",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-female-plastic"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Female-Adaptor-Plastic-Threaded-FAPT.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-float-valve",
+      "name": "Mechanical float valve / ball cock",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-float-valve"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/c69e69925cecd4d65ff0ae7d.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-overflow",
+      "name": "Tank overflow connector / screen",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-overflow"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-gasket",
+      "name": "Tank connector gasket",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-gasket"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-cross",
+      "name": "Ashirvad Four-way cross fitting",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-cross"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Cross-Tee-1.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-gate-valve",
+      "name": "Gate valve",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-gate-valve"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-angle-valve",
+      "name": "Angle stop valve",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-angle-valve"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-bib-cock",
+      "name": "Bib cock / tap",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-bib-cock"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-saddle",
+      "name": "Service saddle",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-saddle"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-grommet",
+      "name": "Pipe penetration grommet",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-grommet"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-nrv",
+      "name": "Ashirvad Inline non-return valve (NRV)",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-nrv"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "https://www.ashirvad.com/wp-content/uploads/2025/10/Ashirvad_CPVC_Fitting_Non-Return-Valve.png",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "remote-reference",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-foot-valve",
+      "name": "Foot valve with strainer",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-foot-valve"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-delivery-hose",
+      "name": "Pressure-rated delivery hose",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-delivery-hose"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-hose-clamp",
+      "name": "Worm-drive hose clamp",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-hose-clamp"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/b8c05d7f4399350e6d329ffc.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-brass-nipple",
+      "name": "Brass threaded nipple",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-brass-nipple"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-gi-nipple",
+      "name": "GI threaded nipple",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-gi-nipple"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-pressure-gauge",
+      "name": "Water pressure gauge",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-pressure-gauge"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-pressure-switch",
+      "name": "Pump pressure switch",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-pressure-switch"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-float-switch",
+      "name": "Electrical tank float switch",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-float-switch"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-pump-union",
+      "name": "Threaded pump union",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-pump-union"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-hose-barb",
+      "name": "Hose barb adapter",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-hose-barb"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-mechanical-seal",
+      "name": "Pump mechanical seal",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-mechanical-seal"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/bfca013a5ecbbfea071bd33d.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-impeller",
+      "name": "Pump impeller spare",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-impeller"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-suction-hose",
+      "name": "Vacuum-rated suction hose",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-suction-hose"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-strainer",
+      "name": "Separate suction strainer",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-strainer"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-tank-lid",
+      "name": "Tank lid clamp / retaining accessory",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-tank-lid"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-tank-inlet",
+      "name": "Tank inlet adapter",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-tank-inlet"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-tank-outlet",
+      "name": "Tank outlet adapter",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-tank-outlet"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-tank-drain",
+      "name": "Tank cleaning drain fitting",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-tank-drain"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-threaded-reducer",
+      "name": "Threaded reducing bush",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-threaded-reducer"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-saddle-clamp",
+      "name": "Saddle pipe support clamp",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-saddle-clamp"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-u-clamp",
+      "name": "U-shaped pipe support clamp",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-u-clamp"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-flex-connector",
+      "name": "Flexible braided water connector",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-flex-connector"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-pump-adapter",
+      "name": "Pump threaded pipe adapter",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-pump-adapter"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-motor-starter",
+      "name": "Pump motor starter / overload protection",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-motor-starter"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-pump-cable",
+      "name": "Pump cable joint connector kit",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-pump-cable"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-anti-vibration",
+      "name": "Flexible pump anti-vibration connector",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-anti-vibration"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-base-pad",
+      "name": "Pump anti-vibration mounting pad",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-base-pad"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-gland-seal",
+      "name": "Pump gland packing / seal",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-gland-seal"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-hose-collar",
+      "name": "Hose ferrule / crimp collar",
+      "brand": "Local supplier",
+      "variants": [
+        "fitting-hose-collar"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "fitting-elbow45",
+      "name": "Ashirvad 45° elbow",
+      "brand": "Ashirvad",
+      "variants": [
+        "fitting-elbow45"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/reference/ashirvad-elbow.webp",
+          "kind": "listing"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "concrete-sand",
+      "name": "Concrete sand",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "concrete-sand"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/1a74f8b09fc34f7b2bd1221e.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "morang-coarse-sand",
+      "name": "Morang / coarse sand",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "morang-coarse-sand"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "river-sand-bulk",
+      "name": "River sand / balu",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "river-sand-bulk"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "fine-plaster-sand",
+      "name": "Fine plaster sand",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "fine-plaster-sand"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/7e936a2d7891eb62b6489fc9.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "washed-sand",
+      "name": "Washed construction sand",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "washed-sand"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "manufactured-sand",
+      "name": "M-sand / crushed stone sand",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "manufactured-sand"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "filling-sand",
+      "name": "Filling sand",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "filling-sand"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "crushed-aggregate-bulk",
+      "name": "Gitti / crushed stone",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "crushed-aggregate-bulk"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/0694bcf1d5a0cb4b2552a9f3.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "gitti-10mm",
+      "name": "10 mm stone aggregate",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "gitti-10mm"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/e4bf7f76fa6edba8937487c8.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "gitti-12-5mm",
+      "name": "12.5 mm stone aggregate",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "gitti-12-5mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "gitti-16mm",
+      "name": "16 mm stone aggregate",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "gitti-16mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "gitti-20mm",
+      "name": "20 mm stone aggregate",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "gitti-20mm"
+      ],
+      "photoCount": 2,
+      "photos": [
+        {
+          "src": "/images/catalog/approved/c8cca270f5879a657c1493cb.webp",
+          "kind": "editorial"
+        },
+        {
+          "src": "/images/catalog/approved/63527a19997afb26405436cd.webp",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "gitti-40mm",
+      "name": "40 mm stone aggregate",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "gitti-40mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "gitti-63mm",
+      "name": "63 mm stone aggregate",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "gitti-63mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "graded-aggregate",
+      "name": "Graded stone aggregate",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "graded-aggregate"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "aggregates",
+      "slug": "crusher-dust",
+      "name": "Crusher dust / stone dust",
+      "brand": "Local supplier to confirm",
+      "variants": [
+        "crusher-dust"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "steel",
+      "slug": "fe-500d-tmt-12mm",
+      "name": "TMT bar · Fe 500D · 12 mm",
+      "brand": "Tata Tiscon",
+      "variants": [
+        "fe-500d-tmt-12mm"
+      ],
+      "photoCount": 2,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/steel-close.jpg",
+          "kind": "editorial"
+        },
+        {
+          "src": "/images/catalog/editorial/steel-bundle.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "steel",
+      "slug": "fe-500d-tmt-10mm",
+      "name": "TMT bar · Fe 500D · 10 mm",
+      "brand": "JSW Neosteel",
+      "variants": [
+        "fe-500d-tmt-10mm"
+      ],
+      "photoCount": 2,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/steel-bundle.jpg",
+          "kind": "editorial"
+        },
+        {
+          "src": "/images/catalog/editorial/steel-close.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "cement",
+      "slug": "opc-cement-53-grade",
+      "name": "OPC cement · 53 grade",
+      "brand": "ACC",
+      "variants": [
+        "opc-cement-53-grade"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/cement-stack.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "bricks-blocks",
+      "slug": "aac-block-600x200",
+      "name": "AAC block · 600 × 200 mm",
+      "brand": "Dealer-listed brand",
+      "variants": [
+        "aac-block-600x200"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/material/aac.webp",
+          "kind": "category"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "bricks-blocks",
+      "slug": "red-clay-brick",
+      "name": "Red clay brick",
+      "brand": "Local manufacturer",
+      "variants": [
+        "red-clay-brick"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/bricks-red.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "cpvc-pipe-25mm",
+      "name": "CPVC pipe · 25 mm",
+      "brand": "Astral",
+      "variants": [
+        "cpvc-pipe-25mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "upvc-pipe-110mm",
+      "name": "uPVC drainage pipe · 110 mm",
+      "brand": "Supreme",
+      "variants": [
+        "upvc-pipe-110mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "frls-wire-15sqmm",
+      "name": "FRLS wire · 1.5 sq mm",
+      "brand": "Polycab",
+      "variants": [
+        "frls-wire-15sqmm"
+      ],
+      "photoCount": 2,
+      "photos": [
+        {
+          "src": "/images/catalog/editorial/wire-coil.jpg",
+          "kind": "editorial"
+        },
+        {
+          "src": "/images/catalog/editorial/wire-install.jpg",
+          "kind": "editorial"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "electrical",
+      "slug": "conduit-pipe-20mm",
+      "name": "Electrical conduit · 20 mm",
+      "brand": "Finolex",
+      "variants": [
+        "conduit-pipe-20mm"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "steel",
+      "slug": "tata-tiscon-550sd-range",
+      "name": "Tata Tiscon 550SD TMT rebar",
+      "brand": "Tata Tiscon",
+      "variants": [
+        "tata-tiscon-550sd-range"
+      ],
+      "photoCount": 1,
+      "photos": [
+        {
+          "src": "/images/catalog/tmt-bars.webp",
+          "kind": "category"
+        }
+      ],
+      "flags": [
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "plumbing",
+      "slug": "astral-cpvc-pro-range",
+      "name": "Astral CPVC PRO pipe system",
+      "brand": "Astral",
+      "variants": [
+        "astral-cpvc-pro-range"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "emulsion-interior-brand-quote",
+      "name": "Interior emulsion paint · brand selection",
+      "brand": "Asian Paints / Berger / Nerolac",
+      "variants": [
+        "emulsion-interior-brand-quote"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "paint",
+      "slug": "exterior-waterproofing-system",
+      "name": "Terrace and exterior waterproofing system",
+      "brand": "Dr. Fixit / Asian Paints",
+      "variants": [
+        "exterior-waterproofing-system"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "vitrified-tile-600x600",
+      "name": "Vitrified floor tile · 600 × 600 mm",
+      "brand": "Kajaria / Somany",
+      "variants": [
+        "vitrified-tile-600x600"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "tiles",
+      "slug": "wall-tile-300x600",
+      "name": "Ceramic wall tile · 300 × 600 mm",
+      "brand": "Somany / Orientbell",
+      "variants": [
+        "wall-tile-300x600"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "tile-adhesive-c2",
+      "name": "Tile adhesive · application-based",
+      "brand": "Roff / MYK Laticrete",
+      "variants": [
+        "tile-adhesive-c2"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    },
+    {
+      "category": "hardware",
+      "slug": "door-hinge-stainless-steel",
+      "name": "Stainless steel door hinge · size selection",
+      "brand": "Godrej / Ebco",
+      "variants": [
+        "door-hinge-stainless-steel"
+      ],
+      "photoCount": 0,
+      "photos": [],
+      "flags": [
+        "no-photo",
+        "fewer-than-three-new-reviewed-views",
+        "no-product-source"
+      ]
+    }
+  ],
+  "sharedPhotos": [
+    {
+      "src": "/images/catalog/reference/ashirvad-elbow.webp",
+      "families": [
+        "plumbing:ashirvad-elbow-half",
+        "plumbing:fitting-elbow45"
+      ]
+    },
+    {
+      "src": "/images/catalog/editorial/steel-close.jpg",
+      "families": [
+        "steel:generic-fe500d-8mm",
+        "steel:generic-fe550d-8mm",
+        "steel:fe-500d-tmt-12mm",
+        "steel:fe-500d-tmt-10mm"
+      ]
+    },
+    {
+      "src": "/images/catalog/editorial/steel-bundle.jpg",
+      "families": [
+        "steel:generic-fe500d-8mm",
+        "steel:generic-fe550d-8mm",
+        "steel:fe-500d-tmt-12mm",
+        "steel:fe-500d-tmt-10mm"
+      ]
+    },
+    {
+      "src": "/images/catalog/editorial/bricks-red.jpg",
+      "families": [
+        "bricks-blocks:generic-clay-standard",
+        "bricks-blocks:red-clay-brick"
+      ]
+    },
+    {
+      "src": "/images/catalog/editorial/cement-stack.jpg",
+      "families": [
+        "cement:generic-cement-ppc",
+        "cement:opc-cement-53-grade"
+      ]
+    },
+    {
+      "src": "/images/catalog/editorial/wire-coil.jpg",
+      "families": [
+        "electrical:generic-wire-1-5sqmm",
+        "electrical:frls-wire-15sqmm"
+      ]
+    },
+    {
+      "src": "/images/catalog/editorial/wire-install.jpg",
+      "families": [
+        "electrical:generic-wire-1-5sqmm",
+        "electrical:frls-wire-15sqmm"
+      ]
+    }
+  ]
+}

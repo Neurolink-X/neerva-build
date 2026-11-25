@@ -7,7 +7,7 @@ import type {DemoProduct} from "./marketplace.ts";
 const listings: [string,string,string,string,string,string,string][] = [
   ["acc-suraksha-power-ppc-cement-50-kg-bag", "cement", "ACC", "Adani ACC Suraksha Power PPC Cement, 50 Kg Bag", "PPC", "50 kg bag", "Packing date and batch number"],
   ["ultratech-ppc-cement", "cement", "UltraTech", "Ultratech PPC Cement, 50 Kg Bag", "PPC", "50 kg bag", "Packing date and batch number"],
-  ["generic-p-sand-plastering-sand-triple-washed-30kg-bag-professional-construction-landscaping-grade", "aggregates", "TRUEGRIT", "TRUEGRIT Triple Washed M-Sand (Plastering Grade / P-Sand) – 25kg Bag", "Washed plastering sand", "25 kg bag", "Grading and delivery charges"],
+  ["generic-p-sand-plastering-sand-triple-washed-30kg-bag-professional-construction-landscaping-grade", "aggregates", "TRUEGRIT", "TRUEGRIT Triple Washed M-Sand (Plastering Grade / P-Sand)", "Washed plastering sand", "Confirm pack weight", "Confirm actual pack weight, grading and delivery charges"],
   ["priya-ppc-cement", "cement", "Priya", "Priya PPC Cement, 50 Kg Bag", "PPC", "50 kg bag", "Packing date and batch number"],
   ["maha-ppc-cement", "cement", "Maha", "Maha PPC Cement, 50 Kg Bag", "PPC", "50 kg bag", "Packing date and batch number"],
   ["ramco-supergrade-ppc-cement", "cement", "Ramco", "Ramco Supergrade PPC Cement, 50 Kg Bag", "PPC", "50 kg bag", "Packing date and batch number"],

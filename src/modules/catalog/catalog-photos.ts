@@ -1,7 +1,6 @@
 import {usableMediaSource} from "./failed-media-sources.ts";
 import {fittingReference} from "./fitting-references.ts";
 import type {DemoProduct} from "./marketplace.ts";
-import {aggregateReference,aggregatePhotoSources} from "./aggregate-references.ts";
 import {hardwareReference} from "./hardware-references.ts";
 import {localBrandAsset} from "./brand-media.ts";
 import {paintReference} from "./paint-references.ts";
@@ -9,15 +8,16 @@ import {tileReferenceMedia} from "./tile-references.ts";
 import {categoryImage} from "./public-products.ts";
 
 import {curatedPhotoPaths} from "./curated-photo-paths.ts";
-export type CatalogPhoto={src:string;label:string;alt:string;kind:"sku"|"listing"|"editorial"|"manufacturer"|"category"};
+import {approvedFamilyMedia} from "./media-integrity.ts";
+export type CatalogPhoto={src:string;label:string;alt:string;sourceUrl?:string;license?:string;licenseUrl?:string;credit?:string;kind:"sku"|"listing"|"editorial"|"manufacturer"|"category"};
 const curated:Record<string,string[]>={
- "plumbing:cpvc-pipe-25mm":["pipe-stack","pipe-install"],
- "plumbing:upvc-pipe-110mm":["pipe-install","pipe-stack"],
- "plumbing:astral-cpvc-pro-range":["pipe-stack","pipe-install"],
- "plumbing:generic-cpvc":["pipe-stack","pipe-install"],
- "plumbing:generic-upvc":["pipe-install","pipe-stack"],
- "plumbing:generic-plumbing-fitting":["plumbing-fitting","pipe-install"],
- "plumbing:generic-hdpe":["pipe-stack"],
+
+
+
+
+
+
+
  "steel:fe-500d-tmt-12mm":["steel-close","steel-bundle"],
  "steel:fe-500d-tmt-10mm":["steel-bundle","steel-close"],
  "steel:generic-fe500d":["steel-close","steel-bundle"],
@@ -30,29 +30,26 @@ const curated:Record<string,string[]>={
  "cement:generic-cement":["cement-stack"],
  "electrical:frls-wire-15sqmm":["wire-coil","wire-install"],
  "electrical:generic-wire":["wire-coil","wire-install"],
- "plumbing:generic-upvc-pressure":["pipe-stack"],
- "plumbing:generic-tee":["plumbing-fitting"],
- "plumbing:generic-coupler":["plumbing-fitting"]
+
 };
 function editorialKeys(p:DemoProduct):string[]{return curated[p.category+":"+p.slug]??(p.familyKey?curated[p.category+":"+p.familyKey]:undefined)??[];}
 function approvedSkuImage(path:string):boolean{return /^\/images\/catalog\/sku\/[a-z0-9][a-z0-9/_-]{3,160}\.(?:webp|avif|png|jpe?g)$/i.test(path)&&!path.includes("..");}
 export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
  const entries:CatalogPhoto[]=[];
- const append=(src:string|undefined|null,label:string,kind:CatalogPhoto["kind"],alt:string)=>{
-  if(src&&usableMediaSource(src)&&!entries.some(x=>x.src===src))entries.push({src,label,kind,alt});
+ const append=(src:string|undefined|null,label:string,kind:CatalogPhoto["kind"],alt:string,credit?:Pick<CatalogPhoto,"sourceUrl"|"license"|"licenseUrl"|"credit">)=>{
+  if(src&&usableMediaSource(src)&&!entries.some(x=>x.src===src)){const lowResolution=["/images/catalog/reference/magicrete-aac.webp","/images/catalog/reference/orientbell-oak.webp"].includes(src);entries.push({src,label:lowResolution?label+" · limited resolution":label,kind,alt,...credit});}
  };
  if(product.verification==="merchant_verified"&&product.imageVerified)
   for(const src of product.images??[])if(approvedSkuImage(src))
    append(src,"Verified seller photo","sku","Seller-reviewed photo of "+product.name);
+ for(const m of approvedFamilyMedia(product))append(m.path,m.scope==="sku"?"Reviewed product photo":"Reviewed material photo · not exact SKU",m.scope==="sku"?"manufacturer":"editorial",m.alt,{sourceUrl:m.sourceUrl,license:m.license,licenseUrl:m.licenseUrl,credit:m.credit});
  if(product.referenceImage)append(product.referenceImage,
   product.familyKey?"Product range":"Product photo",
   "listing","Reference photo of "+product.name+"; exact physical variant unverified");
  const fitting=fittingReference(product.slug);
  if(fitting){if(fitting.image)append(localBrandAsset(fitting.image),fitting.imageSource?"Manufacturer fitting reference":"Retailer fitting reference","listing",product.name+" product family photo");return entries;}
  if(product.category==="aggregates"){
-  const ref=aggregateReference(product.slug);
-  if(ref){const photo=aggregatePhotoSources[ref.group];append(photo.src,"Representative material photo · not exact SKU","editorial",photo.alt);}
-  append(categoryImage("aggregates"),"Material samples · illustrative comparison","category","Illustrative samples of construction sand and stone aggregate");
+  // Use only material-specific reviewed assets; never reuse one group image for a different grade.
   return entries;
  }
  if(product.category==="hardware"){
@@ -86,12 +83,12 @@ export function catalogPhotos(product:DemoProduct):CatalogPhoto[]{
   append(src,"Real material photo · not exact SKU","editorial",
    "Real-world photograph of "+product.category.replaceAll("-"," ")+" materials, not the exact "+product.name);
  }
- if(!entries.length && product.category!=="bricks-blocks" && product.category!=="cement" && product.category!=="plumbing" && !(product.category==="electrical"&&/conduit|cable duct|casing and capping|cable protection|junction box/i.test(product.name)))
+ if(!entries.length && product.category==="steel" && /tmt|rebar|reinforcement/i.test(product.name))
   append(categoryImage(product.category),"Material example","category","Representative "+product.category+" material");
  return entries;
 }
 export function catalogCardPhoto(product:DemoProduct):CatalogPhoto|undefined{
  const all=catalogPhotos(product);
- return all.find(p=>p.kind==="sku")??all.find(p=>p.kind==="listing")??all.find(p=>p.kind==="editorial")??all[0];
+ return all[0];
 }
 

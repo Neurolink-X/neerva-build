@@ -175,7 +175,7 @@
     "supabase/migrations/0004_design_studio_phase_a.sql": "e0275af4d1ed3156a00e7ce1e8eefc6b143d3a77",
     "src/app/api/admin/orders/route.ts": "5f1da1df0384bd2730504f11546f1bec68d4e09f",
     "src/app/api/dealer/orders/route.ts": "d2b979d6e0f9385ce987264e1391bc8de6105096",
-    "src/modules/orders/order-contract.ts": "5189d31c51c41475f38c9bd7534e532558b87fef",
+    "src/modules/orders/order-contract.ts": "0aa2956aab7ecf01f1ba05c9f9c341e7980d0a7b",
     "supabase/migrations/0016_typescript_order_workflow.sql": "d27e7ef56e8f9060db855d432b3a6bf76b55bde5",
     "supabase/migrations/0017_order_contact_role_scope.sql": "5c2c4fbeaa0f71e3db1227aada41c8cc43f7378d",
     "supabase/migrations/0018_orders_offer_lookup_index.sql": "1de0750e0cbc18478e5d4f3262d26ee66e574ec1",
