@@ -23,6 +23,7 @@ export default function RoomOrbit({room,finish,shades=baseline,split=.5}:Props){
  useEffect(()=>{
   const parent=host.current;if(!parent)return;
   let renderer:THREE.WebGLRenderer|undefined,controls:OrbitControls|undefined,resizer:ResizeObserver|undefined,frame=0,timeout=0;
+  let visibilityHandler:(()=>void)|undefined,contextLostHandler:((event:Event)=>void)|undefined,disposed=false;
   const scene=new THREE.Scene(),geo=new THREE.BoxGeometry(1,1,1),allMaterials:THREE.MeshStandardMaterial[]=[];
   scene.background=new THREE.Color("#edf2ee");
   const mat=(hex:string)=>{const m=new THREE.MeshStandardMaterial({color:hex,roughness:.78,metalness:.03});allMaterials.push(m);return m};
@@ -60,14 +61,18 @@ export default function RoomOrbit({room,finish,shades=baseline,split=.5}:Props){
    controls.enableDamping=true;controls.dampingFactor=.08;
    controls.maxPolarAngle=Math.PI*.49;controls.minDistance=.6;controls.maxDistance=Math.max(8,w*4,d*4);
    controls.target.set(0,h*.4,0);controls.update();
-   const render=()=>{frame=0;controls?.update();renderer?.render(scene,camera)};
-   const schedule=()=>{if(!frame)frame=requestAnimationFrame(render)};
+   const render=()=>{frame=0;if(disposed||document.hidden)return;controls?.update();renderer?.render(scene,camera)};
+   const schedule=()=>{if(!frame&&!disposed&&!document.hidden)frame=requestAnimationFrame(render)};
+   visibilityHandler=()=>{if(document.hidden){cancelAnimationFrame(frame);frame=0}else schedule()};
+   document.addEventListener("visibilitychange",visibilityHandler);
+   contextLostHandler=(event)=>{event.preventDefault();cancelAnimationFrame(frame);frame=0;setFallback(true)};
+   renderer.domElement.addEventListener("webglcontextlost",contextLostHandler);
    controls.addEventListener("change",schedule);
    const resize=()=>{if(!renderer)return;const width=Math.max(220,parent.clientWidth),height=Math.max(260,Math.min(500,width*.74));renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();schedule()};
    resizer=new ResizeObserver(resize);resizer.observe(parent);resize();
   }catch{timeout=window.setTimeout(()=>setFallback(true),0)}
-  return()=>{cancelAnimationFrame(frame);clearTimeout(timeout);resizer?.disconnect();controls?.dispose();geo.dispose();allMaterials.forEach(m=>m.dispose());renderer?.dispose();if(renderer?.domElement.parentElement===parent)parent.removeChild(renderer.domElement)}
- },[room,finish,shades,split]);
+  return()=>{disposed=true;if(visibilityHandler)document.removeEventListener("visibilitychange",visibilityHandler);if(contextLostHandler)renderer?.domElement.removeEventListener("webglcontextlost",contextLostHandler);cancelAnimationFrame(frame);clearTimeout(timeout);resizer?.disconnect();controls?.dispose();geo.dispose();allMaterials.forEach(m=>m.dispose());renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===parent)parent.removeChild(renderer.domElement)}
+ },[room,finish,shades,split,fallback]);
  return fallback?<div role="status"><p>3D unavailable on this device. Showing the 2D cutaway instead.</p><RoomCutaway room={room} finish={finish} shades={shades} split={split}/></div>
   :<div ref={host} style={{width:"100%",minHeight:290,borderRadius:12,overflow:"hidden",background:"#edf2ee",touchAction:"none"}} aria-label="Interactive conceptual room with orbit/zoom gestures"/>;
 }
