@@ -13,7 +13,8 @@ export const chapters:readonly Chapter[]=[
     "lessons": [
       "spatial-thinking",
       "house-budget",
-      "digital-models"
+      "digital-models",
+      "space-science"
     ],
     "sources": [
       "local",
@@ -307,7 +308,8 @@ export const chapters:readonly Chapter[]=[
       "brick-count",
       "steel-quantity",
       "money-literacy",
-      "digital-trust"
+      "digital-trust",
+      "quantity-survey"
     ],
     "sources": [
       "bis",
@@ -477,7 +479,8 @@ export const chapters:readonly Chapter[]=[
     "lessons": [
       "digital-models",
       "career-skills",
-      "digital-trust"
+      "digital-trust",
+      "ai-literacy"
     ],
     "sources": [
       "bis",
