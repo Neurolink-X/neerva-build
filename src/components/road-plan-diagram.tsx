@@ -1,4 +1,5 @@
 "use client";
+import {useId} from "react";
 import type {PlanModel,Room,Opening} from "@/modules/studio/plan-model";
 const labels:Record<string,string>={parking:"PARKING",verandah:"VERANDAH",living:"LIVING",dining:"DINING",kitchen:"KITCHEN",bedroom:"BEDROOM",bath:"BATH",stairs:"STAIRS",corridor:"PASSAGE",utility:"UTILITY",balcony:"BALCONY",lounge:"LOUNGE",terrace:"TERRACE"};
 const fills:Record<string,string>={parking:"#d0ded9",verandah:"#e6e4cd",living:"#d9ebe0",dining:"#e3e9d4",kitchen:"#f4e7d2",bedroom:"#e5e7f3",bath:"#d4e5ec",stairs:"#dcd9d3",corridor:"#f5f2e7",utility:"#ebe0d1",balcony:"#dbe6dd",lounge:"#e8ecd5",terrace:"#f0efe9"};
@@ -45,31 +46,55 @@ export function RoadPlanDiagram({plan,floor=0}:{plan:PlanModel;floor?:number}){
  </section>;
 }
 export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;accent:string}){
- const {widthFt,roadSide}=plan.plot;
- const storeyFt=plan.walls.heightFt;
- const scale=Math.min(600/widthFt,280/(plan.floors*storeyFt));
+ const id=useId().replace(/:/g,"");
+ const {widthFt,roadSide}=plan.plot,storeyFt=plan.walls.heightFt;
+ const scale=Math.min(600/widthFt,285/(plan.floors*storeyFt));
  const x=(feet:number)=>350+(feet-widthFt/2)*scale;
  const y=(feet:number)=>355-feet*scale;
- const levels=Array.from({length:plan.floors},(_,floor)=>{
-  const rooms=plan.rooms.filter(r=>r.floor===floor&&!["parking","verandah","balcony","terrace"].includes(r.kind));
-  return {floor,left:Math.min(...rooms.map(r=>r.x)),right:Math.max(...rooms.map(r=>r.x+r.w))};
+ const solid=plan.rooms.filter(r=>!["parking","verandah","balcony","terrace"].includes(r.kind));
+ // Project only real room spans, ordered from the rear to the road. No invented
+ // windows or solid infill across an open car bay.
+ const frontRooms=[...solid].sort((a,b)=>b.y-a.y);
+ const openings=plan.openings.flatMap(o=>{
+  const r=solid.find(r=>r.id===o.roomId);
+  if(!r||o.side!=="front"||o.connectsTo)return [];
+  const a=r.x+o.atFt,b=a+o.widthFt;
+  if(solid.some(s=>s.floor===r.floor&&s.y<r.y-.01&&s.x<b-.01&&s.x+s.w>a+.01))return [];
+  return [{o,r,a}];
  });
+ const gates=[plan.gate,plan.pedestrianGate].filter(g=>g.widthFt>0);
  return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel">
   <svg viewBox="0 0 700 420" role="img" aria-label={`Road-side elevation for ${widthFt} ft frontage, ${plan.floors} levels`}>
-   <rect width="700" height="420" fill="#e7efea"/>
-   <rect x={x(0)} y={355} width={widthFt*scale} height={8} fill="#85938a"/>
-   {levels.map(({floor,left,right})=><g key={floor}>
-    <rect x={x(left)} y={y((floor+1)*storeyFt)} width={(right-left)*scale} height={storeyFt*scale} fill={main} stroke="#68736a"/>
-    <rect x={x(left)} y={y((floor+1)*storeyFt)} width={(right-left)*scale} height={.55*scale} fill={accent}/>
-   </g>)}
+   <defs>
+    <linearGradient id={id+"sky"} x2="0" y2="1"><stop stopColor="#cbdedc"/><stop offset="1" stopColor="#f6f4e9"/></linearGradient>
+    <linearGradient id={id+"wall"} x2=".9" y2="1"><stop stopColor={main}/><stop offset=".65" stopColor={main}/><stop offset="1" stopColor={main}/></linearGradient>
+    <linearGradient id={id+"glass"} x2="1" y2="1"><stop stopColor="#bfdbde"/><stop offset=".55" stopColor="#73949e"/><stop offset="1" stopColor="#38555c"/></linearGradient>
+    <linearGradient id={id+"ground"} x2="0" y2="1"><stop stopColor="#d8d4c5"/><stop offset="1" stopColor="#8e9189"/></linearGradient>
+   </defs>
+   <rect width="700" height="420" fill={`url(#${id}sky)`}/>
+   <rect y="355" width="700" height="65" fill={`url(#${id}ground)`}/>
+   <path d="M0 371H700" stroke="#f6f4eb" strokeWidth="2"/>
+   <rect x={x(0)} y={355} width={widthFt*scale} height="8" fill="#676f67"/>
+   {frontRooms.map(r=><rect key={r.id} x={x(r.x)} y={y((r.floor+1)*storeyFt)} width={r.w*scale} height={storeyFt*scale} fill={`url(#${id}wall)`}/>)}
+   {Array.from({length:plan.floors},(_,floor)=>{
+    const rs=solid.filter(r=>r.floor===floor);
+    return rs.map(r=><g key={r.id}><rect x={x(r.x)} y={y((floor+1)*storeyFt)} width={r.w*scale} height={.35*scale} fill={accent}/><rect x={x(r.x)} y={y((floor+1)*storeyFt)+.35*scale} width={r.w*scale} height={Math.max(1,.09*scale)} fill="#24352b" opacity=".25"/></g>);
+   })}
+   {openings.map(({o,r,a})=>{
+    const w=o.widthFt*scale,h=o.heightFt*scale,left=x(a),top=y(r.floor*storeyFt+o.sillFt+o.heightFt),frame=Math.min(3,w*.08,h*.08);
+    return <g key={o.id} data-opening-id={o.id}><rect x={left} y={top} width={w} height={h} fill={o.kind==="window"?`url(#${id}glass)`:"#594a3e"} stroke="#38423c" strokeWidth={frame}/>{o.kind==="window"&&<><path d={`M${left+w/2} ${top}v${h}`} stroke="#e8eee8" strokeWidth={frame}/><path d={`M${left+frame} ${top+h*.15}l${w*.35} ${-h*.12}`} stroke="#fff" opacity=".35" strokeWidth="2"/></>}</g>;
+   })}
    {plan.rooms.filter(r=>r.kind==="balcony").map(r=><g key={r.id}>
-    <rect x={x(r.x)} y={y(r.floor*storeyFt+3)} width={r.w*scale} height={3*scale} fill="#95b6ae" stroke="#526860"/>
-    {plan.facade.kit==="jali-screen"&&Array.from({length:8},(_,i)=><rect key={i} x={x(r.x+(i+.5)*r.w/24)} y={y((r.floor+1)*storeyFt)} width={.26*scale} height={storeyFt*scale} fill={accent}/>)}
-    {plan.facade.kit==="pergola"&&Array.from({length:6},(_,i)=><rect key={i} x={x(r.x+(i+.5)*r.w/6)} y={y((r.floor+1)*storeyFt)} width={.4*scale} height={.5*scale} fill={accent}/>)}
+    <rect x={x(r.x)} y={y(r.floor*storeyFt+3)} width={r.w*scale} height={3*scale} fill={`url(#${id}glass)`} stroke="#526860"/>
+    <rect x={x(r.x)} y={y(r.floor*storeyFt+3)} width={r.w*scale} height={Math.max(2,.12*scale)} fill="#344b43"/>
+    {Array.from({length:4},(_,k)=><line key={k} x1={x(r.x+r.w*k/3)} x2={x(r.x+r.w*k/3)} y1={y(r.floor*storeyFt+3)} y2={y(r.floor*storeyFt)} stroke="#536c64" strokeWidth="1.5"/>)}
+    {plan.facade.kit==="jali-screen"&&Array.from({length:8},(_,k)=><rect key={k} x={x(r.x+(k+.5)*r.w/24)} y={y((r.floor+1)*storeyFt)} width={.26*scale} height={storeyFt*scale} fill={accent}/>)}
+    {plan.facade.kit==="pergola"&&Array.from({length:6},(_,k)=><rect key={k} x={x(r.x+(k+.5)*r.w/6)} y={y((r.floor+1)*storeyFt)} width={.4*scale} height={.5*scale} fill={accent}/>)}
    </g>)}
-   {[plan.gate,plan.pedestrianGate].filter(g=>g.widthFt>0).map(g=><rect key={g.xFt} x={x(g.xFt)} y={y(4)} width={g.widthFt*scale} height={4*scale} fill="#485d50" stroke="#304739"/>)}
-   <text x="350" y="395" fontSize="15" textAnchor="middle" fill="#314e3e">{widthFt} ft frontage · Road {roadSide} · Concept elevation</text>
+   {gates.map(g=><g key={g.xFt}><rect x={x(g.xFt)} y={y(4)} width={g.widthFt*scale} height={4*scale} fill="#536359" stroke="#303f35"/>{Array.from({length:7},(_,k)=><line key={k} x1={x(g.xFt+g.widthFt*(k+.5)/7)} x2={x(g.xFt+g.widthFt*(k+.5)/7)} y1={y(3.8)} y2={y(.2)} stroke="#a7b2a6" strokeWidth="1.5"/>)}</g>)}
+   <rect x="0" y="384" width="700" height="36" fill="#f4f5ef"/>
+   <text x="350" y="407" fontSize="15" textAnchor="middle" fill="#314e3e">{widthFt} ft frontage · Road {roadSide} · Concept elevation</text>
   </svg>
+  <p className="nroad-small">Plan-derived architectural illustration. Actual openings and gate positions are retained; materials and lighting are illustrative, not a photoreal render.</p>
  </section>;
 }
-

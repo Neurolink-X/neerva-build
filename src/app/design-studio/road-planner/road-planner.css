@@ -106,3 +106,14 @@
 }
 
 .nroad-plan-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}.nroad-plan-summary span{display:grid;gap:4px;background:#f4f7f0;padding:10px;border:1px solid #d5dfd3;border-radius:10px;color:#526354;font-size:12px;overflow-wrap:anywhere}.nroad-plan-summary strong{font-size:clamp(15px,2vw,21px);color:#234538}.nroad .nbd-buttons[aria-label="3D camera views"]{grid-template-columns:repeat(auto-fit,minmax(min(100%,6rem),1fr))}.nroad .nbd-buttons button:focus-visible{outline:3px solid #a46b35;outline-offset:2px}@media(max-width:600px){.nroad-plan-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.nroad .nroad-elevation{padding:8px;border-radius:14px;background:white}
+.nroad .nroad-elevation svg{border-radius:9px;max-height:none;width:min(100%,790px)}
+.nroad .nroad-elevation p{padding:0 8px;margin:10px 0 4px}
+.nroad-exterior-workspace{display:grid;gap:12px}
+.nroad-exterior-workspace .nroad-palette{margin:0}
+.nroad-exterior-workspace>label{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-weight:700;font-size:13px}
+.nroad-exterior-workspace>label select{min-height:44px;flex:1;min-width:140px;max-width:100%}
+@media(min-width:1000px){.nroad-exterior-workspace{grid-template-columns:minmax(0,1fr) minmax(220px,.55fr);align-items:start}.nroad-exterior-workspace>label{grid-column:1/-1}.nroad-exterior-workspace .nroad-elevation{margin:0}}
+
+.nroad-shortlist{border:1px solid #d5e0d4;border-radius:13px;background:#f7faf5;padding:14px;margin:16px 0;min-width:0}.nroad-shortlist h2{font-size:20px;margin:0 0 8px}.nroad-shortlist p,.nroad-shortlist small{font-size:13px;color:#526459;line-height:1.5}.nroad-shortlist-actions,.nroad-shortlist-choices{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.nroad-shortlist button{min-height:44px;padding:8px 12px;border:1px solid #9eb3a4;border-radius:8px;background:#fff;color:#254738}.nroad-shortlist button[aria-pressed=true]{background:#254738;color:#fff}.nroad-shortlist button:disabled{opacity:.5}.nroad-shortlist-choices label{display:flex;gap:8px;align-items:center;min-height:44px}.nroad-compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}.nroad-compare-grid article{background:white;padding:10px;border-radius:10px;min-width:0}.nroad-compare-grid svg{max-width:100%;max-height:320px}.nroad-shortlist button:focus-visible{outline:3px solid #a65333;outline-offset:2px}

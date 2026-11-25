@@ -1,0 +1,8 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {ideas,palettes,parseBoard,toggleIdea,boardQuery,boardFromQuery} from "./inspiration.ts";
+test("inspiration catalog has unique stable IDs and local assets",()=>{assert.equal(new Set(ideas.map(i=>i.id)).size,ideas.length);assert.equal(new Set(ideas.map(i=>i.src)).size,ideas.length);assert.ok(ideas.every(i=>i.src.startsWith("/images/")&&i.href.startsWith("/")&&i.tip.length>0));assert.equal(new Set(palettes.map(p=>p.id)).size,palettes.length)});
+test("board links round trip only allowlisted IDs and palettes",()=>{const b=parseBoard({ids:["starter","starter","<script>","family"],palette:"sage"});assert.deepEqual(b,{ids:["starter","family"],palette:"sage"});assert.deepEqual(boardFromQuery(boardQuery(b)),b);assert.deepEqual(toggleIdea(b,"starter").ids,["family"]);assert.deepEqual(toggleIdea(b,"unknown"),b);assert.equal(boardFromQuery(""),null);assert.equal(parseBoard({palette:"bad"}).palette,"warm")});
+
+import {defaultLibrary,readLibrary,addBoard,activeBoard,updateBoard,removeBoard,maxBoards} from "./inspiration.ts";
+test("named boards migrate legacy saves, remain independent and bounded",()=>{let l=defaultLibrary({ids:["starter"],palette:"sage"});assert.deepEqual(activeBoard(l).ids,["starter"]);l=addBoard(l,"second","Living room");l=updateBoard(l,{ids:["living"],palette:"earth"});assert.deepEqual(l.boards[0].ids,["starter"]);assert.deepEqual(activeBoard(l).ids,["living"]);for(let i=0;i<10;i++)l=addBoard(l,"new-"+i,"Board "+i);assert.equal(l.boards.length,maxBoards);assert.deepEqual(readLibrary(JSON.stringify(l)),l);assert.equal(removeBoard(l,l.active).boards.length,maxBoards-1);assert.equal(readLibrary("x".repeat(8193)).boards.length,1)});
