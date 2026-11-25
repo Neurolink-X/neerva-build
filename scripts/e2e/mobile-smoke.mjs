@@ -444,6 +444,10 @@ async function main(){
     await page.getByRole("searchbox",{name:"Search site situations"}).fill("ईंट");
     await page.getByRole("button",{name:"80",exact:true}).click();
     await page.getByText("Good decision.",{exact:true}).waitFor();
+    await page.getByRole("heading",{name:"Recognise honeycombing in concrete"}).waitFor();
+    assert.equal(await page.getByRole("heading",{name:"Compare two written material prices"}).count(),0,"purchase calculators are not in Academy");
+    await page.goto(base+"/my-project",{waitUntil:"load"});
+    await page.getByText("Optional: compare material prices & deliveries",{exact:true}).click();
     await page.getByText(/Supplier B is ₹500 lower/).waitFor();
     await page.getByLabel("Rejected or damaged units").fill("50");
     await page.getByText("Total accepted shortfall",{exact:true}).locator("..").getByText("100",{exact:true}).waitFor();

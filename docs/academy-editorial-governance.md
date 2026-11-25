@@ -17,3 +17,6 @@ Fifteen material records and twenty glossary terms are separated from the stage 
 
 ## Site Practice Lab
 Twelve authored simulated situations cover all twelve handbook stages. Separate situational judgement, action steps, evidence requests and conversation scripts from theory. Quotes and delivery tools accept user-entered amounts, explicitly distinguish taxes/charges and rejected/missing stock, and do not execute purchasing. Treat scenarios as editorial educational material; qualified site review and real project evidence remain necessary. Keep numerical examples illustrative and stable case IDs.
+
+## Scope boundary: learning vs project execution
+Academy prioritises workmanship, construction science and site decisions. Optional written-price comparison and delivery reconciliation are in the private My Project workspace, not the learning lab. Eight practical workmanship records use original schematic illustrations where useful, clear warning signs, tools and professional escalation. Illustrations are not site photographs or formal acceptance criteria. Professional review remains pending.
