@@ -2,12 +2,12 @@ import {z} from "zod";
 import {planBriefSchema as brief} from "@/modules/studio/plan-brief-schema";
 import {requireAuth,apiFailed} from "@/modules/identity/server-auth";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
-import {planMetrics} from "@/modules/studio/plan-model";
+import {planMetrics,planGeometryDigest} from "@/modules/studio/plan-model";
 import {parseStudioConfig,permittedStudioReport} from "@/modules/studio/studio-config";
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const hdr={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const fail=(code:number,error:string)=>Response.json({error},{status:code,headers:hdr});
-const home=z.object({product:z.literal("home_studio"),brief,option:z.number().int().min(0).max(23),planId:z.string().min(5).max(200).optional()}).strict();
+const home=z.object({product:z.literal("home_studio"),brief,option:z.number().int().min(0).max(23),planId:z.string().min(5).max(200).optional(),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
 const colour=z.object({product:z.literal("colour_studio"),
  base:z.string().regex(/^#[0-9a-fA-F]{6}$/),accent:z.string().regex(/^#[0-9a-fA-F]{6}$/),
  room:z.string().trim().min(3).max(60)}).strict();
@@ -44,6 +44,7 @@ export async function POST(req:Request){
  }
  const plans=generateSpatialPortfolio(p.brief,24).plans;
  const plan=plans[p.option];if(!plan||(p.planId&&plan.id!==p.planId))return fail(409,"The selected plan no longer fits this plot. Select a valid configuration.");
+ if(p.geometryDigest&&p.geometryDigest!==await planGeometryDigest(plan))return fail(409,"Plan geometry changed. Reopen the selected layout before exporting.");
  const metrics=planMetrics(plan);
  return Response.json({product:p.product,planId:plan.id,plot:plan.plot,floors:plan.floors,variant:plan.variant,
   rooms:plan.rooms.map(r=>({floor:r.floor,room:r.label,kind:r.kind,xFt:r.x,yFt:r.y,widthFt:r.w,depthFt:r.d})),
