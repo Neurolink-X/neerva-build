@@ -8,3 +8,6 @@ test("reject divergent Next config version",()=>{const [p,l]=fixture();p.devDepe
 test("reject lockfile drift",()=>{const [p,l]=fixture();l.packages["node_modules/eslint"].version="0.0.0";assert(lintIssues(p,l).some(x=>x.includes("lock mismatch")));});
 test("reject mixed nested ESLint majors",()=>{const [p,l]=fixture();l.packages["node_modules/example/node_modules/eslint"]={version:"0.0.0"};assert(lintIssues(p,l).some(x=>x.includes("Mixed ESLint")));});
 test("reject floating toolchain versions",()=>{const [p,l]=fixture();p.devDependencies.eslint="^9.0.0";assert(lintIssues(p,l).some(x=>x.includes("exact stable")));});
+
+test("reject aligned but unreviewed ESLint major",()=>{const [p,l]=fixture();p.devDependencies.eslint="10.0.0";l.packages[""].devDependencies.eslint="10.0.0";l.packages["node_modules/eslint"].version="10.0.0";assert(lintIssues(p,l).some(x=>x.includes("reviewed major")));});
+test("malformed nested lock entry fails closed",()=>{const [p,l]=fixture();l.packages["node_modules/example/node_modules/eslint"]=null;assert(lintIssues(p,l).some(x=>x.includes("Mixed ESLint")));});

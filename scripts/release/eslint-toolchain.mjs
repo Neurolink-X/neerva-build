@@ -7,6 +7,7 @@ export function lintIssues(manifest, lock) {
   const stable=/^\d+\.\d+\.\d+$/;
   if(lock.lockfileVersion!==3||!lock.packages?.[""])issues.push("Expected npm v3 package lock");
   const packages=lock.packages??{};
+  if(stable.test(versions.eslint??"")&&!versions.eslint.startsWith("9."))issues.push("ESLint 9 is the reviewed major; major upgrades require explicit compatibility review");
   for(const [name,version] of Object.entries(versions)){
     const section=name==="next"?"dependencies":"devDependencies";
     if(!stable.test(version??""))issues.push(`${name} must be an exact stable version`);
@@ -14,7 +15,7 @@ export function lintIssues(manifest, lock) {
   }
   if(versions.next!==versions["eslint-config-next"])issues.push("Next.js and eslint-config-next must use the same release");
   for(const [path,pkg] of Object.entries(packages)){
-    if(/\/node_modules\/eslint$/.test(path)&&pkg.version!==versions.eslint)issues.push(`Mixed ESLint versions at ${path}`);
+    if(/\/node_modules\/eslint$/.test(path)&&pkg?.version!==versions.eslint)issues.push(`Mixed ESLint versions at ${path}`);
   }
   return issues;
 }
