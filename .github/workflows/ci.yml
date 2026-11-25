@@ -43,6 +43,8 @@ jobs:
         run: |
           node scripts/release/eslint-toolchain.mjs
           node --test scripts/release/eslint-toolchain.test.mjs
+          node scripts/release/upstash-peer.mjs
+          node --test scripts/release/upstash-peer.test.mjs
       - name: Install locked dependencies
         id: dependencies
         run: npm ci --no-audit --no-fund
