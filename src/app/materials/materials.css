@@ -154,3 +154,5 @@
 .product-gallery-stage .catalog-real-image{object-fit:contain}
 .catalog-material-identity{border:1px solid #e2e7df}
 @media(max-width:480px){.catalog-media-caption{padding:6px 8px}.catalog-media-frame .catalog-material-image:not(.compact) img{padding:5px}}
+
+.published-catalog-photo{display:grid;justify-items:start;gap:4px;margin:8px 0;max-width:100%}.published-catalog-photo figcaption{font-size:11px;color:#52645a}.published-catalog-sku{display:block;overflow-wrap:anywhere;font-size:12px;color:#42564c}
