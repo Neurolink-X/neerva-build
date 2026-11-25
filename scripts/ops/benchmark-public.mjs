@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {performance} from "node:perf_hooks";
 const base=new URL(process.argv[2]??"https://neerva-build.vercel.app");
 assert.ok(["https://neerva-build.vercel.app","http://127.0.0.1:3000"].includes(base.origin),"Only Neerva public origin or local preview allowed");
-const routes=[["/",2500],["/materials",2500],["/design-studio",2500],["/api/catalog",1000],["/api/catalog/prices",1000],["/api/studio/config",1000]];
+const routes=[["/",2500],["/materials",2500],["/design-studio",2500],["/blog",2500],["/learn",2500],["/brands",2500],["/api/catalog",1000],["/api/catalog/prices",1000],["/api/studio/config",1000]];
 const report=[];
 for(const [path,budget] of routes){
  const times=[];let failed=0;
