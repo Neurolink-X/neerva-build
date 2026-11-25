@@ -504,6 +504,17 @@ async function main(){
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"all","full exterior intentionally displays both floors");
     await page.getByRole("button",{name:"Selected floor cutaway"}).click();
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"1","return to cutaway follows the same 2D floor");
+    await page.getByRole("button",{name:"Save selected layout locally",exact:true}).click();
+    await page.locator(".nroad-variants button").nth(5).click();
+    await page.getByRole("button",{name:"Save selected layout locally",exact:true}).click();
+    await page.getByRole("button",{name:"Show shortlist (2)",exact:true}).click();
+    await page.locator(".nroad-shortlist-choices input").nth(0).check();
+    await page.locator(".nroad-shortlist-choices input").nth(1).check();
+    assert.equal(await page.locator(".nroad-compare-grid article").count(),2,"compare two real plans");
+    assert.equal(await page.locator(".nbd-building").count(),1,"comparison must not allocate extra WebGL viewers");
+    const comparedIds=await page.locator(".nroad-compare-grid .nroad-diagram").evaluateAll(els=>els.map(e=>e.getAttribute("data-plan-id")));
+    assert.equal(new Set(comparedIds).size,2,"comparison has distinct geometry sources");
+    await page.getByRole("button",{name:"Hide shortlist (2)",exact:true}).click();
     await page.goto(base+"/design-studio/road-planner",{waitUntil:"load"});
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
     await roadPlan.waitFor({state:"visible",timeout:15000});
