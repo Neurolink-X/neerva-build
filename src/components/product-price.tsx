@@ -10,24 +10,42 @@ type Rate={category:string;slug:string;sku:string;unit:string;paise:number;city:
 const listeners=new Set<()=>void>();
 let rates=new Map<string,Rate>(),request:Promise<void>|undefined,lastLoaded=0;
 const rateKey=(category:string,slug:string,sku?:string)=>category+"|"+slug+"|"+(sku??"");
+let timer:ReturnType<typeof setInterval>|undefined,expiry:ReturnType<typeof setTimeout>|undefined;
+const notifyRates=()=>{for(const notify of listeners)notify()};
+function scheduleExpiry(){
+ clearTimeout(expiry);
+ if(!listeners.size||!rates.size)return;
+ const now=Date.now();
+ let next=lastLoaded+90000;
+ for(const rate of rates.values())if(rate.until)next=Math.min(next,Date.parse(rate.until));
+ expiry=setTimeout(()=>{prune();scheduleExpiry();},Math.max(1,next-now));
+}
+function prune(){
+ const now=Date.now();let changed=false;
+ for(const [key,rate] of rates)if(now-lastLoaded>=90000||rate.until&&Date.parse(rate.until)<=now){rates.delete(key);changed=true;}
+ if(changed)notifyRates();
+}
 function refresh(){
- if(request||document.visibilityState==="hidden")return;
- request=fetch("/api/catalog/prices",{cache:"no-cache"}).then(async response=>{
-  const body=response.ok?await response.json():null;
-  const next=new Map<string,Rate>();
+ prune();scheduleExpiry();
+ if(request||!listeners.size||document.visibilityState==="hidden")return;
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),10000);
+ request=fetch("/api/catalog/prices",{cache:"no-cache",signal:controller.signal}).then(async response=>{
+  if(!response.ok)throw Error("Price feed unavailable");
+  const body=await response.json();
+  const next=new Map<string,Rate>(),now=Date.now();
   if(Array.isArray(body?.prices))for(const r of body.prices as Rate[]){
-   if(r.until&&Date.parse(r.until)<=Date.now())continue;
+   if(!Number.isSafeInteger(r.paise)||r.paise<=0||r.until&&(!Number.isFinite(Date.parse(r.until))||Date.parse(r.until)<=now))continue;
    for(const key of [rateKey(r.category,r.slug,r.sku),rateKey(r.category,r.slug)])if(!next.has(key))next.set(key,r);
   }
-  rates=next;lastLoaded=Date.now();
- }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{request=undefined;for(const notify of listeners)notify()});
+  rates=next;lastLoaded=now;
+ }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{clearTimeout(timeout);request=undefined;notifyRates();scheduleExpiry()});
 }
-let timer:ReturnType<typeof setInterval>|undefined;
-function onVisible(){if(document.visibilityState==="visible"){for(const notify of listeners)notify();if(Date.now()-lastLoaded>=30000)refresh()}}
+function onVisible(){if(document.visibilityState==="visible"){prune();scheduleExpiry();notifyRates();if(Date.now()-lastLoaded>=30000)refresh()}}
 function subscribe(notify:()=>void){
  listeners.add(notify);
  if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);timer=setInterval(refresh,30000)}
- return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);timer=undefined;document.removeEventListener("visibilitychange",onVisible)}};
+ return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;document.removeEventListener("visibilitychange",onVisible)}};
 }
 const noRate=()=>undefined;
 function currentRate(category:string,slug:string,sku?:string){

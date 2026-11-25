@@ -75,6 +75,19 @@ async function main(){
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert.ok(overflow<=2,category+" overflow at "+v.w);
    }
+   await page.goto(base+"/materials",{waitUntil:"load"});
+   const catalog=page.locator("#catalog-results");
+   await catalog.locator(".product-card").first().waitFor();
+   assert.equal(await catalog.locator(".product-card").count(),24,"Bound first-page DOM at "+v.w);
+   const firstPage=await catalog.locator(".product-card h2 a").evaluateAll(links=>links.map(a=>a.getAttribute("href")));
+   await catalog.getByRole("button",{name:"Next →",exact:true}).click();
+   const secondPage=await catalog.locator(".product-card h2 a").evaluateAll(links=>links.map(a=>a.getAttribute("href")));
+   assert.ok(secondPage.length>0&&secondPage.length<=24,"Next page stays bounded");
+   assert.ok(secondPage.every(h=>!firstPage.includes(h)),"No repeated family between pages");
+   await catalog.getByRole("button",{name:"← Previous",exact:true}).click();
+   assert.deepEqual(await catalog.locator(".product-card h2 a").evaluateAll(links=>links.map(a=>a.getAttribute("href"))),firstPage);
+   await catalog.locator(".catalog-search input").fill("red clay brick");
+   assert.ok(await catalog.locator('a[href="/materials/bricks-blocks/red-clay-brick"]').count()>0,"Search still discovers products beyond first page");
    await page.goto(base+"/materials?category=hardware",{waitUntil:"load"});
    assert.equal(await page.locator('#catalog-results a[href="/materials/hardware/wood-adhesive"]').count(),0,"Minor adhesive bottle must not appear in the public grid");
    await page.goto(base+"/materials/hardware",{waitUntil:"load"});
