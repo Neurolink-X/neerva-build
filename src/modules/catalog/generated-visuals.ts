@@ -176,5 +176,159 @@ export const generatedVisuals:readonly GeneratedVisual[]=[
     "sha256": "dd4ef74ec5d63cd6315b79e9d880e21084f3a4c7e13a8b660f8afe85cc956fe7",
     "alt": "Yellow tile cleaning sponge",
     "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "generic-ball-valve",
+    "width": 308,
+    "height": 308,
+    "bytes": 9260,
+    "sha256": "bccfd5c7cca78e0a0a89d0222e861b991e8009aaebab901cf528a85ed64e079e",
+    "path": "/images/catalog/generated/generic-ball-valve.webp",
+    "alt": "Brass lever ball valve",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-foot-valve",
+    "width": 307,
+    "height": 308,
+    "bytes": 8404,
+    "sha256": "4a08ad711e5d46d75fdac3271970cb364f1c9b3b5b1742534ac4f2d99dfce4f5",
+    "path": "/images/catalog/generated/fitting-foot-valve.webp",
+    "alt": "Brass foot valve with strainer",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-angle-valve",
+    "width": 307,
+    "height": 308,
+    "bytes": 7550,
+    "sha256": "e39603af545faef8870b5677a4b754d90b2e11cc69d98054f3c8344277b41616",
+    "path": "/images/catalog/generated/fitting-angle-valve.webp",
+    "alt": "Chrome-plated angle stop valve",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-bib-cock",
+    "width": 308,
+    "height": 308,
+    "bytes": 7622,
+    "sha256": "52661179e6dc5bb74fc6d4f7802627ec57986a1262f3078903abbe8844420d35",
+    "path": "/images/catalog/generated/fitting-bib-cock.webp",
+    "alt": "Chrome-plated bib tap",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-hose-barb",
+    "width": 308,
+    "height": 307,
+    "bytes": 6192,
+    "sha256": "251621b1018b1d845d62d88f6744131e2392fa37ec34382b9aa4e96fe805f0ef",
+    "path": "/images/catalog/generated/fitting-hose-barb.webp",
+    "alt": "Brass hose barb adapter",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-gasket",
+    "width": 307,
+    "height": 307,
+    "bytes": 5014,
+    "sha256": "83e06c04a5bb742134a20fbbf34ea6002d95386e3a9f8c13abe0960ead0d4eef",
+    "path": "/images/catalog/generated/fitting-gasket.webp",
+    "alt": "Black rubber gasket",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "plumbing",
+    "family": "fitting-delivery-hose",
+    "width": 308,
+    "height": 307,
+    "bytes": 21456,
+    "sha256": "f6c50a5142978be59307df5f843ae51ae8cae5c37909a64398d01d0b0bc14236",
+    "path": "/images/catalog/generated/fitting-delivery-hose.webp",
+    "alt": "Braided water hose; confirm working pressure",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "door-mortise-lock",
+    "width": 308,
+    "height": 307,
+    "bytes": 4460,
+    "sha256": "3779d3bcb89c40b8e7e1ba3af9ac4f429ab80ed42d4a6c8362208d00c502d8a2",
+    "path": "/images/catalog/generated/door-mortise-lock.webp",
+    "alt": "Mortise lock and lever handle",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "door-al-drop",
+    "width": 307,
+    "height": 307,
+    "bytes": 4030,
+    "sha256": "c80bca14664132e9135f1e6d83f73b9d299a14a5573dfdc695899003be5d4d3c",
+    "path": "/images/catalog/generated/door-al-drop.webp",
+    "alt": "Metal sliding door latch",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "cabinet-knob",
+    "width": 307,
+    "height": 307,
+    "bytes": 3610,
+    "sha256": "55a554d42fecd3c84a9d1a449e813495a13bd36865f06a20724e26f0c61cda7e",
+    "path": "/images/catalog/generated/cabinet-knob.webp",
+    "alt": "Brushed metal cabinet knob",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "cabinet-magnetic-catch",
+    "width": 308,
+    "height": 307,
+    "bytes": 4650,
+    "sha256": "eace685e72ce5092cb6610511dc419760c09e112b8177d9ff1a5aeb276e4534e",
+    "path": "/images/catalog/generated/cabinet-magnetic-catch.webp",
+    "alt": "Magnetic catch and strike plate",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "window-latch",
+    "width": 307,
+    "height": 308,
+    "bytes": 5052,
+    "sha256": "5300f3701dff2edc583973ebad6c02ee1d6d1ea323d4dd7a344808b14c68df8a",
+    "path": "/images/catalog/generated/window-latch.webp",
+    "alt": "Metal window latch",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "sliding-window-roller",
+    "width": 307,
+    "height": 308,
+    "bytes": 5628,
+    "sha256": "9f9cd3388f4c8031fe290c37657fb72b536f3261abaf3d44887988c082a9c1d0",
+    "path": "/images/catalog/generated/sliding-window-roller.webp",
+    "alt": "Sliding window roller assembly",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
+  },
+  {
+    "category": "hardware",
+    "family": "window-weather-strip",
+    "width": 308,
+    "height": 308,
+    "bytes": 6958,
+    "sha256": "d6e5dfd4ad25ca014f723ecc82d261dd76e13e45a3a110ed0e5f320f5fe413e8",
+    "path": "/images/catalog/generated/window-weather-strip.webp",
+    "alt": "Coiled rubber weather strip",
+    "source": "AI-generated product-type reference; not a seller or manufacturer photograph"
   }
 ];
