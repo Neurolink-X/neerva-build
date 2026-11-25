@@ -6,6 +6,10 @@ on:
   push:
     branches: ['feat/catalog-media-integrity']
     paths: ['scripts/catalog/material-photo-review-candidates.json']
+# Superseded PR checks must not consume runner time. Manual strict audits stay separate.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions:
   contents: read
 jobs:
