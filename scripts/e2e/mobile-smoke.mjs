@@ -94,8 +94,14 @@ async function main(){
    }));
    assert.deepEqual(mediaIssues,[],"home category media fills frame at "+v.w);
    assert.equal(await page.locator(".nbh-material-options[open]").count(),0,"compact category choices closed initially");
-   const blankGaps=await categoryCards.evaluateAll(cards=>cards.map(c=>{const p=c.querySelector(".nbh-material-info > p"),a=c.querySelector(".nbh-material-cta");return p&&a?a.getBoundingClientRect().top-p.getBoundingClientRect().bottom:0;}));
-   assert.ok(blankGaps.every(g=>g<120),"no stretched empty category card gap");
+   const cardRows=await categoryCards.evaluateAll(cards=>{
+    const rows=new Map();
+    for(const card of cards){const r=card.getBoundingClientRect(),cta=card.querySelector(".nbh-material-cta")?.getBoundingClientRect();const key=Math.round(r.top);const row=rows.get(key)??[];row.push({height:r.height,bottom:cta?.bottom??0});rows.set(key,row)}
+    return [...rows.values()].flatMap(row=>row.length<2?[]:row.slice(1).map(c=>({height:Math.abs(c.height-row[0].height),cta:Math.abs(c.bottom-row[0].bottom)})));
+   });
+   assert.ok(cardRows.every(r=>r.height<=2&&r.cta<=3),"category cards in each row have equal height and aligned actions");
+   assert.equal(await page.locator("footer.unified-footer").count(),1,"home shares the unified footer");
+   assert.equal(await page.locator("footer.unified-footer nav").count(),4,"footer groups are structured");
    await page.locator(".nbh-material-options summary").first().click();
    assert.equal(await page.locator(".nbh-material-options[open]").count(),1,"subcategory links remain expandable");
    for(const category of ["bricks-blocks","plumbing","tiles","hardware"]){
@@ -431,6 +437,9 @@ async function main(){
     assert.equal(await page.getByRole("link",{name:/Prepare material request/}).getAttribute("href"),"/quotes","project connects to existing guarded quote workflow");
     const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
     assert.equal(visual?.status(),200,"colour editor route");
+    assert.equal(await page.locator(".paint-live-workspace .paint-adjacent-controls").count(),1,"colour controls are adjacent to live preview");
+    const paintLayout=await page.locator(".paint-live-workspace").evaluate(el=>{const canvas=el.querySelector(".paint-live-preview"),palette=el.querySelector(".paint-adjacent-controls");return !!canvas&&!!palette&&canvas.nextElementSibling?.contains(palette)});
+    assert.ok(paintLayout,"photo and palette occupy a single workspace");
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const preview=page.locator(".nbd-photo canvas");
     await preview.waitFor({state:"visible"});
@@ -469,6 +478,8 @@ async function main(){
     assert.match((await chosenLayout.innerText()),/^6\./,"gallery card #6 opens option #6, not the default plan");
     await page.getByRole("button",{name:"Ground floor"}).click();
     await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
+    const modelFirst=await page.locator(".nbd-building").evaluate(el=>{const canvas=el.querySelector(".nbd-webgl"),mode=el.querySelector(".nbd-mode-controls");return !canvas||!!mode&&canvas.compareDocumentPosition(mode)&Node.DOCUMENT_POSITION_FOLLOWING});
+    assert.ok(modelFirst,"model appears before its display controls");
     assert.equal(await page.getByRole("button",{name:"Selected floor cutaway"}).getAttribute("aria-pressed"),"true","ground-floor 3D defaults to matching floor");
     // The 3D mesh source must change with the actual selected 2D option, not only the highlighted card.
     const plan2D=page.locator(".nroad-diagram"),plan3D=page.locator(".nbd-building");
@@ -478,14 +489,23 @@ async function main(){
     assert.equal(await plan3D.getAttribute("data-plan-id"),sixthId,"3D must use the same PlanModel as selected 2D");
     assert.equal(await plan2D.getAttribute("data-selected-floor"),"0");
     const viewerBounds=await plan3D.evaluate(viewer=>{
-      const buttons=[...viewer.querySelectorAll(".nbd-buttons button")];
+      const buttons=[...viewer.querySelectorAll(".nbd-buttons button")].filter(button=>button.getClientRects().length>0&&button.getBoundingClientRect().height>0);
       const viewport=document.documentElement.clientWidth;
       const visual=viewer.querySelector("canvas, svg")?.getBoundingClientRect();
       return {fits:visual&&visual.left>=0&&visual.right<=viewport+1,
         targets:buttons.map(button=>button.getBoundingClientRect().height)};
     });
     assert.ok(viewerBounds.fits,"hydrated 3D preview fits the page");
-    assert.ok(viewerBounds.targets.every(height=>height>=44),"3D modes have full touch targets");
+    assert.ok(viewerBounds.targets.length>=3&&viewerBounds.targets.every(height=>height>=44),"visible 3D modes have full touch targets");
+    const qualityOptions=plan3D.locator(".nbd-quality-options");
+    if(await qualityOptions.count()){
+      assert.equal(await qualityOptions.getAttribute("open"),null,"advanced quality is initially collapsed");
+      await qualityOptions.locator("summary").click();
+      const qualityTargets=await qualityOptions.locator("button").evaluateAll(buttons=>buttons.map(button=>button.getBoundingClientRect().height));
+      assert.equal(qualityTargets.length,2,"both rendering quality choices remain available");
+      assert.ok(qualityTargets.every(height=>height>=44),"expanded quality controls have full touch targets");
+      await qualityOptions.locator("summary").click();
+    }
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"0","3D cutaway must start on the selected ground floor");
     assert.ok(Number(await plan3D.getAttribute("data-wall-cells"))>0,"3D selected floor must contain actual mesh walls");
     await page.locator(".nroad-variants button").first().click();
