@@ -43,10 +43,10 @@ export function buildRoomScene(host:HTMLDivElement):RoomScene{
  scene.add(objects);const ambient=new THREE.HemisphereLight("#eaf1ff","#9e8263",2.3);scene.add(ambient);
  const sun=new THREE.DirectionalLight("#fff0d6",3);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.bias=-.0004;scene.add(sun,sun.target);
  const lamp=new THREE.PointLight("#ffbf75",35,45,2);scene.add(lamp);
- let room:RoomLab|null=null,angle=42,zoom=1,disposed=false;
+ let room:RoomLab|null=null,angle=42,zoom=1,disposed=false; let frame=0; function queueRender(){if(!frame&&!disposed)frame=requestAnimationFrame(()=>{frame=0;render()})}
  function render(){if(disposed||!room)return;const width=Math.max(1,host.clientWidth),height=Math.max(1,host.clientHeight);renderer.setSize(width,height,false);camera.aspect=width/height;const span=Math.max(room.width,room.depth),r=span*1.9/zoom,theta=angle*Math.PI/180;
  camera.position.set(room.width/2+Math.sin(theta)*r,span*.98/zoom+3,room.depth/2+Math.cos(theta)*r);camera.lookAt(room.width/2,2.3,room.depth/2);camera.updateProjectionMatrix();renderer.render(scene,camera)}
- const observer=new ResizeObserver(render);observer.observe(host);
+ const observer=new ResizeObserver(queueRender);observer.observe(host);
  function update(next:RoomLab,light:"day"|"evening",nextAngle:number,nextZoom:number){
   if(disposed)return;angle=nextAngle;zoom=nextZoom;
   if(room!==next){room=next;clearGroup(objects);const w=next.width,d=next.depth;
@@ -58,7 +58,7 @@ export function buildRoomScene(host:HTMLDivElement):RoomScene{
    for(const p of next.pieces)objects.add(furnitureModel(p));
    sun.position.set(w+5,20,d+8);sun.target.position.set(w/2,0,d/2);const ext=Math.max(w,d)*1.2;Object.assign(sun.shadow.camera,{left:-ext,right:ext,top:ext,bottom:-ext,near:.1,far:100});sun.shadow.camera.updateProjectionMatrix();lamp.position.set(w*.55,7,d*.4);
   }
-  const day=light==="day";scene.background=new THREE.Color(day?"#e8eae5":"#3d4149");ambient.intensity=day?2.3:.8;sun.intensity=day?3:.3;lamp.intensity=day?0:65;renderer.toneMappingExposure=day?1.12:.9;render();
+  const day=light==="day";scene.background=new THREE.Color(day?"#e8eae5":"#3d4149");ambient.intensity=day?2.3:.8;sun.intensity=day?3:.3;lamp.intensity=day?0:65;renderer.toneMappingExposure=day?1.12:.9;queueRender();
  }
- return {update,dispose(){disposed=true;observer.disconnect();clearGroup(objects);sun.shadow.map?.dispose();renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove()}};
+ return {update,dispose(){disposed=true;cancelAnimationFrame(frame);observer.disconnect();clearGroup(objects);sun.shadow.map?.dispose();renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove()}};
 }
