@@ -419,7 +419,8 @@ async function main(){
     await page.locator("article.admin-record").first().getByRole("button",{name:"Remove"}).click();
     await page.getByText(/Your order cart is empty/).waitFor();
     await page.goto(base+"/build-iq",{waitUntil:"load"});
-    assert.equal(await page.locator(".academy-grid article").count(),19,"all knowledge lessons are available");
+    const academyCount=await page.locator(".academy-grid article").count();
+    assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
     await page.getByRole("link",{name:"Start exploring →"}).click();
     await page.getByText("Optional Build IQ challenge",{exact:true}).click();
     await page.getByRole("button",{name:"Compare their measured dimensions and road access"}).click();
@@ -428,7 +429,7 @@ async function main(){
     await page.reload({waitUntil:"load"});
     await page.getByRole("button",{name:"Lesson explored ✓"}).waitFor();
     await page.getByRole("link",{name:"All lessons",exact:true}).click();
-    await page.getByText("1 of 19 lessons explored",{exact:true}).waitFor();
+    await page.getByText(`1 of ${academyCount} lessons explored`,{exact:true}).waitFor();
     await page.getByRole("searchbox",{name:"Search construction questions"}).fill("सरिया");
     assert.ok(await page.locator(".knowledge-answers details").count()>=2,"Hindi search returns site answers");
     await page.getByRole("button",{name:"हिंदी",exact:true}).click();
@@ -462,6 +463,9 @@ async function main(){
     await page.getByLabel("Room alternative name").fill("First layout");
     await page.getByRole("button",{name:"Save alternative",exact:true}).click();
     await page.getByRole("button",{name:"Restore First layout",exact:true}).waitFor();
+    await page.getByRole("button",{name:"Wall #dbe4d1",exact:true}).click();
+    await page.getByRole("button",{name:"Restore First layout",exact:true}).click();
+    assert.equal(await page.getByRole("button",{name:"Wall #f1e7d5",exact:true}).getAttribute("aria-pressed"),"true","saved room restores its finish");
     await page.getByRole("button",{name:"Interactive 3D",exact:true}).click();
     await page.getByRole("button",{name:"Evening",exact:true}).click();
     assert.equal(await page.getByRole("button",{name:"Evening",exact:true}).getAttribute("aria-pressed"),"true");

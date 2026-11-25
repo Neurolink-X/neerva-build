@@ -34,7 +34,8 @@ function furnitureModel(p:Piece){
  g.rotation.y=p.rotated?-Math.PI/2:0;g.position.set(p.x+(p.rotated?d:w)/2,0,p.y+(p.rotated?w:d)/2);return g;
 }
 export function buildRoomScene(host:HTMLDivElement):RoomScene{
- const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
+ const canvas=document.createElement("canvas");const context=canvas.getContext("webgl2",{antialias:true,alpha:false,powerPreference:"low-power"});if(!context)throw new Error("WebGL2 unavailable");
+ const renderer=new THREE.WebGLRenderer({canvas,context,antialias:true,alpha:false,powerPreference:"low-power"});
  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
  host.appendChild(renderer.domElement);
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(38,1,.1,200),objects=new THREE.Group();
