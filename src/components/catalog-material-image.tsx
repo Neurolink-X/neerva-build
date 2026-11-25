@@ -21,11 +21,12 @@ export function CatalogMaterialImage({category,name,compact=false,product}:{cate
  const isPipe=product&&(category==="plumbing"||category==="electrical")&&!product.referenceImage;
  const safeSrc=isPipe&&current?.kind==="category"?undefined:src;
  const surfacePreview=category==="tiles"&&product&&current?.kind!=="sku"&&Boolean(safeSrc);
- return <div className={"catalog-material-image"+(compact?" compact":"")+(surfacePreview?" tile-surface-photo":current?.kind==="generated"||current?.kind==="sku"||current?.kind==="listing"||current?.kind==="manufacturer"?" pack-photo":"")}>
+ return <div className={"catalog-media-frame"+(compact?" compact":"")}><div className={"catalog-material-image"+(compact?" compact":"")+(surfacePreview?" tile-surface-photo":current?.kind==="generated"||current?.kind==="sku"||current?.kind==="listing"||current?.kind==="manufacturer"?" pack-photo":"")}>
   {safeSrc?<Image src={safeSrc} alt={compact?"":current?.alt??name} fill sizes={compact?"(max-width:680px) 50vw, 33vw":"(max-width:350px) 100vw, (max-width:680px) 90vw, (max-width:1100px) 50vw, 33vw"}
    quality={75} loading="lazy" unoptimized={safeSrc.startsWith("https://")||current?.kind==="generated"} referrerPolicy="no-referrer" onError={()=>setFailed(previous=>previous.includes(safeSrc)?previous:[...previous,safeSrc])}/>:
    <MaterialIdentity name={name} category={category} brand={product?.brand} product={product}/>}
-  {!compact&&safeSrc&&<span className="catalog-image-note">{current?.label}{current?.sourceUrl&&<> · {current.credit} · {current.license} · resized/WebP; source details on product page</>}</span>}
+ </div>
+  {!compact&&<div className="catalog-media-caption"><span>{safeSrc?current?.label:"Photo not yet available"}</span>{safeSrc&&current?.sourceUrl&&<small>{current.credit} · {current.license} · resized/WebP</small>}</div>}
  </div>;
 }
 
