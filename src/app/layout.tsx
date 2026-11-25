@@ -2,6 +2,7 @@ import {canonicalPublicOrigin} from "@/modules/seo/site-origin";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./typography.css";
+import "./interaction-quality.css";
 import {PlatformIncidentMonitor} from "@/components/platform-incident-monitor";
 import {InstallExperience} from "@/components/install-experience";
 import {publicIndexingEnabled} from "@/modules/seo/indexing";

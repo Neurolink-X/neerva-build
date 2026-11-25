@@ -10,7 +10,7 @@ const routes=["/","/design-studio","/design-studio/library","/design-studio/fit"
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
- const failures=[],accessibilityReports=[],performanceReports=[];
+ const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
  try{
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
@@ -35,6 +35,20 @@ async function main(){
     if(!issues.title)failures.push(v.w+"px "+route+": missing document title");
     if(!issues.lang)failures.push(v.w+"px "+route+": missing document language");
     if(issues.h1<1)failures.push(v.w+"px "+route+": missing main heading");
+    // Record actual visible interactive targets without clicking destructive or authenticated actions.
+    const interaction=await page.evaluate(()=>{
+     const elements=[...document.querySelectorAll('a[href],button,summary,input[type="submit"],input[type="button"],[role="button"]')].filter(el=>{
+      const rect=el.getBoundingClientRect(),style=getComputedStyle(el);return rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&!el.closest("[inert],[aria-hidden=true]");
+     });
+     const entries=elements.map(el=>{
+      const rect=el.getBoundingClientRect(),labelledBy=(el.getAttribute("aria-labelledby")??"").split(/\s+/).filter(Boolean).map(id=>document.getElementById(id)?.textContent??"").join(" ");
+      const label=(el.getAttribute("aria-label")||labelledBy||el.textContent||el.getAttribute("value")||el.querySelector("img[alt]")?.getAttribute("alt")||el.getAttribute("title")||"").trim().slice(0,100);
+      return {tag:el.tagName.toLowerCase(),label,href:el.getAttribute("href"),width:Math.round(rect.width),height:Math.round(rect.height),disabled:el.matches(":disabled,[aria-disabled=true]"),primary:el.matches(".button,.header-install,.nbh-outline-link,.nbh-studio-generate")};
+     });
+     return {total:entries.length,unnamed:entries.filter(x=>!x.label),small:entries.filter(x=>!x.disabled&&(x.width<44||x.height<44)),primaryTooShort:entries.filter(x=>x.primary&&!x.disabled&&x.height<43)};
+    });
+    interactionReports.push({route,width:v.w,total:interaction.total,unnamed:interaction.unnamed,smallCount:interaction.small.length,small:interaction.small.slice(0,25),primaryTooShort:interaction.primaryTooShort});
+    if(interaction.primaryTooShort.length)failures.push(v.w+"px "+route+": primary action height below 44px "+JSON.stringify(interaction.primaryTooShort));
     if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer"].includes(route)){
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
      const timing=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],m=window.__neervaPerf;return {ttfbMs:n?Math.round(n.responseStart):null,loadMs:n?Math.round(n.loadEventEnd):null,lcpMs:m?.lcp==null?null:Math.round(m.lcp),cls:m?.cls??null};});
@@ -555,6 +569,7 @@ async function main(){
   if(![200,503].includes(cityRules.status()))failures.push("City rules for Kanpur returned "+cityRules.status());
   await req.close();
  }finally{await browser.close()}
+ fs.writeFileSync("test-results/mobile/interaction-baseline.json",JSON.stringify({scope:"Visible controls on tested routes; inline text links may legitimately be smaller. Protected actions are not executed by this inventory.",samples:interactionReports},null,2));
  fs.writeFileSync("test-results/mobile/performance-baseline.json",JSON.stringify({scope:"390px local browser observations; no field INP claim or cross-run comparison",samples:performanceReports},null,2));
  fs.writeFileSync("test-results/mobile/accessibility-baseline.json",JSON.stringify({
   scope:"Automated axe-core WCAG 2.x A/AA sample at 390px; NOT a full manual WCAG certificate.",
