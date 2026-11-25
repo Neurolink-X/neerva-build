@@ -3,11 +3,12 @@ import {pathToFileURL} from "node:url";
 
 export function lintIssues(manifest, lock) {
   const issues=[];
-  const versions={next:manifest.dependencies?.next,eslint:manifest.devDependencies?.eslint,"eslint-config-next":manifest.devDependencies?.["eslint-config-next"]};
+  const versions={next:manifest.dependencies?.next,eslint:manifest.devDependencies?.eslint,"eslint-config-next":manifest.devDependencies?.["eslint-config-next"],typescript:manifest.devDependencies?.typescript};
   const stable=/^\d+\.\d+\.\d+$/;
   if(lock.lockfileVersion!==3||!lock.packages?.[""])issues.push("Expected npm v3 package lock");
   const packages=lock.packages??{};
   if(stable.test(versions.eslint??"")&&!versions.eslint.startsWith("9."))issues.push("ESLint 9 is the reviewed major; major upgrades require explicit compatibility review");
+  if(stable.test(versions.typescript??"")&&!versions.typescript.startsWith("5."))issues.push("TypeScript 5 is the reviewed compiler major; coordinate upgrades with Next.js and typescript-eslint before changing this policy");
   for(const [name,version] of Object.entries(versions)){
     const section=name==="next"?"dependencies":"devDependencies";
     if(!stable.test(version??""))issues.push(`${name} must be an exact stable version`);
@@ -16,6 +17,7 @@ export function lintIssues(manifest, lock) {
   if(versions.next!==versions["eslint-config-next"])issues.push("Next.js and eslint-config-next must use the same release");
   for(const [path,pkg] of Object.entries(packages)){
     if(/\/node_modules\/eslint$/.test(path)&&pkg?.version!==versions.eslint)issues.push(`Mixed ESLint versions at ${path}`);
+    if(/\/node_modules\/typescript$/.test(path)&&pkg?.version!==versions.typescript)issues.push(`Mixed TypeScript versions at ${path}`);
   }
   return issues;
 }
@@ -23,5 +25,5 @@ export function lintIssues(manifest, lock) {
 if(process.argv[1] && import.meta.url===pathToFileURL(process.argv[1]).href){
   const issues=lintIssues(JSON.parse(readFileSync("package.json","utf8")),JSON.parse(readFileSync("package-lock.json","utf8")));
   if(issues.length){for(const issue of issues)console.error(issue);process.exitCode=1;}
-  else console.log("ESLint and Next.js lockfile alignment verified.");
+  else console.log("ESLint, TypeScript and Next.js lockfile alignment verified.");
 }

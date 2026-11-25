@@ -38,6 +38,11 @@ jobs:
       - name: Verify catalog storage and review provenance
         id: storage
         run: node scripts/catalog/audit-storage.mjs
+      - name: Validate compiler and lint compatibility before install
+        id: toolchain
+        run: |
+          node scripts/release/eslint-toolchain.mjs
+          node --test scripts/release/eslint-toolchain.test.mjs
       - name: Install locked dependencies
         id: dependencies
         run: npm ci --no-audit --no-fund
@@ -55,9 +60,7 @@ jobs:
         run: npm run release:verify
       - name: Validate lint toolchain and installed peer graph
         run: |
-          node scripts/release/eslint-toolchain.mjs
-          node --test scripts/release/eslint-toolchain.test.mjs
-          npm ls eslint eslint-config-next next --all
+          npm ls eslint eslint-config-next next typescript @typescript-eslint/parser @typescript-eslint/eslint-plugin --all
       - name: Lint
         id: lint
         run: npm run lint
@@ -93,6 +96,7 @@ jobs:
           NODE_SETUP: ${{ steps.node.outcome }}
           PAIRING: ${{ steps.pairing.outcome }}
           STORAGE: ${{ steps.storage.outcome }}
+          TOOLCHAIN: ${{ steps.toolchain.outcome }}
           DEPENDENCIES: ${{ steps.dependencies.outcome }}
           SECURITY: ${{ steps.security.outcome }}
           RELEASE: ${{ steps.release.outcome }}
@@ -104,12 +108,12 @@ jobs:
         run: |
           {
             echo '## Release verification outcomes'
-            for key in CHECKOUT NODE_SETUP PAIRING STORAGE DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
+            for key in CHECKOUT NODE_SETUP PAIRING STORAGE TOOLCHAIN DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
               printf '%s: %s\n' "$key" "${!key:-not-run}"
             done
           } | tee -a "$GITHUB_STEP_SUMMARY"
           mkdir -p ci-evidence
-          for key in CHECKOUT NODE_SETUP PAIRING STORAGE DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
+          for key in CHECKOUT NODE_SETUP PAIRING STORAGE TOOLCHAIN DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
             printf '%s=%s\n' "$key" "${!key:-not-run}"
           done > ci-evidence/outcomes.txt
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

@@ -9,6 +9,10 @@ updates:
     ignore:
       - dependency-name: eslint
         update-types: ["version-update:semver-major"]
+      # The installed typescript-eslint 8 toolchain supports TS <6.1, not TS 7.
+      # Keep patch/minor updates enabled; review a compiler major as a coordinated upgrade.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     groups:
       react-compatible-stack:
         patterns:
