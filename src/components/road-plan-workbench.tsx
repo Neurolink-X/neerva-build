@@ -132,7 +132,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
      {design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The selected floor uses the same room footprints and openings. Wall thickness, stairs and finishes remain conceptual, not verified CAD/BIM.</p>
-     <StudioPremiumTools product="home_studio" brief={brief} option={activeOption}/>
+     <StudioPremiumTools product="home_studio" brief={brief} option={activeOption} planId={plan.id}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
      {plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>
