@@ -22,3 +22,6 @@ test("security rejects are separated from provider outages", () => {
   assert.equal(incidentCatalogForAdmin.RFQ_CAPTCHA_PROVIDER_FAILED.severity, "warning");
   assert.notEqual(incidentFingerprint("RFQ_CAPTCHA_REJECTED"), incidentFingerprint("RFQ_CAPTCHA_PROVIDER_FAILED"));
 });
+
+import {assessReadiness} from "./readiness.ts";
+test("readiness distinguishes unavailable, empty and present data",()=>{const rows=assessReadiness({products:0,inventory:2,prices:null,dealers:-1,directOrders:0});const get=(key:string)=>rows.find(row=>row.key===key);assert.deepEqual(get("products"),{key:"products",count:0,state:"empty",priority:"critical"});assert.equal(get("inventory")?.state,"present");assert.equal(get("prices")?.state,"unknown");assert.equal(get("dealers")?.state,"unknown");assert.equal(get("directOrders")?.priority,"review");assert.equal(get("variants")?.state,"unknown");});
