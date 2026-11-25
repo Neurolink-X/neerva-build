@@ -152,3 +152,18 @@ test("published catalog paging is bounded, stable and rejects unsafe query param
  for(const q of ["limit=0","limit=101","limit=-1","limit=2.5","after=../secret","category=invalid","after=","limit=1e2"])assert.equal(parsePublishedCatalogPage(new URLSearchParams(q)),null,q);
  const rows=[{slug:"a"},{slug:"b"},{slug:"c"}];assert.deepEqual(takePublishedCatalogPage(rows,2),{products:rows.slice(0,2),nextCursor:"b"});assert.deepEqual(takePublishedCatalogPage(rows,3),{products:rows,nextCursor:null});assert.deepEqual(takePublishedCatalogPage([],2),{products:[],nextCursor:null});
 });
+
+
+test("reference pagination preserves every product family and every size across pages",async()=>{
+ const {referencePage,REFERENCE_PAGE_SIZE}=await import("./reference-page.ts");
+ const {groupCatalogByPhoto}=await import("./media-usage.ts");
+ const {isPublicConstructionProduct}=await import("./discovery-policy.ts");
+ const products=demoProducts.filter(isPublicConstructionProduct);
+ const groups=groupCatalogByPhoto(products);
+ const first=referencePage(groups,0);
+ assert.ok(first.pages>1);assert.equal(first.items.length,REFERENCE_PAGE_SIZE);
+ const all=Array.from({length:first.pages},(_,i)=>referencePage(groups,i).items).flat();
+ assert.deepEqual(all,groups);assert.equal(all.flatMap(g=>g.variants).length,products.length);
+ assert.equal(referencePage(groups,99999).page,first.pages-1);
+ assert.equal(referencePage(groups,-1).page,0);assert.equal(referencePage([],3).items.length,0);
+});

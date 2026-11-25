@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {createHash} from "node:crypto";
 import assert from "node:assert/strict";
+import {execFileSync} from "node:child_process";
 const root="assets/catalog/material-review";
 const manifest=JSON.parse(fs.readFileSync(root+"/manifest.json","utf8"));
 const digest=bytes=>createHash("sha256").update(bytes).digest("hex");
@@ -24,3 +25,22 @@ for(const row of manifest.rows){
 }
 for(const file of fs.readdirSync(root).filter(f=>f.endsWith(".webp")))assert.ok(retained.has(file),"Unreferenced review asset "+file);
 console.log(JSON.stringify({sharedCount,sharedBytes,reviewBytes,retainedFiles:retained.size},null,2));
+
+// Reviewable budgets; do not delete legitimate content merely to pass a budget.
+const tracked=execFileSync("git",["ls-files","-z"],{encoding:"utf8"}).split("\0").filter(Boolean);
+const budgets={tree:16*1024*1024,publicImages:10*1024*1024,reviewAssets:4*1024*1024,singleImage:512*1024};
+const usage={tree:0,publicImages:0,reviewAssets:0};
+const publicHashes=new Map();
+for(const file of tracked){
+ const stat=fs.lstatSync(file);if(!stat.isFile())continue;
+ usage.tree+=stat.size;
+ if(file.startsWith("assets/catalog/"))usage.reviewAssets+=stat.size;
+ if(file.startsWith("public/images/")){
+  usage.publicImages+=stat.size;
+  assert.ok(stat.size<=budgets.singleImage,"Image exceeds storage budget: "+file);
+  const hash=digest(fs.readFileSync(file));if(!publicHashes.has(hash))publicHashes.set(hash,file);
+ }
+}
+for(const file of retained){const hash=digest(fs.readFileSync(path.join(root,file)));assert.ok(!publicHashes.has(hash),"Review asset duplicates a public file: "+file+" and "+publicHashes.get(hash));}
+for(const key of Object.keys(usage))assert.ok(usage[key]<=budgets[key],key+" exceeds documented storage budget: "+usage[key]);
+console.log(JSON.stringify({usage,budgets},null,2));

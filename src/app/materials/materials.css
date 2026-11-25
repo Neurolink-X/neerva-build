@@ -136,3 +136,5 @@
 .catalog-category-credits{margin:12px 0 20px;font-size:12px;color:#526758}.catalog-category-credits summary{cursor:pointer;padding:8px 0}.catalog-category-credits a{text-decoration:underline}.catalog-category-credits p{overflow-wrap:anywhere}
 
 .catalog-material-image.pack-photo img{object-fit:contain;padding:3px;background:#fff}.catalog-material-image.pack-photo{background:#fff}
+
+.catalog-page-nav{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;margin:24px 0}.catalog-page-nav button{min-height:44px;padding:8px 16px;border:1px solid #9fb7a2;border-radius:10px;background:#fff;color:#275041;font-weight:700;cursor:pointer}.catalog-page-nav button:disabled{opacity:.5;cursor:not-allowed}.catalog-results-meta{scroll-margin-top:100px}.catalog-results-meta:focus-visible{outline:2px solid #275041;outline-offset:4px}
