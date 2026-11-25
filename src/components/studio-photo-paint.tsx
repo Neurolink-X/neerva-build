@@ -23,6 +23,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
  // The tint already contains the selected RGB plus source luminance. Do not blend
  // the old wall hue back into a dark shade or apply a second darkening pass.
  if(tinted){ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;ctx.drawImage(tinted,0,0,w,h);}
+ else{ctx.globalCompositeOperation="color";ctx.fillStyle=wall.colour;ctx.globalAlpha=1;ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation="multiply";ctx.globalAlpha=.35;ctx.fillRect(0,0,w,h);ctx.globalAlpha=1;}
 
  if(wall.pattern!=="plain"){
   const [a,b,c,d]=corners;
@@ -54,7 +55,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  const base=override?.source===colour?override.value:colour;
  const canvas=useRef<HTMLCanvasElement>(null),image=useRef<HTMLCanvasElement|null>(null),url=useRef<string|null>(null),pending=useRef<HTMLImageElement|null>(null),generation=useRef(0);
  const tintCache=useRef(new Map<string,HTMLCanvasElement>());
- const sourceLuma=useRef<Uint8Array|null>(null);
+ const sourceLuma=useRef<Uint8Array|null>(null),tintPixels=useRef<ImageData|null>(null);
  const [history,setHistory]=useState(emptyMaskHistory),[ready,setReady]=useState(false);
  const [closeUp,setCloseUp]=useState(false);
  const [showOriginal,setShowOriginal]=useState(false),[message,setMessage]=useState("Choose a local photo, then mark four corners of one wall clockwise.");
@@ -86,7 +87,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    if(shades.size>=2){const first=shades.keys().next().value;if(first!==undefined){surface=shades.get(first);shades.delete(first)}}
    surface??=document.createElement("canvas");if(surface.width!==w)surface.width=w;if(surface.height!==h)surface.height=h;
    const t=surface.getContext("2d");if(!t)return;
-   const pixels=t.createImageData(w,h),data=pixels.data,luma=sourceLuma.current;
+   const pixels=tintPixels.current??(tintPixels.current=t.createImageData(w,h)),data=pixels.data,luma=sourceLuma.current;
    const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)),lookup=Array.from({length:256},(_,i)=>shadedPixel(i,i,i,rgb));
    for(let i=0,j=0;j<luma.length;i+=4,j++){const values=lookup[luma[j]];data[i]=values[0];data[i+1]=values[1];data[i+2]=values[2];data[i+3]=255;}
    t.putImageData(pixels,0,0);shades.set(hex,surface);return surface;
@@ -116,7 +117,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask)=>{
   const ticket=++generation.current;
-  for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;
+  for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;tintPixels.current=null;
   if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}
   if(image.current){image.current.width=0;image.current.height=0;}
   setCloseUp(false);setPreset(corners&&mask?{points:corners,mask}:null);
@@ -162,7 +163,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  }
  function toggleOriginal(){setOriginalKey(styleKey);setShowOriginal(!originalVisible);}
 
- useEffect(()=>{const frame=requestAnimationFrame(openRoom);return ()=>{++generation.current;cancelAnimationFrame(frame);if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
+ useEffect(()=>{const frame=requestAnimationFrame(openRoom);return ()=>{++generation.current;cancelAnimationFrame(frame);if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;tintPixels.current=null;if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
  async function load(e:ChangeEvent<HTMLInputElement>){
   const f=e.target.files?.[0];e.target.value="";if(!f)return;
   if(!["image/jpeg","image/png","image/webp"].includes(f.type)||f.size>10*1024*1024){

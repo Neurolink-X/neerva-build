@@ -77,6 +77,9 @@ async function main(){
     await page.waitForFunction(()=>document.querySelector(".neerva-navigation-feedback")?.getAttribute("data-active")!== "true");
     const nav=await page.evaluate(()=>({feedback:window.__neervaClickFeedback,elapsed:performance.now()-(window.__neervaClickFeedback?.at??performance.now())}));
     assert.ok(nav.feedback?.active,"internal Link shows feedback synchronously without a full reload");
+    assert.equal(await page.locator(".neerva-navigation-feedback").getAttribute("data-active"),null,"feedback clears after navigation");
+    const invalid=await page.goto(base+"/materials/no-such-category",{waitUntil:"load"});
+    assert.equal(invalid?.status(),404,"missing catalog pages must keep real HTTP 404");
     performanceReports.push({route:"/ → /materials",width:v.w,clickToReadyMs:Math.round(nav.elapsed),scope:"local browser route transition, not field latency"});
    }
    // Check the reported category media regression on every viewport.

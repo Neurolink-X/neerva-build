@@ -3,9 +3,9 @@ import Link from "next/link";
 export function SiteHeader(){
  return <><div className="topline" aria-label="Delivery disclaimer"><span>Made for India’s builders</span><span>Availability checked at quotation · no automatic location selection</span></div>
  <header className="site-header"><Link className="brand" href="/" aria-label="NEERVA BUILD home"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link>
-  <nav className="desktop-nav" aria-label="Main navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/design-studio">Plan my home</Link><Link href="/quotes">Get a quote</Link><Link href="/blog">Blog & guides</Link></nav>
-  <details className="site-mobile-menu"><summary>Menu</summary><nav aria-label="Mobile navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/design-studio">Plan my home</Link><Link href="/quotes">Prepare quote</Link><Link href="/install">Install app</Link><Link href="/account">Account</Link><Link href="/basket">Material list</Link><Link href="/blog">Blog & guides</Link></nav></details>
-  <div className="header-utility"><Link className="header-install" href="/install" aria-label="Install NEERVA BUILD app">Install app</Link><Link className="button button-dark button-small header-quote" href="/quotes">Prepare quote →</Link></div></header></>;
+  <nav className="desktop-nav" aria-label="Main navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/design-studio">Plan my home</Link><Link href="/quotes" prefetch={false}>Get a quote</Link><Link href="/blog">Blog & guides</Link></nav>
+  <details className="site-mobile-menu"><summary>Menu</summary><nav aria-label="Mobile navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/design-studio">Plan my home</Link><Link href="/quotes" prefetch={false}>Prepare quote</Link><Link href="/install" prefetch={false}>Install app</Link><Link href="/account" prefetch={false}>Account</Link><Link href="/basket" prefetch={false}>Material list</Link><Link href="/blog">Blog & guides</Link></nav></details>
+  <div className="header-utility"><Link className="header-install" href="/install" prefetch={false} aria-label="Install NEERVA BUILD app">Install app</Link><Link className="button button-dark button-small header-quote" href="/quotes" prefetch={false}>Prepare quote →</Link></div></header></>;
 }
 export function SiteFooter({language="en"}:{language?:"en"|"hi"}={}){
  const hi=language==="hi";
