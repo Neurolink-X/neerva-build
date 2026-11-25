@@ -1,0 +1,5 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {lessons,parseProgress,readProgress,updateProgress} from "./academy.ts";
+test("all educational modules have stable IDs, concepts, practical activities and valid explanations",()=>{assert.equal(new Set(lessons.map(l=>l.id)).size,lessons.length);for(const l of lessons){assert.ok(l.concepts.length>=3&&l.example.length>0&&l.task.length>0&&l.link.startsWith("/"));assert.ok(l.correct>=0&&l.correct<l.options.length);assert.ok(l.options.every(o=>o.feedback.length>0));}});
+test("learning storage is bounded, deduplicated, allowlisted and recoverable",()=>{const id=lessons[0].id;const p=parseProgress({completed:[id,id,"unknown"],practiced:[id]});assert.deepEqual(p,{completed:[id],practiced:[id]});assert.deepEqual(readProgress("bad"),{completed:[],practiced:[]});assert.deepEqual(readProgress(" ".repeat(4097)),{completed:[],practiced:[]});assert.deepEqual(updateProgress(p,"unknown","completed"),p);assert.deepEqual(updateProgress(p,id,"completed"),p);const all=parseProgress({completed:lessons.map(l=>l.id),practiced:lessons.map(l=>l.id)});assert.ok(JSON.stringify(all).length<1024);});

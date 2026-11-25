@@ -382,6 +382,17 @@ async function main(){
     await page.getByRole("heading",{name:"Order cart (1)"}).waitFor();
     await page.locator("article.admin-record").first().getByRole("button",{name:"Remove"}).click();
     await page.getByText(/Your order cart is empty/).waitFor();
+    await page.goto(base+"/build-iq",{waitUntil:"load"});
+    assert.equal(await page.locator(".academy-grid article").count(),8,"eight knowledge paths are available");
+    await page.getByRole("link",{name:"Start exploring →"}).click();
+    await page.getByText("Optional Build IQ challenge",{exact:true}).click();
+    await page.getByRole("button",{name:"Compare their measured dimensions and road access"}).click();
+    await page.getByText("That's right.",{exact:true}).waitFor();
+    await page.getByRole("button",{name:"Mark lesson explored"}).click();
+    await page.reload({waitUntil:"load"});
+    await page.getByRole("button",{name:"Lesson explored ✓"}).waitFor();
+    await page.getByRole("link",{name:"All lessons",exact:true}).click();
+    await page.getByText("1 of 8 lessons explored",{exact:true}).waitFor();
     await page.goto(base+"/inspiration",{waitUntil:"load"});
     await page.getByRole("button",{name:"Interiors",exact:true}).click();
     assert.equal(await page.locator(".inspiration-card").count(),3,"interior discovery filter");

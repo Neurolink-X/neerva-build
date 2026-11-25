@@ -1,2 +1,8 @@
-import {redirect} from "next/navigation";
-export default function BuildIQPage(){redirect("/inspiration")}
+import type {Metadata} from "next";
+import Link from "next/link";
+import {SiteHeader,SiteFooter} from "@/components/site-chrome";
+import {AcademyProgress} from "@/components/academy-progress";
+import {lessons} from "@/modules/home/academy";
+import "./academy.css";
+export const metadata:Metadata={title:"Neerva Academy — Learn design, technology and life skills",description:"Free practical micro-lessons for youth, families and professionals, from design and materials science to financial and digital literacy.",alternates:{canonical:"/build-iq"}};
+export default function Academy(){return <main className="catalog-page"><SiteHeader/><div className="academy"><header className="academy-hero"><span className="eyebrow">NEERVA ACADEMY · LEARN BY DOING</span><h1>Ideas that make you<br/><em>think differently.</em></h1><p>Learn how homes, materials, money, design and digital tools work. Explore practical examples, try a real tool and challenge your understanding when you want to. For students, curious minds and experienced builders alike.</p><Link className="button button-dark" href="/build-iq/spatial-thinking">Start exploring →</Link></header><AcademyProgress total={lessons.length}/><h2>Explore knowledge paths</h2><div className="academy-grid">{lessons.map((l,i)=><article key={l.id}><span className="academy-topic">{String(i+1).padStart(2,"0")} · {l.topic} · {l.minutes} min</span><h3><Link href={"/build-iq/"+l.id}>{l.title}</Link></h3><p lang="hi">{l.hi}</p><p>{l.summary}</p><Link className="academy-link" href={"/build-iq/"+l.id}>Explore lesson →</Link></article>)}</div><aside className="academy-note"><strong>Learning, not certification.</strong><p>Examples are educational and not professional engineering, financial or legal advice. No scoreboards, payment or sign-in required. Lessons use small local progress records and no tracking service.</p><Link href="/learn">Detailed construction guides →</Link></aside></div><SiteFooter/></main>}
