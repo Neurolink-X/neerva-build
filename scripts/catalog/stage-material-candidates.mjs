@@ -7,13 +7,18 @@ await fs.mkdir(root,{recursive:true});const rows=[];
 let previous=[];try{previous=JSON.parse(await fs.readFile(root+"/manifest.json","utf8")).rows??[];}catch{}
 
 for(const item of candidates){try{
- const old=previous.find(r=>r.key===item.key&&r.filename===item.filename&&r.status==="visual-review-required"&&r.file&&r.sha256);
+ const old=previous.find(r=>r.key===item.key&&r.filename===item.filename&&r.url===item.url&&r.status==="visual-review-required"&&r.file&&r.sha256);
  if(old){try{const b=await fs.readFile(root+"/"+old.file);if(createHash("sha256").update(b).digest("hex")===old.sha256){rows.push({...old,...item});continue;}}catch{}}
 
  const filename=item.filename.trim().replaceAll(" ","_");
  const hash=createHash("md5").update(filename).digest("hex");
- const expected="https://upload.wikimedia.org/wikipedia/commons/"+hash[0]+"/"+hash.slice(0,2)+"/"+encodeURIComponent(filename);
- if(item.url&&decodeURI(expected)!==decodeURI(item.url))throw Error("Unexpected Wikimedia source");
+ let expected="https://upload.wikimedia.org/wikipedia/commons/"+hash[0]+"/"+hash.slice(0,2)+"/"+encodeURIComponent(filename);
+ if(item.origin==="manufacturer"){
+  const u=new URL(item.url),source=new URL(item.source);
+  const valid=(u.hostname==="www.magicrete.in"&&source.hostname==="www.magicrete.in"&&u.pathname.startsWith("/assets/uploads/"))||(u.hostname==="images.orientbell.com"&&source.hostname==="www.orientbell.com"&&u.pathname.startsWith("/media/catalog/product/"));
+  if(!valid||u.protocol!=="https:"||source.protocol!=="https:"||u.username||u.password||u.port||u.search||u.hash)throw Error("Unapproved manufacturer origin");
+  expected=u.href;
+ }else if(item.url&&decodeURI(expected)!==decodeURI(item.url))throw Error("Unexpected Wikimedia source");
  let r;for(let attempt=0;attempt<2;attempt++){r=await fetch(expected,{redirect:"error",signal:AbortSignal.timeout(20000),headers:{"User-Agent":"NeervaBuildCatalogMedia/1.0 (https://github.com/Neurolink-X/neerva-build)"}});if(r.ok||![429,503].includes(r.status))break;await r.body?.cancel();const delay=Math.min(10000,Math.max(1500,Number(r.headers.get("Retry-After")||0)*1000||1500));await new Promise(resolve=>setTimeout(resolve,delay));}
  if(!r?.ok||!r.body)throw Error("HTTP "+r.status);
  const reader=r.body.getReader(),chunks=[];let size=0;while(true){const p=await reader.read();if(p.done)break;size+=p.value.length;if(size>8000000){await reader.cancel();throw Error("Source too large");}chunks.push(Buffer.from(p.value));}

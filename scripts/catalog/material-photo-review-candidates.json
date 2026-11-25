@@ -295,5 +295,133 @@
     "licenseUrl": "https://commons.wikimedia.org/wiki/File:Caulking.jpg",
     "target": "hardware:sealant-gun",
     "note": "Application view, not the same exact retail gun; verify license"
+  },
+  {
+    "key": "ptfe-tape-primary",
+    "filename": "PTFE tape.jpg",
+    "target": "plumbing:fitting-ptfe",
+    "note": "Review roll of PTFE thread seal tape; no exact brand",
+    "source": "https://commons.wikimedia.org/wiki/File:PTFE_tape.jpg",
+    "credit": "Headlock0225",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  {
+    "key": "ptfe-tape-secondary",
+    "filename": "Thread seal tape.jpg",
+    "target": "plumbing:fitting-ptfe",
+    "note": "Separate roll or alternate angle; verify identity and license",
+    "source": "https://commons.wikimedia.org/wiki/File:Thread_seal_tape.jpg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Thread_seal_tape.jpg"
+  },
+  {
+    "key": "ptfe-installed-view",
+    "filename": "PTFE Tape.png",
+    "target": "plumbing:fitting-ptfe",
+    "note": "Installed tape on threaded brass fitting; application view",
+    "source": "https://commons.wikimedia.org/wiki/File:PTFE_Tape.png",
+    "credit": "Kees08",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/"
+  },
+  {
+    "key": "mortise-lock-reference",
+    "filename": "Mortise-lock.jpg",
+    "target": "hardware:door-mortise-lock",
+    "note": "Mechanism reference only; not full lever set",
+    "source": "https://commons.wikimedia.org/wiki/File:Mortise-lock.jpg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Mortise-lock.jpg"
+  },
+  {
+    "key": "butt-hinge-reference",
+    "filename": "Butt Hinge annotated.jpg",
+    "target": "hardware:ss-butt-hinge-3in",
+    "note": "Review annotation and material; not verified stainless steel or size",
+    "source": "https://commons.wikimedia.org/wiki/File:Butt_Hinge_annotated.jpg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Butt_Hinge_annotated.jpg"
+  },
+  {
+    "key": "hose-fitting-reference",
+    "filename": "Stainless hose fittings different shapes and sizes.png",
+    "target": "plumbing:fitting-hose-barb",
+    "note": "Review individual fitting identity; no dimensions claim",
+    "source": "https://commons.wikimedia.org/wiki/File:Stainless_hose_fittings_different_shapes_and_sizes.png",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Stainless_hose_fittings_different_shapes_and_sizes.png"
+  },
+  {
+    "key": "pipe-clamp-reference",
+    "filename": "Pipe clamp 1.jpg",
+    "target": "plumbing:fitting-pipe-strap",
+    "note": "Review actual clamp type, reject woodworking tools",
+    "source": "https://commons.wikimedia.org/wiki/File:Pipe_clamp_1.jpg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Pipe_clamp_1.jpg"
+  },
+  {
+    "key": "pidilite-corporate-logo",
+    "filename": "Pidilite Industries logo.svg",
+    "target": "hardware:Pidilite",
+    "note": "Verify logo license and current corporate identity",
+    "source": "https://commons.wikimedia.org/wiki/File:Pidilite_Industries_logo.svg",
+    "credit": "Pending attribution review",
+    "license": "Pending source license review",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Pidilite_Industries_logo.svg"
+  },
+  {
+    "key": "magicrete-aac-original",
+    "filename": "magicrete-aac-original.png",
+    "target": "bricks-blocks:magicrete-aac",
+    "url": "https://www.magicrete.in/assets/uploads/2026/04/productdetil/untitled--672-x-536-px-_1776240797.png",
+    "source": "https://www.magicrete.in/walling-solutions/aac-products/aac-blocks",
+    "origin": "manufacturer",
+    "credit": "Manufacturer",
+    "license": "Publication rights not yet verified",
+    "licenseUrl": "https://www.magicrete.in/walling-solutions/aac-products/aac-blocks",
+    "note": "Manufacturer original; verify resolution, exact model, distinct view and permission before publication."
+  },
+  {
+    "key": "orientbell-oak-original",
+    "filename": "orientbell-oak-original.jpg",
+    "target": "tiles:orientbell-oak",
+    "url": "https://images.orientbell.com/media/catalog/product/d/r/dr_dgvt_lugano_oak_wood_ivory_-f1.jpg",
+    "source": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "origin": "manufacturer",
+    "credit": "Manufacturer",
+    "license": "Publication rights not yet verified",
+    "licenseUrl": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "note": "Manufacturer original; verify resolution, exact model, distinct view and permission before publication."
+  },
+  {
+    "key": "orientbell-oak-second",
+    "filename": "orientbell-oak-second.jpg",
+    "target": "tiles:orientbell-oak",
+    "url": "https://images.orientbell.com/media/catalog/product/d/r/dr_dgvt_lugano_oak_wood_ivory-2.jpg",
+    "source": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "origin": "manufacturer",
+    "credit": "Manufacturer",
+    "license": "Publication rights not yet verified",
+    "licenseUrl": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "note": "Manufacturer original; verify resolution, exact model, distinct view and permission before publication."
+  },
+  {
+    "key": "orientbell-oak-third",
+    "filename": "orientbell-oak-third.jpg",
+    "target": "tiles:orientbell-oak",
+    "url": "https://images.orientbell.com/media/catalog/product/d/r/dr_dgvt_lugano_oak_wood_ivory-3.jpg",
+    "source": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "origin": "manufacturer",
+    "credit": "Manufacturer",
+    "license": "Publication rights not yet verified",
+    "licenseUrl": "https://www.orientbell.com/dr-dgvt-lugano-oak-wood-ivory",
+    "note": "Manufacturer original; verify resolution, exact model, distinct view and permission before publication."
   }
 ]
