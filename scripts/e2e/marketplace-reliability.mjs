@@ -88,6 +88,8 @@ assert.deepEqual(results.map(x=>x.status).sort(),[200,409],"Last ten bags must h
 const winner=results[0].status===200?firstOrder:secondOrder,loser=winner===firstOrder?secondOrder:firstOrder;
 const quantity=()=>Number(localSql("select available_quantity from public.inventory where branch_id="+uuid(branches[0])+" and variant_id="+uuid(variantId)));
 assert.equal(quantity(),0);
+const archiveHeld=await d.client.from("product_variants").update({status:"archived"}).eq("id",variantId).select("id");
+assert.equal(archiveHeld.error?.code,"23514","Reserved SKU must not be archived before fulfillment or release");
 assert.equal((await call(a,reservePath,"POST",selection(winner))).status,409);
 assert.equal((await call(a,"/api/dealer/inventory","POST",stock)).status,409,"Stale absolute update must not recreate held stock");
 assert.equal((await call(d,"/api/admin/orders","PATCH",{orderId:winner,expectedStatus:"confirmed",status:"cancelled"})).status,200);
@@ -99,6 +101,10 @@ assert.equal(quantity(),0);
 for(const [expectedStatus,status] of [["confirmed","preparing"],["preparing","out_for_delivery"]])assert.equal((await call(a,"/api/dealer/orders","PATCH",{orderId:loser,expectedStatus,status})).status,200);
 assert.equal((await call(d,"/api/admin/orders","PATCH",{orderId:loser,expectedStatus:"out_for_delivery",status:"cancelled"})).status,200);
 assert.equal(quantity(),0,"Dispatched stock cannot be restocked by cancellation");
+const archived=await d.client.from("product_variants").update({status:"archived"}).eq("id",variantId).select("id").single();
+assert.ifError(archived.error);assert.equal(archived.data.id,variantId);
+const movement=Number(localSql("select coalesce(sum(quantity_delta),0) from public.inventory_movements where branch_id="+uuid(branches[0])+" and variant_id="+uuid(variantId)+" and reason in ('order_stock_reserved','order_stock_released')"));
+assert.equal(movement,-10,"Movement journal must reconcile reserved and returned stock");
 
 const product="home_studio";
 const config=await call(d,"/api/admin/studio-settings");

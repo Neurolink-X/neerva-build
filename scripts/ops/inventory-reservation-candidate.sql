@@ -30,7 +30,7 @@ begin
  if tg_op='DELETE' then return old;end if;return new;
 end$$;
 create function neerva_internal.has_stock_hold(b uuid,v uuid) returns boolean
-language sql volatile security definer set search_path='' as $
+language sql volatile security definer set search_path='' as $$
  select auth.uid() is not null and exists(
  select 1 from public.merchant_branches x where x.id=b and public.is_tenant_member(x.tenant_id)
  ) and exists(select 1 from neerva_internal.stock_holds h where h.branch_id=b and h.variant_id=v and h.state='held')
@@ -38,7 +38,7 @@ $$;
 revoke all on function neerva_internal.has_stock_hold(uuid,uuid) from public,anon,authenticated;
 grant execute on function neerva_internal.has_stock_hold(uuid,uuid) to authenticated;
 create function public.neerva_has_stock_hold(b uuid,v uuid) returns boolean
-language sql stable security invoker set search_path='' as $$select neerva_internal.has_stock_hold(b,v)$$;
+language sql volatile security invoker set search_path='' as $$select neerva_internal.has_stock_hold(b,v)$$;
 revoke all on function public.neerva_has_stock_hold(uuid,uuid) from public,anon,authenticated;
 grant execute on function public.neerva_has_stock_hold(uuid,uuid) to authenticated;
 revoke all on function neerva_internal.guard_held_inventory() from public,anon,authenticated;
@@ -65,8 +65,11 @@ begin
    then raise exception 'SKU_UNIT_OR_QUANTITY_INVALID' using errcode='23514';end if;
  end loop;
  for item in select m.value::uuid variant_id,sum((l.value->>'quantity')::numeric) quantity,min(l.value->>'unit') unit from jsonb_array_elements(o.line_items) with ordinality l(value,pos) join jsonb_array_elements_text(p_mapping) with ordinality m(value,pos) using(pos) group by m.value::uuid order by m.value::uuid loop
+  perform 1 from public.product_variants v join public.products p on p.id=v.product_id join public.categories c on c.id=p.category_id where v.id=item.variant_id and v.status='published' and p.status='published' and c.status='published' and v.unit=item.unit for share of v,p,c;
+  if not found then raise exception 'SKU_PUBLICATION_CHANGED' using errcode='23514';end if;
   update public.inventory i set available_quantity=i.available_quantity-item.quantity where i.branch_id=p_branch and i.variant_id=item.variant_id and i.unit=item.unit and i.available_quantity>=item.quantity;
   if not found then raise exception 'INSUFFICIENT_AVAILABLE_STOCK' using errcode='23514';end if;
+  insert into public.inventory_movements(branch_id,variant_id,quantity_delta,unit,reason,actor_id) values(p_branch,item.variant_id,-item.quantity,item.unit,'order_stock_reserved',actor);
   insert into neerva_internal.stock_holds(order_id,branch_id,variant_id,quantity,unit,expires_at) values(p_order,p_branch,item.variant_id,item.quantity,item.unit,statement_timestamp()+interval '30 minutes');
  end loop;
  insert into public.audit_logs(actor_id,tenant_id,action,object_type,object_id,safe_metadata) values(actor,o.tenant_id,'stock.held','order',o.id::text,jsonb_build_object('branchId',p_branch,'lineCount',n));
@@ -75,7 +78,7 @@ end$$;
 revoke all on function neerva_internal.reserve_order_stock(uuid,uuid,jsonb) from public,anon,authenticated;
 -- Reserve and confirm in one transaction. No public standalone hold creation.
 create function neerva_internal.confirm_reserved_order(p_order uuid,p_branch uuid,p_mapping jsonb)
-returns boolean language plpgsql security definer set search_path='' as $
+returns boolean language plpgsql security definer set search_path='' as $$
 declare o public.orders%rowtype;
 begin
  if auth.uid() is null or not coalesce(public.neerva_account_access_allowed(),false) then raise exception 'AUTH_REQUIRED' using errcode='42501';end if;
@@ -87,10 +90,10 @@ begin
  update public.orders set status='confirmed' where id=p_order and status='pending_confirmation';
  if not found then raise exception 'ORDER_STATE_CHANGED_REFRESH' using errcode='23514';end if;
  return true;
-end$;
+end$$;
 revoke all on function neerva_internal.confirm_reserved_order(uuid,uuid,jsonb) from public,anon,authenticated;
 grant execute on function neerva_internal.confirm_reserved_order(uuid,uuid,jsonb) to authenticated;
-create function public.neerva_confirm_reserved_order(p_order uuid,p_branch uuid,p_mapping jsonb) returns boolean language sql security invoker set search_path='' as $select neerva_internal.confirm_reserved_order(p_order,p_branch,p_mapping)$;
+create function public.neerva_confirm_reserved_order(p_order uuid,p_branch uuid,p_mapping jsonb) returns boolean language sql security invoker set search_path='' as $$select neerva_internal.confirm_reserved_order(p_order,p_branch,p_mapping)$$;
 revoke all on function public.neerva_confirm_reserved_order(uuid,uuid,jsonb) from public,anon,authenticated;
 grant execute on function public.neerva_confirm_reserved_order(uuid,uuid,jsonb) to authenticated;
 -- Internal helper: caller already holds order row lock. Never re-add dispatched stock.
@@ -102,6 +105,7 @@ begin
   if p_state='released' then
    update public.inventory set available_quantity=available_quantity+h.quantity where branch_id=h.branch_id and variant_id=h.variant_id and unit=h.unit;
    if not found then raise exception 'STOCK_RECONCILIATION_REQUIRED';end if;
+   insert into public.inventory_movements(branch_id,variant_id,quantity_delta,unit,reason,actor_id) values(h.branch_id,h.variant_id,h.quantity,h.unit,'order_stock_released',auth.uid());
   end if;
   update neerva_internal.stock_holds set state=p_state where order_id=p_order and branch_id=h.branch_id and variant_id=h.variant_id;
  end loop;
@@ -135,4 +139,14 @@ grant execute on function neerva_internal.expire_stock_holds(integer) to authent
 create function public.neerva_expire_stock_holds(p_limit integer default 50) returns integer language sql security invoker set search_path='' as $$select neerva_internal.expire_stock_holds(p_limit)$$;
 revoke all on function public.neerva_expire_stock_holds(integer) from public,anon,authenticated;
 grant execute on function public.neerva_expire_stock_holds(integer) to authenticated;
+-- Lock-compatible guard against archiving a reserved SKU.
+create function neerva_internal.guard_held_variant_archive() returns trigger language plpgsql security definer set search_path='' as $$
+begin
+ if new.status<>'published' and old.status='published' and exists(select 1 from neerva_internal.stock_holds h where h.variant_id=old.id and h.state='held') then
+  raise exception 'VARIANT_HAS_RESERVED_STOCK' using errcode='23514';
+ end if;
+ return new;
+end$$;
+revoke all on function neerva_internal.guard_held_variant_archive() from public,anon,authenticated;
+create trigger neerva_guard_held_variant_archive before update of status on public.product_variants for each row execute function neerva_internal.guard_held_variant_archive();
 commit;
