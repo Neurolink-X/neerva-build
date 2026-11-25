@@ -1,0 +1,9 @@
+"use client";
+import {useState,useRef} from "react";
+const targets=[{name:"Published catalog",path:"/api/catalog?limit=1",ok:(v:Record<string,unknown>)=>v.source==="published_database"&&Array.isArray(v.products)},{name:"Studio configuration",path:"/api/studio/config",ok:(v:Record<string,unknown>)=>v.ready===true&&v.unavailable!==true}] as const;
+type Result={name:string;state:string;detail:string};
+export function ServiceDiagnostics(){
+ const [results,setResults]=useState<Result[]>([]),[busy,setBusy]=useState(false),[checked,setChecked]=useState<number|null>(null);const lock=useRef(false);
+ async function check(){if(lock.current)return;lock.current=true;setBusy(true);try{const rows=await Promise.all(targets.map(async t=>{try{const r=await fetch(t.path,{cache:"no-store",redirect:"error",signal:AbortSignal.timeout(8000)});if(!r.ok)return {name:t.name,state:"Unavailable",detail:"HTTP "+r.status+" — check deployment and dependency logs."};const v=await r.json();return v&&typeof v==="object"&&t.ok(v)?{name:t.name,state:"Responding",detail:"Expected live response shape; not a full database audit."}:{name:t.name,state:"Degraded",detail:"Live data could not be verified. Check database connectivity, configuration, RLS and recent migrations."}}catch{return {name:t.name,state:"Unverified",detail:"Connection or response failure. Check network, hosting and database service health."}}}));setResults(rows);setChecked(Date.now())}finally{lock.current=false;setBusy(false)}}
+ return <section className="admin-record"><h3>Live service diagnostics</h3><p>Optional read-only checks; no production changes, authentication bypass or automated repair.</p><button type="button" disabled={busy} onClick={()=>void check()}>{busy?"Checking…":"Check live catalog and studio"}</button>{checked&&<p>Checked {new Date(checked).toLocaleString("en-IN")}</p>}<div role="status">{results.map(r=><p key={r.name}><strong>{r.name}: {r.state}</strong> — {r.detail}</p>)}</div></section>
+}

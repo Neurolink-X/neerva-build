@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
     {source:"/:path*",has:[{type:"host" as const,value:"www.neerva.in"}],destination:"https://neerva.in/:path*",permanent:true}
   ] : [],
   headers: async () => [
+    {source:"/sw.js",headers:[{key:"Cache-Control",value:"no-cache, max-age=0, must-revalidate"}]},
     // Approved catalog filenames are content-addressed; changed bytes require a new URL.
     {source:"/images/catalog/approved/:asset([a-f0-9]{24}[.]webp)",headers:[{key:"Cache-Control",value:"public, max-age=31536000, immutable"}]},
     {
