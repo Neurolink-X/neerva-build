@@ -85,5 +85,17 @@ assert.equal((await call(d,"/api/admin/studio-payments","PATCH",{...review,actio
 assert.equal((await status()).data.paid,false);
 assert.equal((await status()).data.canUseReport,false);
 assert.equal((await call(d,"/api/admin/studio-payments","PATCH",{...review,action:"refunded"})).status,409,"Repeated refund must not reapply state");
+// Race a claim and cancellation on a fresh checkout, then inspect the persisted result.
+const raceOrder=await call(c,payment,"POST",{product});
+assert.equal(raceOrder.status,200);const raceId=raceOrder.data.orderId;
+const raceClaim={orderId:raceId,utr:"RACE"+randomUUID().replaceAll("-","").slice(0,20).toUpperCase(),paidAt:new Date().toISOString()};
+const race=await Promise.all([call(c,payment+"/claim","POST",raceClaim),call(c,payment,"DELETE",{orderId:raceId})]);
+assert.ok((race[0].status===201&&race[1].status===409)||(race[0].status===409&&race[1].status===200),"Claim/cancellation must have one winner");
+const storedRace=await c.client.from("studio_paid_orders").select("status").eq("id",raceId).single();
+assert.ifError(storedRace.error);
+const storedClaims=await c.client.from("studio_payment_claims").select("id").eq("order_id",raceId);
+assert.ifError(storedClaims.error);
+assert.equal(storedRace.data.status,race[0].status===201?"requested":"cancelled");
+assert.equal(storedClaims.data.length,race[0].status===201?1:0);
 for(const pin of ["000000","20800","2080019","20A001"]){assert.equal((await call(c,"/api/customer/dealer-comparison?category=cement&slug=ppc-cement-50kg&qty=1&pin="+pin)).status,400);}
 console.log(JSON.stringify({scope:"disposable fixtures; no real money, bank verification or dispatch",checks:["dealer branch isolation","cross-tenant writes denied","RLS read isolation","valid stock write","negative and incorrect-unit stock rejection","cross-tenant stock privacy","payment idempotency","foreign claim denied","duplicate claim denied","admin verification","refund revokes access"]}));

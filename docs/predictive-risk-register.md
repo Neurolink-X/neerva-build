@@ -14,3 +14,6 @@ These are risks, not reported production incidents. No production data or permis
 No stock reservation, automatic settlement or certified architectural drawings are introduced by these changes.
 
 Extended disposable regression suite: concurrent Studio checkout and UTR submissions, cancellation after claim, duplicate refund, entitlement revocation, malformed PINs, invalid and stale direct-order transitions. These tests are configured, not yet executed. Claim-versus-cancel at exactly the same instant still needs a reviewed database locking migration; stock reservation requires explicit SKU/branch linkage and fulfillment semantics.
+
+## Next candidate: Studio concurrency
+A transaction-locking SQL candidate is in scripts/ops/studio-concurrency-candidate.sql, rehearsed only on the disposable local database before the reliability suite. It serializes checkout and admin review per account/product, locks the same order row for claim/cancel, validates claim time and ownership inside the database, and refuses refund if the matching active entitlement is missing. The regression checks the persisted outcome of concurrent claim/cancel. This is not a deployed migration, nor bank reconciliation. Supabase CLI is unavailable in the current environment; generate a tracked migration after staging tests and review. Existing inconsistencies must be reconciled, not overwritten.
