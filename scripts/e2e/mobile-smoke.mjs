@@ -360,12 +360,27 @@ async function main(){
     const visual=await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
     assert.equal(visual?.status(),200,"colour editor route");
     await page.getByRole("button",{name:"Sample house exterior"}).click();
+    const preview=page.locator(".nbd-photo canvas");
+    await preview.waitFor({state:"visible"});
+    assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
+    assert.equal(await page.getByRole("combobox",{name:"Wall design",exact:true}).count(),0,"plain mode hides patterns");
+    const original=await preview.evaluate(c=>c.toDataURL());
+    await page.getByRole("button",{name:"View original",exact:true}).click();
+    await page.waitForFunction(previous=>document.querySelector(".nbd-photo canvas").toDataURL()!==previous,original);
+    await page.getByRole("button",{name:"Show new paint",exact:true}).click();
+    await page.getByRole("button",{name:/Contemporary home/}).click();
+    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="contemporary"&&c.getBoundingClientRect().height>0;});
+    await page.getByRole("button",{name:/Premium villa/}).click();
+    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="villa"&&c.getBoundingClientRect().height>0;});
+    await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    await page.getByRole("combobox",{name:"Wall design",exact:true}).selectOption("diamonds");
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
  const canvas=page.locator(".nbd-photo canvas");
  await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
  async function mark(x){let b=await canvas.boundingBox();for(const [u,v] of [[x,.12],[x+.12,.12],[x+.12,.26],[x,.26]])await canvas.click({position:{x:u*b.width,y:v*b.height}});}
  await page.getByRole("button",{name:/Reset wall selection/}).click();
  await mark(.06);
+ await page.getByRole("button",{name:"Paint + design",exact:true}).click();
  await page.getByRole("combobox",{name:"Wall design",exact:true}).selectOption("bands");
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
