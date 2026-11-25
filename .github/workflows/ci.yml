@@ -22,6 +22,7 @@ jobs:
         run: |
           node scripts/release/react-dependency-pair.mjs
           node --test scripts/release/react-dependency-pair.test.mjs
+          node --experimental-strip-types --test src/modules/studio/checkout-status.test.ts
       - run: npm ci --no-audit --no-fund
       - name: Validate installed React peer dependency graph
         run: npm ls react react-dom @types/react @types/react-dom --all

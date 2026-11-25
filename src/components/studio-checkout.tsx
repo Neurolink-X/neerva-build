@@ -5,12 +5,11 @@ import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {studioProducts,studioPayee,studioUpiUrl,type StudioProduct} from "@/modules/studio/paid-products";
 import {useStudioSettings} from "@/components/use-studio-settings";
-type Order={id:string;status:string;created_at:string;amount_paise:number};
-type Status={product:StudioProduct;enabled:boolean;mode:"free"|"paid";paid:boolean;canUseReport:boolean;orders:Order[];claimedOrderIds:string[];pricePaise:number};
+import {isStudioCheckoutStatus,type StudioCheckoutStatus as Status} from "@/modules/studio/checkout-status";
 const money=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2});
 export function StudioCheckout({product}:{product:StudioProduct}){return <StudioCheckoutSession key={product} product={product}/>;}
 function StudioCheckoutSession({product}:{product:StudioProduct}){
- const actionLock=useRef(false),sessionToken=useRef(""),readRequest=useRef<AbortController|null>(null);
+ const actionLock=useRef(false),sessionToken=useRef(""),sessionUser=useRef(""),readRequest=useRef<AbortController|null>(null);
  const [token,setToken]=useState(""),[status,setStatus]=useState<Status|null>(null);
  const [utr,setUtr]=useState(""),[paidAt,setPaidAt]=useState("");
  const [message,setMessage]=useState("Sign in to review your Studio access."),[busy,setBusy]=useState(false);
@@ -24,8 +23,8 @@ function StudioCheckoutSession({product}:{product:StudioProduct}){
   try{
    const res=await fetch("/api/studio/payments?product="+product,{cache:"no-store",signal:controller.signal,headers:{Authorization:"Bearer "+jwt}});
    if(!res.ok)throw Error("Status unavailable");
-   const body=await res.json() as Status;
-   if(body.product!==product||!Array.isArray(body.orders)||!Array.isArray(body.claimedOrderIds))throw Error("Invalid status");
+   const body:unknown=await res.json();
+   if(!isStudioCheckoutStatus(body,product))throw Error("Invalid status");
    if(!current()||controller.signal.aborted)return;
    setStatus(body);
    const pending=body.orders.find(o=>o.status==="requested");
@@ -38,17 +37,18 @@ function StudioCheckoutSession({product}:{product:StudioProduct}){
  useEffect(()=>{
   let cancelled=false,authEvent=false;
   const client=createNeervaBrowserClient();if(!client)return;
-  const apply=(jwt:string)=>{
+  const apply=(jwt:string,userId:string)=>{
    if(cancelled)return;
    if(jwt===sessionToken.current){if(!jwt)setMessage("Sign in to purchase or check paid access.");return;}
    readRequest.current?.abort();readRequest.current=null;
+   if(userId!==sessionUser.current){setUtr("");setPaidAt("");sessionUser.current=userId;}
    sessionToken.current=jwt;setToken(jwt);setStatus(null);
    setMessage(jwt?"Checking your Studio access…":"Sign in to purchase or check paid access.");
    // Auth callback must not wait on Supabase or run a blocking auth call.
    if(jwt)void refresh(jwt);
   };
-  const {data:listener}=client.auth.onAuthStateChange((_event,session)=>{authEvent=true;apply(session?.access_token??"");});
-  void client.auth.getSession().then(s=>{if(!authEvent)apply(s.data.session?.access_token??"");}).catch(()=>{if(!cancelled&&!authEvent)setMessage("Unable to verify account session.")});
+  const {data:listener}=client.auth.onAuthStateChange((_event,session)=>{authEvent=true;apply(session?.access_token??"",session?.user.id??"");});
+  void client.auth.getSession().then(s=>{if(!authEvent)apply(s.data.session?.access_token??"",s.data.session?.user.id??"");}).catch(()=>{if(!cancelled&&!authEvent)setMessage("Unable to verify account session.")});
   return ()=>{cancelled=true;sessionToken.current="";readRequest.current?.abort();readRequest.current=null;listener.subscription.unsubscribe();};
  },[refresh]);
  async function createOrder(){
@@ -99,6 +99,7 @@ function StudioCheckoutSession({product}:{product:StudioProduct}){
   <div className="studio-upgrade-price"><strong>{ready&&config.published?(config.mode==="free"?"FREE":money.format(config.pricePaise/100)):"Pricing unavailable"}</strong>
    <span>{config.mode==="free"?"No payment required":"One-time per Studio · no auto-renewal"}</span></div>
   <p role="status" className="studio-upgrade-status">{message}</p>
+  {token&&!status&&!busy&&<button type="button" className="studio-upgrade-btn" onClick={()=>void refresh(token)}>Refresh checkout status</button>}
   {!token&&<Link className="studio-upgrade-btn" href="/account">Sign in to use this Studio</Link>}
   {token&&ready&&config.mode==="free"&&<p><strong>All signed-in customers can download this report for free.</strong> <Link href={product==="home_studio"?"/design-studio/portfolio":"/design-studio/visualizer"}>Open the Studio →</Link></p>}
   {token&&status?.paid&&config.mode==="paid"&&<p><strong>Access already verified.</strong> No second purchase necessary. <Link href={product==="home_studio"?"/design-studio/portfolio":"/design-studio/visualizer"}>Open your premium report →</Link></p>}
