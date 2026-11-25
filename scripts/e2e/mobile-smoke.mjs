@@ -232,6 +232,7 @@ async function main(){
     assert.equal(cat?.status(),200,"steel category route");
     const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"load"});
     assert.equal(details?.status(),200,"specific material detail route");
+    await page.getByText("Planning a project? Save to material list",{exact:true}).click();
     const add=page.getByRole("button",{name:"Add to material list"});
     assert.equal(await add.count(),1,"a product must provide an actionable add button");
     await add.click();
