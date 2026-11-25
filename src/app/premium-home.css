@@ -315,6 +315,6 @@
 .nbh .nbh-material-info .nbh-material-cta{margin-top:auto}
 .nbh .nbh-material-info h3{min-height:0}
 .nbh .nbh-material-info .nbh-material-cta{min-height:44px}
-.nbh .nbh-material-credits{margin-top:0;min-height:36px}
+.nbh .nbh-material-credits{margin-top:0;min-height:36px;padding:0 12px 4px}.nbh .nbh-material-credits summary{min-height:32px;line-height:32px}
 .nbh .nbh-material-card:not(:has(.nbh-material-credits))::after{content:"";display:block;min-height:36px;flex:none}
 @media(max-width:350px){.nbh .nbh-material-card:not(:has(.nbh-material-credits))::after{display:none}.nbh .nbh-material-credits{min-height:0}}
