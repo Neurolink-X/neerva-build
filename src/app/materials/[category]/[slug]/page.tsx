@@ -8,11 +8,12 @@ import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { ProductGallery, ProductDetailTools } from "@/components/product-detail-tools";
 import {BrandMark} from "@/components/brand-mark";
 import { getCategory, getProduct, getProductsByCategory } from "@/modules/catalog/marketplace";
+import {isPublicConstructionProduct} from "@/modules/catalog/discovery-policy";
 import {rangeVariantLabel} from "@/modules/catalog/media-usage";
 
 type Props = { params: Promise<{ category: string; slug: string }> };
 export async function generateStaticParams() { const { demoProducts } = await import("@/modules/catalog/marketplace"); return demoProducts.map((item) => ({ category: item.category, slug: item.slug })); }
-export async function generateMetadata({ params }: Props): Promise<Metadata> { const { category, slug } = await params; const item = getProduct(category, slug); return item ? { title: item.name, description: item.description, alternates: { canonical: `/materials/${item.category}/${item.slug}` } } : { title: "Product not found" }; }
+export async function generateMetadata({ params }: Props): Promise<Metadata> { const { category, slug } = await params; const item = getProduct(category, slug); return item ? { title: item.name, description: item.description, ...(!isPublicConstructionProduct(item)?{robots:{index:false,follow:true}}:{}), alternates: { canonical: `/materials/${item.category}/${item.slug}` } } : { title: "Product not found" }; }
 
 export default async function MaterialDetailPage({ params }: Props) {
   const { category, slug } = await params; const product = getProduct(category, slug); if (!product) notFound(); const parent = getCategory(category); if (!parent) notFound();

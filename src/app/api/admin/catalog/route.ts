@@ -11,12 +11,15 @@ async function json(request:Request){if(!request.headers.get("content-type")?.in
 }
 export async function GET(request:Request){
  const auth=await requireAdmin(request);if(auth instanceof Response)return auth;
+ const raw=new URL(request.url).searchParams.get("offset")??"0";
+ if(!/^\d{1,6}$/.test(raw)||Number(raw)%100!==0)return err(400,"Invalid catalog batch offset.");
+ const offset=Number(raw);
  try{const [a,b,c]=await Promise.all([
   auth.client.from("categories").select("id,slug,name_en,name_hi,pricing_mode,status").order("name_en"),
   auth.client.from("brands").select("id,name,slug,authorized_source,status").order("name"),
-  auth.client.from("products").select("id,slug,name,description,attributes,status,category:categories(id,slug,name_en,name_hi,pricing_mode,status),brand:brands(id,name,slug,status,authorized_source),variants:product_variants(id,sku,unit,attributes,status)").order("created_at",{ascending:false}).limit(100)
+  auth.client.from("products").select("id,slug,name,description,attributes,status,category:categories(id,slug,name_en,name_hi,pricing_mode,status),brand:brands(id,name,slug,status,authorized_source),variants:product_variants(id,sku,unit,attributes,status)").order("created_at",{ascending:false}).order("id",{ascending:false}).range(offset,offset+100)
  ]);if(a.error||b.error||c.error)return apiFailed();
- return apiData({categories:a.data??[],brands:b.data??[],products:c.data??[]});}catch{return apiFailed();}
+ return apiData({categories:a.data??[],brands:b.data??[],products:(c.data??[]).slice(0,100),nextOffset:(c.data??[]).length>100?offset+100:null});}catch{return apiFailed();}
 }
 export async function POST(request:Request){
  const auth=await requireAdmin(request);if(auth instanceof Response)return auth;

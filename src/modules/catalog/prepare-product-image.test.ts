@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {fitImage,matchesImageType} from "./prepare-product-image.ts";
+import {fitImage,matchesImageType,imageEncodingSizes} from "./prepare-product-image.ts";
 test("product images preserve aspect ratio and never upscale",()=>{
  assert.deepEqual(fitImage(4000,3000),{width:1600,height:1200});
  assert.deepEqual(fitImage(800,1200),{width:800,height:1200});
@@ -14,4 +14,10 @@ test("image signature checks reject spoofed and truncated data",()=>{
  assert.equal(matchesImageType(Uint8Array.from([137,80,78,71,13,10,26,10]),"image/png"),true);
  assert.equal(matchesImageType(Uint8Array.from([255,216,255]),"image/webp"),false);
  assert.equal(matchesImageType(new TextEncoder().encode("RIFF0000WEBP"),"image/webp"),true);
+});
+
+test("progressive image encoding is bounded, deduplicated and preserves aspect ratio",()=>{
+ assert.deepEqual(imageEncodingSizes(4000,3000),[{width:1600,height:1200},{width:1280,height:960},{width:1024,height:768},{width:800,height:600}]);
+ assert.deepEqual(imageEncodingSizes(320,240),[{width:320,height:240}]);
+ assert.throws(()=>fitImage(100,100,0));assert.throws(()=>fitImage(100,100,Infinity));
 });
