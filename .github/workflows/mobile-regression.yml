@@ -51,7 +51,7 @@ jobs:
           node "$RUNNER_TEMP/neerva-browser/mobile-smoke.mjs"
       - name: Store mobile evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: neerva-mobile-visual-evidence
           path: test-results/mobile/
