@@ -70,3 +70,11 @@
 .br-wrap .catalog-media-caption{position:static;display:flex;flex-wrap:wrap;gap:3px 7px;padding:7px 10px;background:#f5f7f3;color:#42564c;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
 .br-wrap .catalog-media-caption small{font-size:10px}
 .br-wrap .tile-swatch .catalog-media-frame .catalog-material-image img{object-fit:contain!important;padding:5px;background:#fff}
+
+/* Brand and showroom photos keep the entire item visible; texture samples may fill their frame. */
+.br-wrap .tile-swatch .catalog-media-frame .catalog-material-image.pack-photo img{object-fit:contain!important;padding:clamp(6px,1.2vw,14px);background:#fff}
+.br-wrap .tile-swatch .catalog-media-frame .catalog-material-image.tile-surface-photo img{object-fit:cover!important;padding:0}
+.br-wrap .catalog-media-caption{font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.br-pack img{object-fit:contain}
+.aggregate-photo img{object-position:center}
+@media(prefers-reduced-motion:reduce){.br-wrap .catalog-material-image img,.br-pack img{transition:none}}
