@@ -40,3 +40,6 @@ A previous preview build is READY, but the latest commit's Vercel status points 
 ### Follow-up verification
 
 Direct routes for quote-only minor accessories remain valid, but generated accessory illustrations are no longer returned by catalogVisuals. Regression tests check this explicitly and browser checks cover hidden wood adhesive and gasket in public browsing. The React compatibility gate now has an independently recorded CI outcome. This does not represent a successful CI run until actual evidence is available.
+
+## Family home imagery
+Three separate generated exterior inspiration crops, local WebP assets, with explicit concept labels. These are small card previews, not approved architectural renderings or evidence of a completed home. No costs or statuses from the source concept sheet are included. The original premium homepage is unchanged. Full-resolution matching plan renders require a separate architectural review.

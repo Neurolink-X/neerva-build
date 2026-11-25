@@ -49,6 +49,10 @@ async function main(){
    assert.equal(await page.locator(".nbh-family-entry").count(),1,"Family planning entry point");
    await page.goto(base+"/family-homes",{waitUntil:"load"});
    assert.equal(await page.locator(".nbh-family-card").count(),4,"Separate family planning page");
+   const familyPhotos=page.locator(".nbh-family-photo img");
+   assert.equal(await familyPhotos.count(),3,"Three distinct family-home visual concepts");
+   for(const img of await familyPhotos.all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());assert.ok(await img.evaluate(el=>el.naturalWidth>0&&el.naturalHeight>0),"Family-home image decodes");}
+   assert.equal(new Set(await familyPhotos.evaluateAll(imgs=>imgs.map(img=>img.getAttribute("src")))).size,3,"No repeated family visual");
    const familyLinks=await page.locator('.nbh-family-card a[href^="/design-studio/portfolio?"]').evaluateAll(links=>links.map(a=>{const q=new URL(a.href).searchParams;return ["width","depth","bedrooms","floors"].map(k=>q.get(k)).join("x");}));
    assert.deepEqual(familyLinks,["15x30x1x1","18x50x3x2","20x40x2x1"],"Family home cards use supported plot and room briefs");
    await page.goto(base+"/",{waitUntil:"load"});

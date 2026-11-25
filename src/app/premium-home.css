@@ -259,3 +259,6 @@
 .nbh-material-image{grid-template-columns:minmax(0,1fr)}
 
 .nbh-family-entry{display:inline-flex;align-items:center;min-height:44px;color:#805139;font-size:14px;font-weight:700;text-decoration:underline;text-underline-offset:3px;margin-bottom:12px}.family-homes-page h1{font-family:Georgia,serif;font-size:clamp(30px,5vw,54px);line-height:1.2;font-weight:400}.family-homes-page .nbh-header nav{margin-left:auto}.family-homes-page .nbh-section>p{max-width:70ch;line-height:1.6}
+
+/* Family landing only: separate local imagery; preserve main premium home. */
+.family-homes-page .nbh-family-photo{margin:0;width:100%;min-width:0}.family-homes-page .nbh-family-photo img{display:block;width:100%;height:auto;aspect-ratio:2.2;object-fit:contain;border-radius:9px;background:#f1f3ef}.family-homes-page .nbh-family-photo figcaption{font-size:11px;color:#526557;line-height:1.4;margin-top:5px}.family-homes-page .nbh-family-card{overflow:hidden}
