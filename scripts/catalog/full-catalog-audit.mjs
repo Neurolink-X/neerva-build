@@ -102,6 +102,16 @@ report.generatedVisuals.priorityMissing=report.generatedVisuals.missingVisualFam
 report.generatedVisuals.priorityMissingCount=report.generatedVisuals.priorityMissing.length;
 report.generatedVisuals.missingVariantCount=report.generatedVisuals.missingVisualFamilies.reduce((n,p)=>n+p.variants.length,0);
 integrityFailures.push(...report.generatedVisuals.invalid);
+// Separate exact reviewed SKU coverage from family/reference coverage. The same
+// family photograph cannot prove every size, grade, pack or brand variant.
+const exactSkuWorklist=[];
+for(const product of demoProducts){
+ const media=approvedFamilyMedia(product);
+ const hasExact=media.some(m=>m.scope==="sku"&&m.family===product.slug)
+  || (product.verification==="merchant_verified"&&product.imageVerified===true&&catalogPhotos(product).some(p=>p.kind==="sku"));
+ if(!hasExact)exactSkuWorklist.push({category:product.category,slug:product.slug,brand:product.brand,name:product.name,reason:catalogPhotos(product).length?"reference-photo-only":"missing-photo",source:product.manufacturerReference??product.referenceSource??null});
+}
+report.exactSkuPhotography={totalVariants:demoProducts.length,verifiedVariants:demoProducts.length-exactSkuWorklist.length,remainingVariants:exactSkuWorklist.length,worklist:exactSkuWorklist,scope:"Static catalog only; verified exact SKU identity is distinct from family imagery."};
 report.variantWorklist=variantWorklist;
 report.integrityFailures=integrityFailures;
 report.totals.variantsWithoutConfiguredPhoto=variantWorklist.filter(v=>v.flags.includes("missing-photo")).length;
