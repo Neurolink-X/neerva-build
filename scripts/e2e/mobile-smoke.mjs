@@ -78,6 +78,24 @@ async function main(){
      await page.setViewportSize({width:v.w,height:v.h});
     }
    }
+   if(v.w===390||v.w===1440){
+    // A fresh context ensures a direct brand route never relies on materials CSS from prior navigation.
+    const brandContext=await browser.newContext({viewport:{width:v.w,height:v.h}});
+    try{
+     const brandPage=await brandContext.newPage();
+     const response=await brandPage.goto(base+"/brands/cement/ultratech",{waitUntil:"load",timeout:60000});
+     assert.equal(response?.status(),200,"direct brand detail route");
+     const cards=brandPage.locator(".br-card .tile-swatch .catalog-material-image");
+     assert.ok(await cards.count()>0,"brand range must contain product cards");
+     const errors=await cards.evaluateAll(items=>items.flatMap(el=>{
+      const container=el.getBoundingClientRect(),card=el.closest(".br-card").getBoundingClientRect();
+      const child=el.querySelector("img,.catalog-material-identity");
+      const inside=child?.getBoundingClientRect();
+      return getComputedStyle(el).position!=="relative"||container.height<100||container.left<card.left-1||container.right>card.right+1||(inside&&(inside.left<container.left-1||inside.right>container.right+1||inside.top<container.top-1||inside.bottom>container.bottom+1))?["uncontained brand media"]:[];
+     }));
+     assert.deepEqual(errors,[],"direct brand route positions media and specification fallback safely");
+    }finally{await brandContext.close();}
+   }
    if(v.w===390){
     // Verify role shells, legal/support destinations, and catalog routes not in the
     // repeated five-viewport sample. Status checks avoid creating fake test orders.
