@@ -245,5 +245,55 @@
     "licenseUrl": "https://commons.wikimedia.org/wiki/Template:PD-textlogo",
     "target": "electrical:Polycab",
     "note": "Review current brand identity and original source before publication; not a product photo."
+  },
+  {
+    "key": "hettich-brand-mark",
+    "filename": "Logo of Hettich (company).svg",
+    "source": "https://commons.wikimedia.org/wiki/File:Logo_of_Hettich_(company).svg",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Logo_of_Hettich_(company).svg",
+    "target": "hardware:Hettich",
+    "note": "Corporate mark, confirm trademark and source license before publication"
+  },
+  {
+    "key": "berger-brand-mark",
+    "filename": "Berger Paints logo.png",
+    "source": "https://commons.wikimedia.org/wiki/File:Berger_Paints_logo.png",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Berger_Paints_logo.png",
+    "target": "paint:Berger",
+    "note": "Confirm current corporate identity and reuse status"
+  },
+  {
+    "key": "nerolac-brand-mark",
+    "filename": "Nerolac-logo.webp",
+    "source": "https://commons.wikimedia.org/wiki/File:Nerolac-logo.webp",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Nerolac-logo.webp",
+    "target": "paint:Nerolac",
+    "note": "Verify copyright provenance before publication"
+  },
+  {
+    "key": "gate-valve-installed",
+    "filename": "GateValve.JPG",
+    "source": "https://commons.wikimedia.org/wiki/File:GateValve.JPG",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:GateValve.JPG",
+    "target": "plumbing:fitting-gate-valve",
+    "note": "Domestic water gate valve, installed example; review identity and license"
+  },
+  {
+    "key": "sealant-gun-application",
+    "filename": "Caulking.jpg",
+    "source": "https://commons.wikimedia.org/wiki/File:Caulking.jpg",
+    "credit": "Pending source-page author verification",
+    "license": "Pending source-page license verification",
+    "licenseUrl": "https://commons.wikimedia.org/wiki/File:Caulking.jpg",
+    "target": "hardware:sealant-gun",
+    "note": "Application view, not the same exact retail gun; verify license"
   }
 ]

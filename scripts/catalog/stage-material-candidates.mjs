@@ -10,8 +10,9 @@ for(const item of candidates){try{
  const old=previous.find(r=>r.key===item.key&&r.filename===item.filename&&r.status==="visual-review-required"&&r.file&&r.sha256);
  if(old){try{const b=await fs.readFile(root+"/"+old.file);if(createHash("sha256").update(b).digest("hex")===old.sha256){rows.push({...old,...item});continue;}}catch{}}
 
- const hash=createHash("md5").update(item.filename).digest("hex");
- const expected="https://upload.wikimedia.org/wikipedia/commons/"+hash[0]+"/"+hash.slice(0,2)+"/"+encodeURIComponent(item.filename);
+ const filename=item.filename.trim().replaceAll(" ","_");
+ const hash=createHash("md5").update(filename).digest("hex");
+ const expected="https://upload.wikimedia.org/wikipedia/commons/"+hash[0]+"/"+hash.slice(0,2)+"/"+encodeURIComponent(filename);
  if(item.url&&decodeURI(expected)!==decodeURI(item.url))throw Error("Unexpected Wikimedia source");
  let r;for(let attempt=0;attempt<2;attempt++){r=await fetch(expected,{redirect:"error",signal:AbortSignal.timeout(20000),headers:{"User-Agent":"NeervaBuildCatalogMedia/1.0 (https://github.com/Neurolink-X/neerva-build)"}});if(r.ok||![429,503].includes(r.status))break;await r.body?.cancel();const delay=Math.min(10000,Math.max(1500,Number(r.headers.get("Retry-After")||0)*1000||1500));await new Promise(resolve=>setTimeout(resolve,delay));}
  if(!r?.ok||!r.body)throw Error("HTTP "+r.status);
