@@ -1,3 +1,4 @@
+import {stockConfirmationEnabled} from "@/modules/orders/stock-confirmation";
 import {apiData,apiFailed,requireDealer} from "@/modules/identity/server-auth";
 import {inventoryWrite,errorFields} from "@/modules/marketplace/write-contract";
 import {isAllowedCategoryUnit} from "@/modules/catalog/category-units";
@@ -46,11 +47,19 @@ export async function POST(request:Request){
   if(!v||v.status!=="published"||product?.status!=="published"||v.unit!==value.unit||
      !category||!isAllowedCategoryUnit(String(category.slug),value.unit))
    return err(409,"Select a published product variant and matching unit.");
-  const {data:saved,error}=await auth.client.from("inventory")
-   .upsert({branch_id:value.branchId,variant_id:value.variantId,unit:value.unit,available_quantity:value.quantity},
-           {onConflict:"branch_id,variant_id"})
-   .select("branch_id,variant_id,unit,available_quantity,updated_at").single();
-  if(error)return err(error.code==="23514"?409:503,"Inventory could not be saved. Check unit and permissions.");
+  const row={branch_id:value.branchId,variant_id:value.variantId,unit:value.unit,available_quantity:value.quantity};
+  // New clients always send the exact snapshot timestamp (null for a new SKU).
+  // Atomic stock rollout refuses older clients instead of overwriting reserved stock.
+  if(stockConfirmationEnabled(process.env)&&value.expectedUpdatedAt===undefined)return err(409,"Refresh inventory before editing stock.");
+  const fields="branch_id,variant_id,unit,available_quantity,updated_at";
+  const savedResult=value.expectedUpdatedAt===undefined
+   ?await auth.client.from("inventory").upsert(row,{onConflict:"branch_id,variant_id"}).select(fields).single()
+   :value.expectedUpdatedAt===null
+    ?await auth.client.from("inventory").insert(row).select(fields).single()
+    :await auth.client.from("inventory").update({available_quantity:value.quantity}).eq("branch_id",value.branchId).eq("variant_id",value.variantId).eq("unit",value.unit).eq("updated_at",value.expectedUpdatedAt).select(fields).maybeSingle();
+  const {data:saved,error}=savedResult;
+  if(error)return err(["23514","23505"].includes(error.code)?409:error.code==="42501"?403:503,"Inventory could not be saved. Refresh stock and verify permissions.");
+  if(!saved)return err(409,"Stock changed since this form was opened. Refresh and recount before saving.");
   return apiData({stock:saved,stored:true,stockScope:"verified_dealer_branch",note:"Stock belongs to this dealer branch; checkout and dispatch require separate confirmation."});
  }catch{return apiFailed()}
 }

@@ -63,8 +63,9 @@ export async function POST(request:Request){
   });
   if(error?.code==="23505"){
    const {data:previous,error:readError}=await auth.client.from("quote_requests")
-    .select("id").eq("requester_id",auth.userId).eq("idempotency_key",data.idempotencyKey).maybeSingle();
+    .select("id,category_slug,material_description,quantity,unit,city,pincode,requested_date,contact_name,phone").eq("requester_id",auth.userId).eq("idempotency_key",data.idempotencyKey).maybeSingle();
    if(readError||!previous?.id)return respond(409,"This request could not be safely confirmed. Use a new request.","IDEMPOTENCY_CONFLICT",reference);
+   if(previous.category_slug!==data.categorySlug||previous.material_description!==data.materialDescription||Number(previous.quantity)!==data.quantity||previous.unit!==data.unit||previous.city!==data.city||previous.pincode!==data.pincode||previous.requested_date!==(data.requestedDate??null)||previous.contact_name!==data.contactName||previous.phone!==data.phone)return respond(409,"Request details changed. Submit a new request with a new key.","IDEMPOTENCY_CONFLICT",reference);
    return NextResponse.json({requestId:previous.id,status:"received",reference,duplicate:true},{status:200,headers});
   }
   if(error){

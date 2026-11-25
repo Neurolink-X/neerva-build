@@ -45,13 +45,14 @@ const variant=await call(d,catalog,"POST",{action:"create",kind:"variant",produc
 assert.equal(variant.status,201);
 const variantId=variant.data.item.id;
 assert.equal((await call(d,catalog,"PATCH",{kind:"variant",id:variantId,status:"published"})).status,200);
-const stock={branchId:branches[0],variantId,quantity:10,unit:"bag"};
+const stock={branchId:branches[0],variantId,quantity:10,unit:"bag",expectedUpdatedAt:null};
 assert.equal((await call(a,"/api/dealer/inventory","POST",stock)).status,200);
 assert.equal((await call(a,"/api/dealer/inventory","POST",{...stock,unit:"kg"})).status,409);
 assert.equal((await call(a,"/api/dealer/inventory","POST",{...stock,quantity:-1})).status,400);
 assert.equal((await call(b,"/api/dealer/inventory","POST",stock)).status,403);
 const own=await call(a,"/api/dealer/inventory");
 assert.ok(own.data.inventory.some(x=>x.variant_id===variantId&&Number(x.available_quantity)===10));
+const initialStockVersion=own.data.inventory.find(x=>x.branch_id===branches[0]&&x.variant_id===variantId).updated_at;
 const privateStock=await b.client.from("inventory").select("branch_id,variant_id,available_quantity").eq("branch_id",branches[0]).eq("variant_id",variantId);
 assert.ifError(privateStock.error);assert.equal(privateStock.data.length,0,"Cross-tenant private stock leaked");
 // Explicit local-only KYC and PIN fixtures: no actual GST verification implied.
@@ -91,9 +92,10 @@ assert.equal(quantity(),0);
 const archiveHeld=await d.client.from("product_variants").update({status:"archived"}).eq("id",variantId).select("id");
 assert.equal(archiveHeld.error?.code,"23514","Reserved SKU must not be archived before fulfillment or release");
 assert.equal((await call(a,reservePath,"POST",selection(winner))).status,409);
-assert.equal((await call(a,"/api/dealer/inventory","POST",stock)).status,409,"Stale absolute update must not recreate held stock");
+assert.equal((await call(a,"/api/dealer/inventory","POST",{...stock,expectedUpdatedAt:initialStockVersion})).status,409,"Stale absolute update must not recreate held stock");
 assert.equal((await call(d,"/api/admin/orders","PATCH",{orderId:winner,expectedStatus:"confirmed",status:"cancelled"})).status,200);
 assert.equal(quantity(),10,"Cancellation must release stock exactly once");
+assert.equal((await call(a,"/api/dealer/inventory","POST",{...stock,quantity:20,expectedUpdatedAt:initialStockVersion})).status,409,"A pre-reservation snapshot cannot overwrite stock even after release");
 assert.equal((await call(d,"/api/admin/orders","PATCH",{orderId:winner,expectedStatus:"confirmed",status:"cancelled"})).status,409);
 assert.equal(quantity(),10);
 assert.equal((await call(a,reservePath,"POST",selection(loser))).status,200);

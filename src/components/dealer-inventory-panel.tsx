@@ -40,8 +40,9 @@ export function DealerInventoryPanel() {
   async function updateStock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setFeedback(null);
     const form = new FormData(event.currentTarget);
-    // Strict API contract: inventory has four fields; price offers are a separate approved workflow.
-    const body = { branchId, variantId, quantity: Number(form.get("quantity")), unit: selectedVariant?.unit ?? "" };
+    // Submit the observed row version; an outdated form cannot recreate sold stock.
+    const snapshot=inventory?.inventory.find(row=>row.branch_id===branchId&&row.variant_id===variantId);
+    const body = { branchId, variantId, quantity: Number(form.get("quantity")), unit: selectedVariant?.unit ?? "", expectedUpdatedAt:snapshot?.updated_at??null };
     try { const result = await dealerFetch("/api/dealer/inventory", { method: "POST", body: JSON.stringify(body) }); setFeedback({ kind: "success", text: result.message ?? "Inventory saved. Updated stock is visible below." }); await load(); }
     catch (error) { setFeedback({ kind: "error", text: error instanceof Error ? error.message : "Inventory update failed." }); }
     finally { setBusy(false); }
@@ -55,7 +56,7 @@ export function DealerInventoryPanel() {
     <form className="catalog-admin-form" onSubmit={updateStock}>
       <label>Store / branch<select required value={branchId} onChange={(event) => setBranchId(event.target.value)}>{availableBranches.map((branch) => <option key={branch.id} value={branch.id}>{branch.name} · {branch.city} {branch.pincode}</option>)}</select></label>
       <label>Product variant<select required value={variantId} onChange={(event) => setVariantId(event.target.value)}>{(inventory?.variants ?? []).map((variant) => <option key={variant.id} value={variant.id}>{variant.product.brand?.name ?? "Brand"} · {variant.product.name} · {variant.sku}</option>)}</select></label>
-      <label>Available quantity<input name="quantity" required type="number" min="0" max="1000000" step="0.001" defaultValue="0" /></label>
+      <label>Available quantity<input name="quantity" required type="number" min="0" max="1000000" step="0.001" key={branchId+":"+variantId+":"+String(inventory?.inventory.find(row=>row.branch_id===branchId&&row.variant_id===variantId)?.updated_at??"new")} defaultValue={inventory?.inventory.find(row=>row.branch_id===branchId&&row.variant_id===variantId)?.available_quantity??0} /></label>
       <p className="wide-field">Unit: <strong>{selectedVariant?.unit?.replaceAll("_", " ") ?? "Choose a published variant"}</strong>. Branch city is taken from your approved branch; submitted stock does not publish a customer-facing rate.</p>
       <button className="button button-dark wide-field" disabled={busy || !branchId || !variantId}>{busy ? "Saving securely…" : "Save branch stock →"}</button>
     </form>

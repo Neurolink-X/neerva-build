@@ -31,3 +31,6 @@ Added disposable real RFQ → invite → offer → accept → simultaneous stock
 
 ## Recheck fixes
 Corrected malformed SQL dollar delimiters in the reservation candidate, added lexical regression tests, locked published SKU/category/product during reservation, guarded SKU archival while reserved and journaled inventory movements. Added archive/ledger assertions. PostgreSQL execution remains mandatory; no production activation.
+
+## Snapshot consistency
+Dealer stock form and API now use optimistic timestamp checks, reject stale updates even after release, and validate decimal precision. Legacy four-field clients are accepted only while the atomic-stock flag is off. Direct database writes remain subject to existing RLS and candidate hold guards; complete enforcement of snapshot tokens at the database boundary still requires a reviewed migration. RFQ retries with changed payload now return conflict instead of returning the earlier unrelated request. Tests added, not yet executed.
