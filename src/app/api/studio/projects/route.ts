@@ -3,14 +3,14 @@ import {NextResponse} from "next/server";
 import {z} from "zod";
 import {planBriefSchema as brief} from "@/modules/studio/plan-brief-schema";
 import {requireAuth} from "@/modules/identity/server-auth";
-import {validatePlan,type PlanModel} from "@/modules/studio/plan-model";
+import {validatePlan,planGeometryDigest,type PlanModel} from "@/modules/studio/plan-model";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const error=(status:number,message:string)=>NextResponse.json({error:message},{status,headers});
 const create=z.object({idempotencyKey:z.string().uuid(),title:z.string().trim().min(3).max(120),
- brief,finish:z.object({kit:z.enum(["simple-parapet","jali-screen","pergola"]),main:z.string().regex(/^#[0-9a-f]{6}$/i),accent:z.string().regex(/^#[0-9a-f]{6}$/i)}).strict().optional(),variant:z.enum(["parking-left","parking-right"]),planId:z.string().min(5).max(200)}).strict();
+ brief,finish:z.object({kit:z.enum(["simple-parapet","jali-screen","pergola"]),main:z.string().regex(/^#[0-9a-f]{6}$/i),accent:z.string().regex(/^#[0-9a-f]{6}$/i)}).strict().optional(),variant:z.enum(["parking-left","parking-right"]),planId:z.string().min(5).max(200),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
 async function parseBounded(request:Request){if(!request.headers.get("content-type")?.includes("application/json"))return null;
  const size=Number(request.headers.get("content-length")??0);if(size>12000)return null;
  try{const text=await request.text();return text.length<=12000?JSON.parse(text) as unknown:null}catch{return null}}
@@ -35,6 +35,7 @@ export async function POST(request:Request){
  const plan=result.plans.find(p=>p.id===input.planId&&p.variant===input.variant);
  if(!plan)return NextResponse.json({error:"No safe draft fits this plot and room request.",blockers:result.blockers.slice(0,6)},{status:422,headers});
  if(validatePlan(plan).length)return error(422,"Draft failed circulation or dimension checks.");
+ if(input.geometryDigest&&input.geometryDigest!==await planGeometryDigest(plan))return error(409,"The selected geometry has changed. Reopen the plan before saving.");
  if(input.finish)plan.facade={...plan.facade,...input.finish};
  const geometry=JSON.stringify(plan);
  const sha=createHash("sha256").update(geometry).digest("hex");
@@ -49,7 +50,7 @@ export async function POST(request:Request){
    const {data:previous,error:readError}=await auth.client.from("studio_customer_projects")
    .select("id,title,plan_sha256,status,created_at").eq("owner_id",auth.userId)
    .eq("idempotency_key",input.idempotencyKey).maybeSingle();
-   if(readError||!previous)return error(409,"The draft could not be confirmed; retry with a new request key.");
+   if(readError||!previous||previous.plan_sha256!==sha)return error(409,"The draft could not be confirmed; retry with a new request key.");
    return NextResponse.json({project:previous,duplicate:true},{headers});
   }
   if(failure||!saved)return error(503,"Project was not saved. No customer-facing confirmation was issued.");
