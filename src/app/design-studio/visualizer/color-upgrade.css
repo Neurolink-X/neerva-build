@@ -42,3 +42,8 @@
 .paint-adjacent-controls label{margin:6px 0!important}
 .paint-adjacent-controls .neerva-tier-note{margin:7px 0 0}
 @media(max-width:850px){.paint-live-workspace{grid-template-columns:minmax(0,1fr);gap:8px}.paint-adjacent-controls section{padding:10px}.paint-live-preview{position:relative}.paint-adjacent-controls section>div{margin:8px 0!important}.paint-adjacent-controls .paint-quality,.paint-adjacent-controls .neerva-tier-note{font-size:12px}}
+
+.paint-live-tools{min-width:0}
+.paint-live-workspace:has(.paint-live-tools:empty){grid-template-columns:minmax(0,1fr)}
+@media(min-width:851px){.paint-live-preview{position:sticky;top:12px;align-self:start}}
+@media(max-width:850px){.paint-live-tools .wall-pattern-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.paint-live-tools .wall-pattern-options button{min-width:0}}
