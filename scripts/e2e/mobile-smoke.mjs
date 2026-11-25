@@ -450,6 +450,13 @@ async function main(){
     await page.locator("article.admin-record").first().getByRole("button",{name:"Remove"}).click();
     await page.getByText(/Your order cart is empty/).waitFor();
     await page.goto(base+"/build-iq",{waitUntil:"load"});
+    await page.goto(base+"/build-iq#build-workbench-title",{waitUntil:"load"});
+    await page.waitForFunction(()=>Boolean(document.querySelector("#build-workbench-title")?.getClientRects().length));
+    const coreInput=page.locator("#build-workbench-title").locator("..").locator("input").first();
+    await coreInput.fill("17");
+    await page.getByRole("button",{name:"Smart Plot & Design"}).click();
+    await page.getByRole("button",{name:"Smart Construction & Materials"}).click();
+    assert.equal(await coreInput.inputValue(),"17","construction measurements survive workspace switches");
     const academyCount=await page.locator(".academy-grid article").count();
     assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
     await page.getByRole("searchbox",{name:"Search the construction handbook"}).fill("foundation");
@@ -458,7 +465,7 @@ async function main(){
     await page.reload({waitUntil:"load"});
     await page.waitForFunction(()=>document.querySelector(".handbook-checks input")?.checked===true);
     await page.goto(base+"/build-iq",{waitUntil:"load"});
-    await page.getByRole("link",{name:"Start exploring →"}).click();
+    await page.getByRole("link",{name:"Understand the full lesson →"}).click();
     await page.getByText("Quick knowledge check",{exact:true}).waitFor();
     await page.getByRole("button",{name:"Compare their measured dimensions and road access"}).click();
     await page.getByText("That's right.",{exact:true}).waitFor();
