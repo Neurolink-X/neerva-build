@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
+import {execFileSync} from "node:child_process";
 import {createClient} from "@supabase/supabase-js";
 const url=process.env.NEERVA_E2E_SUPABASE_URL;
 assert.equal(url,"http://127.0.0.1:54321","Disposable local Supabase only");
@@ -10,13 +11,13 @@ async function login(role){
  const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
  const {data,error}=await client.auth.signInWithPassword({email:process.env["NEERVA_E2E_"+role+"_EMAIL"],password:process.env["NEERVA_E2E_"+role+"_PASSWORD"]});
  assert.ok(!error&&data.session,role+" fixture login failed");
- return {client,token:data.session.access_token};
+ return {client,token:data.session.access_token,id:data.user.id};
 }
 async function call(role,path,method="GET",body){
  const r=await fetch(base+path,{method,redirect:"error",signal:AbortSignal.timeout(15000),headers:{Authorization:"Bearer "+role.token,...(body?{"Content-Type":"application/json"}:{})},...(body?{body:JSON.stringify(body)}:{})});
  return {status:r.status,data:await r.json()};
 }
-const [a,b,c,d]=await Promise.all(["DEALER_A","DEALER_B","CUSTOMER","ADMIN"].map(login));
+const [a,b,c,d,other]=await Promise.all(["DEALER_A","DEALER_B","CUSTOMER","ADMIN","OTHER_CUSTOMER"].map(login));
 const branches=[process.env.NEERVA_E2E_DEALER_A_BRANCH,process.env.NEERVA_E2E_DEALER_B_BRANCH];
 for(const [i,actor] of [a,b].entries()){
  const list=await call(actor,"/api/dealer/inventory");
@@ -53,6 +54,52 @@ const own=await call(a,"/api/dealer/inventory");
 assert.ok(own.data.inventory.some(x=>x.variant_id===variantId&&Number(x.available_quantity)===10));
 const privateStock=await b.client.from("inventory").select("branch_id,variant_id,available_quantity").eq("branch_id",branches[0]).eq("variant_id",variantId);
 assert.ifError(privateStock.error);assert.equal(privateStock.data.length,0,"Cross-tenant private stock leaked");
+// Explicit local-only KYC and PIN fixtures: no actual GST verification implied.
+const db=new URL(process.env.DB_URL??"postgresql://invalid.invalid");
+assert.equal(db.protocol,"postgresql:");assert.equal(db.hostname,"127.0.0.1");assert.equal(db.port,"54322");assert.equal(db.pathname,"/postgres");
+assert.equal(process.env.NEERVA_E2E_LOCAL,"yes");
+const uuid=x=>{assert.match(x,/^[0-9a-f-]{36}$/i);return "'"+x+"'";};
+const localSql=sql=>execFileSync("psql",[db.toString(),"-X","-v","ON_ERROR_STOP=1","-At","-c",sql],{encoding:"utf8"}).trim();
+const tenantResult=await a.client.from("tenant_memberships").select("tenant_id").eq("user_id",a.id).single();
+assert.ifError(tenantResult.error);const tenant=tenantResult.data.tenant_id;
+const application=randomUUID();
+localSql("insert into public.dealer_applications(id,tenant_id,owner_id,legal_business_name,gstin,shop_city,status,gstin_verification,reviewed_by,reviewed_at) values ("+uuid(application)+","+uuid(tenant)+","+uuid(a.id)+",'Disposable dealer fixture','09ABCDE1234F1Z5','Kanpur','approved','verified',"+uuid(d.id)+",now()); insert into public.dealer_service_pincodes(application_id,pincode) values ("+uuid(application)+",'208001'); insert into public.dealer_categories(application_id,category_id) values ("+uuid(application)+","+uuid(category.id)+");");
+async function acceptedOrder(customer){
+ // Customer-scoped PostgREST insertion tests the real RFQ trigger and RLS.
+ const rfq=await customer.client.from("quote_requests").insert({idempotency_key:randomUUID(),requester_id:customer.id,category_slug:"cement",material_description:"Disposable cement fixture",quantity:10,unit:"bag",city:"Kanpur",pincode:"208001",contact_name:"Disposable fixture",phone:"9000000000"}).select("id").single();
+ assert.ifError(rfq.error);const req=rfq.data.id;
+ const invite=await call(d,"/api/admin/rfqs","POST",{requestId:req,tenantId:tenant});
+ assert.equal(invite.status,201,JSON.stringify(invite.data));
+ const quote=await call(a,"/api/dealer/quotes","POST",{quoteRequestId:req,tenantId:tenant,lines:[{description:"Disposable cement fixture",quantity:10,unit:"bag",unitPricePaise:1000}],taxPaise:0,freightPaise:0,unloadingPaise:0,terms:"Synthetic test; no delivery",validUntil:new Date(Date.now()+3600000).toISOString()});
+ assert.equal(quote.status,201,JSON.stringify(quote.data));
+ const accept=await call(customer,"/api/orders","POST",{offerId:quote.data.offer.id,idempotencyKey:randomUUID(),deliveryAddress:"Disposable Kanpur address only",quoteAccepted:true});
+ assert.equal(accept.status,201,JSON.stringify(accept.data));return accept.data.order.id;
+}
+const [firstOrder,secondOrder]=await Promise.all([acceptedOrder(c),acceptedOrder(other)]);
+const reservePath="/api/dealer/orders/stock";
+const selection=id=>({orderId:id,branchId:branches[0],variantIds:[variantId],exactSkuConfirmed:true});
+assert.equal((await call(b,reservePath,"POST",selection(firstOrder))).status,403);
+assert.equal((await call(c,reservePath,"POST",selection(firstOrder))).status,403);
+assert.equal((await call(a,"/api/dealer/orders","PATCH",{orderId:firstOrder,expectedStatus:"pending_confirmation",status:"confirmed"})).status,409);
+const bypass=await a.client.from("orders").update({status:"confirmed"}).eq("id",firstOrder).select("id");
+assert.ok(bypass.error,"Direct database status update must not bypass reservation");
+const results=await Promise.all([call(a,reservePath,"POST",selection(firstOrder)),call(a,reservePath,"POST",selection(secondOrder))]);
+assert.deepEqual(results.map(x=>x.status).sort(),[200,409],"Last ten bags must have exactly one winner");
+const winner=results[0].status===200?firstOrder:secondOrder,loser=winner===firstOrder?secondOrder:firstOrder;
+const quantity=()=>Number(localSql("select available_quantity from public.inventory where branch_id="+uuid(branches[0])+" and variant_id="+uuid(variantId)));
+assert.equal(quantity(),0);
+assert.equal((await call(a,reservePath,"POST",selection(winner))).status,409);
+assert.equal((await call(a,"/api/dealer/inventory","POST",stock)).status,409,"Stale absolute update must not recreate held stock");
+assert.equal((await call(d,"/api/admin/orders","PATCH",{orderId:winner,expectedStatus:"confirmed",status:"cancelled"})).status,200);
+assert.equal(quantity(),10,"Cancellation must release stock exactly once");
+assert.equal((await call(d,"/api/admin/orders","PATCH",{orderId:winner,expectedStatus:"confirmed",status:"cancelled"})).status,409);
+assert.equal(quantity(),10);
+assert.equal((await call(a,reservePath,"POST",selection(loser))).status,200);
+assert.equal(quantity(),0);
+for(const [expectedStatus,status] of [["confirmed","preparing"],["preparing","out_for_delivery"]])assert.equal((await call(a,"/api/dealer/orders","PATCH",{orderId:loser,expectedStatus,status})).status,200);
+assert.equal((await call(d,"/api/admin/orders","PATCH",{orderId:loser,expectedStatus:"out_for_delivery",status:"cancelled"})).status,200);
+assert.equal(quantity(),0,"Dispatched stock cannot be restocked by cancellation");
+
 const product="home_studio";
 const config=await call(d,"/api/admin/studio-settings");
 assert.equal(config.status,200);
