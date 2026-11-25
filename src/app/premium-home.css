@@ -305,3 +305,16 @@
 .nbh-house-strip img,.nbh-studio-photo img{object-position:center}
 .nbh-house-strip,.nbh-studio-photo,.nbh-house-frame{isolation:isolate}
 @media(max-width:600px){.nbh-house-strip>div{aspect-ratio:4/3}.nbh-studio-photo-caption{left:12px;right:12px;bottom:12px}}
+
+/* Equal-height discovery cards in each grid row, including photo-credit space.
+   Content remains fully readable; expanding a details section grows the row. */
+.nbh .nbh-category-grid{align-items:stretch}
+.nbh .nbh-material-card{align-self:stretch;height:100%;display:flex;flex-direction:column}
+.nbh .nbh-material-image{flex:none;aspect-ratio:16/10}
+.nbh .nbh-material-info{flex:1;display:flex;flex-direction:column}
+.nbh .nbh-material-info .nbh-material-cta{margin-top:auto}
+.nbh .nbh-material-info h3{min-height:0}
+.nbh .nbh-material-info .nbh-material-cta{min-height:44px}
+.nbh .nbh-material-credits{margin-top:0;min-height:36px}
+.nbh .nbh-material-card:not(:has(.nbh-material-credits))::after{content:"";display:block;min-height:36px;flex:none}
+@media(max-width:350px){.nbh .nbh-material-card:not(:has(.nbh-material-credits))::after{display:none}.nbh .nbh-material-credits{min-height:0}}
