@@ -58,3 +58,88 @@
  :where(a[href],button,summary,input,select,textarea):focus-visible{outline:3px solid Highlight}
  :where(button[aria-pressed="true"],[aria-current="page"]){outline:2px solid Highlight;outline-offset:2px}
 }
+
+/* Visual hierarchy: one brand palette, opt-in variants, no JavaScript or extra assets.
+   Existing class names are compatibility aliases. New pages can use .nb-action
+   with data-variant="primary|secondary|accent|quiet|danger". */
+:root{
+ --action-primary:#254738;--action-primary-hover:#183a2a;
+ --action-secondary:#fff;--action-secondary-hover:#edf3ec;
+ --action-text:#244738;--action-border:#a6baaa;
+ --action-accent:#a65333;--action-accent-hover:#884226;
+ --action-danger:#a22c2c;--action-danger-hover:#842020;
+ --action-quiet-hover:#eaf0e8;--action-selected:#e2eee3;
+ --action-shadow:0 2px 4px #17372916;
+ --action-shadow-hover:0 4px 10px #17372922;
+ --action-padding:clamp(12px,1.5vw,18px);
+ --action-label:clamp(.8125rem,.79rem + .12vw,.9375rem);
+}
+:is(.nb-action,.button,.nbh-outline-link,.nbh-studio-generate,.header-install){
+ box-sizing:border-box;max-inline-size:100%;min-height:var(--action-target);
+ border-radius:var(--action-radius);font-weight:700;line-height:1.35;
+ text-align:center;overflow-wrap:anywhere;
+}
+.nb-action{
+ display:inline-flex;align-items:center;justify-content:center;gap:8px;
+ padding:11px var(--action-padding);font:inherit;font-size:var(--action-label);font-weight:700;
+ border:1px solid transparent;cursor:pointer;text-decoration:none;
+}
+:is(.button,.nb-action) svg,.nbh-outline-link svg,.nbh-studio-generate svg{flex:none;inline-size:18px;block-size:18px}
+:is(.button-dark,.nb-action[data-variant="primary"],.nbh-studio-generate:not([aria-disabled="true"]),.nbh-outline-link){
+ background:var(--action-primary);color:#fff;border:1px solid transparent;box-shadow:var(--action-shadow)
+}
+:is(.button-outline,.button-light,.nb-action[data-variant="secondary"],.header-install){
+ background:var(--action-secondary);color:var(--action-text);border:1px solid var(--action-border);box-shadow:none
+}
+:is(.button-orange,.nb-action[data-variant="accent"]){background:var(--action-accent);color:#fff;border:1px solid transparent;box-shadow:var(--action-shadow)}
+.nb-action[data-variant="danger"]{background:var(--action-danger);color:#fff;border:1px solid transparent}
+.nb-action[data-variant="quiet"]{background:transparent;color:var(--action-text);border-color:transparent;text-decoration:underline;text-underline-offset:4px}
+.nb-action[data-size="icon"]{inline-size:var(--action-target);padding:0}
+.nb-action[data-size="large"]{min-height:52px;padding-block:14px}
+:is(.nb-action,.button,.header-install,.nbh-outline-link,.nbh-studio-generate):focus-visible{outline:3px solid var(--action-focus);outline-offset:3px}
+.nb-action:not(:disabled):not([aria-disabled="true"]){transition:background-color var(--action-duration) var(--action-ease),border-color var(--action-duration) var(--action-ease),box-shadow var(--action-duration) var(--action-ease)}
+/* Material cards use a restrained secondary CTA rather than bare action text. */
+.nbh .nbh-material-info .nbh-material-cta{
+ min-height:44px;padding:9px 11px;border:1px solid #c5d5c6;border-radius:9px;
+ background:#f4f8f2;color:var(--action-text);line-height:1.35;gap:6px;
+ margin-top:6px;overflow-wrap:anywhere;transition:background-color var(--action-duration),border-color var(--action-duration)
+}
+.nbh-material-cta svg,.nbh-section-link svg{flex:none}
+.nbh .nbh-section-link{white-space:normal;flex-wrap:wrap;line-height:1.4;text-underline-offset:5px}
+.nbh .nbh-material-options summary{min-height:44px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.nbh .nbh-pipe-quick .nbh-outline-link{background:var(--action-secondary);border:1px solid var(--action-border);color:var(--action-text)!important;box-shadow:none;margin:0;gap:8px;padding:10px 12px}
+.nbh .nbh-search button,.nbh .nbh-quick-fields button,.nstudio-start-form>button{
+ background:var(--action-primary);color:#fff;border-radius:var(--action-radius);font-weight:750;
+}
+.nbh .nbh-journey:not(.nbh-primary){border-color:#becfc0}
+.nbh .nbh-journey.nbh-primary{background:var(--action-primary);box-shadow:var(--action-shadow)}
+:is(.nbh-studio-more,.nbh-suggestions,.site-mobile-menu,.nbh-mobile-menu) a[href]{overflow-wrap:anywhere}
+:is(.nbh-studio-more,.catalog-variant-links,.nbh-material-choices) a[href]{min-height:44px;line-height:1.4}
+:is(.detail-title,.product-detail-copy) > a:not(.button){text-decoration:underline;text-underline-offset:4px;font-weight:700}
+:is(.nbd-buttons,.paint-mode,.paint-targets,.nroad-floor-tabs,.account-mode-switch,.tile-filter-row) button[aria-pressed="true"]{
+ background:var(--action-primary);color:white;border-color:var(--action-primary);
+}
+:is(.nbd-buttons,.paint-mode,.paint-targets,.nroad-floor-tabs,.account-mode-switch,.tile-filter-row) button{border-radius:var(--action-radius);min-height:44px}
+:is(.admin-module,.admin-gate) button{line-height:1.4;overflow-wrap:anywhere}
+:is(.desktop-nav,.nbh-nav) a[href]{line-height:1.35;text-underline-offset:5px}
+:is(.site-footer,.nbh-footer) nav a[href]{padding-block:4px}
+@media(hover:hover) and (pointer:fine){
+ :is(.button-dark,.nb-action[data-variant="primary"],.nbh-studio-generate:not([aria-disabled="true"]),.nbh-outline-link):hover:not(:disabled):not([aria-disabled="true"]){background:var(--action-primary-hover);box-shadow:var(--action-shadow-hover)}
+ :is(.button-outline,.button-light,.nb-action[data-variant="secondary"],.header-install):hover:not(:disabled):not([aria-disabled="true"]){background:var(--action-secondary-hover);border-color:#789a80;box-shadow:none}
+ :is(.button-orange,.nb-action[data-variant="accent"]):hover:not(:disabled):not([aria-disabled="true"]){background:var(--action-accent-hover)}
+ .nb-action[data-variant="danger"]:hover:not(:disabled){background:var(--action-danger-hover)}
+ .nb-action[data-variant="quiet"]:hover:not(:disabled){background:var(--action-quiet-hover)}
+ .nbh .nbh-material-info .nbh-material-cta:hover,.nbh .nbh-pipe-quick .nbh-outline-link:hover{background:#e4eee2;border-color:#789a80;box-shadow:none}
+}
+@media(max-width:680px){
+ .nbh .nbh-material-info .nbh-material-cta{padding:8px;gap:4px;font-size:13px}
+ .nbh .nbh-material-cta svg{width:16px;height:16px}
+ .nbh .nbh-pipe-quick{gap:8px!important}
+ .nbh .nbh-pipe-quick .nbh-outline-link{font-size:13px}
+ .product-request-config .button{width:100%;margin-inline:0!important}
+}
+@media(prefers-reduced-motion:reduce){.nb-action,.nbh .nbh-material-cta{transition:none}.nb-action:active{transform:none}}
+@media(forced-colors:active){
+ :is(.nb-action,.button,.nbh-material-cta,.nbh-outline-link,.nbh-studio-generate){border:1px solid ButtonText}
+ :is(.nb-action,.button):disabled{border-color:GrayText}
+}
