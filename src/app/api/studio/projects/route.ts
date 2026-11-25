@@ -1,6 +1,7 @@
 import {createHash} from "node:crypto";
 import {NextResponse} from "next/server";
 import {z} from "zod";
+import {planBriefSchema as brief} from "@/modules/studio/plan-brief-schema";
 import {requireAuth} from "@/modules/identity/server-auth";
 import {validatePlan,type PlanModel} from "@/modules/studio/plan-model";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
@@ -8,18 +9,6 @@ export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const error=(status:number,message:string)=>NextResponse.json({error:message},{status,headers});
-const brief=z.object({
- widthFt:z.number().finite().min(10).max(200),depthFt:z.number().finite().min(15).max(250),
- roadSide:z.enum(["N","E","S","W"]),floors:z.union([z.literal(1),z.literal(2),z.literal(3)]),
- bedrooms:z.number().int().min(1).max(3),parking:z.boolean(),
- siteShape:z.discriminatedUnion("kind",[
-  z.object({kind:z.literal("rectangle")}).strict(),
-  z.object({kind:z.literal("rear-left-notch"),notchWidthFt:z.number().finite().min(1).max(90),notchDepthFt:z.number().finite().min(1).max(90)}).strict(),
-  z.object({kind:z.literal("rear-right-notch"),notchWidthFt:z.number().finite().min(1).max(90),notchDepthFt:z.number().finite().min(1).max(90)}).strict()
- ]).optional(),
- setbacks:z.object({frontFt:z.number().finite().min(0).max(30),rearFt:z.number().finite().min(0).max(30),
-  leftFt:z.number().finite().min(0).max(30),rightFt:z.number().finite().min(0).max(30)}).strict()
-}).strict();
 const create=z.object({idempotencyKey:z.string().uuid(),title:z.string().trim().min(3).max(120),
  brief,finish:z.object({kit:z.enum(["simple-parapet","jali-screen","pergola"]),main:z.string().regex(/^#[0-9a-f]{6}$/i),accent:z.string().regex(/^#[0-9a-f]{6}$/i)}).strict().optional(),variant:z.enum(["parking-left","parking-right"]),planId:z.string().min(5).max(200)}).strict();
 async function parseBounded(request:Request){if(!request.headers.get("content-type")?.includes("application/json"))return null;
