@@ -457,6 +457,10 @@ async function main(){
     await page.getByRole("button",{name:"Smart Plot & Design"}).click();
     await page.getByRole("button",{name:"Smart Construction & Materials"}).click();
     assert.equal(await coreInput.inputValue(),"17","construction measurements survive workspace switches");
+  await page.getByRole("button",{name:"House budget",exact:true}).click();
+  assert.equal(await page.getByLabel("Your quoted rate (₹/sq ft)").inputValue(),"","no assumed market rate");
+  await page.getByText("Budget is optional.",{exact:false}).waitFor();
+  await page.getByRole("button",{name:"Brick wall",exact:true}).click();
     const academyCount=await page.locator(".academy-grid article").count();
     assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
     await page.getByRole("searchbox",{name:"Search the construction handbook"}).fill("foundation");
