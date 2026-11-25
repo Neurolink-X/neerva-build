@@ -22,11 +22,13 @@ jobs:
         id: checkout
         with:
           persist-credentials: false
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         id: node
         with:
           node-version: '24'
           cache: npm
+      - name: Validate React runtime and types pairing
+        run: node scripts/release/react-dependency-pair.mjs
       - name: Install locked dependencies
         id: dependencies
         run: npm ci --no-audit --no-fund
@@ -75,7 +77,7 @@ jobs:
           for key in CHECKOUT NODE_SETUP DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
             printf '%s=%s\n' "$key" "${!key:-not-run}"
           done > ci-evidence/outcomes.txt
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
           name: ci-verification-outcomes
