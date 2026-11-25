@@ -10,7 +10,7 @@ type LocalContainer={Id?:string;Config?:{Image?:string};State?:{Running?:boolean
 export function selectRecoveryContainer(containers:LocalContainer[],port:string):string{
  if(port!=="54322")throw Error("Expected disposable database port");
  const matches=containers.filter(c=>c.State?.Running===true
-  && /^(?:public\.ecr\.aws\/supabase\/postgres|supabase\/postgres):[0-9][a-zA-Z0-9._-]*$/.test(c.Config?.Image??"")
+  && /^(?:public\.ecr\.aws\/supabase\/postgres|ghcr\.io\/supabase\/postgres|docker\.io\/supabase\/postgres|supabase\/postgres):[0-9][a-zA-Z0-9._-]*$/.test(c.Config?.Image??"")
   && c.NetworkSettings?.Ports?.["5432/tcp"]?.some(p=>p.HostPort===port&&["127.0.0.1","0.0.0.0","::","::1"].includes(p.HostIp??"")));
  if(matches.length!==1||! /^[a-f0-9]{64}$/.test(matches[0].Id??""))throw Error("Expected exactly one running disposable Supabase PostgreSQL container");
  return matches[0].Id!;

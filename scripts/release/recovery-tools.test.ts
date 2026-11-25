@@ -10,6 +10,8 @@ test("select exact PostgreSQL server major from numeric version",()=>{
 });
 test("select exactly the disposable Supabase database container by published port",()=>{
  assert.equal(selectRecoveryContainer([fixture],"54322"),id);
+ for(const image of ["ghcr.io/supabase/postgres:17.11.0.006","docker.io/supabase/postgres:17.11.0.006","supabase/postgres:17.11.0.006"])assert.equal(selectRecoveryContainer([{...fixture,Config:{Image:image}}],"54322"),id);
+ assert.throws(()=>selectRecoveryContainer([{...fixture,Config:{Image:"ghcr.io/untrusted/postgres:17.11.0.006"}}],"54322"));
  assert.throws(()=>selectRecoveryContainer([],"54322"));
  assert.throws(()=>selectRecoveryContainer([fixture,fixture],"54322"));
  assert.throws(()=>selectRecoveryContainer([fixture],"5432"));

@@ -1,0 +1,2 @@
+# Disposable recovery registry fallback
+PR #68 E2E 45564448304 showed public ECR/Docker pull limits, successful fallback to ghcr.io/supabase/postgres:17.11.0.006 and a failed container allowlist check. Accept only exact official Supabase postgres image names across the observed registry aliases. Preserve local port, running state, exact server identity and matching tool version checks. No production database access or skipped backup test.

@@ -24,7 +24,7 @@ export function ProductGallery({product}:{product:DemoProduct}){
  return <figure className="product-gallery" aria-label={"Photos of "+product.name}>
   <div className={"product-gallery-stage"+(!current?" awaiting-photo":"")} style={{overflow:"hidden",touchAction:"pan-y"}} onTouchStart={e=>{start.current={x:e.touches[0].clientX,y:e.touches[0].clientY};}} onTouchEnd={e=>{const s=start.current;start.current=null;if(!s||zoom)return;const t=e.changedTouches[0];const dx=t.clientX-s.x,dy=t.clientY-s.y;if(Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy))move(dx<0?1:-1);}}>
    {current?<Image key={current.src} src={current.src} alt={current.alt} fill sizes="(max-width:850px) 94vw, 48vw"
-     quality={82} unoptimized={current.src.startsWith("https://")||current.kind==="generated"} referrerPolicy="no-referrer" style={{objectFit:current.kind==="generated"||current.kind==="listing"||current.kind==="manufacturer"?"contain":undefined,transform:zoom?"scale(1.65)":"none"}} className="catalog-real-image" onError={()=>setFailed(old=>old.includes(current.src)?old:[...old,current.src])}/>:
+     quality={82} unoptimized={current.kind==="generated"} referrerPolicy="no-referrer" style={{objectFit:current.kind==="generated"||current.kind==="listing"||current.kind==="manufacturer"?"contain":undefined,transform:zoom?"scale(1.65)":"none"}} className="catalog-real-image" onError={()=>setFailed(old=>old.includes(current.src)?old:[...old,current.src])}/>:
     <MaterialIdentity name={product.name} brand={product.brand} category={product.category} product={product}/>}
   </div>
   {current&&<div role="group" aria-label="Gallery controls" style={{display:"flex",flexWrap:"wrap",alignItems:"center",justifyContent:"center",gap:8,margin:"10px 0"}}>{photos.length>1&&<button className="button button-outline" type="button" aria-label="Previous photo" onClick={()=>move(-1)}>←</button>}<span aria-live="polite">{index+1} / {photos.length}</span>{photos.length>1&&<button className="button button-outline" type="button" aria-label="Next photo" onClick={()=>move(1)}>→</button>}<button className="button button-outline" type="button" aria-pressed={zoom} onClick={()=>setZoom(z=>!z)}>{zoom?"Reset zoom":"Zoom photo"}</button></div>}
@@ -33,7 +33,7 @@ export function ProductGallery({product}:{product:DemoProduct}){
   {photos.length>1&&<div className="product-gallery-thumbs" role="group" aria-label="Choose material photographs">
    {photos.map((media,i)=><button type="button" key={media.src} aria-label={"Show photo "+(i+1)+": "+media.label}
      aria-pressed={current?.src===media.src} onClick={()=>{setSelected(media.src);setZoom(false);}}>
-     <span className="product-gallery-thumb-image"><Image src={media.src} alt="" fill sizes="90px" quality={60} unoptimized={media.src.startsWith("https://")||media.kind==="generated"} referrerPolicy="no-referrer" onError={()=>setFailed(old=>old.includes(media.src)?old:[...old,media.src])}/></span>
+     <span className="product-gallery-thumb-image"><Image src={media.src} alt="" fill sizes="90px" quality={60} unoptimized={media.kind==="generated"} referrerPolicy="no-referrer" onError={()=>setFailed(old=>old.includes(media.src)?old:[...old,media.src])}/></span>
      <span>{media.kind==="generated"?"AI reference":media.kind==="sku"?"Seller photo":media.kind==="listing"?"Product photo":media.kind==="editorial"?"Material photo":media.kind==="manufacturer"?media.label:"Category view"}</span>
     </button>)}
   </div>}
