@@ -1,4 +1,3 @@
--- Restored from existing production migration 20261124123644 neerva_design_review_queue; local replay only, do not reapply to production.
 create table public.studio_design_reviews (
  design_slug text primary key check(design_slug ~ '^[a-z0-9][a-z0-9-]{1,159}$'),
  status text not null check(status in ('in_review','changes_requested','ready_for_professional_review','archived')),
@@ -30,3 +29,4 @@ grant execute on function neerva_internal.save_design_review(text,text,text,inte
 create function public.neerva_save_design_review(p_slug text,p_status text,p_note text,p_version integer) returns jsonb language sql security invoker set search_path='' as $$select neerva_internal.save_design_review(p_slug,p_status,p_note,p_version)$$;
 revoke all on function public.neerva_save_design_review(text,text,text,integer) from public,anon,authenticated;
 grant execute on function public.neerva_save_design_review(text,text,text,integer) to authenticated;
+

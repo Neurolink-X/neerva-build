@@ -1,4 +1,3 @@
--- Restored from existing production migration 20261124122148 neerva_batched_admin_snapshot; local replay only, do not reapply to production.
 create function public.neerva_admin_snapshot() returns jsonb language plpgsql stable security invoker set search_path='' as $$
 begin
  if auth.uid() is null or not public.neerva_account_access_allowed() or not public.has_platform_role(array['admin','super_admin']::public.platform_role[]) then raise exception 'Administrator access required' using errcode='42501';end if;
