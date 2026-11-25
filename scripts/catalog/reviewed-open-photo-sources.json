@@ -130,5 +130,33 @@
     "view": "close-up",
     "primary": false,
     "sortOrder": 2
+  },
+  {
+    "category": "plumbing",
+    "family": "generic-hdpe",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Hdpe_Pipes_In_Coil.jpg",
+    "sha1": "696036f1b674e109f5e66b1a82fe63187b6c37e0",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hdpe_Pipes_In_Coil.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "credit": "Deeptarpara",
+    "alt": "Black HDPE pipes in coils and straight lengths at a storage site; grade, pressure rating and diameter must be confirmed",
+    "view": "site",
+    "primary": true,
+    "sortOrder": 0
+  },
+  {
+    "category": "hardware",
+    "family": "cabinet-pull-handle",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/0/0f/Drawer_handle.jpg",
+    "sha1": "bad89932aac22c3febe61d484f19b966c5518a72",
+    "sourceUrl": "https://commons.wikimedia.org/wiki/File:Drawer_handle.jpg",
+    "license": "CC BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "credit": "iluvrhinestones",
+    "alt": "Installed metal drawer pull on a wooden cabinet; reference shape only, finish and fixing centres not verified",
+    "view": "installed",
+    "primary": true,
+    "sortOrder": 0
   }
 ]

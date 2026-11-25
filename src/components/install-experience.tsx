@@ -3,7 +3,9 @@ import {useEffect,useRef,useState} from "react";
 type BeforeInstallPromptEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:"accepted"|"dismissed"}>};
 const DISMISS_KEY="neerva-install-dismissed-until-v2",INSTALLED="neerva-installed-v1";
 const COOLDOWN=7*24*60*60*1000;
-const storage=()=>{try{return window.localStorage}catch{return null}};
+// Accessing storage may succeed even when individual reads and writes throw.
+const readPreference=(key:string)=>{try{return window.localStorage.getItem(key)}catch{return null}};
+const writePreference=(key:string,value:string)=>{try{window.localStorage.setItem(key,value)}catch{/* Optional preference; never block the UI. */}};
 const standalone=()=>window.matchMedia("(display-mode: standalone)").matches||Boolean((navigator as Navigator&{standalone?:boolean}).standalone);
 function os(){
  const ua=navigator.userAgent;
@@ -19,19 +21,18 @@ export function InstallExperience(){
  const [ready,setReady]=useState(false),[supported,setSupported]=useState(false),[showHelp,setShowHelp]=useState(false),[busy,setBusy]=useState(false);
  const [platform,setPlatform]=useState<"ios"|"android"|"desktop">("desktop");
  useEffect(()=>{
-  const store=storage();
-  const allowed=()=>location.pathname!=="/install"&&!standalone()&&!store?.getItem(INSTALLED)&&Number(store?.getItem(DISMISS_KEY)||0)<Date.now();
+  const allowed=()=>location.pathname!=="/install"&&!standalone()&&!readPreference(INSTALLED)&&Number(readPreference(DISMISS_KEY)||0)<Date.now();
   const frame=window.requestAnimationFrame(()=>{setPlatform(os());setReady(allowed());});
   if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){
    void navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(()=>undefined);
   }
   function installable(event:Event){event.preventDefault();deferred.current=event as BeforeInstallPromptEvent;setSupported(true);}
-  function installed(){store?.setItem(INSTALLED,"1");deferred.current=null;setReady(false);setSupported(false);}
+  function installed(){writePreference(INSTALLED,"1");deferred.current=null;setReady(false);setSupported(false);}
   window.addEventListener("beforeinstallprompt",installable);
   window.addEventListener("appinstalled",installed);
   return()=>{window.cancelAnimationFrame(frame);window.removeEventListener("beforeinstallprompt",installable);window.removeEventListener("appinstalled",installed);};
  },[]);
- function dismiss(){storage()?.setItem(DISMISS_KEY,String(Date.now()+COOLDOWN));setReady(false);setShowHelp(false);}
+ function dismiss(){writePreference(DISMISS_KEY,String(Date.now()+COOLDOWN));setReady(false);setShowHelp(false);}
  async function install(){
   if(!deferred.current){setShowHelp(true);return;}
   const event=deferred.current;
