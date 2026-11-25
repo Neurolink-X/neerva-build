@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {facadeZones,stylesForTarget,activePattern,shadedPixel,type PaintStyle} from "./facade-paint.ts";
+import {facadeZones,facadeSamples,stylesForTarget,activePattern,shadedPixel,type PaintStyle} from "./facade-paint.ts";
 import {validWallMask} from "./mask-editor.ts";
 const plain:PaintStyle={colour:"#b6c7a3",accent:"#c4925f",pattern:"plain",opacity:.78};
 test("all sample exterior paint sections have independent normalized masks",()=>{
@@ -27,4 +27,10 @@ test("shade calculation retains light and shadow and supports both pale and deep
  assert.ok(lit.every((v,i)=>v>dark[i]));
  assert.ok(shadedPixel(190,190,190,pale).every((v,i)=>v===pale[i]));
  assert.ok(shadedPixel(190,190,190,deep).every((v,i)=>v===deep[i]));
+});
+
+test("each local house has its own validated paint zones and independent whole-exterior selection",()=>{
+ assert.equal(facadeSamples.length,3);
+ assert.equal(new Set(facadeSamples.map(s=>s.src)).size,3);
+ for(const s of facadeSamples){assert.ok(s.src.startsWith("/images/studio/"));assert.ok(s.zones.length>=3);const styles=stylesForTarget({},"all",plain,s.zones);assert.equal(Object.keys(styles).length,s.zones.length);for(const z of s.zones){assert.ok(validWallMask(z.points),s.id+" "+z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1);}}
 });
