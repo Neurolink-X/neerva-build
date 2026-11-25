@@ -98,3 +98,17 @@ test("central pricing policies validate scope and bound platform-funded discount
 
 
 test("checkout return is confined to valid material or cart routes and strips unexpected parameters",async()=>{const {safeCheckoutReturn}=await import("./checkout-return.ts");assert.equal(safeCheckoutReturn("//evil.example/checkout"),null);assert.equal(safeCheckoutReturn("/checkout?category=cement&product=abc&qty=20&unit=bag&redirect=https://evil.example"),"/checkout?category=cement&product=abc&qty=20&unit=bag");assert.equal(safeCheckoutReturn("/checkout?cart=1&next=//evil.example"),"/checkout?cart=1");assert.equal(safeCheckoutReturn("/checkout?category=unknown&product=abc"),null);assert.equal(safeCheckoutReturn("/checkout?category=cement&product=abc&qty=-1&unit=piece"),"/checkout?category=cement&product=abc");const {changeDirectCartQuantity}=await import("./direct-cart.ts");const row={category:"cement",productSlug:"cement",productName:"Cement",quantity:2,unit:"bag"};assert.equal(changeDirectCartQuantity([row],"cement|cement|bag",7)[0].quantity,7);assert.equal(changeDirectCartQuantity([row],"cement|cement|bag",0)[0].quantity,2);});
+
+
+test("streamed order JSON enforces byte limits even without Content-Length",async()=>{
+ const encoder=new TextEncoder();
+ let cancelled=false;
+ const stream=new ReadableStream<Uint8Array>({start(controller){controller.enqueue(encoder.encode('{"x":"'));controller.enqueue(encoder.encode("a".repeat(128)));},cancel(){cancelled=true;}});
+ const req=new Request("https://neerva.test/api/orders",{method:"POST",headers:{"content-type":"application/json"},body:stream,duplex:"half"} as RequestInit);
+ assert.equal(await parseOrderJson(req,64),null);
+ assert.equal(cancelled,true);
+ const bad=new Request("https://neerva.test/api/orders",{method:"POST",headers:{"content-type":"application/jsonp"},body:"{}"});
+ assert.equal(await parseOrderJson(bad),null);
+ const valid=new Request("https://neerva.test/api/orders",{method:"POST",headers:{"content-type":"application/json; charset=utf-8"},body:JSON.stringify({x:"नमस्ते"})});
+ assert.deepEqual(await parseOrderJson(valid),{x:"नमस्ते"});
+});
