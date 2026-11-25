@@ -2,7 +2,7 @@ import type {MaskCorner} from "./mask-editor.ts";
 import type {Pattern} from "./wall-patterns.ts";
 export type PhotoMask={outline:number[][];holes?:number[][][]};
 export type PaintStyle={colour:string;accent:string;pattern:Pattern;opacity:number};
-export type FacadeTarget="all"|"left"|"right"|"balcony"|"entry"|"boundary";
+export type FacadeTarget="all"|"left"|"right"|"balcony"|"entry"|"boundary"|"roof"|"boundary-right";
 const ring=(p:number[][],width=1536,height=512)=>p.map(([x,y])=>[x/width,y/height]);
 const rect=(x:number,y:number,w:number,h:number)=>[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
 function zone(id:Exclude<FacadeTarget,"all">,label:string,outline:number[][],holes:number[][][]=[],bounds?:number[][],width=1536,height=512){
@@ -18,7 +18,9 @@ export const facadeZones=[
  zone("right","Right facade",[[972,62],[1226,62],[1226,282],[1172,282],[1172,410],[972,410]], [rect(982,115,189,132),rect(982,319,189,91)]),
  zone("balcony","Balcony frame",[[527,47],[970,47],[970,75],[555,75],[555,251],[970,251],[970,286],[527,286]]),
  zone("entry","Entrance frame",[[527,287],[554,287],[554,396],[527,396]]),
- zone("boundary","Boundary top band",[[281,419],[631,419],[631,432],[281,432]])
+ zone("boundary","Left boundary band",[[281,412],[630,412],[630,423],[281,423]]),
+ zone("roof","Roof trim",[[901,24],[1238,24],[1238,60],[1228,63],[972,63],[972,47],[901,47]]),
+ zone("boundary-right","Right boundary band",[[919,413],[1178,413],[1178,423],[919,423]])
 ] as const;
 // Every photograph owns its mask geometry. Never reuse a polygon from another home.
 const villaZones=[

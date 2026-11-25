@@ -8,7 +8,7 @@ import {useSyncExternalStore} from "react";
 import {validPublicRate,type PublicRate as Rate} from "@/modules/catalog/public-feed-validation";
 
 const listeners=new Set<()=>void>();
-let rates=new Map<string,Rate>(),request:Promise<void>|undefined,lastLoaded=0;
+let rates=new Map<string,Rate>(),request:Promise<void>|undefined,lastLoaded=0,lastAttempt=0;
 const rateKey=(category:string,slug:string,sku?:string)=>category+"|"+slug+"|"+(sku??"");
 let timer:ReturnType<typeof setInterval>|undefined,expiry:ReturnType<typeof setTimeout>|undefined;
 const notifyRates=()=>{for(const notify of listeners)notify()};
@@ -27,7 +27,8 @@ function prune(){
 }
 function refresh(){
  prune();scheduleExpiry();
- if(request||!listeners.size||document.visibilityState==="hidden")return;
+ if(request||!listeners.size||document.visibilityState==="hidden"||Date.now()-lastAttempt<30000)return;
+ lastAttempt=Date.now();
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),10000);
  request=fetch("/api/catalog/prices",{cache:"no-cache",signal:controller.signal}).then(async response=>{

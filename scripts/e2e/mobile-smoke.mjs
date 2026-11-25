@@ -66,6 +66,24 @@ async function main(){
     }
     if(v.w===360||v.w===430)await page.screenshot({path:path.join("test-results/mobile",v.w+"-"+(route.replaceAll("/","-")||"home")+".png"),fullPage:true,animations:"disabled"});
    }
+   if(v.w===390){
+    await page.goto(base+"/",{waitUntil:"load"});
+    const indicator=page.locator(".neerva-navigation-feedback");
+    await indicator.waitFor({state:"attached"});
+    await page.evaluate(()=>{window.__neervaClickFeedback=null;document.addEventListener("click",event=>{if(event.target instanceof Element&&event.target.closest(".nbh-journey.nbh-primary"))window.__neervaClickFeedback={active:document.querySelector(".neerva-navigation-feedback")?.getAttribute("data-active")==="true",at:performance.now()}},{capture:true,once:true})});
+    await page.locator(".nbh-journey.nbh-primary").click();
+    await page.waitForURL("**/materials");
+    await page.locator(".catalog-discovery").waitFor();
+    await page.waitForFunction(()=>document.querySelector(".neerva-navigation-feedback")?.getAttribute("data-active")!== "true");
+    const nav=await page.evaluate(()=>({feedback:window.__neervaClickFeedback,elapsed:performance.now()-(window.__neervaClickFeedback?.at??performance.now())}));
+    assert.ok(nav.feedback?.active,"internal Link shows feedback synchronously without a full reload");
+    assert.equal(await page.locator(".neerva-navigation-feedback").getAttribute("data-active"),null,"feedback clears after navigation");
+    // A deliberately missing document emits a browser console 404. Check its HTTP
+    // contract through the request context so real browser errors remain fatal.
+    const invalid=await page.request.get(base+"/materials/no-such-category");
+    try{assert.equal(invalid.status(),404,"missing catalog pages must keep real HTTP 404");}finally{await invalid.dispose();}
+    performanceReports.push({route:"/ → /materials",width:v.w,clickToReadyMs:Math.round(nav.elapsed),scope:"local browser route transition, not field latency"});
+   }
    // Check the reported category media regression on every viewport.
    await page.goto(base+"/",{waitUntil:"load"});
    const housePhotos=await page.locator(".nbh-house-strip img,.nbh-studio-photo img,.nbh-photo-hero img").evaluateAll(imgs=>imgs.map(img=>{const src=img.getAttribute("src")??"";return new URL(src,location.origin).searchParams.get("url")??src;}));
@@ -111,6 +129,18 @@ async function main(){
     const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
     assert.ok(overflow<=2,category+" overflow at "+v.w);
    }
+   await page.goto(base+"/materials/plumbing",{waitUntil:"load"});
+   await page.getByRole("link",{name:"Browse electrical →",exact:true}).click();
+   await page.waitForURL("**/materials/electrical");
+   assert.ok(await page.locator(".pipe-use-links a").count()>=8,"direct electrical family routes");
+   assert.ok(await page.locator("#material-ranges .product-card").count()<=12,"bounded initial catalog cards");
+   const firstFamily=page.locator(".pipe-use-links a").first();
+   const destination=await firstFamily.getAttribute("href");
+   assert.ok(destination?.startsWith("/materials/electrical/"),"family link opens exact product, not broad search");
+   await firstFamily.click();
+   await page.waitForURL("**"+destination);
+   assert.ok(await page.locator(".product-request-config").isVisible(),"quantity and order controls on product");
+   assert.equal(await page.getByRole("link",{name:"Request order →",exact:true}).count(),1,"one primary order action");
    await page.goto(base+"/materials",{waitUntil:"load"});
    const catalog=page.locator("#catalog-results");
    await catalog.locator(".product-card").first().waitFor();
@@ -440,11 +470,25 @@ async function main(){
     assert.equal(await page.locator(".paint-live-workspace .paint-adjacent-controls").count(),1,"colour controls are adjacent to live preview");
     const paintLayout=await page.locator(".paint-live-workspace").evaluate(el=>{const canvas=el.querySelector(".paint-live-preview"),palette=el.querySelector(".paint-adjacent-controls");return !!canvas&&!!palette&&canvas.nextElementSibling?.contains(palette)});
     assert.ok(paintLayout,"photo and palette occupy a single workspace");
+    const roomPreview=page.locator(".nbd-photo canvas");
+    await roomPreview.waitFor({state:"visible"});
+    const samplePixel=()=>roomPreview.evaluate(c=>Array.from(c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.32),1,1).data).slice(0,3));
+    await page.getByRole("button",{name:"Select #293f36",exact:true}).click();
+    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas"),p=c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.32),1,1).data;return p[1]>p[0]&&p[1]>p[2]&&p[1]<90});
+    const dark=await samplePixel();
+    await page.getByRole("button",{name:"Select #edf2db",exact:true}).click();
+    await page.waitForFunction(d=>{const c=document.querySelector(".nbd-photo canvas");return c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.32),1,1).data[1]>d[1]+70},dark);
+    await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    const actionSizes=await page.locator(".paint-wall-actions button,.paint-preview-actions button").evaluateAll(bs=>bs.filter(b=>b.getClientRects().length>0).map(b=>({w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height})));
+    assert.ok(actionSizes.length>=3&&actionSizes.every(b=>b.w>=100&&b.h>=44&&b.h<=88),"wall actions stay compact and readable");
+    assert.equal(await page.locator(".paint-wall-actions .paint-more").getAttribute("open"),null,"advanced wall tools are initially collapsed");
+    assert.equal(await page.locator(".paint-live-preview .paint-preview-actions button").count(),2,"compare and save remain next to the canvas");
+    assert.equal(await page.getByRole("combobox",{name:"Wall design",exact:true}).count(),0,"no duplicate pattern selector");
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const preview=page.locator(".nbd-photo canvas");
     await preview.waitFor({state:"visible"});
     assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
-    assert.equal(await page.getByRole("combobox",{name:"Wall design",exact:true}).count(),0,"plain mode hides patterns");
+    assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
     const original=await preview.evaluate(c=>c.toDataURL());
     await page.getByRole("button",{name:"View original",exact:true}).click();
     await page.waitForFunction(previous=>document.querySelector(".nbd-photo canvas").toDataURL()!==previous,original);
@@ -454,15 +498,16 @@ async function main(){
     await page.getByRole("button",{name:/Premium villa/}).click();
     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="villa"&&c.getBoundingClientRect().height>0;});
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-    await page.getByRole("combobox",{name:"Wall design",exact:true}).selectOption("diamonds");
+    await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
  const canvas=page.locator(".nbd-photo canvas");
  await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
  async function mark(x){let b=await canvas.boundingBox();for(const [u,v] of [[x,.12],[x+.12,.12],[x+.12,.26],[x,.26]])await canvas.click({position:{x:u*b.width,y:v*b.height}});}
+ await page.getByText("Wall selection tools",{exact:true}).click();
  await page.getByRole("button",{name:/Reset wall selection/}).click();
  await mark(.06);
  await page.getByRole("button",{name:"Paint + design",exact:true}).click();
- await page.getByRole("combobox",{name:"Wall design",exact:true}).selectOption("bands");
+ await page.getByRole("button",{name:"Pinstripes",exact:true}).click();
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
  const png=()=>canvas.evaluate(c=>c.toDataURL());

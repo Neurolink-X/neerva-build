@@ -143,3 +143,11 @@
  :is(.nb-action,.button,.nbh-material-cta,.nbh-outline-link,.nbh-studio-generate){border:1px solid ButtonText}
  :is(.nb-action,.button):disabled{border-color:GrayText}
 }
+
+/* Compact shared controls: smaller visual padding, never tiny hit areas. */
+:root{--action-compact-padding:6px 10px;--action-compact-label:.8125rem}
+:is(.nbd-building,.nroad-shortlist,.room-lab,.inspiration-page,.pipe-shopping,.product-request-config) :is(button,a.button){min-height:var(--action-target);font-size:var(--action-compact-label);line-height:1.35;white-space:normal;word-break:normal;overflow-wrap:break-word}
+.nbd-building .nbd-buttons[aria-label="3D camera views"]{grid-template-columns:repeat(auto-fit,minmax(min(100%,76px),1fr));gap:6px}.nbd-building .nbd-mode-controls{grid-template-columns:repeat(auto-fit,minmax(min(100%,110px),1fr));gap:6px}.nbd-building .nbd-buttons button,.nroad-shortlist button,.room-lab-controls button,.inspiration-toolbar button,.inspiration-card-actions button,.inspiration-library button{padding:var(--action-compact-padding);font-size:var(--action-compact-label)}
+.room-lab .room-lab-swatches button{padding:0;width:44px;min-height:44px}.room-lab .room-lab-move{grid-template-columns:repeat(3,minmax(0,1fr))}.inspiration-page .inspiration-board-actions>*{flex:0 1 auto;min-height:44px}.product-request-config .order-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.product-request-config .order-actions>.button{flex:1 1 140px;width:auto;padding:var(--action-compact-padding);margin:0!important}.product-request-config .order-cart-link,.product-request-config .order-quote-link{display:inline-flex;align-items:center;min-height:44px;text-decoration:underline;text-underline-offset:3px;font-size:13px;color:#254738;font-weight:650}.product-request-config .order-secondary{display:flex;flex-wrap:wrap;gap:4px 14px}.pipe-shopping .category-detail-head>a{width:auto;max-width:100%;padding:var(--action-compact-padding)}.pipe-use-card .pipe-quote-link{display:inline-flex;align-items:center;min-height:44px;font-size:13px;font-weight:650;text-decoration:underline;text-underline-offset:3px;color:#254738}.pipe-use-links a{padding:6px 9px;line-height:1.35;font-size:13px}
+@media(max-width:350px){.product-request-config .order-actions>.button{flex-basis:100%}}
+

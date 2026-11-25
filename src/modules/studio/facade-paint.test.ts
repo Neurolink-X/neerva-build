@@ -4,7 +4,7 @@ import {facadeZones,facadeSamples,stylesForTarget,activePattern,shadedPixel,type
 import {validWallMask} from "./mask-editor.ts";
 const plain:PaintStyle={colour:"#b6c7a3",accent:"#c4925f",pattern:"plain",opacity:.78};
 test("all sample exterior paint sections have independent normalized masks",()=>{
- assert.equal(new Set(facadeZones.map(z=>z.id)).size,5);
+ assert.equal(new Set(facadeZones.map(z=>z.id)).size,7);
  for(const z of facadeZones){assert.ok(validWallMask(z.points),z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1,z.id);}
  assert.equal(facadeZones.find(z=>z.id==="right")?.mask.holes.length,2);
 });
@@ -12,7 +12,7 @@ test("plain paint is independent of stored pattern and selected base shade",()=>
  assert.equal(activePattern("paint","diamonds"),"plain");
  assert.equal(activePattern("design","diamonds"),"diamonds");
  const full=stylesForTarget({},"all",plain);
- assert.equal(Object.keys(full).length,5);
+ assert.equal(Object.keys(full).length,7);
  const design=stylesForTarget(full,"right",{...plain,pattern:activePattern("design","diamonds")});
  assert.equal(design.right?.colour,plain.colour);
  assert.equal(design.right?.pattern,"diamonds");
@@ -34,3 +34,5 @@ test("each local house has its own validated paint zones and independent whole-e
  assert.equal(new Set(facadeSamples.map(s=>s.src)).size,3);
  for(const s of facadeSamples){assert.ok(s.src.startsWith("/images/studio/"));assert.ok(s.zones.length>=3);const styles=stylesForTarget({},"all",plain,s.zones);assert.equal(Object.keys(styles).length,s.zones.length);for(const z of s.zones){assert.ok(validWallMask(z.points),s.id+" "+z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1);}}
 });
+
+test("deep green remains dark on a bright beige wall instead of inheriting beige luminance",()=>{const rgb=[41,63,54];const lit=shadedPixel(220,204,178,rgb);assert.ok(lit[1]>lit[0]&&lit[1]>lit[2]);assert.ok(Math.max(...lit)<90);assert.ok(shadedPixel(110,100,90,rgb)[1]<lit[1]);});

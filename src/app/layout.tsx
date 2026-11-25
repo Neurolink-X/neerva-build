@@ -1,8 +1,11 @@
 import {canonicalPublicOrigin} from "@/modules/seo/site-origin";
 import type { Metadata, Viewport } from "next";
+import {Suspense} from "react";
+import {NavigationFeedback} from "@/components/navigation-feedback";
 import "./globals.css";
 import "./typography.css";
 import "./interaction-quality.css";
+import "./navigation-feedback.css";
 import {PlatformIncidentMonitor} from "@/components/platform-incident-monitor";
 import {InstallExperience} from "@/components/install-experience";
 import {publicIndexingEnabled} from "@/modules/seo/indexing";
@@ -33,5 +36,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#f5f4ef", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en-IN"><body>{children}<InstallExperience/><PlatformIncidentMonitor/></body></html>;
+  return <html lang="en-IN"><body><Suspense fallback={null}><NavigationFeedback/></Suspense>{children}<InstallExperience/><PlatformIncidentMonitor/></body></html>;
 }

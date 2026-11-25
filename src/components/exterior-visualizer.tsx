@@ -17,7 +17,7 @@ export function ExteriorVisualizer(){
  const [colour,setColour]=useState("#b6c7a3");
  const [family,setFamily]=useState<keyof typeof families>("Greens");
  return <main className="visualizer-app">
-  <header className="visualizer-topbar"><a href="/design-studio">← Design Studio</a><strong>Paint studio</strong></header>
+  <header className="visualizer-topbar"><Link href="/design-studio">← Design Studio</Link><strong>Paint studio</strong></header>
   <div className="visualizer-heading"><h1>Find your home’s next colour.</h1><p>Preview plain paint or add a wall design. Try an entire sample exterior, a selected facade section, or a private photo of your own home.</p></div>
   <div className="visualizer-layout"><section className="elevation-stage neerva-photo-stage"><StudioPhotoPaint colour={colour} onColourChange={setColour} colourControls={<aside className="visualizer-controls paint-adjacent-controls" aria-label="Live colour controls"><section>
    <h2>Choose a colour</h2><label>Colour family <select value={family} onChange={e=>setFamily(e.target.value as keyof typeof families)}>{Object.keys(families).map(name=><option key={name}>{name}</option>)}</select></label>

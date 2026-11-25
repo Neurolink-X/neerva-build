@@ -2,6 +2,7 @@
 import {CatalogOffer} from "@/components/catalog-offer";
 import {ProductPrice} from "@/components/product-price";
 import Link from "next/link";
+import {useRouter} from "next/navigation";
 import {useMemo,useState,useRef} from "react";
 import {referencePage} from "@/modules/catalog/reference-page";
 import {CatalogMaterialImage} from "@/components/catalog-material-image";
@@ -10,9 +11,10 @@ import type {DemoProduct} from "@/modules/catalog/marketplace";
 import type {CatalogCategory} from "@/modules/catalog/catalog";
 import {filterCatalog,productFacetValues} from "@/modules/catalog/discovery";
 import {groupCatalogByPhoto,rangeVariantLabel} from "@/modules/catalog/media-usage";
-export function MaterialsBrowser({products,categories,initialQuery="",initialBrand="all",initialCategory="all"}:{
- products:DemoProduct[];categories:CatalogCategory[];initialQuery?:string;initialBrand?:string;initialCategory?:string
+export function MaterialsBrowser({products,categories,initialQuery="",initialBrand="all",initialCategory="all",scopedCategory}:{
+ products:DemoProduct[];categories:CatalogCategory[];initialQuery?:string;initialBrand?:string;initialCategory?:string;scopedCategory?:string
 }){
+ const router=useRouter();
  const [category,setCategory]=useState(initialCategory);
  const [brand,setBrand]=useState(initialBrand);
  const [gradeOrSize,setGradeOrSize]=useState("all");
@@ -23,8 +25,8 @@ export function MaterialsBrowser({products,categories,initialQuery="",initialBra
  const visible=useMemo(()=>filterCatalog(products,{category,brand,gradeOrSize,query}),[products,category,brand,gradeOrSize,query]);
  const groups=useMemo(()=>groupCatalogByPhoto(visible),[visible]);
  const paged=useMemo(()=>referencePage(groups,page),[groups,page]);
- function chooseCategory(c:string){setCategory(c);setBrand("all");setGradeOrSize("all");setPage(0)}
- function clear(){setCategory("all");setBrand("all");setGradeOrSize("all");setQuery("");setPage(0)}
+ function chooseCategory(c:string){if(scopedCategory&&c!==scopedCategory){window.dispatchEvent(new Event("neerva:navigation-start"));router.push("/materials?"+new URLSearchParams({category:c,search:query})+"#catalog-results");return}setCategory(c);setBrand("all");setGradeOrSize("all");setPage(0)}
+ function clear(){if(scopedCategory){window.dispatchEvent(new Event("neerva:navigation-start"));router.push("/materials#catalog-results");return}setCategory("all");setBrand("all");setGradeOrSize("all");setQuery("");setPage(0)}
  function move(next:number){setPage(next);resultsRef.current?.scrollIntoView({block:"start"});resultsRef.current?.focus({preventScroll:true});}
  return <section id="catalog-results" className="catalog-discovery" aria-label="Find materials by brand and technical specification">
   <form className="catalog-toolbar" role="search" onSubmit={e=>e.preventDefault()}>
@@ -39,16 +41,16 @@ export function MaterialsBrowser({products,categories,initialQuery="",initialBra
   </form>
   <div ref={resultsRef} tabIndex={-1} className="catalog-results-meta"><p aria-live="polite"><strong>{visible.length}</strong> references in {groups.length} distinct product/photo cards{groups.length>0&&<> · Showing {paged.start+1}–{paged.end}</>}</p>
    <button type="button" onClick={clear}>Reset filters</button></div>
-  <p className="catalog-demo-note"><strong>Product identity first.</strong> Brand/range examples and material photographs help choose specifications. Exact SKU, manufacturer-authorized packaging, local stock, prices and delivery are pending supplier verification. Unverified products are not buyable.</p>
+  <p className="catalog-demo-note"><strong>Product identity first.</strong> Brand/range examples and material photographs help choose specifications. Exact SKU, manufacturer-authorized packaging, local stock, prices and delivery are pending supplier verification. You may send an order request for these references; stock and final price require confirmation.</p>
   {groups.length?<div className="product-grid">{paged.items.map(({primary:p,variants})=><article className="product-card" key={p.category+":"+p.slug}>
    <div className="product-card-art"><CatalogMaterialImage category={p.category} name={p.name} product={p}/></div>
    <div className="product-card-copy">
     <div className="product-brand-identity"><BrandMark name={p.brand} small/><small>Brand reference · no authorised dealer claim</small></div>
-    <h2><Link href={`/materials/${p.category}/${p.slug}`}>{variants.length>1?p.name.replace(/\s*[·-]\s*\d+(?:\.\d+)?\s*mm\s*$/i,"")+" · size options":p.name}</Link></h2>
+    <h2><Link href={`/materials/${p.category}/${p.slug}`} prefetch={false} data-intent-prefetch="">{variants.length>1?p.name.replace(/\s*[·-]\s*\d+(?:\.\d+)?\s*mm\s*$/i,"")+" · size options":p.name}</Link></h2>
     <p>{variants.length>1?"Choose a size below to see its specifications and request the matching variant.":p.description}</p>
     {variants.length>1&&<><p className="catalog-range-note">{variants.length} size options</p>
      <div className="catalog-variant-links" aria-label={"Available "+p.brand+" reference sizes"}>
-      {variants.map(item=><Link key={item.slug} href={`/materials/${item.category}/${item.slug}`}>{rangeVariantLabel(item)}</Link>)}
+      {variants.map(item=><Link key={item.slug} href={`/materials/${item.category}/${item.slug}`} prefetch={false} data-intent-prefetch="">{rangeVariantLabel(item)}</Link>)}
      </div></>}
     <div className="catalog-spec-chips">{(variants.length>1?p.specifications.filter(s=>!/diameter|thickness|nominal mass/i.test(s.label)):p.specifications).slice(0,3).map(s=><span key={s.label}><b>{s.label}:</b> {s.value}</span>)}</div>
     <div className="catalog-sku-status"><span>Availability by pincode</span></div>
