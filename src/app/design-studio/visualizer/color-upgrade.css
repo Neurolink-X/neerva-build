@@ -57,3 +57,14 @@
 @media(max-width:340px){.neerva-photo-stage .paint-actions{grid-template-columns:minmax(0,1fr)}}
 
 @media(max-height:560px){.paint-live-preview{position:relative!important}}
+
+/* Compact, readable action hierarchy. 44px remains the touch floor. */
+.neerva-photo-stage .paint-compact-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0}
+.neerva-photo-stage .paint-compact-actions button,.neerva-photo-stage :is(.paint-source,.paint-mode,.paint-targets) button,.neerva-photo-stage .paint-live-preview>button{min-height:44px;padding:6px 9px;font-size:13px;line-height:1.3;word-break:normal;overflow-wrap:break-word}
+.neerva-photo-stage .paint-compact-actions>button:first-child,.neerva-photo-stage .paint-compact-actions>button:last-child{grid-column:auto;background:#f5f8f3;color:#254738}
+.neerva-photo-stage .paint-compact-actions>button.paint-primary{background:#254738;color:white;font-weight:700;border-color:#254738}
+.neerva-photo-stage .paint-compact-actions>button.paint-primary:disabled{background:#f5f8f3;color:#526459;border-color:#b6c5b7}
+.neerva-photo-stage .paint-compact-actions>button.paint-quiet,.neerva-photo-stage .paint-more{grid-column:1/-1}
+.neerva-photo-stage .paint-compact-actions button.paint-quiet{background:transparent;color:#254738;box-shadow:none;text-decoration:underline;text-underline-offset:3px;border-color:transparent}
+.neerva-photo-stage .paint-more{border-top:1px solid #d5e0d4;padding:0 2px;min-width:0}.paint-more summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;font-size:13px;font-weight:650;cursor:pointer}.paint-more summary::after{content:"+"}.paint-more[open] summary::after{content:"−"}.paint-edit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.paint-edit-grid .paint-quiet{grid-column:1/-1}.paint-pattern-title{font-size:15px;margin:12px 0 0}.neerva-photo-stage .wall-pattern-options{margin:6px 0;gap:6px}.neerva-photo-stage .wall-pattern-options span{font-size:12px;line-height:1.35}.neerva-photo-stage .paint-live-tools .wall-pattern-options button{min-height:44px;padding:4px}.neerva-photo-stage .paint-sample-gallery button{padding:4px}.neerva-photo-stage .paint-source input[type=file]{padding:8px;font-size:13px}
+@media(max-width:340px){.neerva-photo-stage .paint-compact-actions,.paint-edit-grid{grid-template-columns:minmax(0,1fr)}}

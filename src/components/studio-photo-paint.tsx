@@ -69,7 +69,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  const wallWidth=canInspect?Math.max(...focusPoints.map(p=>p.x))-Math.min(...focusPoints.map(p=>p.x)):1;
  const wallZoom=closeUp&&canInspect?`scale(${Math.min(4,Math.max(1.6,.94/wallWidth))})`:undefined;
  const [preset,setPreset]=useState<{points:MaskCorner[];mask:PhotoMask}|null>(null);
- const currentMask=editing!==null?walls[editing]?.mask:preset?.points===points?preset.mask:undefined;
+ const currentMask=editing!==null?walls[editing]?.mask:preset&&preset.points.length===points.length&&preset.points.every((p,i)=>p.x===points[i].x&&p.y===points[i].y)?preset.mask:undefined;
  useLayoutEffect(()=>{
   const el=canvas.current,img=image.current;if(!el||!img||!ready)return;
   const ctx=el.getContext("2d");if(!ctx)return;const {width:w,height:h}=el;
@@ -204,26 +204,27 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   <canvas data-sample={scene==="facade"?sampleId:scene} ref={canvas} role="img" aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Photo of your wall. Tap four corners clockwise to choose a painting region"} onPointerDown={addPoint}
     style={{transform:wallZoom,transformOrigin:wallCentre,display:ready?"block":"none",width:"100%",height:"auto",cursor:scene!=="facade"&&points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   </div>
-  </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><label>Wall design <select value={pattern} onChange={e=>{setPattern(e.target.value as Pattern);setShowOriginal(false)}}>
-   {patternKeys.filter(key=>key!=="plain").map(key=><option key={key} value={key}>{finishes[key].name}</option>)}
-  </select></label>
-  <label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Pattern strength · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
-  <div className="wall-pattern-options" aria-label="Wall design samples">
+  </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><h3 className="paint-pattern-title">Wall design</h3><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
    {patternKeys.filter(key=>key!=="plain").map(key=><button type="button" key={key} aria-pressed={pattern===key} onClick={()=>{setPattern(key);setShowOriginal(false)}}>
     <svg viewBox="0 0 150 100" aria-hidden="true" style={{background:base}}>
      {(finishes[key].motifs as Motif[]).map((motif,i)=><polyline key={i} points={motif.points.map(([x,y])=>[x*150,y*100].join(",")).join(" ")} fill={motif.filled?accent:"none"} stroke={accent} strokeWidth="1.2"/>)}
     </svg><span>{finishes[key].name}</span>
    </button>)}
-  </div></>}
+  </div><label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Pattern strength · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
+  </>}
 </div></div>
-  {ready&&scene==="facade"&&<div className="paint-actions"><button type="button" aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?"Show new paint":"View original"}</button><button type="button" disabled={originalVisible} onClick={saveImage}>Save colour preview</button><button type="button" onClick={()=>{setFacadeStyles({});setTarget("all");setMode("paint");setCloseUp(false);setShowOriginal(false)}}>Reset exterior sections</button></div>}
-  {ready&&scene!=="facade"&&<div className="paint-actions paint-wall-actions" role="group" aria-label="Wall preview actions">
-   <button type="button" disabled={!valid||originalVisible} onClick={()=>{
+  {ready&&scene==="facade"&&<div className="paint-actions paint-compact-actions" role="group" aria-label="Exterior preview actions"><button type="button" aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?"Show new paint":"View original"}</button><button type="button" className="paint-primary" disabled={originalVisible} onClick={saveImage}>Save colour preview</button><details className="paint-more"><summary>More exterior options</summary><button type="button" onClick={()=>{setFacadeStyles({});setTarget("all");setMode("paint");setCloseUp(false);setShowOriginal(false)}}>Reset exterior sections</button></details></div>}
+  {ready&&scene!=="facade"&&<div className="paint-actions paint-wall-actions paint-compact-actions" role="group" aria-label="Wall preview actions">
+   <button type="button" disabled={!valid&&!walls.length} aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?"Show new colour":"View original"}</button>
+   <button type="button" className="paint-primary" disabled={(!valid&&(points.length>0||!walls.length))||originalVisible} onClick={saveImage}>Save colour preview</button>
+      <button className="paint-quiet" type="button" disabled={!valid||originalVisible} onClick={()=>{
     const wall={points,colour:base,pattern:effectivePattern,accent,opacity,mask:currentMask};
     setWalls(current=>editing===null?[...current,wall]:current.map((w,i)=>i===editing?wall:w));
     setHistory(emptyMaskHistory());setEditing(null);setMessage("Wall kept. Mark another wall or edit a saved wall below.");
    }}>Keep wall & select another</button>
-   {walls.map((wall,i)=><button type="button" key={i} aria-pressed={editing===i} onClick={()=>{
+
+   <details className="paint-more" open={!valid&&points.length>0?true:undefined}><summary>Wall selection tools</summary><div className="paint-edit-grid">
+      {walls.map((wall,i)=><button type="button" key={i} aria-pressed={editing===i} onClick={()=>{
     setEditing(i);setHistory({points:wall.points,redo:[]});setAccent(wall.accent);setMode(wall.pattern==="plain"?"paint":"design");if(wall.pattern!=="plain")setPattern(wall.pattern);setOpacity(wall.opacity??.78);
     if(onColourChange){onColourChange(wall.colour);setOverride(null)}else setOverride({source:colour,value:wall.colour});
     setShowOriginal(false);
@@ -231,11 +232,11 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    {editing!==null&&<button type="button" onClick={()=>{
     setWalls(current=>current.filter((_,i)=>i!==editing));setEditing(null);setHistory(emptyMaskHistory());setShowOriginal(false);
    }}>Remove this wall</button>}
-   <button type="button" disabled={!points.length} onClick={()=>setHistory(undoCorner)}>Undo corner</button>
+
+   <button type="button" disabled={!points.length} onClick={()=>{setCloseUp(false);setHistory(undoCorner)}}>Undo corner</button>
    <button type="button" disabled={!history.redo.length} onClick={()=>setHistory(redoCorner)}>Redo corner</button>
-   <button type="button" disabled={!valid&&!walls.length} aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?"Show new colour":"View original"}</button>
-   <button type="button" onClick={()=>{setHistory(emptyMaskHistory());setEditing(null);setShowOriginal(false)}}>Reset wall selection ({points.length}/4)</button>
-   <button type="button" disabled={(!valid&&(points.length>0||!walls.length))||originalVisible} onClick={saveImage}>Save colour preview</button>
+   <button type="button" className="paint-quiet" onClick={()=>{setCloseUp(false);setHistory(emptyMaskHistory());setEditing(null);setShowOriginal(false)}}>Reset wall selection ({points.length}/4)</button>
+   </div></details>
   </div>}
   <p className="nbd-disclaimer">Sample photos have pre-marked paintable surfaces. Full exterior colours all marked areas, not glass, timber, plants or neighbouring buildings. For your own photo, mark a flat wall and avoid openings. Preview shades retain lighting; edges and colours are approximate. Verify physical shade cards and measured wall area before buying.</p>
  </section>;

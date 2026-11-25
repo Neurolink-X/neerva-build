@@ -461,13 +461,15 @@ async function main(){
     await page.getByRole("button",{name:"Select #edf2db",exact:true}).click();
     await page.waitForFunction(d=>{const c=document.querySelector(".nbd-photo canvas");return c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.32),1,1).data[1]>d[1]+70},dark);
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-    const actionSizes=await page.locator(".paint-wall-actions button").evaluateAll(bs=>bs.map(b=>({w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height})));
-    assert.ok(actionSizes.every(b=>b.w>=100&&b.h>=44&&b.h<=100),"wall actions stay readable, never six squeezed columns");
+    const actionSizes=await page.locator(".paint-wall-actions button").evaluateAll(bs=>bs.filter(b=>b.getClientRects().length>0).map(b=>({w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height})));
+    assert.ok(actionSizes.length>=3&&actionSizes.every(b=>b.w>=100&&b.h>=44&&b.h<=88),"wall actions stay compact and readable");
+    assert.equal(await page.locator(".paint-wall-actions .paint-more").getAttribute("open"),null,"advanced wall tools are initially collapsed");
+    assert.equal(await page.getByRole("combobox",{name:"Wall design",exact:true}).count(),0,"no duplicate pattern selector");
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const preview=page.locator(".nbd-photo canvas");
     await preview.waitFor({state:"visible"});
     assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
-    assert.equal(await page.getByRole("combobox",{name:"Wall design",exact:true}).count(),0,"plain mode hides patterns");
+    assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
     const original=await preview.evaluate(c=>c.toDataURL());
     await page.getByRole("button",{name:"View original",exact:true}).click();
     await page.waitForFunction(previous=>document.querySelector(".nbd-photo canvas").toDataURL()!==previous,original);
@@ -477,15 +479,16 @@ async function main(){
     await page.getByRole("button",{name:/Premium villa/}).click();
     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="villa"&&c.getBoundingClientRect().height>0;});
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-    await page.getByRole("combobox",{name:"Wall design",exact:true}).selectOption("diamonds");
+    await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
  const canvas=page.locator(".nbd-photo canvas");
  await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
  async function mark(x){let b=await canvas.boundingBox();for(const [u,v] of [[x,.12],[x+.12,.12],[x+.12,.26],[x,.26]])await canvas.click({position:{x:u*b.width,y:v*b.height}});}
+ await page.getByText("Wall selection tools",{exact:true}).click();
  await page.getByRole("button",{name:/Reset wall selection/}).click();
  await mark(.06);
  await page.getByRole("button",{name:"Paint + design",exact:true}).click();
- await page.getByRole("combobox",{name:"Wall design",exact:true}).selectOption("bands");
+ await page.getByRole("button",{name:"Pinstripes",exact:true}).click();
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
  const png=()=>canvas.evaluate(c=>c.toDataURL());
