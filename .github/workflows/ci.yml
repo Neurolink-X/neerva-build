@@ -4,6 +4,10 @@ on:
   pull_request:
   push:
     branches: [main, feat/platform-foundation]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -12,18 +16,69 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        id: checkout
         with:
-          node-version: 24
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        id: node
+        with:
+          node-version: '24'
           cache: npm
-      - run: npm ci --no-audit --no-fund
+      - name: Install locked dependencies
+        id: dependencies
+        run: npm ci --no-audit --no-fund
       - name: Production dependency security audit
+        id: security
         run: npm audit --omit=dev --audit-level=moderate
-      - run: npm run release:verify
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run test:contracts
-      - run: npm test
-      - run: npm run build
+      - name: Release verification
+        id: release
+        run: npm run release:verify
+      - name: Lint
+        id: lint
+        run: npm run lint
+      - name: Typecheck
+        id: types
+        run: npm run typecheck
+      - name: Contract tests
+        id: contracts
+        run: npm run test:contracts
+      - name: Unit and regression tests
+        id: tests
+        run: npm test
+      - name: Production build
+        id: build
+        run: npm run build
+      - name: Record verification outcomes
+        if: always()
+        env:
+          CHECKOUT: ${{ steps.checkout.outcome }}
+          NODE_SETUP: ${{ steps.node.outcome }}
+          DEPENDENCIES: ${{ steps.dependencies.outcome }}
+          SECURITY: ${{ steps.security.outcome }}
+          RELEASE: ${{ steps.release.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          TYPES: ${{ steps.types.outcome }}
+          CONTRACTS: ${{ steps.contracts.outcome }}
+          TESTS: ${{ steps.tests.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+        run: |
+          {
+            echo '## Release verification outcomes'
+            for key in CHECKOUT NODE_SETUP DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
+              printf '%s: %s\n' "$key" "${!key:-not-run}"
+            done
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+          mkdir -p ci-evidence
+          for key in CHECKOUT NODE_SETUP DEPENDENCIES SECURITY RELEASE LINT TYPES CONTRACTS TESTS BUILD; do
+            printf '%s=%s\n' "$key" "${!key:-not-run}"
+          done > ci-evidence/outcomes.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: ci-verification-outcomes
+          path: ci-evidence/outcomes.txt
+          retention-days: 14
+          if-no-files-found: warn

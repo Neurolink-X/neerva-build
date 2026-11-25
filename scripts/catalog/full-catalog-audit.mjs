@@ -79,7 +79,24 @@ report.generatedVisuals={assets:generatedVisuals.length,bytes:generatedVisuals.r
 for(const m of generatedVisuals){try{const bytes=fs.readFileSync("public"+m.path);const meta=await sharp(bytes).metadata();await sharp(bytes).resize(1,1).raw().toBuffer();if(meta.format!=="webp"||meta.width!==m.width||meta.height!==m.height||m.width<280||m.height<280||bytes.length!==m.bytes||bytes.length>35000||createHash("sha256").update(bytes).digest("hex")!==m.sha256)throw Error("Generated asset integrity failure");if(!demoProducts.some(p=>p.category===m.category&&(p.familyKey??p.slug)===m.family))throw Error("Unknown generated product family");}catch(e){report.generatedVisuals.invalid.push({family:m.family,error:String(e)});}}
 for(const {primary:p,variants} of families){const media=catalogVisuals(p);const c=report.generatedVisuals.byCategory[p.category]??={families:0,withGeneratedFallback:0,withoutVisual:0};c.families++;if(media.some(m=>m.kind==="generated")){c.withGeneratedFallback++;report.generatedVisuals.familiesWithGeneratedFallback++;}const missingVariants=variants.filter(v=>!catalogVisuals(v).some(m=>m.kind!=="category"||v.category==="bricks-blocks")).map(v=>v.slug);if(missingVariants.length){c.withoutVisual++;report.generatedVisuals.missingVisualFamilies.push({category:p.category,slug:p.slug,brand:p.brand,name:p.name,variants:missingVariants});}}
 report.generatedVisuals.missingVisualCount=report.generatedVisuals.missingVisualFamilies.length;
-report.publicDiscovery={families:families.filter(g=>isPublicConstructionProduct(g.primary)).length,hiddenAccessoryFamilies:families.filter(g=>!isPublicConstructionProduct(g.primary)).length,missingVisualFamilies:report.generatedVisuals.missingVisualFamilies.filter(isPublicConstructionProduct)};
+// Measure actual locally available visuals for every publicly discoverable variant.
+const publicFamilies=families.filter(g=>g.variants.some(isPublicConstructionProduct));
+const generatedFailures=new Set(report.generatedVisuals.invalid.map(m=>m.family));
+const missingPublicVariants=[];
+for(const g of publicFamilies){
+ for(const p of g.variants.filter(isPublicConstructionProduct)){
+  let usable=false;
+  for(const media of catalogVisuals(p)){
+   if(!media.src.startsWith("/")||media.kind==="category")continue;
+   if(media.kind==="generated"){
+    if(!generatedFailures.has(p.familyKey??p.slug)){usable=true;break;}
+   }else if(!await checkLocal(media.src)){usable=true;break;}
+  }
+  if(!usable)missingPublicVariants.push({category:p.category,slug:p.slug,family:g.primary.slug,brand:p.brand,name:p.name});
+ }
+}
+const missingKeys=new Set(missingPublicVariants.map(p=>p.category+":"+p.family));
+report.publicDiscovery={families:publicFamilies.length,hiddenAccessoryFamilies:families.length-publicFamilies.length,missingVisualFamilies:publicFamilies.filter(g=>missingKeys.has(g.primary.category+":"+g.primary.slug)).map(g=>({category:g.primary.category,slug:g.primary.slug,name:g.primary.name})),missingVisualVariants:missingPublicVariants};
 report.publicDiscovery.missingVisualCount=report.publicDiscovery.missingVisualFamilies.length;
 report.generatedVisuals.priorityMissing=report.generatedVisuals.missingVisualFamilies.filter(p=>p.category==="plumbing"||p.category==="hardware");
 report.generatedVisuals.priorityMissingCount=report.generatedVisuals.priorityMissing.length;
@@ -97,6 +114,7 @@ if(report.totals.missingBrandEntries>26)regressionFailures.push("Missing logo en
 if(report.localFileIssues.filter(([,issue])=>issue==="Low resolution").length>2)regressionFailures.push("Low resolution files exceed 2 baseline");
 report.releaseReadiness={regressionFailures,hardFailures,integrityFailures,strictFailures:[
   ...(!report.coverageTarget.met?["Required additional family photos not complete"]:[]),
+  ...(report.publicDiscovery.missingVisualCount?["Public products without usable local visual remain"]:[]),
   ...(report.generatedVisuals.priorityMissingCount?["Hardware and plumbing product visual coverage incomplete"]:[]),
   ...(report.generatedVisuals.missingVisualCount?["Catalog product visual coverage incomplete"]:[]),
   ...(report.totals.missingBrandEntries?["Missing brand logos remain"]:[]),
@@ -105,7 +123,7 @@ report.releaseReadiness={regressionFailures,hardFailures,integrityFailures,stric
 ]};
 report.releaseReadiness.ready=!report.releaseReadiness.strictFailures.length&&!regressionFailures.length&&!hardFailures.length&&!integrityFailures.length;
 
-fs.mkdirSync("catalog-audit",{recursive:true});fs.writeFileSync("catalog-audit/report.json",JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify({totals:report.totals,coverageTarget:report.coverageTarget,byCategory,brandsMissing:brands.filter(b=>b.logoStatus==="fallback").map(b=>b.name),localFileIssues:report.localFileIssues,generatedVisuals:{assets:report.generatedVisuals.assets,bytes:report.generatedVisuals.bytes,missingVisualCount:report.generatedVisuals.missingVisualCount,priorityMissingCount:report.generatedVisuals.priorityMissingCount,missingVariantCount:report.generatedVisuals.missingVariantCount,byCategory:report.generatedVisuals.byCategory}},null,2));
+fs.mkdirSync("catalog-audit",{recursive:true});fs.writeFileSync("catalog-audit/report.json",JSON.stringify(report,null,2)+"\n");console.log(JSON.stringify({totals:report.totals,coverageTarget:report.coverageTarget,byCategory,brandsMissing:brands.filter(b=>b.logoStatus==="fallback").map(b=>b.name),localFileIssues:report.localFileIssues,publicDiscovery:{families:report.publicDiscovery.families,hiddenAccessoryFamilies:report.publicDiscovery.hiddenAccessoryFamilies,missingVisualCount:report.publicDiscovery.missingVisualCount,missingVariants:report.publicDiscovery.missingVisualVariants.length},generatedVisuals:{assets:report.generatedVisuals.assets,bytes:report.generatedVisuals.bytes,missingVisualCount:report.generatedVisuals.missingVisualCount,priorityMissingCount:report.generatedVisuals.priorityMissingCount,missingVariantCount:report.generatedVisuals.missingVariantCount,byCategory:report.generatedVisuals.byCategory}},null,2));
 
 if(!report.coverageTarget.met)console.warn("Coverage release target NOT MET: "+report.coverageTarget.remainingToTarget+" additional families still required. Audit completion alone is not a release approval.");
 
