@@ -19,3 +19,7 @@ Admin-only on-demand marketplace readiness counts with explicit unknown/empty/pr
 - `scripts/e2e/marketplace-reliability.mjs` uses disposable local identities and synthetic UTR claims; never verifies a real bank payment.
 - `scripts/ops/disposable-recovery-drill.mjs` validates backup/restore of a draft-catalog snapshot in an isolated schema. It does not establish production disaster recovery.
 - Public health checks run twice weekly with bounded GET requests and fail on errors or latency-budget breaches; native GitHub workflow failure notifications depend on user settings and available runner quota.
+
+- Production catalog preflight checks the exact tested export SHA-256, checkout commit, isolated production host, backup and maintenance confirmation. It only permits a fresh initial draft import; existing catalog reconciliation is intentionally a separate operation.
+- Mobile browser evidence includes initial-load TTFB, load time, LCP and CLS observations at 390px; no synthetic result is represented as field INP or verified mobile speed.
+- Approved public branch identities are not private data; dealer E2E checks private memberships, private stock and unauthorized writes separately. Admin global inventory is reported unknown rather than a misleading zero until a reviewed aggregate permission exists.
