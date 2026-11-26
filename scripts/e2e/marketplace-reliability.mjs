@@ -81,16 +81,16 @@ const selfApprove=await a.client.from("dealer_applications").update({status:"app
 assert.ok(selfApprove.error,"Dealer cannot self-approve");
 const submitted=await a.client.from("dealer_applications").update({status:"submitted",submitted_at:new Date().toISOString()}).eq("id",application).select("status").single();
 assert.ifError(submitted.error);assert.equal(submitted.data.status,"submitted");
-const review=(actor,action,expected="submitted")=>call(actor,"/api/admin/dealers","PATCH",{id:application,expected,action,reason:"Disposable test evidence only; no real GST verification."});
-assert.equal((await review(a,"approve")).status,403);
-assert.equal((await review(d,"approve")).status,400,"Incomplete verification cannot approve");
-assert.equal((await review(d,"verify_gstin")).status,200);
-assert.equal((await review(d,"verify_photo")).status,200);
-const approved=await review(d,"approve");assert.equal(approved.status,200,JSON.stringify(approved.data));
+const reviewDealer=(actor,action,expected="submitted")=>call(actor,"/api/admin/dealers","PATCH",{id:application,expected,action,reason:"Disposable test evidence only; no real GST verification."});
+assert.equal((await reviewDealer(a,"approve")).status,403);
+assert.equal((await reviewDealer(d,"approve")).status,400,"Incomplete verification cannot approve");
+assert.equal((await reviewDealer(d,"verify_gstin")).status,200);
+assert.equal((await reviewDealer(d,"verify_photo")).status,200);
+const approved=await reviewDealer(d,"approve");assert.equal(approved.status,200,JSON.stringify(approved.data));
 assert.equal((await call(a,"/api/dealer/overview")).status,200);
-assert.equal((await review(d,"suspend","approved")).status,200);
+assert.equal((await reviewDealer(d,"suspend","approved")).status,200);
 assert.equal((await call(a,"/api/dealer/overview")).status,403);
-assert.equal((await review(d,"reactivate","suspended")).status,200);
+assert.equal((await reviewDealer(d,"reactivate","suspended")).status,200);
 assert.equal((await call(a,"/api/dealer/overview")).status,200);
 console.log("Disposable dealer application, KYC privacy, anti-self-approval, admin review and suspension/reactivation verified.");
 
