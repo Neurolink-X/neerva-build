@@ -2,7 +2,7 @@
 import Link from "next/link";
 import {useEffect,useRef,useState,type FormEvent} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
-import {categoryUnits,defaultCategoryUnit,categoryMaterialHints,quantityUnitLabels,isAllowedCategoryUnit,isMaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
+import {categoryUnits,defaultCategoryUnit,categoryMaterialHints,materialUnitLabel,quantityPrecision,validMaterialQuantity,isAllowedCategoryUnit,isMaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
 
 const supabase=createNeervaBrowserClient();
 const intakeEnabled=process.env.NEXT_PUBLIC_RFQ_INTAKE_ENABLED==="true";
@@ -23,7 +23,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   const material=String(form.get("materialDescription")??"").trim(),
    quantity=Number(form.get("quantity")),pincode=String(form.get("pincode")??"").trim(),
    city=String(form.get("city")??"").trim();
-  if(material.length<3||!Number.isFinite(quantity)||quantity<.001||quantity>1000000||Math.abs(quantity*1000-Math.round(quantity*1000))>.00001||city.length<2||!/^[1-9][0-9]{5}$/.test(pincode)){
+  if(material.length<3||!validMaterialQuantity(category,unit,quantity)||city.length<2||!/^[1-9][0-9]{5}$/.test(pincode)){
    setMessage({kind:"error",text:"Add material details, a positive quantity, city and a valid 6-digit pincode first."});return;
   }
   const draft=`NEERVA BUILD · Material quote draft (NOT sent)\nMaterial: ${material}\nCategory: ${category}\nQuantity: ${quantity} ${unit}\nCity: ${city}\nPincode: ${pincode}\nPreferred date: ${String(form.get("requestedDate")??"")||"Flexible"}\nGST, delivery, unloading, offer validity and real stock must be confirmed by the dealer.`;
@@ -59,6 +59,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
     ...(requestedDate?{requestedDate}:{}),
     contactName:String(form.get("contactName")??""),phone:String(form.get("phone")??""),privacyAccepted:form.get("privacyAccepted")==="yes"
    };
+   if(!validMaterialQuantity(payload.categorySlug,payload.unit,payload.quantity)){setMessage({kind:"error",text:"Check the quantity and unit for this material."});return;}
    const fingerprint=JSON.stringify([session.data.session.user.id,payload]);
    const idempotencyKey=requestKeys.current.get(fingerprint)??crypto.randomUUID();
    requestKeys.current.set(fingerprint,idempotencyKey);
@@ -81,8 +82,8 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   <div className="rfq-form-section-label">01 · Material and delivery</div><div className="rfq-form-grid">
    <label>Material category<select name="categorySlug" value={category} onChange={event=>changeCategory(event.target.value)}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical</option><option value="paint">Paint & coatings</option><option value="tiles">Tiles & flooring</option><option value="hardware">Hardware & adhesive</option></select></label>
    <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} defaultValue={defaultMaterial} placeholder={categoryMaterialHints[category]}/></label>
-   <label>Quantity<input name="quantity" required type="number" min="0.001" step="0.001" max="1000000" defaultValue={defaultQuantity} placeholder="Quantity"/></label>
-   <label>Unit<select name="unit" value={unit} onChange={event=>setUnit(event.target.value as MaterialQuantityUnit)}>{selectedUnits.map(option=><option value={option} key={option}>{quantityUnitLabels[option]}</option>)}</select><small>Units update automatically with the selected material category.</small></label>
+   <label>Quantity<input name="quantity" required type="number" min={quantityPrecision(unit)} step={quantityPrecision(unit)} inputMode={quantityPrecision(unit)===1?"numeric":"decimal"} max="1000000" defaultValue={defaultQuantity} placeholder="Quantity"/></label>
+   <label>Unit<select name="unit" value={unit} onChange={event=>setUnit(event.target.value as MaterialQuantityUnit)}>{selectedUnits.map(option=><option value={option} key={option}>{materialUnitLabel(category,option)}</option>)}</select><small>Units update automatically with the selected material category.</small></label>
    <label>Delivery city<input name="city" required minLength={2} maxLength={80} defaultValue={defaultCity}/></label>
    <label>Delivery pincode<input name="pincode" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} defaultValue={defaultPincode}/></label>
    <label>Preferred delivery date (optional)<input name="requestedDate" type="date"/></label>
