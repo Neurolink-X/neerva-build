@@ -246,7 +246,18 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    exportScene.current=async()=>{
     const {GLTFExporter}=await import("three/addons/exporters/GLTFExporter.js");
     if(disposed)throw new Error("The selected model changed. Try exporting again.");
-    const output=await new GLTFExporter().parseAsync(site,{binary:true,onlyVisible:true,includeCustomExtensions:false});
+    // Flatten instanced wall cells only for export, for compatibility with offline renderers.
+    // The live view retains its efficient instanced meshes.
+    const snapshot=site.clone(true),instanced:THREE.InstancedMesh[]=[];
+    snapshot.traverse(o=>{if(o instanceof THREE.InstancedMesh)instanced.push(o)});
+    for(const source of instanced){
+     const parent=source.parent;if(!parent)continue;
+     const group=new THREE.Group();group.position.copy(source.position);group.quaternion.copy(source.quaternion);group.scale.copy(source.scale);group.visible=source.visible;
+     const transform=new THREE.Matrix4();
+     for(let i=0;i<source.count;i++){source.getMatrixAt(i,transform);const mesh=new THREE.Mesh(source.geometry,source.material);transform.decompose(mesh.position,mesh.quaternion,mesh.scale);group.add(mesh);}
+     parent.add(group);parent.remove(source);
+    }
+    const output=await new GLTFExporter().parseAsync(snapshot,{binary:true,onlyVisible:true,includeCustomExtensions:false});
     if(disposed||!(output instanceof ArrayBuffer))throw new Error("Scene changed or export was unavailable.");
     const href=URL.createObjectURL(new Blob([output],{type:"model/gltf-binary"}));
     try{const a=document.createElement("a");a.href=href;a.download="neerva-"+design.id.replace(/[^a-zA-Z0-9_-]/g,"-")+"-"+mode+".glb";a.click();}
