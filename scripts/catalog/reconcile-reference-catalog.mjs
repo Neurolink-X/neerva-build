@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import {execFileSync} from "node:child_process";
 import {demoProducts} from "../../src/modules/catalog/marketplace.ts";
-import {defaultCategoryUnit} from "../../src/modules/catalog/category-units.ts";
+import {defaultProductUnit} from "../../src/modules/catalog/category-units.ts";
 import {reconcileCatalog} from "../../src/modules/catalog/reconciliation.ts";
 const db=new URL(process.env.NEERVA_CATALOG_DATABASE_URL??process.env.DB_URL??"postgresql://invalid.invalid");
 assert.equal(db.protocol,"postgresql:");
@@ -14,7 +14,7 @@ const sql="select coalesce(jsonb_agg(jsonb_build_object('slug',p.slug,'category'
 const env={...process.env,PGHOST:db.hostname,PGPORT:db.port||"5432",PGDATABASE:decodeURIComponent(db.pathname.slice(1)),PGUSER:decodeURIComponent(db.username),PGPASSWORD:decodeURIComponent(db.password),PGSSLMODE:db.searchParams.get("sslmode")||"disable",PGCONNECT_TIMEOUT:"10",PGOPTIONS:"-c default_transaction_read_only=on -c statement_timeout=20000"};
 delete env.NEERVA_CATALOG_DATABASE_URL;delete env.PGSERVICE;delete env.PGSERVICEFILE;delete env.PGHOSTADDR;delete env.DB_URL;
 const rows=JSON.parse(execFileSync("psql",["-X","-v","ON_ERROR_STOP=1","-At","-c",sql],{env,encoding:"utf8",maxBuffer:16*1024*1024}).trim());
-const refs=demoProducts.map(p=>({slug:p.slug,category:p.category,unit:defaultCategoryUnit(p.category)}));
+const refs=demoProducts.map(p=>({slug:p.slug,category:p.category,unit:defaultProductUnit(p.category,p.slug)}));
 const findings=reconcileCatalog(refs,rows);
 console.log(JSON.stringify({scope:local?"disposable":"production read-only",references:refs.length,databaseRows:rows.length,findings},null,2));
 if(findings.length)process.exitCode=1;
