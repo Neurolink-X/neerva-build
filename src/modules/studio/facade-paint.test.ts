@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {createHash} from "node:crypto";
+import {encodedPhotoDimensions} from "./photo-budget.ts";
 import {facadeZones,facadeSamples,stylesForTarget,activePattern,shadedPixel,type PaintStyle} from "./facade-paint.ts";
 import {validWallMask} from "./mask-editor.ts";
 const plain:PaintStyle={colour:"#b6c7a3",accent:"#c4925f",pattern:"plain",opacity:.78};
@@ -66,4 +69,18 @@ test("modern right wall return and balcony side pier are painted without crossin
  const painted=(x:number,y:number)=>inside(right.mask.outline,x/1536,y/512)&&!right.mask.holes.some(h=>inside(h,x/1536,y/512));
  for(const [x,y] of [[949,217],[963,106],[978,263],[1181,347],[1172,387]])assert.ok(painted(x,y),`wall ${x},${y}`);
  for(const [x,y] of [[1050,160],[1050,360],[1210,292],[1400,250],[920,220]])assert.equal(painted(x,y),false,`protected ${x},${y}`);
+});
+
+// The hash binds the paint coordinates to the exact reviewed local binary.
+test("photorealistic 100 gaj asset has the reviewed dimensions and immutable byte digest",()=>{
+ const sample=facadeSamples.find(s=>s.id==="compact-family")!;
+ const bytes=readFileSync(new URL("../../../public"+sample.src,import.meta.url));
+ assert.deepEqual(encodedPhotoDimensions(bytes),{width:1200,height:800});
+ assert.equal(bytes.length,124430);
+ assert.equal(createHash("sha256").update(bytes).digest("hex"),"d8b42fea054432af0b0a4bc7c3669a2a0c136d3f36eb2538d4b00788ca9c8fa9");
+ assert.equal(sample.zones.length,9);
+ function inside(r:number[][],x:number,y:number){let hit=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const [a,b]=r[i],[c,d]=r[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
+ const hits=(x:number,y:number)=>sample.zones.filter(z=>inside(z.mask.outline,x/1536,y/1024)&&!z.mask.holes.some(h=>inside(h,x/1536,y/1024)));
+ for(const [x,y] of [[402,240],[800,145],[840,290],[790,285],[820,540],[460,730],[800,645],[370,850],[1244,850]])assert.equal(hits(x,y).length,1,"paintable point "+x+","+y);
+ for(const [x,y] of [[480,250],[570,380],[699,350],[965,365],[700,450],[950,470],[620,635],[555,745],[700,740],[950,720],[430,850],[275,865],[970,850],[1120,850],[100,200],[1300,420],[700,55],[700,640]])assert.equal(hits(x,y).length,0,"protected point "+x+","+y);
 });
