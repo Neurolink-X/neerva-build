@@ -1,19 +1,31 @@
 "use client";
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
+import {loadPublicFeed} from "@/modules/catalog/public-feed-client";
 import {subscribeCatalogPriceSignal} from "./catalog-price-signal";
 import {validPublicRate} from "@/modules/catalog/public-feed-validation";
 import {validCombinedEstimate} from "@/modules/orders/combined-estimate";
 import {estimateCart} from "@/modules/orders/cart-estimate";
 import {cartKey,type CartItem} from "@/modules/orders/direct-cart";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
-const money=(n:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR"}).format(n/100);
+const formatter=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR"});
+const money=(n:number)=>formatter.format(n/100);
 type Seller={seller:string;material_paise:number;fee_paise:number;discount_paise:number;freight_paise:number|null;unloading_paise:number|null;tax_paise:number|null;estimated_total_paise:number|null;valid_to:string|null};
 export function CartPricePreview({rows,unload,pin,city,onLocation}:{rows:CartItem[];unload:boolean;pin:string;city:string;onLocation:(pin:string,city:string)=>void}){
  const [feed,setFeed]=useState<{rates:unknown[];offers:unknown[];at:number}|null>(null),[failed,setFailed]=useState(false),[clock,setClock]=useState(0),[refresh,setRefresh]=useState(0),[dealer,setDealer]=useState<{fingerprint:string;row:Seller|null;message:string;at?:number}|null>(null),[busy,setBusy]=useState(false);
  const revision=useRef(0);
  useEffect(()=>subscribeCatalogPriceSignal(()=>{revision.current++;setDealer(null);setFeed(null);setRefresh(n=>n+1)}),[]);
- useEffect(()=>{let alive=true;const abort=new AbortController();let fetching=false;async function load(){if(fetching)return;fetching=true;try{const [p,o]=await Promise.allSettled(["/api/catalog/prices","/api/catalog/offers"].map(u=>fetch(u,{signal:AbortSignal.any([abort.signal,AbortSignal.timeout(12000)]),cache:"no-store"})));if(p.status!=="fulfilled"||!p.value.ok)throw Error();const a=await p.value.json();const b=o.status==="fulfilled"&&o.value.ok?await o.value.json().catch(()=>({offers:[]})):{offers:[]};if(alive){const at=Date.now();setClock(at);if(!Array.isArray(a.prices)||!Array.isArray(b.offers))throw Error("Invalid price response");setFeed({rates:a.prices,offers:b.offers,at});setFailed(false)}}catch{if(alive){setFeed(null);setFailed(true)}}finally{fetching=false}}void load();const timer=setInterval(()=>{setClock(Date.now());void load()},15000);const tick=setInterval(()=>setClock(Date.now()),1000);return()=>{alive=false;abort.abort();clearInterval(timer);clearInterval(tick)}},[refresh]);
- const current=feed&&clock-feed.at<90000?feed.rates.filter(r=>validPublicRate(r,clock)):[];
+ useEffect(()=>{let alive=true,fetching=false;async function load(){if(fetching||document.hidden||!navigator.onLine)return;fetching=true;try{
+ const [p,o]=await Promise.allSettled([loadPublicFeed("prices"),loadPublicFeed("offers")]);
+ if(p.status!=="fulfilled")throw Error("Pricing unavailable");
+ const a=p.value as {prices:unknown[]},b=o.status==="fulfilled"?o.value as {offers:unknown[]}:{offers:[]};
+ if(alive){const at=Date.now();setClock(at);setFeed({rates:a.prices,offers:b.offers,at});setFailed(false)}
+ }catch{if(alive){setFeed(null);setFailed(true)}}finally{fetching=false}}
+ void load();const timer=setInterval(()=>{void load()},30000);
+ const wake=()=>{if(!document.hidden){setClock(Date.now());void load()}};
+ document.addEventListener("visibilitychange",wake);window.addEventListener("online",wake);
+ const tick=setInterval(()=>{if(!document.hidden)setClock(Date.now())},1000);
+ return()=>{alive=false;clearInterval(timer);clearInterval(tick);document.removeEventListener("visibilitychange",wake);window.removeEventListener("online",wake)}},[refresh]);
+ const current=useMemo(()=>feed&&clock-feed.at<90000?feed.rates.filter(r=>validPublicRate(r,clock)):[],[feed,clock]);
  const estimate=estimateCart(rows,pin,city,current,feed&&clock-feed.at<90000?feed.offers:[],clock);
  const referenceRows=rows.map(item=>{const eligible=current.filter(r=>r.category===item.category&&r.slug===item.productSlug&&r.unit===item.unit&&item.quantity>=r.min&&(!city.trim()||r.city.trim().toLowerCase()===city.trim().toLowerCase())&&(!/^[1-9][0-9]{5}$/.test(pin)||!r.prefix||pin.startsWith(r.prefix)));if(!eligible.length)return null;const values=eligible.map(r=>r.paise);return {low:Math.min(...values),high:Math.max(...values),locations:[...new Set(eligible.map(r=>r.city))].join(", ")};});
  const locationReady=/^[1-9][0-9]{5}$/.test(pin)&&city.trim().length>=2;
