@@ -478,6 +478,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
  if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,limit);
+ if(brief.bedrooms===1&&brief.widthFt>=26&&brief.depthFt>=40){const wide=wideResult(brief,limit);if(wide.plans.length)return wide;}
  const compact=compactPedestrianPlans(brief,Math.max(1,Math.floor(limit)));if(compact)return compact;
  const envelope=houseEnvelope(brief);
  const W=brief.widthFt-envelope.leftFt-envelope.rightFt;
