@@ -145,3 +145,29 @@ assert.equal((await call(winnerActor,route,"PATCH",{orderId:winner.id,expectedSt
 assert.equal((await signed.rpc("neerva_coupon_available",{p_code:code})).data,false);
 assert.equal((await call(customer,route,"POST",withCoupon)).status,200,"Coupon receipt retry survives redemption");
 console.log("Coupon admin isolation, invalid code, concurrent cap, reviewed discount, redemption and retry verified.");
+
+
+ // Studio storage: exercise actual API, PostgreSQL constraint, idempotency and tenant isolation
+ // with the existing disposable identities, never a production account.
+ const {generateSpatialPortfolio}=await import("../../src/modules/studio/road-generator.ts");
+ const {planGeometryDigest}=await import("../../src/modules/studio/plan-model.ts");
+ const studioRoute="/api/studio/projects";
+ for(const bedrooms of [4,5,6]){
+  const brief={widthFt:36,depthFt:65,roadSide:"N",floors:2,bedrooms,parking:true,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
+  const plan=generateSpatialPortfolio(brief,24).plans[0];
+  assert.ok(plan,"Expected a checked "+bedrooms+" BHK fixture");
+  const request={idempotencyKey:randomUUID(),title:"Disposable "+bedrooms+" BHK concept",brief,planId:plan.id,variant:plan.variant,geometryDigest:await planGeometryDigest(plan),finish:{kit:plan.facade.kit,main:plan.facade.main,accent:plan.facade.accent}};
+  assert.equal((await call(null,studioRoute,"POST",request)).status,401);
+  assert.equal((await call(customer,studioRoute,"POST",{...request,geometryDigest:"0".repeat(64)})).status,409);
+  const saved=await call(customer,studioRoute,"POST",request);
+  assert.equal(saved.status,201,JSON.stringify(saved.data));
+  const id=saved.data.project.id;
+  const retry=await call(customer,studioRoute,"POST",request);assert.equal(retry.status,200);assert.equal(retry.data.project.id,id);
+  const stored=await signed.from("studio_customer_projects").select("bedrooms,plan_json").eq("id",id).single();
+  assert.ifError(stored.error);assert.equal(stored.data.bedrooms,bedrooms);
+  assert.equal(stored.data.plan_json.rooms.filter(r=>r.kind==="bedroom").length,bedrooms);
+  const own=await call(customer,studioRoute),hidden=await call(other,studioRoute);
+  assert.equal(own.status,200);assert.equal(hidden.status,200);
+  assert.ok(own.data.projects.some(p=>p.id===id));assert.ok(!hidden.data.projects.some(p=>p.id===id));
+ }
+ console.log("4–6 BHK private storage, exact geometry, stale digest rejection, retry and customer isolation verified.");
