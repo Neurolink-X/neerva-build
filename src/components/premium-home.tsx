@@ -3,6 +3,7 @@
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import Image from "next/image";
 import Link from "next/link";
+import {MobileNavigation} from "@/components/mobile-navigation";
 import {InstallLink} from "@/components/pwa-install";
 import {SiteFooter} from "./site-chrome";
 import {MaterialShortlist} from "./material-shortlist";
@@ -116,9 +117,9 @@ export function PremiumHome(){
   <div className="nbh-ribbon"><span>{lang==="hi"?"हर घर मजबूत · विकसित भारत का सपना":"ONE DREAM. MANY HOMES. STRONGER INDIA."}</span><span>{lang==="hi"?"देशभर के बिल्डर्स के लिए":"Made for India’s builders"}</span></div>
   <header className="nbh-header">
    <Link className="nbh-logo" href="/" aria-label="NEERVA BUILD home"><span className="nbh-logomark">N</span><span>NEERVA <i>BUILD</i></span></Link>
-   <nav className="nbh-nav" aria-label="Primary navigation"><Link href="/materials">{t.navMaterials}</Link><Link href="/brands">{lang==="hi"?"ब्रांड":"Brands"}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/blog">{t.navGuides}</Link></nav><details className="nbh-mobile-menu"><summary aria-label={lang==="hi"?"नेविगेशन मेन्यू":"Open navigation menu"}>{lang==="hi"?"मेन्यू":"Menu"}</summary><nav aria-label="Mobile navigation"><Link href="/materials">{t.navMaterials}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/brands">{lang==="hi"?"ब्रांड":"Brands"}</Link><InstallLink recoveryLabel={lang==="hi"?"ऐप सहायता":"App help"}>{lang==="hi"?"ऐप इंस्टॉल करें":"Install app"}</InstallLink><Link href="/account">{lang==="hi"?"खाता":"Account"}</Link><Link href="/checkout?cart=1">{lang==="hi"?"कार्ट":"Cart"}</Link><Link href="/my-project">{lang==="hi"?"मेरा प्रोजेक्ट":"My Project"}</Link><Link href="/account/orders" prefetch={false}>{lang==="hi"?"मेरे ऑर्डर":"My Orders"}</Link><Link href="/build-iq">{lang==="hi"?"अकादमी":"Academy"}</Link><Link href="/blog">{t.navGuides}</Link></nav></details>
+   <nav className="nbh-nav" aria-label="Primary navigation"><Link href="/materials">{t.navMaterials}</Link><Link href="/brands">{lang==="hi"?"ब्रांड":"Brands"}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/blog">{t.navGuides}</Link></nav><MobileNavigation className="nbh-mobile-menu" language={lang}><Link href="/materials">{t.navMaterials}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/brands">{lang==="hi"?"ब्रांड":"Brands"}</Link><InstallLink recoveryLabel={lang==="hi"?"ऐप सहायता":"App help"}>{lang==="hi"?"ऐप इंस्टॉल करें":"Install app"}</InstallLink><Link href="/account">{lang==="hi"?"खाता":"Account"}</Link><Link href="/checkout?cart=1">{lang==="hi"?"कार्ट":"Cart"}</Link><Link href="/my-project">{lang==="hi"?"मेरा प्रोजेक्ट":"My Project"}</Link><Link href="/account/orders" prefetch={false}>{lang==="hi"?"मेरे ऑर्डर":"My Orders"}</Link><Link href="/build-iq">{lang==="hi"?"अकादमी":"Academy"}</Link><Link href="/blog">{t.navGuides}</Link></MobileNavigation>
    <div className="nbh-header-actions">
-    <InstallLink className="nbh-install-header" ariaLabel={lang==="hi"?"ऐप इंस्टॉल कैसे करें":"How to install the NEERVA BUILD app"}>{lang==="hi"?"ऐप":"Install"}</InstallLink><Link className="nbh-icon-link" href="/account" aria-label={lang==="hi"?"अकाउंट":"Account"}><Icon name="home"/></Link>
+    <Link className="nbh-icon-link" href="/account" aria-label={lang==="hi"?"अकाउंट":"Account"}><Icon name="home"/></Link>
     <Link className="nbh-icon-link" href="/checkout?cart=1" aria-label={lang==="hi"?"कार्ट":"Cart"}><Icon name="cart"/></Link>
     <button className="nbh-language" type="button" onClick={language}>{t.langButton}</button>
    </div>

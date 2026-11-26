@@ -163,6 +163,58 @@ async function main(){
    assert.ok(cardRows.every(r=>r.height<=2&&r.cta<=3),"category cards in each row have equal height and aligned actions");
    assert.equal(await page.locator("footer.unified-footer").count(),1,"home shares the unified footer");
    assert.equal(await page.locator("footer.unified-footer nav").count(),4,"footer groups are structured");
+   assert.equal(await page.locator("header a.header-install,header a.nbh-install-header").count(),0,"installation never occupies primary header space");
+   if(v.w<=760){
+    const menu=page.locator(".nbh-mobile-menu"),trigger=menu.locator("summary");
+    await trigger.click();
+    assert.notEqual(await menu.getAttribute("open"),null,"menu opens through icon");
+    assert.ok(await menu.getByRole("navigation").isVisible(),"menu navigation visible");
+    await page.keyboard.press("Escape");
+    assert.equal(await menu.getAttribute("open"),null,"Escape closes menu");
+    assert.ok(await trigger.evaluate(el=>document.activeElement===el),"Escape restores trigger focus");
+    await trigger.click();
+    // The open menu legitimately overlays the hero heading on narrow screens.
+    // Pick a real hit-tested point outside the disclosure, then use native pointer input.
+    const outside=await menu.evaluate(el=>{
+     const panel=el.querySelector("nav")?.getBoundingClientRect();
+     const viewport=document.documentElement.clientWidth;
+     for(const y of [8,24,48,Math.floor(innerHeight*.85),innerHeight-20]){
+      for(const x of [4,Math.floor(viewport*.25),Math.floor(viewport*.5),viewport-5]){
+       const hit=document.elementFromPoint(x,y);
+       if(hit&&!el.contains(hit)&&!(hit.closest("a,button,summary,input,select,textarea,[role=button]"))&&(!panel||x<panel.left||x>panel.right||y<panel.top||y>panel.bottom))return {x,y};
+      }
+     }
+     return null;
+    });
+    assert.ok(outside,"an unobstructed outside-menu pointer target exists");
+    await page.mouse.click(outside.x,outside.y);
+    assert.equal(await menu.getAttribute("open"),null,"outside click closes menu");
+    await trigger.click();
+    await menu.locator('a[href="/materials"]').click();
+    await page.waitForURL(base+"/materials");
+    const sharedMenu=page.locator(".site-mobile-menu");
+    assert.equal(await sharedMenu.getAttribute("open"),null,"navigation closes menu");
+    assert.equal(await page.locator("header a.header-install").count(),0,"shared header never reserves install space");
+    await page.goto(base+"/",{waitUntil:"load"});
+   }
+   const footer=page.locator("footer.unified-footer");
+   const footerLayout=await footer.evaluate(el=>{
+    const groups=[...el.querySelectorAll(".unified-footer-groups nav")];
+    const rects=groups.map(g=>g.getBoundingClientRect());
+    const links=[...el.querySelectorAll(".unified-footer-groups a")].filter(a=>a.getClientRects().length);
+    const b=el.getBoundingClientRect();
+    return {columns:new Set(rects.map(r=>Math.round(r.left))).size,topAligned:Math.abs(rects[0].top-rects[1].top)<=2,overflow:el.scrollWidth>el.clientWidth+2,linkFits:links.every(a=>{const r=a.getBoundingClientRect();return r.left>=b.left-1&&r.right<=b.right+1}),touch:links.every(a=>a.getBoundingClientRect().height>=43),height:b.height,sectionGaps:[...el.querySelectorAll(".unified-footer-intro,.unified-footer-groups,.unified-footer-bottom")].map((section,i,sections)=>i?Math.max(0,section.getBoundingClientRect().top-sections[i-1].getBoundingClientRect().bottom):0),emptyGroupSpace:groups.map(g=>{const heading=g.querySelector("h3"),list=g.querySelector("ul");if(!heading||!list)return Infinity;return Math.max(0,list.getBoundingClientRect().top-heading.getBoundingClientRect().bottom)+Math.max(0,g.getBoundingClientRect().bottom-list.getBoundingClientRect().bottom)}),legal:el.querySelectorAll(".unified-footer-legal a").length};
+   });
+   assert.equal(footerLayout.columns,v.w<=900?2:4,"footer columns adapt to viewport");
+   assert.ok(footerLayout.topAligned&&!footerLayout.overflow&&footerLayout.linkFits,"footer headings and links stay within the layout");
+   if(v.w<=650)assert.ok(footerLayout.touch,"mobile footer targets remain at least 44px");
+   assert.equal(footerLayout.legal,3,"legal policies have a compact dedicated row");
+   // Measure empty gaps, not the total height of valid content (e.g. Hindi wrapping).
+   assert.ok(footerLayout.sectionGaps.every(g=>g<=12),"footer section gaps: "+JSON.stringify(footerLayout));
+   assert.ok(footerLayout.emptyGroupSpace.every(g=>g<=12),"footer group whitespace: "+JSON.stringify(footerLayout));
+   assert.ok(footerLayout.height>0&&Number.isFinite(footerLayout.height),"footer height is measurable");
+   fs.writeFileSync(path.join("test-results/mobile",v.w+"-footer-layout.json"),JSON.stringify(footerLayout,null,2));
+   await footer.screenshot({path:path.join("test-results/mobile",v.w+"-unified-footer.png"),animations:"disabled"});
    await page.locator(".nbh-material-options summary").first().click();
    assert.equal(await page.locator(".nbh-material-options[open]").count(),1,"subcategory links remain expandable");
    for(const category of ["bricks-blocks","plumbing","tiles","hardware"]){

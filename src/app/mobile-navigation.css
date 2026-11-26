@@ -1,0 +1,12 @@
+/* Compact native disclosure. No modal, external icon library or extra network request. */
+.site-header .neerva-mobile-navigation>summary,.nbh-header .neerva-mobile-navigation>summary{box-sizing:border-box;display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:1px solid #d0dcd1;border-radius:10px;background:#fff;color:#244b37;list-style:none}
+.neerva-mobile-navigation>summary::-webkit-details-marker{display:none}
+.neerva-mobile-navigation>summary::marker{content:""}
+.neerva-mobile-navigation>summary .neerva-menu-close,.neerva-mobile-navigation[open]>summary .neerva-menu-open{display:none}
+.neerva-mobile-navigation[open]>summary .neerva-menu-close{display:block}
+.neerva-mobile-navigation>summary:focus-visible,.neerva-mobile-navigation a:focus-visible{outline:3px solid #a85135;outline-offset:2px}
+.site-header .neerva-mobile-navigation>nav,.nbh-header .neerva-mobile-navigation>nav{box-sizing:border-box;right:12px;top:calc(100% - 1px);width:min(360px,calc(100vw - 24px));max-height:min(70vh,520px);overflow:auto;overscroll-behavior:contain;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:12px;border-radius:14px;background:#fffefa}
+.neerva-mobile-navigation:not([open])>nav{display:none!important}
+.site-header .neerva-mobile-navigation>nav a,.nbh-header .neerva-mobile-navigation>nav a{min-height:44px;min-width:0;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
+@media(max-width:760px){.nbh-header .nbh-header-actions{gap:2px}.nbh-header .nbh-header-actions .nbh-icon-link,.nbh-header .nbh-language{min-width:44px;min-height:44px}.nbh-header .nbh-logo{flex:0 1 auto;min-width:0}.site-header .header-utility{gap:4px}}
+@media(max-width:350px){.nbh-header{padding-inline:8px;gap:4px}.nbh-header .nbh-logo{font-size:10px;gap:4px}.nbh-header .nbh-header-actions{gap:0}.nbh-header .nbh-logomark{width:29px;height:29px}}
