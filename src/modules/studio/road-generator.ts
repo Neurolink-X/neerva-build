@@ -318,7 +318,9 @@ function buildArchitecturalFamily(
 function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
  const sb=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
  const width=b.widthFt-sb.leftFt-sb.rightFt,depth=b.depthFt-sb.frontFt-sb.rearFt;
- if(b.parking||(width>=17.5&&depth>=40))return null;
+ // A dedicated stair-free 1 BHK is also useful on larger plots. Keep the
+ // unoccupied area open rather than adding stairs or stretching bedrooms.
+ if(b.parking||b.floors!==1||b.bedrooms!==1)return null;
  // Cap the occupied footprint on elongated sites; remaining area stays open.
  const w=Math.min(20,width),d=Math.min(38,depth);
  const setbacks={...sb,rightFt:sb.rightFt+width-w,rearFt:sb.rearFt+depth-d,verified:false as const};
