@@ -58,18 +58,18 @@ const format=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maxi
 export function ProductPrice({category,slug,sku,unit,quoteOnly}:{sku?:string;unit?:string;category:string;slug:string;quoteOnly?:boolean}){
  const rate=useSyncExternalStore(subscribe,()=>currentRate(category,slug,sku,unit),noRate);
  // A published exact SKU must not inherit a generic historical family price.
- if(sku&&!rate)return <span>{quoteOnly?"Private quotation":"Request today’s SKU rate"} · Choose your quantity</span>;
+ if(sku&&!rate)return <span>{quoteOnly?"Private quotation":"Get today’s price"}</span>;
  const budgetUnit:Record<string,string>={cement:"bag","bricks-blocks":"piece",steel:"kg",paint:"litre"};
  const budget=quoteOnly||(unit&&unit!==budgetUnit[category])?null:planningRate(category,slug);
  const fitting=category==="plumbing"&&!quoteOnly&&(!unit||unit==="piece")?fittingPrice(slug):null;
- if(!rate&&fitting)return <span><strong>{format.format(fitting.rupees)}</strong> / listed piece<br/>{fitting.size} · {fitting.market}, checked 24 Nov 2026. <a href={fitting.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
+ if(!rate&&fitting)return <span><strong>{format.format(fitting.rupees)}</strong> / listed piece<br/>{fitting.size} · {fitting.market} · Reference, 24 Nov 2026. <a href={fitting.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  const hardware=category==="hardware"&&!quoteOnly&&!unit?hardwarePrice(slug):null;
- if(!rate&&hardware)return <span><strong>{format.format(hardware.rupees)}</strong> / listed variant<br/>{hardware.pack} · Bengaluru retailer reference, {hardware.checked}; historical listing, not Neerva selling price. <a href={hardware.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
+ if(!rate&&hardware)return <span><strong>{format.format(hardware.rupees)}</strong> / listed variant<br/>{hardware.pack} · Bengaluru reference · {hardware.checked} · Not a selling price. <a href={hardware.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  const paint=category==="paint"&&!quoteOnly&&(!unit||unit==="litre")?paintReferencePrice(slug):null;
- if(!rate&&paint)return <span><strong>₹{paint.rupees} / L</strong><br/>Manufacturer reference MRP, tax included, largest pack basis · {paint.checked}. Smaller packs and shade may differ. <a href={paint.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
+ if(!rate&&paint)return <span><strong>₹{paint.rupees} / L</strong><br/>MRP (incl. tax) · {paint.checked} · Largest pack; shade and pack prices may vary. <a href={paint.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  const tile=category==="tiles"&&!quoteOnly&&(!unit||unit==="square_foot")?tileReferencePrice(slug):null;
  if(!rate&&tile)return <span><strong>₹{tile.rupees} / sq ft</strong><br/>Manufacturer MRP (tax included) · Reference checked {tile.checked}; dealer rate may differ. <a href={tile.source} target="_blank" rel="noopener noreferrer">Source ↗</a></span>;
  if(!rate&&budget)return <span><strong>{budget}</strong><br/>Kanpur planning estimate · {category==="bricks-blocks"?"Aug":"Oct"} 2026 · Get a delivered quote</span>;
  if(quoteOnly||!rate)return <span>{quoteOnly?"Private quotation":"Request today’s rate"} · {category==="bricks-blocks"?"Specify quantity in pieces":category==="cement"?"Specify bag quantity":"Choose your quantity"}</span>;
- return <span><strong>From {format.format(rate.paise/100)} / {rate.unit}</strong><br/>Published location-specific reference · {rate.sku} · {rate.city}{rate.prefix?" · PIN starts "+rate.prefix:""} · Min. {rate.min} {rate.unit}{rate.until&&<> · Rate valid until {new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Kolkata"}).format(new Date(rate.until))} IST</>}</span>;
+ return <span><strong>From {format.format(rate.paise/100)} / {rate.unit}</strong><br/>Estimated material rate · {rate.city} · Min. {rate.min} {rate.unit}{rate.until&&<> · Rate valid until {new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Kolkata"}).format(new Date(rate.until))} IST</>}</span>;
 }
