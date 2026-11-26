@@ -119,3 +119,10 @@
 .nroad-shortlist{border:1px solid #d5e0d4;border-radius:13px;background:#f7faf5;padding:14px;margin:16px 0;min-width:0}.nroad-shortlist h2{font-size:20px;margin:0 0 8px}.nroad-shortlist p,.nroad-shortlist small{font-size:13px;color:#526459;line-height:1.5}.nroad-shortlist-actions,.nroad-shortlist-choices{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.nroad-shortlist button{min-height:44px;padding:8px 12px;border:1px solid #9eb3a4;border-radius:8px;background:#fff;color:#254738}.nroad-shortlist button[aria-pressed=true]{background:#254738;color:#fff}.nroad-shortlist button:disabled{opacity:.5}.nroad-shortlist-choices label{display:flex;gap:8px;align-items:center;min-height:44px}.nroad-compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}.nroad-compare-grid article{background:white;padding:10px;border-radius:10px;min-width:0}.nroad-compare-grid svg{max-width:100%;max-height:320px}.nroad-shortlist button:focus-visible{outline:3px solid #a65333;outline-offset:2px}
 
 .nroad-3d-slot{min-inline-size:0;min-height:220px}.nroad-3d-slot .nroad-loading button{min-height:44px;padding:10px 16px;border:1px solid #254738;border-radius:8px;background:#254738;color:white;font:inherit;cursor:pointer}.nroad-3d-slot .nroad-loading p{margin:0 0 10px}
+
+.nroad-variants button{touch-action:manipulation;transition:background-color 120ms ease,border-color 120ms ease}
+.nroad-variants button:active{box-shadow:inset 0 0 0 2px #2f7551}
+.nroad :is(.nroad-variants,.nroad-floor-tabs) button:focus-visible{outline:3px solid #a46b35;outline-offset:-3px}
+.nroad-selection-feedback{padding:10px 12px;background:#eef5ee;border-radius:8px;overflow-wrap:anywhere}.nroad-selection-feedback a{display:inline-flex;align-items:center;min-height:44px;color:#254738;font-weight:700;text-decoration:underline}
+@media(hover:hover) and (pointer:fine){.nroad-variants button:hover{border-color:#2f7551;background:#edf5ee}}
+@media(prefers-reduced-motion:reduce){.nroad-variants button{transition:none}}
