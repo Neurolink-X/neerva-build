@@ -24,7 +24,6 @@ export function explainImpossible(b:PlanBrief):string[]{
   if(W<15||D<30||b.floors!==1||b.bedrooms!==1)x.push("Compact pedestrian layouts need 15 × 30 ft usable area, one floor and one bedroom.");
  }else if(W<17.5||D<40)x.push("This road-front layout family needs at least 17.5 × 40 ft usable area. Check dimensions and setbacks.");
  if(b.floors===1&&(b.bedrooms>2||(b.bedrooms===2&&W<20)))x.push("With this narrow parking-first template, only 1BHK fits on ground. Consider G+1 for 2–3 bedrooms.");
- if(b.bedrooms<b.floors)x.push("Choose at least one bedroom per level.");
  if(b.widthFt<=15&&b.depthFt<=30&&b.parking&&b.bedrooms>=3)x.push("3BHK + car parking on 15 × 30 ft cannot pass the tested room and access constraints.");
  return [...new Set(x)];
 }
@@ -101,9 +100,11 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  put("bed-g","Bedroom 1","bedroom",0,0,37,rearBedW,D-37);
  put(twinRear?"bed-g2":"utility-g",twinRear?"Bedroom 2":rearLabel,twinRear?"bedroom":rearKind,0,rearBedW,37,W-rearBedW,D-37);
  for(let level=1;level<b.floors;level++){
-  const upper=b.bedrooms-b.floors+1;
+  const upper=b.bedrooms<b.floors?(level<b.bedrooms?1:0):b.bedrooms-b.floors+1;
   put(`balcony-${level}`,"Street balcony","balcony",level,0,0,W,4);
-  if(upper===1){
+  if(upper===0){
+   put(`family-room-${level}`,"Family room (no bedroom)","lounge",level,0,4,W,12);
+  }else if(upper===1){
    put(`bed-${level}a`,`Bedroom ${level+1}`,"bedroom",level,0,4,W,12);
   }else{
    put(`bed-${level}a`,`Bedroom ${level+1}`,"bedroom",level,0,4,round(W*(recipe.upperBedRatio??.5)),12);
@@ -148,7 +149,9 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   ["corridor-g","hall-g"],["hall-g","bed-g"],["hall-g",twinRear?"bed-g2":"utility-g"]
  ];
  for(let level=1;level<b.floors;level++){
-  joins.push([`stairs-${level}`,`lounge-${level}`],[`stairs-${level}`,`bath-${level}`],[`lounge-${level}`,`utility-${level}`],[`lounge-${level}`,`bed-${level}a`],[`balcony-${level}`,`bed-${level}a`]);
+  const frontRoom=b.bedrooms<b.floors&&level>=b.bedrooms?`family-room-${level}`:`bed-${level}a`;
+  joins.push([`stairs-${level}`,`lounge-${level}`],[`stairs-${level}`,`bath-${level}`],[`lounge-${level}`,`utility-${level}`],[`lounge-${level}`,frontRoom],[`balcony-${level}`,frontRoom]);
+  if(b.bedrooms<b.floors&&level>=b.bedrooms)joins.push([`utility-${level}`,`terrace-${level}`]);
   if(b.bedrooms>b.floors)joins.push([`lounge-${level}`,`bed-${level}b`],[`balcony-${level}`,`bed-${level}b`]);
  }
  if(!b.parking)joins.push(["verandah","front-court"]);
@@ -350,9 +353,16 @@ function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
    balcony:null,facade:{kit:"simple-parapet",massing:"box",main:"#e9e2d4",accent:"#8e755b"},
    score:recipe.id==="balanced"?1:0,notes:[recipe.label,...(b.siteShape&&b.siteShape.kind!=="rectangle"?["L-plot rear corner omitted. Entire adjacent strip is kept unbuilt as a conservative construction envelope; a cadastral site survey and licensed architect must verify the actual boundary."]:[]),"City rules, setbacks and construction details require local professional review."],conceptOnly:true};
   addWindow(plan);
-  if(validatePlan(plan).length===0)plans.push(plan);
+  if(validateRequestedProgramme(plan,b).length===0)plans.push(plan);
  }
  return {plans:pickDiverse(plans,limit),blockers:plans.length?[]:["Room sizes or access could not be validated within the available footprint."]};
+}
+/** Never display a valid geometry that silently changes the customer's room programme. */
+export function validateRequestedProgramme(p:PlanModel,b:PlanBrief):string[]{
+ const errors=validatePlan(p);
+ if(p.floors!==b.floors||p.rooms.filter(r=>r.kind==="bedroom").length!==b.bedrooms||Boolean(p.parking)!==b.parking||p.plot.widthFt!==b.widthFt||p.plot.depthFt!==b.depthFt||p.plot.roadSide!==b.roadSide)errors.push("Plan does not match requested plot, floors, bedrooms or parking.");
+ if(!p.rooms.some(r=>r.kind==="living")||!p.rooms.some(r=>r.kind==="kitchen")||!p.rooms.some(r=>r.kind==="bath"))errors.push("Missing essential BHK spaces.");
+ return errors;
 }
 export function planSignature(p:PlanModel):string{
  // IDs, labels, room names and exterior finishes cannot manufacture a new floor plan.
@@ -370,7 +380,7 @@ export function generateRoadPlans(brief:PlanBrief):PlanningResult{
  const compact=compactPedestrianPlans(brief,2);if(compact)return compact;
  const candidates:PlanModel[]=[];
  for(const variant of ["parking-left","parking-right"] as const){
-  try{const p=build(brief,variant),errors=validatePlan(p);if(!errors.length)candidates.push(p);
+  try{const p=build(brief,variant),errors=validateRequestedProgramme(p,brief);if(!errors.length)candidates.push(p);
    else blockers.push(variant+": "+errors.join("; "));
   }catch(error){blockers.push(variant+": "+(error instanceof Error?error.message:"Unknown invalid geometry"))}
  }
@@ -394,7 +404,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
  const W=brief.widthFt-envelope.leftFt-envelope.rightFt;
  const baseParking=Math.max(8.5,Math.min(10,round(W*.46)));
  const plans:PlanModel[]=[],seen=new Set<string>(),seenMeshes=new Set<string>();
- const normalized=Math.max(1,Math.min(24,Math.floor(limit)));
+ const normalized=Math.max(1,Math.min(brief.bedrooms===1?6:24,Math.floor(limit)));
  for(const variant of ["parking-left","parking-right"] as const){
   const perSide=normalized===24?12:Math.ceil(normalized/2);
   let sideCount=0;
@@ -411,9 +421,9 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
     kitchenWidthFt:kitchen,rearBedWidthFt:bedWidth,upperBedRatio:ratio,rearProgramme:prog,
     frontProgramme:family,familyLabel:"spatial-"+i+"-"+prog+"-"+family};
    try{
-    const family=i%3===1?"front-stair":i%3===2&&W>=20?"front-bedroom":null;
+    const family=brief.bedrooms<brief.floors?null:i%3===1?"front-stair":i%3===2&&W>=20?"front-bedroom":null;
     const p=family?buildArchitecturalFamily(brief,variant,family,prog):build(brief,variant,recipe),
-     errors=validatePlan(p);
+     errors=validateRequestedProgramme(p,brief);
     if(errors.length)continue;
     const geometry=planSignature(p);
     if(seen.has(geometry))continue;
