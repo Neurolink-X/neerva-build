@@ -1,4 +1,5 @@
 "use client";
+import {createBackgroundSuspension} from "@/modules/catalog/background-suspension";
 import {invalidatePublicFeeds} from "@/modules/catalog/public-feed-client";
 type Listener=()=>void;
 const listeners=new Set<Listener>();
@@ -21,16 +22,27 @@ function schedule(){
   }).catch(()=>{/* foreground polling remains available */}).finally(()=>{if(current===generation)starting=false});
  },2500);
 }
+const background=createBackgroundSuspension(suspendTransport,()=>document.visibilityState!=="visible");
+function suspendTransport(){
+ generation++;starting=false;clearTimeout(startTimer);startTimer=undefined;background.cancel();stop?.();stop=undefined;
+}
 function onNetwork(event:Event){
  if(event.type==="offline"){
-  generation++;starting=false;clearTimeout(startTimer);startTimer=undefined;stop?.();stop=undefined;
+  suspendTransport();
   invalidateNow();return;
  }
  if(event.type==="online")invalidateNow();
- if(document.visibilityState!=="visible"){clearTimeout(startTimer);startTimer=undefined;return;}schedule();
+ if(document.visibilityState!=="visible"){
+  clearTimeout(startTimer);startTimer=undefined;
+  // Short app switches should not churn connections; prolonged background
+  // tabs release the realtime socket. Foreground HTTP polling is unchanged.
+  background.schedule();
+  return;
+ }
+ background.cancel();schedule();
 }
 export function subscribeCatalogPriceSignal(listener:Listener){
  listeners.add(listener);
  if(listeners.size===1){generation++;schedule();window.addEventListener("online",onNetwork);window.addEventListener("offline",onNetwork);document.addEventListener("visibilitychange",onNetwork);}
- return()=>{listeners.delete(listener);if(!listeners.size){generation++;starting=false;clearTimeout(timer);clearTimeout(startTimer);startTimer=undefined;stop?.();stop=undefined;window.removeEventListener("online",onNetwork);window.removeEventListener("offline",onNetwork);document.removeEventListener("visibilitychange",onNetwork)}};
+ return()=>{listeners.delete(listener);if(!listeners.size){clearTimeout(timer);suspendTransport();window.removeEventListener("online",onNetwork);window.removeEventListener("offline",onNetwork);document.removeEventListener("visibilitychange",onNetwork)}};
 }

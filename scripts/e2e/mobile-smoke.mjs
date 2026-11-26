@@ -510,9 +510,16 @@ async function main(){
     await page.locator(".nbh-header").waitFor({state:"visible"});
     assert.equal(await page.locator('a[href="/install"]').count(),0,"client navigation keeps install controls hidden");
     assert.equal(await page.locator(".unified-footer-groups a[href=\"/install\"]").count(),0,"install never sits in business links");
+    await page.locator(".unified-footer-app a[href='/install?recovery=1']").waitFor({state:"visible"});
     assert.equal(await page.locator(".unified-footer-app a[href=\"/install?recovery=1\"]").count(),1,"remembered installation exposes only app help");
     assert.equal(await page.locator(".neerva-install-banner").count(),0,"installed app never displays install banner");
     await page.reload({waitUntil:"load"});
+    // load is not hydration: the initial install state deliberately renders no links.
+    // Require positive evidence that the PWA store has subscribed and restored the
+    // installed preference before dispatching a synthetic browser lifecycle event.
+    const restoredHelp=page.locator(".nbh-mobile-menu a[href='/install?recovery=1']");
+    await restoredHelp.waitFor({state:"attached"});
+    await page.locator(".unified-footer-app a[href='/install?recovery=1']").waitFor({state:"visible"});
     assert.equal(await page.locator('a[href="/install"]').count(),0,"installed state survives reload");
     // Simulate an uninstall with a fresh browser installability event. No storage clearing.
     await page.evaluate(()=>{
@@ -521,6 +528,8 @@ async function main(){
       window.dispatchEvent(event);
     });
     await page.locator(".nbh-mobile-menu a[href='/install']").waitFor({state:"attached"});
+    await restoredHelp.waitFor({state:"detached"});
+    assert.equal(await page.evaluate(()=>localStorage.getItem("neerva-installed-v1")),null,"fresh installability event clears remembered installation");
     const footerInstall=page.locator(".unified-footer-app button");
     await footerInstall.waitFor({state:"visible"});
     assert.equal(await footerInstall.getAttribute("type"),"button","installation is a native action, not a store link");
