@@ -416,3 +416,7 @@
 .nbh-category-cart .nb-shop-stepper input{width:100%;min-width:0;text-align:center}
 .nbh-category-cart .nb-shop-stepper button{min-height:44px;padding:0}
 @media(max-width:350px){.nbh-category-grid{grid-template-columns:minmax(0,1fr)}.nbh-category-cart .nb-shop-stepper{grid-template-columns:44px minmax(0,1fr) 44px}}
+
+/* Balanced comparison framing and consistent category-card actions. */
+.nbh .nbh-compare-frame{width:100%;aspect-ratio:16/10;max-height:420px;background:#e6ebe3}.nbh .nbh-compare-frame img{object-fit:cover;object-position:center}.nbh .nbh-category-cart{margin-top:12px;padding-top:12px}.nbh .nbh-material-info{gap:8px}.nbh .nbh-material-info>p{flex:0}.nbh .nbh-material-info .nbh-material-cta{margin-top:auto;min-height:44px}.nbh .nbh-category-cart .nb-shop-add{min-height:44px;line-height:1.25;text-align:center;overflow-wrap:anywhere}.nbh .nbh-category-cart .nb-shop-stepper{grid-template-columns:minmax(32px,1fr) minmax(0,1.3fr) minmax(32px,1fr)}
+@media(max-width:760px){.nbh .nbh-compare-frame{aspect-ratio:4/3;max-height:340px}.nbh .nbh-material-card{min-width:0}.nbh .nbh-material-info{padding:12px 10px}.nbh .nbh-category-cart-product{font-size:12px}.nbh .nbh-category-cart .nb-shop-add{font-size:13px}}
