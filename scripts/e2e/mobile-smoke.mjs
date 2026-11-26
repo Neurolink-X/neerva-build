@@ -454,7 +454,7 @@ async function main(){
     await page.reload({waitUntil:"load"});
     await page.getByRole("heading",{name:"My cart (2)"}).waitFor();
     assert.equal(await page.locator(".nb-shop-cart-line input[type=number]").first().inputValue(),"5","quantity persists after reload");
-    await page.getByRole("button",{name:"Continue →"}).click();
+    await page.getByRole("button",{name:"Continue to delivery →"}).click();
     const signIn=page.getByRole("link",{name:/Sign in and continue/});
     await signIn.waitFor();
     assert.equal(new URL(await signIn.getAttribute("href"),base).searchParams.get("next"),"/checkout?cart=1","cart survives the sign-in return");
