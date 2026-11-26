@@ -1,6 +1,6 @@
 "use client";
 import {useState} from "react";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import {CatalogMaterialImage} from "@/components/catalog-material-image";
 import {ProductPrice} from "@/components/product-price";
 import {BrandMark} from "@/components/brand-mark";

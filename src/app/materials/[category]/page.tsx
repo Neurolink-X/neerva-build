@@ -4,7 +4,7 @@ import {CatalogOffer} from "@/components/catalog-offer";
 import {ProductPrice} from "@/components/product-price";
 import {PublishedMaterials} from "@/components/published-materials";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import { notFound } from "next/navigation";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { CatalogMaterialImage } from "@/components/catalog-material-image";

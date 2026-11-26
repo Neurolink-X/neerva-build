@@ -1,7 +1,6 @@
 "use client";
 import {useState} from "react";
-import Link from "next/link";
-import {createNeervaBrowserClient} from "@/modules/supabase/browser";
+import Link from "@/components/intent-link";
 import {planGeometryDigest,type PlanBrief,type PlanModel} from "@/modules/studio/plan-model";
 import "@/app/studio-pricing/pricing.css";
 import {useStudioSettings} from "@/components/use-studio-settings";
@@ -14,6 +13,7 @@ export function StudioPremiumTools({product,brief,option=0,planId,selectedPlan,b
  async function exportReport(){
   if(busy)return;setBusy(true);setMessage("");
   try{
+   const {createNeervaBrowserClient}=await import("@/modules/supabase/browser");
    const client=createNeervaBrowserClient();
    const jwt=(await client?.auth.getSession())?.data.session?.access_token;
    if(!jwt){setMessage("Sign in to use your paid Studio report.");return;}

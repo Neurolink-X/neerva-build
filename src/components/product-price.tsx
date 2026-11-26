@@ -30,7 +30,7 @@ function prune(){
 function refresh(force=false){
  prune();scheduleExpiry();
  if(force){invalidated=true;rates=new Map();lastLoaded=0;notifyRates();}
- if(request||!listeners.size||document.visibilityState==="hidden"||(!invalidated&&Date.now()-lastAttempt<30000))return;
+ if(request||!listeners.size||document.visibilityState==="hidden"||navigator.onLine===false||(!invalidated&&Date.now()-lastAttempt<30000))return;
  invalidated=false;
  lastAttempt=Date.now();
  request=loadPublicFeed("prices").then(value=>{
@@ -47,7 +47,7 @@ function onVisible(){if(document.visibilityState==="visible"){prune();scheduleEx
 function subscribe(notify:()=>void){
  listeners.add(notify);
  if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true));timer=setInterval(()=>refresh(),30000)}
- return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;stopSignal?.();stopSignal=undefined;document.removeEventListener("visibilitychange",onVisible)}};
+ return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;stopSignal?.();stopSignal=undefined;document.removeEventListener("visibilitychange",onVisible);}};
 }
 const noRate=()=>undefined;
 function currentRate(category:string,slug:string,sku?:string,unit?:string){

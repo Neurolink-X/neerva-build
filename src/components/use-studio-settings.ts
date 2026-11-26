@@ -9,6 +9,7 @@ const listeners=new Set<()=>void>();
 const notify=()=>{for(const f of listeners)f()};
 async function fetchSettings(){
  if(active)return active;
+ if(navigator.onLine===false)return;
  const controller=new AbortController();
  const timeout=window.setTimeout(()=>controller.abort(),10000);
  active=fetch("/api/studio/config",{cache:"no-store",signal:controller.signal})
@@ -33,6 +34,7 @@ function subscribe(listener:()=>void){
  if(listeners.size===1){
   void fetchSettings();
   window.addEventListener("focus",refresh);
+  window.addEventListener("online",refresh);
   window.addEventListener("studio-config-changed",refresh);
   document.addEventListener("visibilitychange",onVisibility);
   polling=window.setInterval(()=>{if(document.visibilityState==="visible")void fetchSettings()},60000);
@@ -41,6 +43,7 @@ function subscribe(listener:()=>void){
   listeners.delete(listener);
   if(!listeners.size){
    window.removeEventListener("focus",refresh);
+   window.removeEventListener("online",refresh);
    window.removeEventListener("studio-config-changed",refresh);
    document.removeEventListener("visibilitychange",onVisibility);
    if(polling!==null)window.clearInterval(polling);

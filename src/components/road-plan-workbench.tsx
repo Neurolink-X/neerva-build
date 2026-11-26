@@ -1,10 +1,9 @@
 "use client";
-import {useEffect,useMemo,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {SiteFooter} from "@/components/site-chrome";
 import {StudioPremiumTools} from "./studio-premium-tools";
-import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
 import {planMetrics,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
@@ -14,6 +13,7 @@ import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 import {PlanShortlist} from "./plan-shortlist";
 import {briefKey} from "@/modules/studio/plan-shortlist";
+import {allowStudioWarmup,studioWarmupDelay,type NetworkHint} from "@/modules/navigation/intent";
 const Building3D=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{
  ssr:false,loading:()=> <p role="status" className="nroad-loading">Loading plan-matched 3D viewer… The 2D plan is available immediately.</p>
 });
@@ -28,21 +28,21 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const [floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
  const [kit,setKit]=useState<PlanModel["facade"]["kit"]>("simple-parapet");
  const [threeReady,setThreeReady]=useState(false);
+ const threeSection=useRef<HTMLDivElement>(null);
  const [saving,setSaving]=useState(false),[saveInfo,setSaveInfo]=useState("");
  async function saveDraft(){
   if(!draft||saving)return;
-  const client=createNeervaBrowserClient();
-  if(!client){setSaveInfo("Account service is not configured. Your concept is not saved.");return;}
-  const session=await client.auth.getSession();
-  const token=session.data.session?.access_token;
-  if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
   setSaving(true);setSaveInfo("");
-  try{const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id,geometryDigest:await planGeometryDigest(draft),finish:{kit,main:shade.main,accent:shade.accent}}),cache:"no-store"});
+  try{const {createNeervaBrowserClient}=await import("@/modules/supabase/browser");
+   const client=createNeervaBrowserClient();
+   if(!client){setSaveInfo("Account service is not configured. Your concept is not saved.");return;}
+   const session=await client.auth.getSession(),token=session.data.session?.access_token;
+   if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
+   const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:crypto.randomUUID(),title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id,geometryDigest:await planGeometryDigest(draft),finish:{kit,main:shade.main,accent:shade.accent}}),cache:"no-store"});
    const body=await response.json() as {project?:{id?:string};error?:string};
    setSaveInfo(response.ok&&body.project?.id?"Private concept saved. Not a construction-approved plan.":(body.error??"Project was not saved."));
   }catch{setSaveInfo("Network issue. Your concept was not confirmed saved.");}finally{setSaving(false)}
  }
- useEffect(()=>{const frame=window.requestAnimationFrame(()=>setThreeReady(true));return()=>window.cancelAnimationFrame(frame)},[]);
  const result=useMemo(()=>generateSpatialPortfolio(brief,24),[brief]);
  const activeOption=result.plans[chosen]?chosen:0;
  const draft=result.plans[activeOption]??null;
@@ -50,6 +50,30 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,kit,main:shade.main,accent:shade.accent}}:null,[draft,shade,kit]);
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
  const metrics=useMemo(()=>plan?planMetrics(plan):null,[plan]);
+ const hasPlan=!!plan;
+ // Download/parse the shared 3D chunk after useful content on capable devices.
+ // Warming never mounts a canvas or allocates WebGL before it is needed.
+ useEffect(()=>{
+  const node=threeSection.current;if(!hasPlan||threeReady||!node)return;
+  const nav=navigator as Navigator&{connection?:NetworkHint&EventTarget;deviceMemory?:number};
+  const conn=nav.connection;let timer:ReturnType<typeof setTimeout>|undefined,idle:number|undefined,disposed=false,started=false;
+  const eligible=()=>allowStudioWarmup(conn,{cores:nav.hardwareConcurrency,memory:nav.deviceMemory},nav.onLine,document.visibilityState==="visible");
+  function cancel(){clearTimeout(timer);timer=undefined;if(idle!==undefined){window.cancelIdleCallback?.(idle);idle=undefined;}}
+  function warm(){idle=undefined;if(disposed||started||!eligible())return;started=true;node!.dataset.warmState="loading";
+   void import("./studio-building-3d").then(()=>{if(!disposed)node!.dataset.warmState="ready"}).catch(()=>{if(!disposed)node!.dataset.warmState="failed"});
+  }
+  function schedule(){cancel();if(disposed||started||!eligible()||document.readyState!=="complete")return;
+   timer=setTimeout(()=>{timer=undefined;if(!eligible()||disposed)return;if(typeof window.requestIdleCallback==="function")idle=window.requestIdleCallback(warm);else warm()},studioWarmupDelay(conn??{}));
+  }
+  window.addEventListener("load",schedule);window.addEventListener("online",schedule);window.addEventListener("offline",schedule);document.addEventListener("visibilitychange",schedule);conn?.addEventListener?.("change",schedule);schedule();
+  return()=>{disposed=true;cancel();window.removeEventListener("load",schedule);window.removeEventListener("online",schedule);window.removeEventListener("offline",schedule);document.removeEventListener("visibilitychange",schedule);conn?.removeEventListener?.("change",schedule)};
+ },[hasPlan,threeReady]);
+ // Keep Three.js and WebGL off the initial route critical path. Auto-load near
+ // the viewer, or load immediately on explicit request; 2D remains independent.
+ useEffect(()=>{const node=threeSection.current;if(!hasPlan||threeReady||!node||!("IntersectionObserver" in window))return;
+  const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();setThreeReady(true)}},{rootMargin:"120px"});
+  observer.observe(node);return()=>observer.disconnect();
+ },[hasPlan,threeReady]);
  function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setBrief(v=>({...v,[key]:value}));setChosen(0);setFloor(0)}
  function changeSetback(side:keyof PlanBrief["setbacks"],value:number){setBrief(v=>({...v,setbacks:{...v.setbacks,[side]:value}}));setChosen(0);setFloor(0)}
  const str=(en:string,hi:string)=>hindi?hi:en;
@@ -134,7 +158,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <OrientedPlanDrawing plan={plan} floor={floor}/>
      <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0)setChosen(i)}}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
-     {design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<p role="status" className="nroad-loading">Preparing plan-matched 3D geometry…</p>)}
+     <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. The interactive 3D viewer loads when you reach this section.","2D नक्शा तैयार है। 3D व्यू इस भाग में आने पर लोड होगा।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The selected floor uses the same room footprints and openings. Wall thickness, stairs and finishes remain conceptual, not verified CAD/BIM.</p>
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>

@@ -1,6 +1,6 @@
 "use client";
-import {useState} from "react";
-import Link from "next/link";
+import {useMemo,useState} from "react";
+import Link from "@/components/intent-link";
 import {CatalogMaterialImage} from "@/components/catalog-material-image";
 import {ProductPrice} from "@/components/product-price";
 import {tileReferenceMedia,tileReferencePrice} from "@/modules/catalog/tile-references";
@@ -10,7 +10,7 @@ export function TileShowroom({products}:{products:DemoProduct[]}){
  const [style,setStyle]=useState<string>("All designs");
  const [brand,setBrand]=useState("All brands");
  const [area,setArea]=useState("100");const [waste,setWaste]=useState("10");const [chosen,setChosen]=useState("");
- const visible=products.filter(p=>{const t=tileReferenceMedia(p.slug);const text=[p.name,p.description,...p.specifications.map(s=>s.value)].join(" ").toLowerCase();return (brand==="All brands"||p.brand===brand)&&(style==="All designs"||(style==="Bathroom & outdoor"?/anti.skid|safegrip|balcony|outdoor/.test(text):(t?.design??text).toLowerCase().includes(style.toLowerCase())));});
+ const visible=useMemo(()=>products.filter(p=>{const t=tileReferenceMedia(p.slug);const text=[p.name,p.description,...p.specifications.map(s=>s.value)].join(" ").toLowerCase();return (brand==="All brands"||p.brand===brand)&&(style==="All designs"||(style==="Bathroom & outdoor"?/anti.skid|safegrip|balcony|outdoor/.test(text):(t?.design??text).toLowerCase().includes(style.toLowerCase())));}),[products,brand,style]);
  const selected=products.find(p=>p.slug===chosen);const ref=selected?tileReferenceMedia(selected.slug):null;const mrp=selected?tileReferencePrice(selected.slug):null;
  const net=Number(area),allow=Number(waste);const valid=area.trim()!==""&&waste.trim()!==""&&Number.isFinite(net)&&net>0&&net<=100000&&Number.isFinite(allow)&&allow>=0&&allow<=25;
  const required=valid?net*(1+allow/100):0;const coverage=ref?.coverage?ref.coverage*10.7639104167:0;const boxes=coverage?Math.ceil(required/coverage):null;const billed=boxes&&coverage?boxes*coverage:required;

@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import {useSyncExternalStore} from "react";
 import {loadPublicFeed} from "@/modules/catalog/public-feed-client";
 import {subscribeCatalogPriceSignal} from "./catalog-price-signal";
@@ -22,7 +22,7 @@ function scheduleExpiry(){
 function refresh(force=false){
  removeExpired();scheduleExpiry();
  if(force){invalidated=true;offers=empty;lastLoaded=0;notify();}
- if(active||!listeners.size||document.visibilityState==="hidden"||(!invalidated&&Date.now()-lastAttempt<60000))return;
+ if(active||!listeners.size||document.visibilityState==="hidden"||navigator.onLine===false||(!invalidated&&Date.now()-lastAttempt<60000))return;
  invalidated=false;
  lastAttempt=Date.now();
  active=loadPublicFeed("offers").then(value=>{
@@ -40,7 +40,7 @@ function onVisible(){
 function subscribe(listener:()=>void){
  listeners.add(listener);
  if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true));timer=setInterval(()=>refresh(),60000)}
- return ()=>{listeners.delete(listener);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;stopSignal?.();stopSignal=undefined;document.removeEventListener("visibilitychange",onVisible)}};
+ return ()=>{listeners.delete(listener);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;stopSignal?.();stopSignal=undefined;document.removeEventListener("visibilitychange",onVisible);}};
 }
 const money=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2});
 const date=new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Kolkata"});
