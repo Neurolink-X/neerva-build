@@ -357,7 +357,7 @@ async function main(){
     await page.getByRole("heading",{name:"Get Neerva on your device"}).waitFor({state:"visible"});
     assert.equal(await page.evaluate(()=>localStorage.getItem("neerva-installed-v1")),null,"recovery clears only installation preference");
     await page.goto(base+"/",{waitUntil:"load"});
-    await page.locator(".neerva-install-banner").waitFor({state:"visible"});
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"manual recovery does not trigger an immediate popup");
     // Separately emulate the standalone browser media query before app hydration.
     const standaloneCtx=await browser.newContext({viewport:{width:390,height:844}});
     try{
@@ -393,11 +393,27 @@ async function main(){
     const expectedUnauth=process.env.NEERVA_RFQ_INTAKE_ENABLED==="true"&&process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?401:503;
     assert.equal(unauth.status(),expectedUnauth,"RFQ must fail closed: 401 only when intake and auth are enabled, otherwise 503");
     await page.goto(base+"/",{waitUntil:"load"});
-    await page.locator(".neerva-install-banner").waitFor({state:"visible",timeout:15000});
-    assert.equal(await page.locator(".neerva-install-banner").count(),1,"discoverable installation help is available on first visit without scroll");
-     assert.equal(await page.locator(".neerva-install-banner").locator("a,button").filter({hasText:/^(How to install|Install app)$/}).count(),1,"browser-specific install help entry is usable");
-     await page.locator(".neerva-install-banner").getByRole("button",{name:"Not now"}).click();
-     assert.equal(await page.locator(".neerva-install-banner").count(),0,"install assistance dismisses cleanly");
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"no immediate arrival promotion");
+    await page.locator(".nbh-mobile-menu a[href='/install']").waitFor({state:"attached"});
+    const emitInstallPrompt=()=>page.evaluate(()=>{
+      const event=new Event("beforeinstallprompt",{cancelable:true});
+      Object.assign(event,{prompt:async()=>undefined,userChoice:Promise.resolve({outcome:"dismissed"})});
+      window.dispatchEvent(event);
+    });
+    await emitInstallPrompt();
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"native prompt is not promoted immediately");
+    const banner=page.locator(".neerva-install-banner");
+    await banner.waitFor({state:"visible",timeout:15000});
+    assert.equal(await banner.getByRole("button",{name:"Install free app",exact:true}).count(),1,"only real installation is promoted");
+    assert.equal(await banner.getByRole("link").count(),0,"manual installation help remains in navigation, not popup");
+    await banner.getByRole("button",{name:"Continue browsing",exact:true}).click();
+    await banner.waitFor({state:"detached"});
+    assert.ok(await page.evaluate(()=>Number(localStorage.getItem("neerva-install-dismissed-until-v2"))>Date.now()),"dismissal persists cooldown");
+    await page.reload({waitUntil:"load"});
+    await page.locator(".nbh-mobile-menu a[href='/install']").waitFor({state:"attached"});
+    await emitInstallPrompt();
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"cooldown does not remove manual navigation");
+    // Keep testing private and transaction routes without install interference.
     // Payment safety: public pricing is readable; unauthenticated users must not
     // see a simulated paid QR or receive an entitlement from a bare POST.
     await page.goto(base+"/studio-pricing",{waitUntil:"load"});

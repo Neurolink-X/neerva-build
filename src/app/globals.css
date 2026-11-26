@@ -209,3 +209,10 @@ footer.unified-footer .unified-footer-groups nav a{display:flex;align-items:cent
 /* A single compact shared header: keep navigation reachable on narrow screens. */
 @media(max-width:1120px){.site-header{display:flex;flex-wrap:nowrap;justify-content:space-between;padding-inline:clamp(10px,2.5vw,24px);gap:8px}.site-header .brand{margin-right:auto;min-width:0;flex:0 1 auto;white-space:nowrap}.site-header .header-utility{margin-left:0;gap:8px;flex:0 0 auto;order:1}.site-header .site-mobile-menu{order:2;flex:0 0 auto}.site-header .header-quote{display:none}.site-header .site-mobile-menu summary,.site-header .header-install,.site-header .nb-shop-nav{min-height:44px;display:inline-flex;align-items:center;justify-content:center}}
 @media(max-width:390px){.site-header .header-install{display:none}.site-header .header-utility{gap:4px}.site-header .brand{font-size:11px;gap:5px}.site-header .site-mobile-menu summary{padding-inline:8px}}
+
+/* Native-install promotion: compact, non-modal and safe-area aware. */
+.neerva-install-banner{width:min(440px,calc(100% - 24px));bottom:max(16px,env(safe-area-inset-bottom));padding:16px;flex-direction:column;align-items:stretch;gap:13px;border-radius:18px}
+.neerva-install-copy{display:flex;gap:12px;align-items:flex-start;min-width:0}.neerva-install-copy>div{min-width:0}.neerva-install-mark{display:grid;place-items:center;width:42px;height:42px;flex:none;background:#ac5739;color:#fff;border-radius:12px 12px 12px 4px;font:24px Georgia,serif}.neerva-install-copy strong{display:block;font-size:16px;line-height:1.3}.neerva-install-copy p{font-size:13px;line-height:1.5;margin:5px 0 0}
+.neerva-install-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}.neerva-install-actions button{min-height:46px;line-height:1.25;padding:9px 10px}.neerva-install-actions button:focus-visible{outline:3px solid #a85135;outline-offset:2px}.neerva-install-actions button:disabled{opacity:.7}
+@media(max-width:340px){.neerva-install-banner{padding:12px}.neerva-install-actions button{font-size:12px}}
+@media print{.neerva-install-banner{display:none!important}}

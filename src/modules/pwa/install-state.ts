@@ -3,8 +3,8 @@ export function installedDisplayMode(modes:readonly boolean[],iosStandalone:bool
  return modes.some(Boolean)||iosStandalone;
 }
 
-/** Manual browser installation remains discoverable even without a native prompt. */
-export function showInstallOffer(state:{ready:boolean;installed:boolean;dismissed:boolean;accepted:boolean;path:string|null}):boolean{
- const privateFlow=/^\/(?:install|account|admin|dealer|checkout|basket|quotes|orders|support|my-project)(?:\/|$)/.test(state.path??"");
- return state.ready&&!state.installed&&!state.dismissed&&!state.accepted&&!privateFlow;
+export const INSTALL_OFFER_DELAY_MS=6000;
+/** Promote only on the homepage, with a real browser install event. Manual help stays in navigation. */
+export function showInstallOffer(state:{ready:boolean;installed:boolean;dismissed:boolean;accepted:boolean;path:string|null;available:boolean}):boolean{
+ return state.ready&&state.available&&!state.installed&&!state.dismissed&&!state.accepted&&state.path==="/";
 }
