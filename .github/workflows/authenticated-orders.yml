@@ -116,6 +116,7 @@ jobs:
             if curl -fsS http://127.0.0.1:3000/ >/dev/null; then break; fi
             sleep 2
           done
+          node scripts/e2e/api-connectivity.mjs | tee test-results/authenticated/api-connectivity.jsonl
           node scripts/e2e/authenticated-direct-orders.mjs | tee test-results/authenticated/result.json
           node scripts/ops/rehearse-studio-concurrency.mjs
           node scripts/ops/rehearse-order-acceptance.mjs
