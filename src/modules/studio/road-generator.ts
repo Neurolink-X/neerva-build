@@ -368,10 +368,10 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
  const W=Math.min(36,aw),D=Math.min(85,ad),sb={...base,leftFt:base.leftFt+(aw-W)/2,rightFt:base.rightFt+(aw-W)/2,rearFt:base.rearFt+ad-D,verified:false};
  const plans:PlanModel[]=[],seen=new Set<string>(),meshes=new Set<string>();
  type Slot={floor:number;x:number;y:number;w:number;d:number;capacity:number;count:number;key:string};
- for(let recipe=0;recipe<144&&plans.length<limit;recipe++){
-  const spine=4+recipe%2,left=round((W-spine)/2+[0,-2,2,-1,1,3][Math.floor(recipe/2)%6]),right=W-spine-left;
+ for(let recipe=0;recipe<576&&plans.length<limit;recipe++){
+  const spine=4+recipe%2,left=round((W-spine)/2+[0,-2,2,-1,1,3][Math.floor(recipe/2)%6]),right=round(W-spine-left);
   if(left<9||right<9)continue;
-  const mirror=Math.floor(recipe/12)%2===1,variant=mirror?"parking-right":"parking-left",stairDepth=9+Math.floor(recipe/24)%3,kitchenDepth=8+Math.floor(recipe/72)%2*2;
+  const mirror=Math.floor(recipe/12)%2===1,variant=mirror?"parking-right":"parking-left",stairDepth=9+Math.floor(recipe/24)%3,kitchenDepth=8+Math.floor(recipe/72)%2*2,entryDepth=4+Math.floor(recipe/144)%2,bedTarget=12+Math.floor(recipe/288)%2*3;
   const rooms:Room[]=[],openings:Opening[]=[],joins:[string,string][]=[],slots:Slot[]=[];
   const add=(id:string,label:string,kind:RoomKind,floor:number,x:number,y:number,w:number,d:number)=>rooms.push(room(id,label,kind,floor,sb.leftFt+(mirror?W-x-w:x),sb.frontFt+y,w,d));
   function slot(floor:number,x:number,y:number,w:number,d:number,key:string){
@@ -383,8 +383,8 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
    add(hall,"Access passage","corridor",floor,left,floor===0?16:0,spine,D-(floor===0?16:0));
    if(floor===0){
     add("wide-front",b.parking?"Car parking":"Front garden",b.parking?"parking":"terrace",0,0,0,left,16);
-    add("wide-entry","Front verandah","verandah",0,left,0,W-left,4);
-    add("wide-living","Living room","living",0,left,4,W-left,12);
+    add("wide-entry","Front verandah","verandah",0,left,0,W-left,entryDepth);
+    add("wide-living","Living room","living",0,left,entryDepth,W-left,16-entryDepth);
     joins.push(["wide-entry","wide-living"],["wide-living",hall]);
     add("wide-kitchen","Kitchen","kitchen",0,left+spine,16,right,kitchenDepth);
     add("wide-bath-0","Bath / WC","bath",0,left+spine,16+kitchenDepth,right,6);
@@ -412,7 +412,7 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
   for(const s of slots){
    const openId="wide-open-"+s.floor+"-"+s.key;
    if(!s.count){add(openId,"Open court / terrace","terrace",s.floor,s.x,s.y,s.w,s.d);continue}
-   const minDepth=Math.max(10,Math.ceil(96/s.w),s.w/2.5),bedDepth=Math.min(16,Math.max(minDepth,Math.floor(s.d/s.count)));
+   const minDepth=Math.max(10,Math.ceil(96/s.w),s.w/2.5),bedDepth=Math.min(Math.floor(s.d/s.count),Math.max(minDepth,bedTarget));
    for(let i=0;i<s.count;i++){const id="wide-bed-"+(++n);add(id,"Bedroom "+n,"bedroom",s.floor,s.x,s.y+i*bedDepth,s.w,bedDepth);joins.push(["wide-hall-"+s.floor,id])}
    const extra=s.d-s.count*bedDepth;
    if(extra>.1)add(openId,"Open court / terrace","terrace",s.floor,s.x,s.y+s.count*bedDepth,s.w,extra);
