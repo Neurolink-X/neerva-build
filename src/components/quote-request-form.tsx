@@ -48,7 +48,8 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   submissionLock.current=true;setBusy(true);setMessage(null);
   const element=event.currentTarget,form=new FormData(element);
   try{
-   const session=await supabase.auth.getSession();
+   let timer:ReturnType<typeof setTimeout>|undefined;
+   const session=await Promise.race([supabase.auth.getSession(),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error("Account check timed out")),8000)})]).finally(()=>clearTimeout(timer));
    const token=session.data.session?.access_token;
    if(!token||!session.data.session?.user.email_confirmed_at){setVerified(false);setMessage({kind:"error",text:"Please verify your email and sign in again."});return;}
    const requestedDate=String(form.get("requestedDate")??"");
