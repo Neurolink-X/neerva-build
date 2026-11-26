@@ -47,6 +47,7 @@ const manifest={
  "/api/admin/account-recovery":["POST"],
  "/api/admin/dealer-members":["GET","POST"],
  "/api/dealer/overview":["GET"],
+ "/api/dealer/onboarding":["GET","POST"],
  "/api/admin/audit":["GET"],
  "/api/admin/blog":["GET","POST","PATCH"],
  "/api/admin/catalog/campaigns":["GET","POST","PATCH"],
@@ -105,6 +106,9 @@ test("every API route is accounted for by the role and method contract",()=>{
   assert.deepEqual([...actual].sort(),[...expectedMethods].sort(),route+": declared HTTP methods differ");
   if(route.startsWith("/api/admin/")){
    assert.match(code,/requireAdmin|has_platform_role/,route+" must verify server-side administrator authorization");
+  }else if(route==="/api/dealer/onboarding"){
+   assert.match(code,/requireAuth/,route+" must authenticate applicants before approval");
+   assert.match(code,/neerva_save_dealer_application/);
   }else if(route.startsWith("/api/dealer/")){
    assert.match(code,/requireDealer/,route+" must check approved dealer + tenant roles");
   }else if(route.startsWith("/api/customer/")||route==="/api/orders"||route==="/api/direct-orders"||route==="/api/rfqs"||
