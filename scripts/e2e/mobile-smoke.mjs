@@ -163,6 +163,20 @@ async function main(){
    assert.ok(cardRows.every(r=>r.height<=2&&r.cta<=3),"category cards in each row have equal height and aligned actions");
    assert.equal(await page.locator("footer.unified-footer").count(),1,"home shares the unified footer");
    assert.equal(await page.locator("footer.unified-footer nav").count(),4,"footer groups are structured");
+   const footer=page.locator("footer.unified-footer");
+   const footerLayout=await footer.evaluate(el=>{
+    const groups=[...el.querySelectorAll(".unified-footer-groups nav")];
+    const rects=groups.map(g=>g.getBoundingClientRect());
+    const links=[...el.querySelectorAll(".unified-footer-groups a")].filter(a=>a.getClientRects().length);
+    const b=el.getBoundingClientRect();
+    return {columns:new Set(rects.map(r=>Math.round(r.left))).size,topAligned:Math.abs(rects[0].top-rects[1].top)<=2,overflow:el.scrollWidth>el.clientWidth+2,linkFits:links.every(a=>{const r=a.getBoundingClientRect();return r.left>=b.left-1&&r.right<=b.right+1}),touch:links.every(a=>a.getBoundingClientRect().height>=43),height:b.height,legal:el.querySelectorAll(".unified-footer-legal a").length};
+   });
+   assert.equal(footerLayout.columns,v.w<=900?2:4,"footer columns adapt to viewport");
+   assert.ok(footerLayout.topAligned&&!footerLayout.overflow&&footerLayout.linkFits,"footer headings and links stay within the layout");
+   if(v.w<=650)assert.ok(footerLayout.touch,"mobile footer targets remain at least 44px");
+   assert.equal(footerLayout.legal,3,"legal policies have a compact dedicated row");
+   assert.ok(footerLayout.height<1000,"footer avoids excessive vertical whitespace");
+   await footer.screenshot({path:path.join("test-results/mobile",v.w+"-unified-footer.png"),animations:"disabled"});
    await page.locator(".nbh-material-options summary").first().click();
    assert.equal(await page.locator(".nbh-material-options[open]").count(),1,"subcategory links remain expandable");
    for(const category of ["bricks-blocks","plumbing","tiles","hardware"]){
