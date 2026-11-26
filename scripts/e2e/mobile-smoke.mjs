@@ -1106,6 +1106,20 @@ async function main(){
     },compactFirstId);
     assert.equal(await page.getByRole("button",{name:"First floor"}).count(),0);
     await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
+    // Large-home input, full 24-option gallery and the exact selected 3D floor.
+    await page.goto(base+"/design-studio/portfolio?width=36&depth=65&floors=2&bedrooms=6&road=W&parking=true",{waitUntil:"load"});
+    await page.getByRole("img",{name:/Road on W side/}).waitFor();
+    assert.equal(await page.locator(".nroad-variants button").count(),24);
+    assert.match(await page.locator(".nroad-plan-summary").innerText(),/6\s*Bedrooms total/);
+    const firstLargeId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
+    await page.locator(".nroad-variants button").last().click();
+    await page.getByRole("button",{name:"First floor",exact:true}).click();
+    await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
+    await page.waitForFunction(previous=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")!==previous&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")&&b.getAttribute("data-selected-floor")==="1"},firstLargeId);
+    await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=2&bedrooms=6&road=N&parking=true",{waitUntil:"load"});
+    assert.equal(await page.locator(".nroad-form").getByRole("combobox",{name:"Total bedrooms",exact:true}).inputValue(),"6");
+    await page.locator(".nroad-error").waitFor();
+    assert.equal(await page.locator(".nroad-variants button").count(),0,"Impossible brief must not show fabricated layouts");
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"load"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
