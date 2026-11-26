@@ -107,13 +107,22 @@ async function main(){
     const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
     assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
     assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
-    assert.ok(await gallery.evaluate(el=>new Set([...el.querySelectorAll("button")].map(b=>getComputedStyle(b).borderColor+"|"+getComputedStyle(b).backgroundColor)).size===1),"all four cards retain the neutral original layout without a selected mark");
+    assert.ok(await gallery.evaluate(el=>{const active=el.querySelector("button[aria-pressed=true]"),other=el.querySelector("button[aria-pressed=false]");return active&&other&&getComputedStyle(active).borderColor!==getComputedStyle(other).borderColor}),"active house is visually distinguishable without a badge");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
     const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
     assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
     await page.getByRole("button",{name:/100 gaj family home/}).click();
+    assert.match(await page.locator(".paint-sample-feedback").innerText(),/100 gaj family home/);
     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="compact-family"&&!!document.querySelector(".paint-preview-actions button")&&c.getBoundingClientRect().height>0});
     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect(),p=c.parentElement.getBoundingClientRect();return Math.abs(r.width/r.height-c.width/c.height)<.025&&r.left>=p.left-1&&r.right<=p.right+1&&p.right<=innerWidth+1}),v.w+"px full facade fits its source aspect ratio");
+    if(v.w<=430&&v.h>560){
+     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+     const pattern=page.locator(".wall-pattern-options button").first();
+     await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
+     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");if(!c)return false;const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0},null,{timeout:3000});
+     await pattern.click();
+     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");if(!c)return false;const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0},null,{timeout:3000});
+    }
     await gallery.screenshot({path:path.join("test-results/mobile",v.w+"-facade-gallery.png"),animations:"disabled"});
    }finally{await ctx.close()}
   }
@@ -921,9 +930,11 @@ async function main(){
     fs.writeFileSync("test-results/mobile/facade-pixel-evidence.json",JSON.stringify({scope:"390px Chromium canvas sample points; elapsed includes browser automation and is not field INP",samples:evidence},null,2));
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const patternButton=page.getByRole("button",{name:"Diamond lattice",exact:true});
-    await patternButton.evaluate(el=>el.scrollIntoView({block:"center",behavior:"instant"}));
+    await patternButton.evaluate(el=>el.scrollIntoView({block:"end",behavior:"instant"}));
+    await page.waitForFunction(()=>{const b=[...document.querySelectorAll(".wall-pattern-options button")].find(e=>e.textContent?.trim()==="Diamond lattice");if(!b)return false;const r=b.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;return y>0&&y<innerHeight&&b.contains(document.elementFromPoint(x,y));});
     const stableScroll=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(window.scrollY)))));
-    await patternButton.click();
+    const hit=await patternButton.boundingBox();assert.ok(hit);
+    await page.mouse.click(hit.x+hit.width/2,hit.y+hit.height/2);
     const afterPatternScroll=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(window.scrollY)))));
     assert.ok(Math.abs(afterPatternScroll-stableScroll)<=3,"choosing a visible design must not jump the page to the house");
     assert.equal(await patternButton.getAttribute("aria-pressed"),"true");
@@ -1020,7 +1031,7 @@ async function main(){
     const floorToggle=page.getByRole("button",{name:"First floor"});
     await floorToggle.click();
     assert.equal(await floorToggle.getAttribute("aria-pressed"),"true","G+1 levels must switch");
-    const roadSelector=page.getByLabel("Road along which edge?");
+    const roadSelector=page.locator(".nroad-form").getByRole("combobox",{name:"Road along which edge?",exact:true});
     await roadSelector.selectOption("E");
     assert.equal(await page.getByRole("img",{name:/Road on E side/}).count(),1,"east-side road is still the entry edge");
     const plotInputs=page.locator(".nroad-controls input[type=number]");
@@ -1033,6 +1044,22 @@ async function main(){
     await plotInputs.nth(1).fill("50");
     await page.getByRole("img",{name:/Road on E side/}).waitFor();
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
+    await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=2&bedrooms=1&road=N&parking=false",{waitUntil:"load"});
+    const floorSelector=page.locator(".nroad-form").getByRole("combobox",{name:"Levels",exact:true});
+    await floorSelector.waitFor({state:"visible"});
+    assert.equal(await floorSelector.count(),1,"floor selector has a unique accessible name");
+    assert.equal(await floorSelector.inputValue(),"2","requested G+1 is preserved before explicit recovery");
+    await page.getByRole("button",{name:"Show ground-floor 1 BHK plan",exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector('.nroad-form select[name="floors"]')?.value==="1");
+    assert.equal(await floorSelector.inputValue(),"1","explicit recovery selects one floor");
+    await page.getByRole("img",{name:/Road on N side/}).waitFor();
+    assert.equal(await page.locator(".nroad-error").count(),0,"validated recovery clears the unsupported-plan notice");
+    assert.equal(await page.locator(".nroad-variants button").count(),6,"standard plot has six geometry-distinct 1 BHK choices");
+    await page.locator(".nroad-variants button").last().click();
+    assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
+    assert.match(await page.locator(".nroad-selection-feedback").innerText(),/Layout 6 of 6 selected/);
+    await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")});
     await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=1&bedrooms=1&road=W&parking=false",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
     assert.equal(await page.locator(".nroad-variants button").count(),2,"compact 1 BHK has two genuine kitchen orientations");
@@ -1113,7 +1140,7 @@ async function main(){
       await page.locator(".nbh-studio-back").click();assert.equal(await dimensions.nth(0).inputValue(),w);assert.equal(await dimensions.nth(1).inputValue(),d);
       await page.locator(".nbh-studio-generate").click();assert.equal(await page.locator("#nbh-studio-bedrooms").inputValue(),"2");assert.equal(await page.locator("#nbh-studio-parking").inputValue(),"false");
       await link.click();await page.waitForURL("**/design-studio/portfolio?**");await page.locator(".nroad-form").waitFor({state:"visible"});
-      assert.equal(await page.getByLabel("Total bedrooms").inputValue(),"2");assert.equal(await page.getByLabel("Car parking").inputValue(),"false");
+      assert.equal(await page.locator(".nroad-form").getByRole("combobox",{name:"Total bedrooms",exact:true}).inputValue(),"2");assert.equal(await page.locator(".nroad-form").getByRole("combobox",{name:"Car parking",exact:true}).inputValue(),"false");
       assert.equal(await page.locator("summary").filter({hasText:/Coordinated design|China and seismic/}).count(),0,"no unrelated educational banner above planner");
       await page.goto(base+"/",{waitUntil:"load"});await page.locator("#nbh-studio-preset").selectOption("custom");
     }

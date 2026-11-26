@@ -51,6 +51,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
  const metrics=useMemo(()=>plan?planMetrics(plan):null,[plan]);
  const hasPlan=!!plan;
+ const fewerLevels=brief.bedrooms<brief.floors&&brief.bedrooms>=1&&brief.bedrooms<=3?brief.bedrooms as 1|2|3:null;
+ const alternative=useMemo(()=>!hasPlan&&fewerLevels?generateSpatialPortfolio({...brief,floors:fewerLevels},1).plans[0]??null:null,[brief,hasPlan,fewerLevels]);
  // Download/parse the shared 3D chunk after useful content on capable devices.
  // Warming never mounts a canvas or allocates WebGL before it is needed.
  useEffect(()=>{
@@ -92,7 +94,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
     <form onSubmit={e=>e.preventDefault()} className="nroad-form">
      <label>{str("Frontage / width (ft)","चौड़ाई (फीट)")}<input type="number" min="10" max="200" step="any" value={brief.widthFt} onChange={e=>update("widthFt",Number(e.target.value))}/></label>
      <label>{str("Plot depth (ft)","लंबाई (फीट)")}<input type="number" min="15" max="250" step="any" value={brief.depthFt} onChange={e=>update("depthFt",Number(e.target.value))}/></label>
-     <label>{str("Road along which edge?","सड़क किस दिशा में है?")}<select value={brief.roadSide} onChange={e=>update("roadSide",e.target.value as RoadSide)}>
+     <label>{str("Road along which edge?","सड़क किस दिशा में है?")}<select name="roadSide" aria-label={str("Road along which edge?","सड़क किस दिशा में है?")} value={brief.roadSide} onChange={e=>update("roadSide",e.target.value as RoadSide)}>
       {(["N","E","S","W"] as const).map(side=><option key={side} value={side}>{({N:"North",E:"East",S:"South",W:"West"} as const)[side]}</option>)}
      </select></label>
      <div className="nroad-road-help" role="status">
@@ -102,7 +104,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      </div>
      <details className="nroad-advanced nroad-site-shape"><summary>{str("Plot shape: rectangle or L-shaped land","प्लॉट का आकार: चौकोर या L शेप")}</summary>
       <p>{str("For an L-shaped plot, mark a missing rear corner. The model leaves an entire side strip unbuilt to avoid placing rooms outside your land. A surveyor must confirm boundaries.","L आकार के प्लॉट में पीछे का कटा हुआ कोना बताएं। नक्शा सुरक्षित जगह तक सीमित रहता है, जमीन की सही नाप सर्वेयर से जाँचें।")}</p>
-      <label>{str("Site outline","प्लॉट का आकार")}<select value={brief.siteShape?.kind??"rectangle"}
+      <label>{str("Site outline","प्लॉट का आकार")}<select name="siteShape" aria-label={str("Site outline","प्लॉट का आकार")} value={brief.siteShape?.kind??"rectangle"}
        onChange={e=>update("siteShape",e.target.value==="rectangle"?{kind:"rectangle"}:{kind:e.target.value as "rear-left-notch"|"rear-right-notch",notchWidthFt:2,notchDepthFt:10})}>
        <option value="rectangle">Rectangle · full frontage</option>
        <option value="rear-left-notch">L shape · rear-left missing corner</option>
@@ -116,11 +118,11 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
       </>}
       <p className="nroad-small">These are conservative concept constraints, not municipal setbacks, cadastral proof or licensed architecture.</p>
      </details>
-     <label>{str("Levels","मंज़िलें")}<select value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2|3)}>
+     <label>{str("Levels","मंज़िलें")}<select name="floors" aria-label={str("Levels","मंज़िलें")} value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2|3)}>
       <option value={1}>G · Ground</option><option value={2}>G+1 · Two levels</option><option value={3}>G+2 · Three levels</option></select></label>
-     <label>{str("Total bedrooms","कुल बेडरूम")}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>
+     <label>{str("Total bedrooms","कुल बेडरूम")}<select name="bedrooms" aria-label={str("Total bedrooms","कुल बेडरूम")} value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>
       {[1,2,3].map(n=><option key={n} value={n}>{n} BHK</option>)}</select></label>
-     <label>{str("Car parking","कार पार्किंग")}<select value={String(brief.parking)} onChange={e=>update("parking",e.target.value==="true")}>
+     <label>{str("Car parking","कार पार्किंग")}<select name="parking" aria-label={str("Car parking","कार पार्किंग")} value={String(brief.parking)} onChange={e=>update("parking",e.target.value==="true")}>
       <option value="true">Yes · minimum 8 × 16 ft</option><option value="false">No parking</option></select></label>
      <details className="nroad-advanced"><summary>{str("Setbacks (unverified)","सेटबैक (सत्यापित नहीं)")}</summary><p>{str("Only enter setbacks confirmed for your own plot. The engine will refuse layouts that cannot accommodate them.","अपने प्लॉट के सत्यापित सेटबैक ही भरें। जगह कम होने पर प्लान नहीं बनेगा।")}</p>
       {(["frontFt","rearFt","leftFt","rightFt"] as const).map(side=><label key={side}>{side.replace("Ft","")} (ft)
@@ -133,22 +135,24 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
    <div className="nroad-results">
     {!plan?<section className="nroad-error" role="alert">
      <h2>{str("No circulation-safe plan for this brief","इस मांग के अनुसार सुरक्षित रास्ते वाला प्लान नहीं है")}</h2>
+     {fewerLevels&&<><p>{str("Your selected bedroom count is lower than the number of floors. This planner currently supports at least one bedroom on each floor; it does not yet generate bedroom-free levels.","चुने गए बेडरूम मंज़िलों से कम हैं। अभी हर मंज़िल पर कम से कम एक बेडरूम वाला नक्शा उपलब्ध है।")}</p>{alternative&&<button type="button" onClick={()=>update("floors",fewerLevels)}>{fewerLevels===1?str("Show ground-floor 1 BHK plan","एक मंज़िल का 1 BHK नक्शा देखें"):str("Show validated "+fewerLevels+"-level plan",fewerLevels+" मंज़िल का नक्शा देखें")}</button>}</>}
      <ul>{result.blockers.map(msg=><li key={msg}>{msg}</li>)}</ul>
-     <p>{str("Try G+1, fewer bedrooms, or review parking and setbacks. We do not shrink rooms below minimums to fabricate a fit.",
-       "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>
+     {!fewerLevels&&<p>{str("Try G+1, fewer bedrooms, or review parking and setbacks. We do not shrink rooms below minimums to fabricate a fit.",
+       "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>}
     </section>:<>
      <p className="nroad-jump"><a href="#selected-plan-drawing">Jump to the selected exact 2D + 3D plan ↓</a></p>
      <div className="nroad-head nroad-choices"><h2>{str("Room-layout options checked for your plot","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} room-layout options, same plot</span></div>
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=>{const {widthFt:w,depthFt:d,roadSide:side}=v.plot;const dim=siteDimensions(w,d,side),road=roadSegment(w,d,side);const boundary=siteOutline(w,d,v.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,side));return <button key={v.id} type="button" aria-pressed={v.id===plan.id}
-       onClick={()=>{setChosen(i);document.getElementById("selected-plan-drawing")?.scrollIntoView({block:"start"})}}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} role="img" aria-label={`Floor ${floor+1} layout preview ${i+1}: ${w} by ${d} feet, road ${side}`}>
+       onClick={()=>setChosen(i)}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} role="img" aria-label={`Floor ${floor+1} layout preview ${i+1}: ${w} by ${d} feet, road ${side}`}>
        <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#f7f5ec" stroke="#55765a" strokeWidth=".45"/>
        {v.rooms.filter(r=>r.floor===floor).map(r=>{const box=roadRect(r,w,d,side);return <rect key={r.id} x={box.x} y={box.y} width={box.w} height={box.d}
         fill={({parking:"#d4e6e0",verandah:"#fff3d9",living:"#e0ead9",dining:"#e8ebd7",kitchen:"#f0dfcc",bedroom:"#dce2f1",bath:"#c7e3f0",stairs:"#d4d4d4",corridor:"#f4efd9",utility:"#e5d5c4",lounge:"#d9e8cd",terrace:"#dce8df"} as Record<string,string>)[r.kind]??"#e7e4da"} stroke="#496452" strokeWidth=".18"/>})}
        <line x1={road.start.x} x2={road.end.x} y1={road.start.y} y2={road.end.y} stroke="#be6740" strokeWidth="1.1"/>
-      </svg><strong>{i+1}. {v.rooms.find(r=>r.id==="stairs-g")?.y===v.setbacks.frontFt?"Staircase beside parking":v.rooms.find(r=>r.id==="bed-g")?.y===v.setbacks.frontFt?"Bedroom beside parking":!v.parking&&!v.stairs.roomIds.length?"Compact 1 BHK":v.rooms.some(r=>r.id==="bed-g2")?"Two rear bedrooms":v.notes[0]?.includes("family-gallery")?"Gallery / family seating":v.notes[0]?.includes("rear-courtyard")?"Open rear courtyard":v.notes[0]?.includes("rear-baranda")?"Rear baranda / veranda":"Utility & wash"}</strong>
+      </svg><strong>{i+1}. {v.rooms.find(r=>r.id==="stairs-g")?.y===v.setbacks.frontFt?"Staircase beside parking":v.rooms.find(r=>r.id==="bed-g")?.y===v.setbacks.frontFt?"Bedroom beside parking":!v.parking&&!v.stairs.roomIds.length?(v.notes[0]==="Spacious living and dining"?"Spacious living 1 BHK":v.notes[0]==="Spacious private bedroom"?"Spacious bedroom 1 BHK":"Balanced 1 BHK"):v.rooms.some(r=>r.id==="bed-g2")?"Two rear bedrooms":v.notes[0]?.includes("family-gallery")?"Gallery / family seating":v.notes[0]?.includes("rear-courtyard")?"Open rear courtyard":v.notes[0]?.includes("rear-baranda")?"Rear baranda / veranda":"Utility & wash"}</strong>
        <span>{!v.parking?"Pedestrian entrance":v.variant==="parking-left"?"Car at left":"Car at right"} · {!v.parking&&!v.stairs.roomIds.length?"Living + dining":v.notes[0]?.includes("family hall")?"Family hall":v.notes[0]?.includes("lounge / drawing")?"Drawing lounge":"Dining + hall"}</span>
        <small>Kitchen {v.rooms.find(r=>r.id==="kitchen")!.x < v.plot.widthFt/2 ? "left" : "right"} · {v.plot.widthFt} × {v.plot.depthFt} ft · Floor {floor+1}</small></button>})}</div>
-     {result.plans.length<24&&<p className="nroad-small" role="status">Only {result.plans.length} geometry-distinct concept layouts passed for this exact plot. We do not duplicate walls to reach 24.</p>}
+     <p className="nroad-small nroad-selection-feedback" role="status">{str("Layout "+(activeOption+1)+" of "+result.plans.length+" selected. Your matching 2D and 3D views are below.","नक्शा "+(activeOption+1)+" / "+result.plans.length+" चुना गया। नीचे इसी नक्शे के 2D और 3D व्यू हैं।")} <a href="#selected-plan-drawing">{str("View selected plan ↓","चुना नक्शा देखें ↓")}</a></p>
+     {result.plans.length<24&&<p className="nroad-small">{brief.bedrooms===1?str("1 BHK options depend on usable space. Smaller plots may have fewer layouts; all shown options pass the concept geometry checks.","1 BHK विकल्प उपलब्ध जगह पर निर्भर हैं। सभी दिखाए गए नक्शों की ज्यामिति जाँची गई है।"):str("Only "+result.plans.length+" geometry-distinct concept layouts passed for this exact plot.","इस प्लॉट के लिए "+result.plans.length+" अलग नक्शे जाँचे गए हैं।")}</p>}
      <div className="nroad-save"><button type="button" disabled={saving} onClick={()=>void saveDraft()}>{saving?"Saving…":str("Save this plot-specific concept privately","अपना नक्शा सुरक्षित सेव करें")}</button>{saveInfo&&<p role="status">{saveInfo} {saveInfo.startsWith("Sign in")&&<Link href="/account">Sign in →</Link>}</p>}</div>
      <div className="nroad-head" id="selected-plan-drawing"><h2>{str("Plan & room dimensions","प्लान और कमरों का नाप")}</h2><span>Road · {plan.plot.roadSide}</span></div>
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
@@ -162,7 +166,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The selected floor uses the same room footprints and openings. Wall thickness, stairs and finishes remain conceptual, not verified CAD/BIM.</p>
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
-     <div className="nroad-exterior-workspace">{plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}
+     <div className="nroad-exterior-workspace">{plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select name="facadeKit" aria-label={str("Balcony front style","बालकनी का डिज़ाइन")} value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>
      <div className="nroad-palette"><h2>{str("House colour mood","घर की रंग योजना")}</h2>
       <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>setPalette(x.id)}>

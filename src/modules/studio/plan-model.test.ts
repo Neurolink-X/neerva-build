@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {generateRoadPlans,pickDiverse,planSignature} from "./road-generator.ts";
+import {generateRoadPlans,generateSpatialPortfolio,pickDiverse,planSignature} from "./road-generator.ts";
 import {oppositeRoadSide,roadSegment,siteDimensions} from "./plan-coordinate.ts";
 import {validatePlan,overlapArea,planMetrics,wallBoxes,recolorMasked,sharedEdge,type PlanBrief} from "./plan-model.ts";
 const brief=(changes:Partial<PlanBrief>={}):PlanBrief=>({
@@ -139,4 +139,32 @@ test("plot changes update model identity and actual enclosed footprints, not jus
  assert.equal(small.plot.depthFt,50);assert.equal(large.plot.depthFt,52);
  assert.notEqual(planMetrics(small).roomFloorSqFt,planMetrics(large).roomFloorSqFt);
  assert.deepEqual(validatePlan(large),[]);
+});
+
+test("standard 18×50 and compact 15×30 no-parking ground 1 BHK share validated stair-free geometry",()=>{
+ for(const [widthFt,depthFt] of [[18,50],[15,30],[25,50]])for(const roadSide of ["N","E","S","W"] as const){
+  const input=brief({widthFt,depthFt,roadSide,parking:false});
+  const result=generateSpatialPortfolio(input);
+  assert.ok(result.plans.length>0,result.blockers.join("; "));
+  for(const p of result.plans){
+   assert.deepEqual(validatePlan(p),[]);
+   assert.equal(p.floors,1);assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,1);
+   assert.equal(p.stairs.roomIds.length,0);assert.equal(p.parking,null);
+   assert.equal(p.plot.roadSide,roadSide);
+   assert.ok(p.rooms.some(r=>r.kind==="living")&&p.rooms.some(r=>r.kind==="kitchen")&&p.rooms.some(r=>r.kind==="bath"));
+  }
+ }
+ const unsupported=generateSpatialPortfolio(brief({floors:2,bedrooms:1,parking:false}));
+ assert.equal(unsupported.plans.length,0);
+});
+
+test("standard no-parking 1 BHK offers six distinct validated room footprints",()=>{
+ const {plans,blockers}=generateSpatialPortfolio(brief({parking:false}));
+ assert.deepEqual(blockers,[]);assert.equal(plans.length,6);
+ assert.equal(new Set(plans.map(planSignature)).size,6);
+ assert.equal(new Set(plans.map(p=>p.id)).size,6);
+ assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size,3);
+ assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="bedroom")!.d)).size,3);
+ for(const p of plans)assert.deepEqual(validatePlan(p),[]);
+ assert.equal(generateSpatialPortfolio(brief({parking:false,widthFt:15,depthFt:30})).plans.length,2);
 });
