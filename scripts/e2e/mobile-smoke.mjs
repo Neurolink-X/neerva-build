@@ -731,7 +731,16 @@ async function main(){
     await floorsSelect.selectOption("1");
     assert.equal(await floorsSelect.inputValue(),"1","ground-floor selection must update the plot brief");
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
-    assert.equal(await page.locator(".nroad-diagram svg").getByText("BEDROOM 2",{exact:true}).count(),1);
+    const fitDrawing=page.locator(".nfit-primary-next .nroad-diagram");
+    // Verify the room programme independently of display text and tooltip markup.
+    await page.waitForFunction(()=>{const d=document.querySelector(".nfit-primary-next .nroad-diagram");return d?.getAttribute("data-selected-floor")==="0"&&d.getAttribute("data-total-bedrooms")==="2"&&d.getAttribute("data-bedroom-count")==="2"});
+    const fitBedrooms=fitDrawing.locator('svg g[data-room-kind="bedroom"]');
+    assert.equal(await fitBedrooms.count(),2,"ground-floor 2 BHK must contain exactly two actual bedroom geometries");
+    assert.equal(await fitDrawing.locator('svg g[data-room-kind="living"]').count()>=1,true,"hall geometry is required");
+    assert.equal(await fitDrawing.locator('svg g[data-room-kind="kitchen"]').count(),1,"kitchen geometry is required");
+    const roomLabels=await fitBedrooms.locator('text[data-room-label="true"]').allTextContents();
+    assert.deepEqual(roomLabels.sort(),["BEDROOM 1","BEDROOM 2"],"visible room labels must match their actual bedroom geometry");
+    assert.equal(await fitBedrooms.locator("title").count(),2,"each bedroom retains its independent descriptive tooltip");
     const cat=await page.goto(base+"/materials/steel",{waitUntil:"load"});
     assert.equal(cat?.status(),200,"steel category route");
     const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"load"});
