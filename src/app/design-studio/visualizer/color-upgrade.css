@@ -100,3 +100,14 @@
 .neerva-photo-stage .paint-reference-note{font-size:12px;line-height:1.4;color:#59685e;margin:5px 0 0}
 .paint-live-tools .visualizer-controls,.paint-adjacent-controls section{width:100%}
 @media(max-width:340px){.visualizer-app .paint-preview-actions{grid-template-columns:minmax(0,1fr)}}
+
+/* Gallery thumbnails fill their cards; the actual paint canvas retains its full geometry. */
+.visualizer-app .paint-sample-gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible;gap:8px;padding:0;align-items:stretch}
+.visualizer-app .paint-sample-gallery button{width:100%;min-width:0;padding:5px;border:2px solid #d5dfd4}
+.visualizer-app .paint-sample-gallery button[aria-pressed=true]{border-color:#254738}
+.visualizer-app .paint-sample-photo{aspect-ratio:4/3;width:100%;background:#edf0e9;overflow:hidden}
+.visualizer-app .paint-sample-photo img{object-fit:cover;object-position:center}
+.visualizer-app .paint-sample-gallery small{display:block;line-height:1.35}
+.visualizer-app .paint-canvas-frame canvas{width:100%;height:auto;object-fit:contain}
+@media(max-width:900px){.visualizer-app .paint-sample-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:320px){.visualizer-app .paint-sample-gallery{gap:5px}.visualizer-app .paint-sample-gallery button{padding:3px}}

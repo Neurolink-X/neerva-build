@@ -40,21 +40,22 @@ const contemporaryZones=[
  zone("entry","Entrance recess",[[200,355],[244,365],[282,357],[438,381],[438,397],[302,378],[302,545],[244,551],[244,383],[200,383]],[],undefined,880,738),
  zone("roof","Entrance frame",[[170,245],[484,349],[484,551],[466,555],[466,388],[170,325]],[],undefined,880,738)
 ] as const;
-// Existing local 18×50 ft family-home concept (900 sq ft / 100 sq yd).
-// Independent polygons are measured in the original 351×161 pixel reference.
+// Original 1200×800 vector concept. Exact geometry, no mask reused from the old photograph.
 const compactFamilyZones=[
- zone("left","Left upper wall",[[110,0],[162,0],[162,53],[110,53]], [rect(126,31,29,22)],undefined,351,161),
- zone("right","Right upper wall",[[176,0],[296,0],[296,67],[176,67]], [rect(198,26,31,26),rect(238,25,30,27),rect(180,0,14,67),rect(176,52,120,15)],undefined,351,161),
- zone("balcony","Balcony slab",[[100,69],[296,69],[296,88],[100,88]],[],undefined,351,161),
- zone("entry","Ground floor wall",[[100,88],[296,88],[296,129],[100,129]], [rect(123,105,34,24),rect(215,103,55,26),rect(177,88,15,41)],undefined,351,161),
- zone("boundary","Boundary walls",[[0,129],[97,129],[97,161],[0,161]], [rect(7,138,38,23),rect(59,142,25,19)],undefined,351,161),
- zone("boundary-right","Right boundary wall",[[298,129],[351,129],[351,161],[298,161]], [rect(306,140,20,21)],undefined,351,161)
+ zone("left","Left upper wall",rect(340,160,220,235),[rect(365,202,155,152)],undefined,1200,800),
+ zone("right","Right upper wall",rect(590,160,305,170),[rect(630,220,88,110),rect(740,221,116,109)],undefined,1200,800),
+ zone("balcony","Balcony slab",rect(330,395,570,30),[],undefined,1200,800),
+ zone("entry","Ground floor wall",rect(340,435,220,150),[rect(375,468,122,117)],undefined,1200,800),
+ zone("lower-recess","Right ground floor wall",rect(590,435,305,151),[rect(645,461,155,125)],undefined,1200,800),
+ zone("boundary","Left boundary wall",rect(185,578,138,90),[rect(218,578,64,90)],undefined,1200,800),
+ zone("boundary-right","Right boundary wall",rect(916,578,102,90),[rect(940,578,65,90)],undefined,1200,800),
+ zone("roof","Roof trim",rect(330,123,570,35),[],undefined,1200,800)
 ] as const;
 export const facadeSamples=[
  {id:"family",label:"Modern family home",description:"Street-facing two-storey home",src:"/images/studio/finished.webp",zones:facadeZones},
  {id:"contemporary",label:"Contemporary home",description:"Clean lines and contrasting cladding",src:"/images/studio/house-3.webp",zones:contemporaryZones},
  {id:"villa",label:"Premium villa",description:"Modern facade with terraces",src:"/images/studio/house-2.webp",zones:villaZones},
- {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 concept reference",src:"/images/studio/family/family-18x50.webp",zones:compactFamilyZones}
+ {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 architectural concept",src:"/images/studio/family/compact-100gaj-elevation.svg",zones:compactFamilyZones}
 ] as const;
 export type FacadeSampleId=typeof facadeSamples[number]["id"];
 export type FacadeZone=typeof facadeZones[number];

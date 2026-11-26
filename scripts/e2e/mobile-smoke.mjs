@@ -813,9 +813,10 @@ async function main(){
       {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100],[750,122],[750,316],[949,217],[963,106],[978,263],[1181,347],[1172,387]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350],[1210,292],[1050,360]]},
       {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
       {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]},
-      {id:"compact-family",label:/100 gaj family home/,w:351,h:161,paint:[[115,12],[280,36],[150,78],[280,95]],protect:[[140,40],[210,39],[245,115],[15,15]]}
+      {id:"compact-family",label:/100 gaj family home/,w:1200,h:800,paint:[[350,180],[600,175],[450,410],[350,455],[810,480],[195,600],[925,600],[400,140]],protect:[[400,250],[670,260],[700,510],[450,520],[15,15],[430,625],[750,355]]}
     ];
     assert.equal(await page.locator(".paint-sample-gallery button").count(),visualCases.length,"every house must have a pixel regression case");
+    assert.ok(await page.locator(".paint-sample-gallery").evaluate(el=>el.scrollWidth<=el.clientWidth+2&&[...el.querySelectorAll("button")].every(b=>b.getBoundingClientRect().right<=el.getBoundingClientRect().right+1)),"all house cards fit without horizontal clipping");
     const evidence=[];
     for(const sample of visualCases){
       await page.getByRole("button",{name:sample.label}).click();
@@ -1002,6 +1003,7 @@ async function main(){
     assert.equal(await dimensions.count(),2,"custom plotting accepts both frontage and depth");
     await dimensions.nth(0).fill("9");
     assert.equal(await page.locator(".nbh-studio-generate[href]").count(),0,"invalid dimensions must never open a fallback 18×50 plan");
+    assert.equal(await page.locator(".nbh-studio-step-link").count(),0,"invalid plot cannot bypass the step-two gate");
     for(const [w,d] of [["18","50"],["20","45"]]){
       await dimensions.nth(0).fill(w);
       await dimensions.nth(1).fill(d);
@@ -1009,8 +1011,10 @@ async function main(){
       const href=await link.getAttribute("href");
       assert.ok(href?.includes("width="+w+"&depth="+d), "selected custom plot must reach the geometry generator");
       assert.ok(href?.includes("floors=2&road=N"),"floor and road facing defaults are explicit");
-      await link.click();
+      assert.equal(await page.locator(".nbh-studio-step-link").getAttribute("href"),href,"step two and continue use the same validated plot");
+      await page.locator(".nbh-studio-step-link").click();
       await page.waitForURL("**/design-studio/portfolio?**");
+      await page.locator(".nroad-form").waitFor({state:"visible"});
       assert.ok(new URL(page.url()).searchParams.get("width")===w&&new URL(page.url()).searchParams.get("depth")===d,
         "portfolio must inherit selected dimensions");
       await page.goto(base+"/",{waitUntil:"load"});
