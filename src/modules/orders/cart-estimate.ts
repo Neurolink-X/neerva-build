@@ -6,12 +6,14 @@ export function estimateCart(items:CartItem[],pin:string,city:string,rates:unkno
  const matches=(x:{city:string;prefix:string|null;min:number},item:CartItem)=>validLocation&&x.city.trim().toLowerCase()===city.trim().toLowerCase()&&(!x.prefix||pin.startsWith(x.prefix))&&item.quantity>=x.min;
  const current=rates.filter((r):r is PublicRate=>validPublicRate(r,now)),campaigns=offers.filter((o):o is PublicOffer=>validPublicOffer(o,now));
  const lines=items.map(item=>{
+  if(!Number.isFinite(item.quantity)||item.quantity<.001||item.quantity>1000000||Math.abs(item.quantity*1000-Math.round(item.quantity*1000))>.00001)return null;
   const eligible=current.filter(r=>r.category===item.category&&r.slug===item.productSlug&&r.unit===item.unit&&matches(r,item));
   // A family reference with multiple SKU identities is not an exact price.
   if(new Set(eligible.map(r=>r.sku)).size!==1)return null;
   // Prefer most specific location and highest qualifying quantity slab; never use an unrelated cheaper price.
   const rank=(a:PublicRate,b:PublicRate)=>(b.prefix?.length??0)-(a.prefix?.length??0)||b.min-a.min||a.paise-b.paise;
   const r=eligible.sort(rank)[0];if(!r)return null;
+  if(eligible.some(v=>v.prefix===r.prefix&&v.min===r.min&&v.paise!==r.paise))return null;
   const deal=campaigns.filter(o=>o.category===r.category&&o.slug===r.slug&&o.sku===r.sku&&o.unit===r.unit&&o.basePaise===r.paise&&o.min===r.min&&o.prefix===r.prefix&&matches(o,item)).sort((a,b)=>a.offerPaise-b.offerPaise)[0];
   const milli=Math.round(item.quantity*1000),material=Number((BigInt(r.paise)*BigInt(milli)+500n)/1000n),net=Number((BigInt(deal?.offerPaise??r.paise)*BigInt(milli)+500n)/1000n);
   if(!Number.isSafeInteger(material)||!Number.isSafeInteger(net))return null;
