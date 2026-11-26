@@ -174,9 +174,9 @@ test("large 4–6 BHK requests preserve exact inputs and unique wall geometry",(
   const {plans,blockers}=generateSpatialPortfolio(brief,24);
   assert.equal(blockers.length,0,blockers.join(" / "));
   assert.equal(plans.length,24,"large plot should deliver all 24 distinct options");
-  assert.equal(new Set(plans.map(meshSignature)).size,plans.length);
+  assert.equal(new Set(plans.map(p=>meshSignature(p))).size,plans.length);
   assert.equal(new Set(plans.map(geometrySignature)).size,plans.length);
-  for(const p of plans){assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,bedrooms);assert.equal(p.floors,2);assert.equal(p.plot.widthFt,36);assert.equal(p.plot.depthFt,65);assert.equal(studioDesignFromPlan(p).bedrooms,bedrooms);}
+  for(const p of plans){assert.deepEqual(validatePlan(p),[]);assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,bedrooms);assert.equal(p.floors,2);assert.equal(p.plot.widthFt,36);assert.equal(p.plot.depthFt,65);assert.equal(studioDesignFromPlan(p).bedrooms,bedrooms);}
  }
 });
 test("small plot never silently downgrades requested 6 BHK",()=>{
