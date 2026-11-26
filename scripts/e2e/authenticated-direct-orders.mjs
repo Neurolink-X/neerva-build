@@ -106,3 +106,25 @@ const article=await fetch(new URL("/blog/editorial/"+slug,base),{signal:AbortSig
 const archived=await call(admin,editorialRoute,"PATCH",{post:{...post,status:"archived",reviewed:true},expectedVersion:2});assert.equal(archived.status,200);assert.equal(await visible(anonymous),0);assert.equal(await visible(signed),0);
 assert.equal((await fetch(new URL("/blog/editorial/"+slug,base),{signal:AbortSignal.timeout(20000)})).status,404);
 console.log(JSON.stringify({scope:"authenticated disposable staging API workflow; no physical dispatch or payment",completed:order.code,cancelled:cancel.data.order.code,checks:["guest denial","role isolation","validation","idempotency","admin fallback","price acceptance","delivery state","tracking","cancellation","editorial admin role isolation","draft privacy","publish","version conflict","archive"]}));
+
+const couponAdmin=createClient(db.origin,key,{auth:{persistSession:false,autoRefreshToken:false},global:{headers:{Authorization:"Bearer "+admin.token}}});
+const code="TEST-"+randomUUID().slice(0,8).toUpperCase();
+const promo={code,fixed_paise:5000,rate_bps:0,cap_paise:5000,minimum_paise:10000,starts_at:new Date(Date.now()-60000).toISOString(),ends_at:new Date(Date.now()+3600000).toISOString(),max_uses:1};
+assert.ok((await signed.from("checkout_coupons").insert(promo)).error,"Customer cannot create coupon");
+assert.ifError((await couponAdmin.from("checkout_coupons").insert(promo)).error);
+assert.equal((await signed.rpc("neerva_coupon_available",{p_code:code})).data,true);
+assert.equal((await call(customer,route,"POST",{...payload,idempotencyKey:randomUUID(),couponCode:"MISSING"})).status,409);
+const withCoupon={...payload,idempotencyKey:randomUUID(),couponCode:code};
+const couponOrder=await call(customer,route,"POST",withCoupon);assert.equal(couponOrder.status,201,JSON.stringify(couponOrder.data));
+assert.equal(couponOrder.data.order.coupon_status,"requested");
+const secondCoupon=await call(other,route,"POST",{...withCoupon,idempotencyKey:randomUUID()});assert.equal(secondCoupon.status,201);
+const quoteCoupon=id=>call(admin,adminRoute,"PATCH",{orderId:id,expectedStatus:"received",status:"price_ready",breakdown:{materialPaise:30000,taxPaise:0,freightPaise:1000,unloadingPaise:0},terms:"Disposable coupon test, no real delivery"});
+const competing=await Promise.all([quoteCoupon(couponOrder.data.order.id),quoteCoupon(secondCoupon.data.order.id)]);
+assert.deepEqual(competing.map(x=>x.status),[200,200]);assert.deepEqual(competing.map(x=>x.data.order.coupon_status).sort(),["applied","unavailable"]);
+const winnerIndex=competing.findIndex(x=>x.data.order.coupon_status==="applied"),winnerActor=winnerIndex===0?customer:other,winner=competing[winnerIndex].data.order;
+assert.equal(winner.discount_paise,5000);
+assert.equal(winner.total_paise,winner.material_paise+winner.freight_paise+winner.tax_paise+winner.unloading_paise+winner.platform_fee_paise-5000);
+assert.equal((await call(winnerActor,route,"PATCH",{orderId:winner.id,expectedStatus:"price_ready",status:"confirmed"})).status,200);
+assert.equal((await signed.rpc("neerva_coupon_available",{p_code:code})).data,false);
+assert.equal((await call(customer,route,"POST",withCoupon)).status,200,"Coupon receipt retry survives redemption");
+console.log("Coupon admin isolation, invalid code, concurrent cap, reviewed discount, redemption and retry verified.");
