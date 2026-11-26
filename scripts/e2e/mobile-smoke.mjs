@@ -563,7 +563,7 @@ async function main(){
     }finally{await standaloneCtx.close();}
     const account=await page.goto(base+"/account",{waitUntil:"load"});
     assert.equal(account?.status(),200,"authenticated account route");
-    assert.equal(await page.getByRole("heading",{name:/Access your projects and requests/}).count(),1,"account page must not show prelaunch placeholder");
+    assert.equal(await page.getByRole("heading",{name:/Your account. Your build./}).count(),1,"account page must not show prelaunch placeholder");
     if(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY){
       const form=page.locator("form.account-auth-form").filter({has:page.locator("input[name=password]")});
       await form.getByRole("button",{name:"Sign in securely →",exact:true}).waitFor({state:"visible"});
@@ -574,6 +574,19 @@ async function main(){
     }else{
       assert.equal(await page.getByText("Waiting for backend setup").count(),1,"unconfigured account must not collect passwords");
     }
+    // Exercise the actual account shells at narrow, landscape and wide sizes.
+    // Signed-in card/CRUD checks are reserved for isolated authenticated fixtures.
+    const previousAccountViewport=page.viewportSize();
+    for(const size of [{width:320,height:568},{width:360,height:800},{width:390,height:844},{width:600,height:900},{width:768,height:1024},{width:844,height:390},{width:1024,height:768},{width:1440,height:900},{width:1920,height:1080}]){
+      await page.setViewportSize(size);
+      for(const route of ["/account","/account/addresses"]){
+        await page.goto(base+route,{waitUntil:"load"});
+        const region=page.locator(".naccount-page");await region.waitFor();
+        const metrics=await region.evaluate(el=>{const r=el.getBoundingClientRect();const controls=[...el.querySelectorAll("button,input:not([type=checkbox]),select,textarea")].filter(n=>n.getClientRects().length);return {width:r.width,overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+2||el.scrollWidth>el.clientWidth+2,fit:controls.every(n=>{const b=n.getBoundingClientRect();return b.left>=r.left-1&&b.right<=r.right+1&&b.height>=44})}});
+        assert.ok(metrics.width>0&&!metrics.overflow&&metrics.fit,route+" responsive account controls at "+size.width+"px");
+      }
+    }
+    if(previousAccountViewport)await page.setViewportSize(previousAccountViewport);
     const unauth=await page.request.post(base+"/api/rfqs",{data:{idempotencyKey:"f1d3068d-3f5f-4e5c-a14e-2546fb9902ed"}});
     const expectedUnauth=process.env.NEERVA_RFQ_INTAKE_ENABLED==="true"&&process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?401:503;
     assert.equal(unauth.status(),expectedUnauth,"RFQ must fail closed: 401 only when intake and auth are enabled, otherwise 503");
