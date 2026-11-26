@@ -97,8 +97,9 @@ export async function PATCH(request:Request){
    if(cat.data?.status!=="published"||(product.brand_id&&brand.data?.status!=="published"))return err(409,"Publish the matching category and brand first.");
   }
   if(data.kind==="variant"){
-   const {data:variant}=await auth.client.from("product_variants").select("product_id,unit").eq("id",data.id).maybeSingle();
+   const {data:variant}=await auth.client.from("product_variants").select("product_id,unit,sku,attributes").eq("id",data.id).maybeSingle();
    if(!variant)return err(404,"Variant not found.");
+   if(/^NEERVA-REF-/i.test(variant.sku)||variant.attributes?.reference_only===true)return err(409,"This is a reference draft, not a verified SKU. Create a real SKU before publishing.");
    const {data:product}=await auth.client.from("products").select("status,category_id,slug").eq("id",variant.product_id).maybeSingle();
    if(product?.status!=="published")return err(409,"Publish the parent product first.");
    const {data:cat}=await auth.client.from("categories").select("slug,status").eq("id",product.category_id).maybeSingle();
