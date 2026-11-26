@@ -5,12 +5,13 @@ import {paintReferencePrice} from "@/modules/catalog/paint-references";
 import {tileReferencePrice} from "@/modules/catalog/tile-references";
 import {planningRate} from "@/modules/catalog/planning-rate";
 import {useSyncExternalStore} from "react";
+import {subscribeCatalogPriceSignal} from "./catalog-price-signal";
 import {validPublicRate,type PublicRate as Rate} from "@/modules/catalog/public-feed-validation";
 
 const listeners=new Set<()=>void>();
 let rates=new Map<string,Rate>(),request:Promise<void>|undefined,lastLoaded=0,lastAttempt=0;
 const rateKey=(category:string,slug:string,sku?:string,unit?:string)=>category+"|"+slug+"|"+(sku??"")+"|"+(unit??"");
-let timer:ReturnType<typeof setInterval>|undefined,expiry:ReturnType<typeof setTimeout>|undefined;
+let timer:ReturnType<typeof setInterval>|undefined,expiry:ReturnType<typeof setTimeout>|undefined,stopSignal:(()=>void)|undefined,invalidated=false;
 const notifyRates=()=>{for(const notify of listeners)notify()};
 function scheduleExpiry(){
  clearTimeout(expiry);
@@ -25,9 +26,11 @@ function prune(){
  for(const [key,rate] of rates)if(now-lastLoaded>=90000||rate.until&&Date.parse(rate.until)<=now){rates.delete(key);changed=true;}
  if(changed)notifyRates();
 }
-function refresh(){
+function refresh(force=false){
  prune();scheduleExpiry();
- if(request||!listeners.size||document.visibilityState==="hidden"||Date.now()-lastAttempt<15000)return;
+ if(force){invalidated=true;rates=new Map();lastLoaded=0;notifyRates();}
+ if(request||!listeners.size||document.visibilityState==="hidden"||(!invalidated&&Date.now()-lastAttempt<15000))return;
+ invalidated=false;
  lastAttempt=Date.now();
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),10000);
@@ -39,14 +42,14 @@ function refresh(){
    if(!validPublicRate(r,now))continue;
    for(const key of [rateKey(r.category,r.slug,r.sku),rateKey(r.category,r.slug),rateKey(r.category,r.slug,r.sku,r.unit),rateKey(r.category,r.slug,undefined,r.unit)])if(!next.has(key))next.set(key,r);
   }
-  rates=next;lastLoaded=now;
- }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{clearTimeout(timeout);request=undefined;notifyRates();scheduleExpiry()});
+  if(!invalidated){rates=next;lastLoaded=now;}
+ }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{clearTimeout(timeout);request=undefined;notifyRates();scheduleExpiry();if(invalidated)refresh()});
 }
 function onVisible(){if(document.visibilityState==="visible"){prune();scheduleExpiry();notifyRates();if(Date.now()-lastLoaded>=30000)refresh()}}
 function subscribe(notify:()=>void){
  listeners.add(notify);
- if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);timer=setInterval(refresh,15000)}
- return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;document.removeEventListener("visibilitychange",onVisible)}};
+ if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true));timer=setInterval(()=>refresh(),15000)}
+ return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;stopSignal?.();stopSignal=undefined;document.removeEventListener("visibilitychange",onVisible)}};
 }
 const noRate=()=>undefined;
 function currentRate(category:string,slug:string,sku?:string,unit?:string){
