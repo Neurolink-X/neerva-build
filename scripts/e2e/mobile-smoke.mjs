@@ -379,8 +379,9 @@ async function main(){
     const manifest=await page.request.get(base+"/manifest.webmanifest");
     assert.equal(manifest.status(),200,"manifest route");
     const appManifest=await manifest.json();
-    assert.equal(appManifest.name,"NEERVA BUILD","native launch uses concise brand name");
-    assert.equal(appManifest.short_name,appManifest.name,"launcher and startup brand agree");
+    assert.equal(appManifest.name,"NEERVA BUILD — Build better. Buy smarter.","native manifest provides brand and marketing tagline");
+    assert.equal(appManifest.short_name,"NEERVA BUILD","launcher retains the concise existing name");
+    assert.ok(appManifest.description.startsWith("Build better. Buy smarter."),"manifest description reinforces the same positioning");
     assert.equal(appManifest.id,"/","existing installed app identity stays unchanged");
     assert.equal(appManifest.start_url,"/","native startup opens home directly");
     assert.equal(appManifest.scope,"/","PWA scope remains unchanged");

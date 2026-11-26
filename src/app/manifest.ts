@@ -2,8 +2,8 @@ import type {MetadataRoute} from "next";
 import {launchBrand} from "@/modules/pwa/launch-brand";
 export default function manifest():MetadataRoute.Manifest{
  return {
-  id:"/",name:launchBrand.name,short_name:launchBrand.name,
-  description:"Plan your plot, explore construction material specifications, and prepare private dealer requests.",
+  id:"/",name:launchBrand.manifestName,short_name:launchBrand.name,
+  description:launchBrand.tagline+" Plan your home, compare materials and prepare dealer quotations.",
   start_url:"/",scope:"/",display:"standalone",display_override:["standalone","minimal-ui"],
   background_color:launchBrand.background,theme_color:launchBrand.theme,
   lang:"en-IN",
