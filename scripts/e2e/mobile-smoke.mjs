@@ -1105,7 +1105,7 @@ async function main(){
      assert.equal(await page.locator(".nbh-shopping-shelf,.nbh-quick-categories,.nbh-shop-product").count(),0,"no duplicate materials shelf");
      const categories=page.locator(".nbh-category-grid");
      assert.equal(await categories.locator(".nbh-material-card").count(),9,"original nine categories retained");
-     assert.equal(await categories.locator(".nbh-category-cart").count(),4,"quick add inside existing category cards");
+     assert.equal(await categories.locator(".nbh-category-cart").count(),await categories.locator(".nbh-material-card").count(),"every existing category has a catalog-backed action");
      assert.ok(await categories.evaluate(el=>el.scrollWidth<=el.clientWidth+2),"category grid fits mobile");
      const nav=page.locator(".nbh-mobile-shop-nav");
      assert.equal(await nav.locator("a").count(),5);
