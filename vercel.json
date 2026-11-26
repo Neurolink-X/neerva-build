@@ -1,7 +1,8 @@
 {
   "git": {
     "deploymentEnabled": {
-      "feat/catalog-media-integrity": false
+      "**": false,
+      "main": true
     }
   }
 }
