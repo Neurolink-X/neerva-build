@@ -183,7 +183,7 @@ export function PremiumHome(){
 
     </div>
     <div className="nbh-studio-planner">
-     <div className="nbh-studio-planner-head"><span>{lang==="hi"?"चरण 1 / 2":"STEP 1 OF 2 · PLOT DETAILS"}</span><h3>{lang==="hi"?"अपने प्लॉट से शुरुआत करें":"Start with your plot"}</h3><p>{lang==="hi"?"पहले प्लॉट का साइज चुनें। अगली स्क्रीन पर कमरों और पार्किंग के हिसाब से नक्शे बनेंगे।":"Choose the actual plot size first. The next screen creates room layouts using your selected dimensions."}</p></div>
+     <div className="nbh-studio-planner-head"><ol className="nbh-studio-progress" aria-label={lang==="hi"?"घर की योजना के चरण":"Home planning steps"}><li aria-current="step"><span>1</span>{lang==="hi"?"प्लॉट की जानकारी":"Plot details"}</li><li><span>2</span>{lang==="hi"?"कमरों की जरूरत":"Room requirements"}</li></ol><h3>{lang==="hi"?"अपने प्लॉट से शुरुआत करें":"Start with your plot"}</h3><p>{lang==="hi"?"पहले प्लॉट का साइज चुनें। अगली स्क्रीन पर कमरों और पार्किंग के हिसाब से नक्शे बनेंगे।":"Choose the actual plot size first. The next screen creates room layouts using your selected dimensions."}</p></div>
      <label className="nbh-studio-primary-label" htmlFor="nbh-studio-preset">{lang==="hi"?"प्लॉट का आकार (फीट)":"Plot dimensions (feet)"}</label>
      <select className="nbh-studio-preset" id="nbh-studio-preset" value={plot} onChange={e=>setPlot(e.target.value)}>
       <option value="18x50">18 × 50 ft</option>
@@ -200,13 +200,13 @@ export function PremiumHome(){
       <label htmlFor="nbh-studio-depth">{lang==="hi"?"लंबाई (फीट)":"Plot depth (ft)"}<input id="nbh-studio-depth" type="number" inputMode="decimal" min="15" max="250" step="0.5" value={customDepth} onChange={e=>setCustomDepth(e.target.value)} required/></label>
      </div>}
      {!plotValid&&<p className="nbh-studio-error" role="alert">{lang==="hi"?"चौड़ाई 10–200 फीट और लंबाई 15–250 फीट रखें।":"Enter both dimensions: frontage 10–200 ft and depth 15–250 ft."}</p>}
-     <details className="nbh-studio-options" open>
-      <summary>{lang==="hi"?"वैकल्पिक: मंज़िल और सड़क की दिशा":"Floors and road-facing direction"}</summary>
+     <fieldset className="nbh-studio-options">
+      <legend>{lang==="hi"?"मंज़िल और सड़क की दिशा":"Floors & road direction"}</legend>
       <div className="nbh-studio-option-grid">
        <label htmlFor="nbh-studio-floors">{lang==="hi"?"मंज़िल":"Floors"}<select id="nbh-studio-floors" value={homeFloors} onChange={e=>setHomeFloors(Number(e.target.value) as 1|2|3)}><option value={1}>Ground</option><option value={2}>G + 1</option><option value={3}>G + 2</option></select></label>
        <label htmlFor="nbh-studio-road">{lang==="hi"?"सड़क की दिशा":"Road-facing direction"}<select id="nbh-studio-road" value={homeRoad} onChange={e=>setHomeRoad(e.target.value as "N"|"E"|"S"|"W")}><option value="N">North</option><option value="E">East</option><option value="S">South</option><option value="W">West</option></select></label>
       </div>
-     </details>
+     </fieldset>
      <div className="nbh-studio-result" aria-live="polite">
       <span>{lang==="hi"?"चुना हुआ प्लॉट":"SELECTED PLOT"}</span>
       <strong>{plotValid?String(portfolioDimensions.width)+" × "+String(portfolioDimensions.depth)+" ft":"—"}</strong>

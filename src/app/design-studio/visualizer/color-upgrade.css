@@ -77,3 +77,17 @@
 @media(max-width:600px){.paint-sample-gallery{scroll-padding-inline:6px}.paint-sample-gallery button{flex-basis:clamp(126px,44%,200px)}.paint-sample-gallery small{display:block}}
 
 @media(min-width:601px){.paint-sample-gallery{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(min-width:601px) and (max-width:900px){.paint-sample-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Photo-first workspace: preserve the entire source aspect ratio and contain only intentional wall inspection. */
+.visualizer-page,.visualizer-app,.visualizer-layout,.neerva-photo-stage,.neerva-photo-stage .nbd-photo,.paint-live-workspace,.paint-live-preview,.paint-live-tools,.paint-adjacent-controls,.paint-adjacent-controls section{min-inline-size:0;max-inline-size:100%;box-sizing:border-box}
+.paint-photo-frame{inline-size:100%;min-inline-size:0;max-inline-size:100%;overflow:hidden;border-radius:12px;background:#edf0e9}
+.paint-photo-frame canvas{display:block;inline-size:100%;max-inline-size:100%;block-size:auto;object-fit:contain;transform-origin:center}
+.paint-sample-photo{aspect-ratio:16/10;background:#e9eee9}.paint-sample-photo img{object-fit:contain;object-position:center}
+.neerva-photo-stage .paint-reference-note{font-size:11px;line-height:1.4;color:#59685e;margin:5px 0 0}
+.paint-live-tools .visualizer-controls,.paint-adjacent-controls section{width:100%}
+.paint-adjacent-controls :is(button,select,input){min-inline-size:0;max-inline-size:100%}
+.paint-adjacent-controls section>div{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.neerva-photo-stage .paint-preview-actions{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+.neerva-photo-stage .paint-preview-actions>button{white-space:normal;min-width:0;max-width:100%;padding-inline:7px}
+@media(max-width:600px){.visualizer-app{padding-inline:clamp(8px,3vw,12px)}.neerva-photo-stage .nbd-photo{padding:clamp(8px,3vw,12px)}.paint-live-workspace{width:100%}.paint-sample-gallery button{flex-basis:clamp(118px,44%,200px)}.paint-live-preview{position:relative;top:auto}.paint-adjacent-controls h2{font-size:22px!important}}
+@media(max-width:340px){.neerva-photo-stage .paint-preview-actions{grid-template-columns:minmax(0,1fr)}}

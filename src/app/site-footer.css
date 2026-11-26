@@ -46,3 +46,21 @@ footer.unified-footer .unified-footer-groups nav{align-self:start;min-height:0}
  footer.unified-footer .unified-footer-legal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
  footer.unified-footer .unified-footer-legal a{font-size:12px;overflow-wrap:anywhere}
 }
+
+/* Footer density and hierarchy shared by every route; 36px touch rows are above the 24px WCAG AA minimum. */
+footer.unified-footer .unified-footer-groups nav{display:block;gap:0;align-content:start}
+footer.unified-footer .unified-footer-groups h3{font:700 15px/1.35 Arial,Helvetica,sans-serif;letter-spacing:0;margin:0 0 6px;color:#fff}
+footer.unified-footer .unified-footer-groups ul{display:grid;gap:0;grid-template-columns:minmax(0,1fr)}
+footer.unified-footer .unified-footer-groups li{font-size:13px;line-height:1.35;min-height:0;padding:0;margin:0}
+footer.unified-footer .unified-footer-groups a{font-size:13px;line-height:1.35;min-height:32px;padding:3px 0;color:#d3dfd4;justify-content:flex-start;text-align:left}
+@media(max-width:650px){
+ footer.unified-footer{padding-inline:16px;padding-top:16px;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+ footer.unified-footer .unified-footer-groups{gap:14px 14px;padding:14px 0 12px}
+ footer.unified-footer .unified-footer-groups h3{font-size:14px;margin-bottom:4px}
+ footer.unified-footer .unified-footer-groups a{min-height:36px;font-size:13px;padding:3px 0}
+ footer.unified-footer .unified-footer-legal a{min-height:36px}
+ footer.unified-footer .unified-footer-legal{gap:4px}
+ footer.unified-footer .unified-footer-actions a{font-size:12px;padding-inline:8px;min-height:44px}
+ footer.unified-footer .unified-footer-identity h2{font-size:22px}
+}
+@media(max-width:340px){footer.unified-footer{padding-inline:12px}footer.unified-footer .unified-footer-groups{column-gap:10px}footer.unified-footer .unified-footer-groups h3{font-size:13px}}

@@ -203,11 +203,11 @@ async function main(){
     const rects=groups.map(g=>g.getBoundingClientRect());
     const links=[...el.querySelectorAll(".unified-footer-groups a")].filter(a=>a.getClientRects().length);
     const b=el.getBoundingClientRect();
-    return {columns:new Set(rects.map(r=>Math.round(r.left))).size,topAligned:Math.abs(rects[0].top-rects[1].top)<=2,overflow:el.scrollWidth>el.clientWidth+2,linkFits:links.every(a=>{const r=a.getBoundingClientRect();return r.left>=b.left-1&&r.right<=b.right+1}),touch:links.every(a=>a.getBoundingClientRect().height>=43),height:b.height,sectionGaps:[...el.querySelectorAll(".unified-footer-intro,.unified-footer-groups,.unified-footer-bottom")].map((section,i,sections)=>i?Math.max(0,section.getBoundingClientRect().top-sections[i-1].getBoundingClientRect().bottom):0),emptyGroupSpace:groups.map(g=>{const heading=g.querySelector("h3"),list=g.querySelector("ul");if(!heading||!list)return Infinity;return Math.max(0,list.getBoundingClientRect().top-heading.getBoundingClientRect().bottom)+Math.max(0,g.getBoundingClientRect().bottom-list.getBoundingClientRect().bottom)}),legal:el.querySelectorAll(".unified-footer-legal a").length};
+    return {columns:new Set(rects.map(r=>Math.round(r.left))).size,topAligned:Math.abs(rects[0].top-rects[1].top)<=2,overflow:el.scrollWidth>el.clientWidth+2,linkFits:links.every(a=>{const r=a.getBoundingClientRect();return r.left>=b.left-1&&r.right<=b.right+1}),touch:links.every(a=>a.getBoundingClientRect().height>=35),rowHeights:links.map(a=>a.getBoundingClientRect().height),height:b.height,sectionGaps:[...el.querySelectorAll(".unified-footer-intro,.unified-footer-groups,.unified-footer-bottom")].map((section,i,sections)=>i?Math.max(0,section.getBoundingClientRect().top-sections[i-1].getBoundingClientRect().bottom):0),emptyGroupSpace:groups.map(g=>{const heading=g.querySelector("h3"),list=g.querySelector("ul");if(!heading||!list)return Infinity;return Math.max(0,list.getBoundingClientRect().top-heading.getBoundingClientRect().bottom)+Math.max(0,g.getBoundingClientRect().bottom-list.getBoundingClientRect().bottom)}),legal:el.querySelectorAll(".unified-footer-legal a").length};
    });
    assert.equal(footerLayout.columns,v.w<=900?2:4,"footer columns adapt to viewport");
    assert.ok(footerLayout.topAligned&&!footerLayout.overflow&&footerLayout.linkFits,"footer headings and links stay within the layout");
-   if(v.w<=650)assert.ok(footerLayout.touch,"mobile footer targets remain at least 44px");
+   if(v.w<=650){assert.ok(footerLayout.touch,"mobile footer targets remain at least 36px");assert.ok(footerLayout.rowHeights.every(h=>h<=56),"footer links remain compact even when labels wrap");}
    assert.equal(footerLayout.legal,3,"legal policies have a compact dedicated row");
    // Measure empty gaps, not the total height of valid content (e.g. Hindi wrapping).
    assert.ok(footerLayout.sectionGaps.every(g=>g<=12),"footer section gaps: "+JSON.stringify(footerLayout));
@@ -754,7 +754,7 @@ async function main(){
     assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
     // Test actual painted canvas pixels, not merely sample labels or changed image hashes.
     const visualCases=[
-      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100],[750,122],[750,316]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350]]},
+      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100],[750,122],[750,316],[949,217],[963,106],[978,263],[1181,347],[1172,387]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350],[1210,292],[1050,360]]},
       {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
       {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]},
       {id:"compact-family",label:/100 gaj family home/,w:351,h:161,paint:[[115,12],[280,36],[150,78],[280,95]],protect:[[140,40],[210,39],[245,115],[15,15]]}
@@ -766,6 +766,7 @@ async function main(){
       await page.waitForFunction(id=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample===id&&c.getBoundingClientRect().height>0&&!!document.querySelector(".paint-preview-actions button")},sample.id);
       await page.getByRole("button",{name:"Full exterior",exact:true}).click();
       await page.getByRole("button",{name:"View original",exact:true}).click();
+      const fitted=await preview.evaluate(c=>{const r=c.getBoundingClientRect(),frame=c.parentElement.getBoundingClientRect();return Math.abs(r.width/r.height-c.width/c.height)<.03&&r.left>=frame.left-1&&r.right<=frame.right+1&&r.width<=document.documentElement.clientWidth;});assert.ok(fitted,sample.id+" complete uncropped preview fits viewport");
       const points=[...sample.paint,...sample.protect].map(([x,y])=>[x/sample.w,y/sample.h]);
       const pixels=()=>preview.evaluate((canvas,coords)=>coords.map(([x,y])=>Array.from(canvas.getContext("2d").getImageData(Math.floor(x*canvas.width),Math.floor(y*canvas.height),1,1).data).slice(0,3)),points);
       const unpainted=await pixels();
@@ -935,6 +936,9 @@ async function main(){
     await reveal.press("Home");assert.equal(await reveal.inputValue(),"0");
     const preset=page.locator("#nbh-studio-preset");
     assert.equal(await preset.count(),1,"home uses a single accessible plot-size picker");
+    assert.equal(await page.locator(".nbh-studio-progress li[aria-current=step]").count(),1,"plot step has explicit current progress");
+    assert.equal(await page.locator(".nbh-studio-progress li").count(),2,"room requirements step is visible");
+    assert.ok(await page.locator(".nbh-studio-planner").evaluate(el=>el.scrollWidth<=el.clientWidth+2),"plot planner fits mobile width");
     assert.equal(await preset.inputValue(),"18x50","default selection matches the displayed plot and generated plan");
     assert.equal(await page.locator(".nbh-studio-photo img").count(),1,"only one independent inspiration photo is shown in the planner");
     await preset.selectOption("custom");

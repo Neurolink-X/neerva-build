@@ -335,3 +335,30 @@
 
 /* Small screens keep install discovery in the menu without crowding shopping controls. */
 @media(max-width:390px){.nbh-header .nbh-install-header{display:none}.nbh-header-actions .nbh-icon-link{min-width:44px}.nbh-header .nbh-language{min-width:44px}.nbh-mobile-menu summary{min-height:44px}}
+
+/* Plot step: compact progress, grouped inputs and one primary action, no decorative blank rows. */
+.nbh .nbh-studio-planner{display:grid;align-content:start;gap:10px;min-inline-size:0;padding:clamp(16px,2.5vw,28px);align-self:start;border-radius:16px}
+.nbh .nbh-studio-planner-head{padding:0 0 10px;margin:0;border-bottom:1px solid #e1e9df}
+.nbh .nbh-studio-progress{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0;margin:0 0 10px}
+.nbh .nbh-studio-progress li{display:flex;align-items:center;gap:6px;font-size:12px;line-height:1.3;font-weight:650;color:#63786a;min-width:0;padding:0 0 7px;border-bottom:3px solid #dfe7df}
+.nbh .nbh-studio-progress li[aria-current=step]{color:#234b34;border-color:#2b6243}
+.nbh .nbh-studio-progress li span{display:grid;place-items:center;flex:none;width:23px;height:23px;border-radius:50%;background:#e8eee6;color:#425c48;font-size:12px}
+.nbh .nbh-studio-progress li[aria-current=step] span{background:#254738;color:#fff}
+.nbh .nbh-studio-planner-head h3{font-size:clamp(24px,3vw,31px);margin:0 0 5px;line-height:1.15}
+.nbh .nbh-studio-planner-head p{font-size:13px;line-height:1.45;margin:0}
+.nbh .nbh-studio-primary-label{margin:0;font-size:13px}
+.nbh :is(.nbh-studio-preset,.nbh-studio-custom-fields input,.nbh-studio-option-grid select){height:46px;padding-inline:10px;font-size:16px;min-width:0;width:100%;max-width:100%;border-radius:8px}
+.nbh .nbh-studio-options{border:0;border-top:1px solid #e1e9df;margin:2px 0 0;padding:8px 0 0;min-width:0}
+.nbh .nbh-studio-options legend{padding:0 6px 0 0;color:#355c41;font-size:12px;font-weight:700}
+.nbh .nbh-studio-option-grid,.nbh .nbh-studio-custom-fields{margin:0;gap:8px}
+.nbh .nbh-studio-option-grid label,.nbh .nbh-studio-custom-fields label{font-size:12px;gap:4px;line-height:1.35}
+.nbh .nbh-studio-result{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 10px;padding:10px 12px;margin:0;border-radius:9px;align-items:center}
+.nbh .nbh-studio-result span{grid-column:1/-1;width:auto;font-size:10px}
+.nbh .nbh-studio-result strong{font-size:clamp(19px,3vw,24px);grid-row:2/4;overflow-wrap:anywhere}
+.nbh .nbh-studio-result small{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+.nbh .nbh-studio-generate{min-height:48px;margin:0;padding:9px 12px;font-size:14px}
+.nbh .nbh-studio-trust{margin:0;font-size:12px;line-height:1.45}
+.nbh .nbh-studio-more{margin:0;padding-top:2px;gap:0 12px;justify-content:flex-start}
+.nbh .nbh-studio-more a{min-height:36px;font-size:12px;line-height:1.3}
+@media(max-width:600px){.nbh .nbh-studio-planner{padding:14px;gap:9px}.nbh .nbh-studio-progress{gap:7px}.nbh .nbh-studio-progress li{font-size:11px;gap:4px}.nbh .nbh-studio-result{padding:9px}.nbh .nbh-studio-more{gap:0 8px}}
+@media(max-width:340px){.nbh .nbh-studio-planner{padding:10px}.nbh .nbh-studio-progress li span{width:20px;height:20px}}

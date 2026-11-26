@@ -6,7 +6,7 @@ const plain:PaintStyle={colour:"#b6c7a3",accent:"#c4925f",pattern:"plain",opacit
 test("all sample exterior paint sections have independent normalized masks",()=>{
  assert.equal(new Set(facadeZones.map(z=>z.id)).size,9);
  for(const z of facadeZones){assert.ok(validWallMask(z.points),z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1,z.id);}
- assert.equal(facadeZones.find(z=>z.id==="right")?.mask.holes.length,2);
+ assert.equal(facadeZones.find(z=>z.id==="right")?.mask.holes.length,3);
 });
 test("plain paint is independent of stored pattern and selected base shade",()=>{
  assert.equal(activePattern("paint","diamonds"),"plain");
@@ -58,4 +58,12 @@ test("compact family concept preserves glazing and paints four independent surfa
  assert.equal(edited.entry?.colour,"#293f36");
  assert.equal(edited.left?.colour,plain.colour);
  assert.equal(all.entry?.colour,plain.colour);
+});
+
+test("modern right wall return and balcony side pier are painted without crossing glazing or the tree",()=>{
+ const right=facadeZones.find(z=>z.id==="right")!;
+ function inside(r:number[][],x:number,y:number){let hit=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const [a,b]=r[i],[c,d]=r[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
+ const painted=(x:number,y:number)=>inside(right.mask.outline,x/1536,y/512)&&!right.mask.holes.some(h=>inside(h,x/1536,y/512));
+ for(const [x,y] of [[949,217],[963,106],[978,263],[1181,347],[1172,387]])assert.ok(painted(x,y),`wall ${x},${y}`);
+ for(const [x,y] of [[1050,160],[1050,360],[1210,292],[1400,250],[920,220]])assert.equal(painted(x,y),false,`protected ${x},${y}`);
 });
