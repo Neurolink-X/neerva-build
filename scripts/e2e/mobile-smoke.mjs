@@ -42,6 +42,22 @@ async function main(){
     }
    }finally{await ctx.close()}
   }
+  // Focused facade gallery and full-aspect canvas checks across nine screen sizes.
+  for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
+   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
+   try{const page=await ctx.newPage();await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
+    await page.getByRole("button",{name:"Sample house exterior"}).click();
+    const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
+    assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
+    for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
+    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
+    assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
+    await page.getByRole("button",{name:/100 gaj family home/}).click();
+    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="compact-family"&&!!document.querySelector(".paint-preview-actions button")&&c.getBoundingClientRect().height>0});
+    assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect(),p=c.parentElement.getBoundingClientRect();return Math.abs(r.width/r.height-c.width/c.height)<.025&&r.left>=p.left-1&&r.right<=p.right+1&&p.right<=innerWidth+1}),v.w+"px full facade fits its source aspect ratio");
+    await gallery.screenshot({path:path.join("test-results/mobile",v.w+"-facade-gallery.png"),animations:"disabled"});
+   }finally{await ctx.close()}
+  }
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
    const page=await ctx.newPage(),errors=[];
@@ -814,9 +830,10 @@ async function main(){
       {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100],[750,122],[750,316],[949,217],[963,106],[978,263],[1181,347],[1172,387]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350],[1210,292],[1050,360]]},
       {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
       {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]},
-      {id:"compact-family",label:/100 gaj family home/,w:351,h:161,paint:[[115,12],[280,36],[150,78],[280,95]],protect:[[140,40],[210,39],[245,115],[15,15]]}
+      {id:"compact-family",label:/100 gaj family home/,w:1536,h:1024,paint:[[402,240],[800,145],[840,290],[790,285],[820,540],[460,730],[800,645],[370,850],[1244,850]],protect:[[480,250],[570,380],[699,350],[965,365],[700,450],[950,470],[620,635],[555,745],[700,740],[950,720],[430,850],[275,865],[970,850],[1120,850],[100,200],[1300,420],[700,55],[700,640]]}
     ];
     assert.equal(await page.locator(".paint-sample-gallery button").count(),visualCases.length,"every house must have a pixel regression case");
+    assert.ok(await page.locator(".paint-sample-gallery").evaluate(el=>el.scrollWidth<=el.clientWidth+2&&[...el.querySelectorAll("button")].every(b=>b.getBoundingClientRect().right<=el.getBoundingClientRect().right+1)),"all house cards fit without horizontal clipping");
     const evidence=[];
     for(const sample of visualCases){
       await page.getByRole("button",{name:sample.label}).click();
@@ -1003,6 +1020,7 @@ async function main(){
     assert.equal(await dimensions.count(),2,"custom plotting accepts both frontage and depth");
     await dimensions.nth(0).fill("9");
     assert.equal(await page.locator(".nbh-studio-generate[href]").count(),0,"invalid dimensions must never open a fallback 18×50 plan");
+    assert.equal(await page.locator(".nbh-studio-step-link").count(),0,"invalid plot cannot bypass the step-two gate");
     for(const [w,d] of [["18","50"],["20","45"]]){
       await dimensions.nth(0).fill(w);
       await dimensions.nth(1).fill(d);
@@ -1010,8 +1028,10 @@ async function main(){
       const href=await link.getAttribute("href");
       assert.ok(href?.includes("width="+w+"&depth="+d), "selected custom plot must reach the geometry generator");
       assert.ok(href?.includes("floors=2&road=N"),"floor and road facing defaults are explicit");
-      await link.click();
+      assert.equal(await page.locator(".nbh-studio-step-link").getAttribute("href"),href,"step two and continue use the same validated plot");
+      await page.locator(".nbh-studio-step-link").click();
       await page.waitForURL("**/design-studio/portfolio?**");
+      await page.locator(".nroad-form").waitFor({state:"visible"});
       assert.ok(new URL(page.url()).searchParams.get("width")===w&&new URL(page.url()).searchParams.get("depth")===d,
         "portfolio must inherit selected dimensions");
       await page.goto(base+"/",{waitUntil:"load"});

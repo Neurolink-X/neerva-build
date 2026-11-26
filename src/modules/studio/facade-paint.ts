@@ -40,21 +40,25 @@ const contemporaryZones=[
  zone("entry","Entrance recess",[[200,355],[244,365],[282,357],[438,381],[438,397],[302,378],[302,545],[244,551],[244,383],[200,383]],[],undefined,880,738),
  zone("roof","Entrance frame",[[170,245],[484,349],[484,551],[466,555],[466,388],[170,325]],[],undefined,880,738)
 ] as const;
-// Existing local 18×50 ft family-home concept (900 sq ft / 100 sq yd).
-// Independent polygons are measured in the original 351×161 pixel reference.
+// Dedicated masks measured against the 1536×1024 generated source; the local
+// 1200×800 WebP preserves the same aspect ratio. Conservative exclusions protect
+// glazing, railings, fixtures, timber, stone and foliage, including thin leaves.
 const compactFamilyZones=[
- zone("left","Left upper wall",[[110,0],[162,0],[162,53],[110,53]], [rect(126,31,29,22)],undefined,351,161),
- zone("right","Right upper wall",[[176,0],[296,0],[296,67],[176,67]], [rect(198,26,31,26),rect(238,25,30,27),rect(180,0,14,67),rect(176,52,120,15)],undefined,351,161),
- zone("balcony","Balcony slab",[[100,69],[296,69],[296,88],[100,88]],[],undefined,351,161),
- zone("entry","Ground floor wall",[[100,88],[296,88],[296,129],[100,129]], [rect(123,105,34,24),rect(215,103,55,26),rect(177,88,15,41)],undefined,351,161),
- zone("boundary","Boundary walls",[[0,129],[97,129],[97,161],[0,161]], [rect(7,138,38,23),rect(59,142,25,19)],undefined,351,161),
- zone("boundary-right","Right boundary wall",[[298,129],[351,129],[351,161],[298,161]], [rect(306,140,20,21)],undefined,351,161)
+ zone("left","Left facade wall",[[383,105],[423,105],[423,543],[622,543],[622,576],[383,576]],[],undefined,1536,1024),
+ zone("roof","Roof and upper trim",[[383,95],[1116,95],[1116,52],[1178,52],[1178,185],[631,185],[631,129],[423,129],[423,105],[383,105]],[],undefined,1536,1024),
+ zone("right","Right balcony wall",[[831,278],[1116,278],[1158,219],[1158,349],[1137,349],[1125,346],[1109,350],[1090,343],[1064,350],[1046,369],[1037,399],[831,399]],[rect(869,332,204,67),rect(843,333,15,24)],undefined,1536,1024),
+ zone("upper-recess","Left balcony recess",rect(650,270,162,130),[rect(648,313,123,90)],undefined,1536,1024),
+ zone("balcony","Balcony slab",rect(642,510,524,66),[],undefined,1536,1024),
+ zone("entry","Ground floor entrance wall",[[380,580],[421,580],[421,601],[500,655],[640,655],[640,650],[760,650],[760,781],[408,781],[408,755],[380,755]],[rect(506,701,109,82),rect(639,691,126,93)],undefined,1536,1024),
+ zone("lower-recess","Right ground floor wall",[[767,609],[1115,609],[1152,581],[1152,770],[1059,770],[1059,673],[861,673],[861,770],[828,770],[828,755],[777,755],[767,770]],[rect(815,679,16,25)],undefined,1536,1024),
+ zone("boundary","Left boundary wall",[[200,775],[355,775],[355,765],[402,765],[402,968],[200,968]],[rect(255,804,63,132),[[200,832],[230,828],[276,835],[310,860],[332,920],[335,968],[200,968]],rect(362,785,31,30)],undefined,1536,1024),
+ zone("boundary-right","Right boundary wall",[[784,767],[823,767],[823,775],[1265,775],[1265,974],[784,974]],[rect(790,786,27,30),rect(864,804,55,140),rect(1050,805,169,136),[[850,912],[865,861],[885,824],[888,790],[902,770],[927,764],[950,755],[986,754],[1017,770],[1048,801],[1050,862],[1036,911],[1020,974],[850,974]],[[1017,940],[1060,932],[1120,921],[1170,922],[1225,913],[1250,937],[1250,974],[1017,974]]],undefined,1536,1024)
 ] as const;
 export const facadeSamples=[
  {id:"family",label:"Modern family home",description:"Street-facing two-storey home",src:"/images/studio/finished.webp",zones:facadeZones},
  {id:"contemporary",label:"Contemporary home",description:"Clean lines and contrasting cladding",src:"/images/studio/house-3.webp",zones:contemporaryZones},
  {id:"villa",label:"Premium villa",description:"Modern facade with terraces",src:"/images/studio/house-2.webp",zones:villaZones},
- {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 concept reference",src:"/images/studio/family/family-18x50.webp",zones:compactFamilyZones}
+ {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 photorealistic concept",src:"/images/studio/family/neerva-100gaj-photorealistic.webp",zones:compactFamilyZones}
 ] as const;
 export type FacadeSampleId=typeof facadeSamples[number]["id"];
 export type FacadeZone=typeof facadeZones[number];
