@@ -379,7 +379,17 @@ async function main(){
     const manifest=await page.request.get(base+"/manifest.webmanifest");
     assert.equal(manifest.status(),200,"manifest route");
     const appManifest=await manifest.json();
-    assert.equal(appManifest.name?.includes("NEERVA BUILD"),true,"PWA name");
+    assert.equal(appManifest.name,"NEERVA BUILD","native launch uses concise brand name");
+    assert.equal(appManifest.short_name,appManifest.name,"launcher and startup brand agree");
+    assert.equal(appManifest.id,"/","existing installed app identity stays unchanged");
+    assert.equal(appManifest.start_url,"/","native startup opens home directly");
+    assert.equal(appManifest.scope,"/","PWA scope remains unchanged");
+    assert.equal(appManifest.background_color,"#f5f4ef","startup paper surface");
+    assert.equal(appManifest.theme_color,"#263e33","native brand theme");
+    await page.goto(base+"/",{waitUntil:"load"});
+    assert.equal(await page.locator('meta[name="theme-color"]').getAttribute("content"),appManifest.theme_color,"native and web theme colors match");
+    const surfaces=await page.evaluate(()=>({root:getComputedStyle(document.documentElement).backgroundColor,body:getComputedStyle(document.body).backgroundColor,home:getComputedStyle(document.querySelector(".nbh")).backgroundColor}));
+    assert.deepEqual(surfaces,{root:"rgb(245, 244, 239)",body:"rgb(245, 244, 239)",home:"rgb(245, 244, 239)"},"manifest and first page surfaces agree");
     assert.ok(appManifest.icons?.some(icon=>icon.purpose?.includes("maskable")),"PWA maskable icon");
     for(const asset of ["/icon","/apple-icon"]){
       const response=await page.request.get(base+asset);
@@ -400,8 +410,10 @@ async function main(){
       Object.assign(event,{prompt:async()=>undefined,userChoice:Promise.resolve({outcome:"accepted"})});
       window.dispatchEvent(event);
     });
-    await page.getByRole("button",{name:"Install Neerva",exact:true}).waitFor({state:"visible"});
-    await page.getByRole("button",{name:"Install Neerva",exact:true}).click();
+    assert.equal(await page.locator(".unified-footer-app").count(),0,"install page avoids a duplicate footer CTA");
+    const pageInstall=page.locator(".install-action").getByRole("button",{name:"Install Neerva",exact:true});
+    await pageInstall.waitFor({state:"visible"});
+    await pageInstall.click();
     await page.getByText("Installation accepted. Check your home screen.").waitFor();
     // Acceptance alone is not proof of installation. Exercise the actual browser-event contract.
     await page.evaluate(()=>window.dispatchEvent(new Event("appinstalled")));

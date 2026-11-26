@@ -1,6 +1,7 @@
 "use client";
 import {useState,useSyncExternalStore} from "react";
 import Link from "next/link";
+import {usePathname} from "next/navigation";
 import {installedDisplayMode} from "@/modules/pwa/install-state";
 type PromptEvent=Event&{prompt:()=>Promise<void>;userChoice:Promise<{outcome:"accepted"|"dismissed"}>};
 type State={ready:boolean;installed:boolean;runningStandalone:boolean;available:boolean;busy:boolean;platform:"ios"|"android"|"desktop"};
@@ -55,7 +56,8 @@ export function InstallLink({children,className,ariaLabel,recoveryLabel}:{childr
 export function FooterAppAccess({language="en"}:{language?:"en"|"hi"}){
  const {ready,installed,runningStandalone,available,busy,platform}=usePwaInstall(),hi=language==="hi";
  const [result,setResult]=useState<"accepted"|"dismissed"|"unavailable"|null>(null);
- if(!ready||runningStandalone)return null;
+ const pathname=usePathname();
+ if(!ready||runningStandalone||pathname==="/install")return null;
  async function install(){setResult(await requestPwaInstall());}
  const guide=platform==="ios"?(hi?"Safari में Share दबाएं, फिर Add to Home Screen चुनें।":"In Safari, tap Share, then Add to Home Screen."):(hi?"ब्राउज़र मेनू में Install app या Add to Home screen चुनें। अगर विकल्प नहीं है, Chrome या Edge में खोलें।":"Open your browser menu and choose Install app or Add to Home screen. If missing, try Chrome or Edge.");
  return <div className="unified-footer-app" aria-label={hi?"नीरवा ऐप":"Neerva app access"}>
