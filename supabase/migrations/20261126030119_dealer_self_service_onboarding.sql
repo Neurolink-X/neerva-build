@@ -75,3 +75,9 @@ create or replace function public.neerva_admin_review_dealer(p_id uuid,p_expecte
 
 -- Pending shop PIN is private until approved.
 create policy branch_read_applicant on public.merchant_branches for select to authenticated using(exists(select 1 from public.dealer_applications a where a.tenant_id=merchant_branches.tenant_id and a.owner_id=(select auth.uid())));
+
+-- New applicants use the validated atomic save/submit RPCs, not raw application
+-- UPDATE. Preserve legacy owner editing only when the owner membership is active.
+alter policy dealer_application_edit_draft on public.dealer_applications
+ using (owner_id=(select auth.uid()) and status in ('draft','changes_requested') and (select public.is_tenant_member(tenant_id,array['owner']::text[])))
+ with check (owner_id=(select auth.uid()) and status in ('draft','submitted') and gstin_verification='unverified' and reviewed_by is null and reviewed_at is null and (select public.is_tenant_member(tenant_id,array['owner']::text[])));
