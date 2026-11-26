@@ -133,6 +133,8 @@ async function main(){
    if(v.w===390)await page.addInitScript(()=>{
     const metrics={lcp:null,cls:0,sessionStart:0,previousShift:0,sessionScore:0};
     window.__neervaPerf=metrics;
+    window.__neervaObservedVitals=[];
+    window.addEventListener("neerva:web-vitals",event=>{if(Array.isArray(event.detail))window.__neervaObservedVitals=event.detail.filter(x=>["LCP","INP","CLS"].includes(x.name)&&Number.isFinite(x.value)&&x.value>=0);});
     try{new PerformanceObserver(list=>{for(const e of list.getEntries())metrics.lcp=e.startTime;}).observe({type:"largest-contentful-paint",buffered:true});}catch{}
     try{new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput){if(e.startTime-metrics.previousShift>1000||e.startTime-metrics.sessionStart>5000){metrics.sessionStart=e.startTime;metrics.sessionScore=0;}metrics.previousShift=e.startTime;metrics.sessionScore+=e.value;metrics.cls=Math.max(metrics.cls,metrics.sessionScore);}}).observe({type:"layout-shift",buffered:true});}catch{}
    });
@@ -192,14 +194,14 @@ async function main(){
     await page.waitForURL("**/materials");
     await page.locator(".catalog-discovery").waitFor();
     await page.waitForFunction(()=>document.querySelector(".neerva-navigation-feedback")?.getAttribute("data-active")!== "true");
-    const nav=await page.evaluate(()=>({feedback:window.__neervaClickFeedback,elapsed:performance.now()-(window.__neervaClickFeedback?.at??performance.now())}));
+    const nav=await page.evaluate(()=>({feedback:window.__neervaClickFeedback,elapsed:performance.now()-(window.__neervaClickFeedback?.at??performance.now()),vitals:window.__neervaObservedVitals??[]}));
     assert.ok(nav.feedback?.active,"internal Link shows feedback synchronously without a full reload");
     assert.equal(await page.locator(".neerva-navigation-feedback").getAttribute("data-active"),null,"feedback clears after navigation");
     // A deliberately missing document emits a browser console 404. Check its HTTP
     // contract through the request context so real browser errors remain fatal.
     const invalid=await page.request.get(base+"/materials/no-such-category");
     try{assert.equal(invalid.status(),404,"missing catalog pages must keep real HTTP 404");}finally{await invalid.dispose();}
-    performanceReports.push({route:"/ → /materials",width:v.w,clickToReadyMs:Math.round(nav.elapsed),scope:"local browser route transition, not field latency"});
+    performanceReports.push({route:"/ → /materials",width:v.w,clickToReadyMs:Math.round(nav.elapsed),observedBrowserVitals:nav.vitals,scope:"actual local Chromium measurements, not production population field data"});
    }
    // Room preview and Academy controls must work on phone and desktop.
    if(v.w===390||v.w===1440){
