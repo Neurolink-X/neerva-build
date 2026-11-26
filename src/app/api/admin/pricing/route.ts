@@ -29,8 +29,8 @@ export async function GET(request:Request){
 }
 async function validateVariant(client:Awaited<ReturnType<typeof requireAdmin>>,id:string,unit:string,minimumQuantity:number){
  if(client instanceof Response)return false;
- const {data:v,error}=await client.client.from("product_variants").select("id,unit,status,product:products(slug,status,category:categories(slug,status))").eq("id",id).maybeSingle();
- if(error||!v||v.unit!==unit||v.status!=="published")return false;
+ const {data:v,error}=await client.client.from("product_variants").select("id,sku,attributes,unit,status,product:products(slug,status,category:categories(slug,status,pricing_mode))").eq("id",id).maybeSingle();
+ if(error||!v||v.unit!==unit||v.status!=="published"||/^NEERVA-REF-/i.test(v.sku)||v.attributes?.reference_only===true)return false;
  const p=Array.isArray(v.product)?v.product[0]:v.product;
  const c=p?(Array.isArray(p.category)?p.category[0]:p.category):null;
  return p?.status==="published"&&c?.status==="published"&&validProductQuantity(String(c.slug),String(p.slug),unit,minimumQuantity);
