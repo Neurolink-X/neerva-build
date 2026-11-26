@@ -60,7 +60,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  function changeSetback(side:keyof PlanBrief["setbacks"],value:number){setBrief(v=>({...v,setbacks:{...v.setbacks,[side]:value}}));setChosen(0);setFloor(0)}
  const str=(en:string,hi:string)=>hindi?hi:en;
  return <main className="nroad">
-  <nav className="nroad-nav" aria-label="House planner navigation"><Link href="/design-studio/workbench">← {str("Previous workbench","पुराना प्लानर")}</Link>
+  <nav className="nroad-nav" aria-label="House planner navigation"><Link href="/design-studio">← {str("Home Studio","होम स्टूडियो")}</Link>
    <span>NEERVA BUILD · PLANMODEL</span><button type="button" onClick={()=>setHindi(x=>!x)}>{hindi?"English":"हिन्दी"}</button></nav>
   <header className="nroad-hero">
    <span className="nroad-kicker">ROAD-FIRST · DRAFT CONCEPT GENERATOR</span>

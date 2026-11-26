@@ -111,3 +111,14 @@
 .visualizer-app .paint-canvas-frame canvas{width:100%;height:auto;object-fit:contain}
 @media(max-width:900px){.visualizer-app .paint-sample-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:320px){.visualizer-app .paint-sample-gallery{gap:5px}.visualizer-app .paint-sample-gallery button{padding:3px}}
+
+/* Keep the established four-card gallery, without a selection badge/highlight.
+   aria-pressed remains available to assistive technology and keyboard focus stays visible. */
+.visualizer-app .paint-sample-gallery button[aria-pressed=true]{border-color:#d5dfd4;background:#fff}
+.visualizer-app .paint-canvas-frame{overflow-anchor:none}
+.visualizer-app .paint-preview-status{overflow-anchor:none}
+/* On touch-sized screens the house preview scrolls normally with the page.
+   Editing must not make the house jump to a sticky position above the controls. */
+@media(max-width:850px){.visualizer-app .paint-live-preview{position:relative;top:auto;z-index:auto;padding-block:0}}
+/* Scope scroll anchoring suppression to the editor, not the rest of the site. */
+html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}

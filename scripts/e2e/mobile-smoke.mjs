@@ -56,6 +56,17 @@ async function main(){
     }
    }finally{await ctx.close()}
   }
+  // Paint catalogue stays readable and bounded on phones and desktop.
+  for(const v of [{w:320,h:640},{w:390,h:844},{w:768,h:1024},{w:1440,h:900}]){
+   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
+   try{const page=await ctx.newPage();await page.goto(base+"/materials/paint",{waitUntil:"load"});const showroom=page.locator(".paint-showroom");
+    assert.ok(await showroom.isVisible());assert.ok(await showroom.locator(".tile-show-card").count()<=8);
+    assert.ok(await showroom.evaluate(e=>e.scrollWidth<=e.clientWidth+2));assert.equal(await showroom.locator(".paint-showroom-journey a").count(),3);
+    const next=showroom.getByRole("button",{name:"Next →",exact:true});if(await next.count()){await next.click();assert.match(await showroom.locator(".paint-page-nav").innerText(),/Page 2 of/);}
+    await showroom.getByRole("button",{name:"Reset filters"}).click();assert.ok(await showroom.locator(".tile-show-card").count()<=8);
+    assert.ok(await showroom.locator("#paint-estimate").isVisible());
+   }finally{await ctx.close()}
+  }
   // Audit other image-heavy public pages on a constrained network. The
   // normal workflow retains its existing route and pixel regression checks.
   for(const route of ["/materials","/brands","/materials/tiles","/materials/hardware","/design-studio/portfolio?width=18&depth=50&floors=2&road=N&bedrooms=3&parking=true"]){
@@ -80,6 +91,8 @@ async function main(){
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
     assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
+    assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
+    assert.ok(await gallery.evaluate(el=>new Set([...el.querySelectorAll("button")].map(b=>getComputedStyle(b).borderColor+"|"+getComputedStyle(b).backgroundColor)).size===1),"all four cards retain the neutral original layout without a selected mark");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
     const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
     assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
@@ -891,7 +904,13 @@ async function main(){
     }
     fs.writeFileSync("test-results/mobile/facade-pixel-evidence.json",JSON.stringify({scope:"390px Chromium canvas sample points; elapsed includes browser automation and is not field INP",samples:evidence},null,2));
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-    await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
+    const patternButton=page.getByRole("button",{name:"Diamond lattice",exact:true});
+    await patternButton.evaluate(el=>el.scrollIntoView({block:"center",behavior:"instant"}));
+    const stableScroll=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(window.scrollY)))));
+    await patternButton.click();
+    const afterPatternScroll=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(window.scrollY)))));
+    assert.ok(Math.abs(afterPatternScroll-stableScroll)<=3,"choosing a visible design must not jump the page to the house");
+    assert.equal(await patternButton.getAttribute("aria-pressed"),"true");
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
  const canvas=page.locator(".nbd-photo canvas");
  await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
@@ -1052,31 +1071,30 @@ async function main(){
     const dimensions=page.locator(".nbh-studio-custom-fields input[type=number]");
     assert.equal(await dimensions.count(),2,"custom plotting accepts both frontage and depth");
     await dimensions.nth(0).fill("9");
-    assert.equal(await page.locator(".nbh-studio-generate[href]").count(),0,"invalid dimensions must never open a fallback 18×50 plan");
-    assert.equal(await page.locator(".nbh-studio-step-link").count(),0,"invalid plot cannot bypass the step-two gate");
+    assert.ok(await page.locator(".nbh-studio-generate").isDisabled(),"invalid plot cannot continue");
+    assert.ok(await page.locator(".nbh-studio-step-button").nth(1).isDisabled(),"invalid plot cannot bypass step 2");
     for(const [w,d] of [["18","50"],["20","45"]]){
-      await dimensions.nth(0).fill(w);
-      await dimensions.nth(1).fill(d);
-      const link=page.locator(".nbh-studio-generate[href]");
-      const href=await link.getAttribute("href");
-      assert.ok(href?.includes("width="+w+"&depth="+d), "selected custom plot must reach the geometry generator");
-      assert.ok(href?.includes("floors=2&road=N"),"floor and road facing defaults are explicit");
-      assert.equal(await page.locator(".nbh-studio-step-link").getAttribute("href"),href,"step two and continue use the same validated plot");
-      await page.locator(".nbh-studio-step-link").click();
-      await page.waitForURL("**/design-studio/portfolio?**");
-      await page.locator(".nroad-form").waitFor({state:"visible"});
-      assert.ok(new URL(page.url()).searchParams.get("width")===w&&new URL(page.url()).searchParams.get("depth")===d,
-        "portfolio must inherit selected dimensions");
-      await page.goto(base+"/",{waitUntil:"load"});
-      await page.locator("#nbh-studio-preset").selectOption("custom");
+      await dimensions.nth(0).fill(w);await dimensions.nth(1).fill(d);
+      await page.locator(".nbh-studio-step-button").nth(1).click();
+      assert.equal(new URL(page.url()).pathname,"/","room requirements stay inside homepage");
+      assert.equal(await page.locator(".nbh-studio-progress li").nth(1).getAttribute("aria-current"),"step");
+      assert.ok(await page.locator(".nbh-studio-generate").isDisabled(),"explicit household choices required");
+      await page.locator("#nbh-studio-bedrooms").selectOption("2");await page.locator("#nbh-studio-parking").selectOption("false");
+      const link=page.locator(".nbh-studio-generate[href]");const href=await link.getAttribute("href");
+      assert.ok(href?.includes("width="+w+"&depth="+d));assert.ok(href?.includes("floors=2&road=N&bedrooms=2&parking=false"));
+      await page.locator(".nbh-studio-back").click();assert.equal(await dimensions.nth(0).inputValue(),w);assert.equal(await dimensions.nth(1).inputValue(),d);
+      await page.locator(".nbh-studio-generate").click();assert.equal(await page.locator("#nbh-studio-bedrooms").inputValue(),"2");assert.equal(await page.locator("#nbh-studio-parking").inputValue(),"false");
+      await link.click();await page.waitForURL("**/design-studio/portfolio?**");await page.locator(".nroad-form").waitFor({state:"visible"});
+      assert.equal(await page.getByLabel("Total bedrooms").inputValue(),"2");assert.equal(await page.getByLabel("Car parking").inputValue(),"false");
+      assert.equal(await page.locator("summary").filter({hasText:/Coordinated design|China and seismic/}).count(),0,"no unrelated educational banner above planner");
+      await page.goto(base+"/",{waitUntil:"load"});await page.locator("#nbh-studio-preset").selectOption("custom");
     }
     await page.locator("#nbh-studio-preset").selectOption("30x40");
-    const roadOptions=page.locator(".nbh-studio-options");
-    assert.equal(await roadOptions.locator("legend").count(),1,"floor and road inputs have a permanent accessible fieldset label");
-    await roadOptions.locator("#nbh-studio-floors").selectOption("3");
-    await roadOptions.locator("#nbh-studio-road").selectOption("W");
-    assert.match((await page.locator(".nbh-studio-generate[href]").getAttribute("href"))??"",/width=30&depth=40&floors=3&road=W/,
-      "preset, floors and road direction must use one consistent plan link");
+    const roadOptions=page.locator(".nbh-studio-options");assert.equal(await roadOptions.locator("legend").count(),1);
+    await roadOptions.locator("#nbh-studio-floors").selectOption("3");await roadOptions.locator("#nbh-studio-road").selectOption("W");
+    await page.locator(".nbh-studio-generate").click();await page.locator("#nbh-studio-bedrooms").selectOption("3");await page.locator("#nbh-studio-parking").selectOption("true");
+    assert.match((await page.locator(".nbh-studio-generate[href]").getAttribute("href"))??"",/width=30&depth=40&floors=3&road=W&bedrooms=3&parking=true/);
+
 
    }
    await page.goto(base+"/",{waitUntil:"load"});

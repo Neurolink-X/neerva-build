@@ -122,7 +122,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   if(image.current){image.current.width=0;image.current.height=0;}
   setCloseUp(false);setPreset(corners&&mask?{points:corners,mask}:null);
   if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);
-  setWalls([]);setEditing(null);url.current=next;image.current=null;setReady(false);
+  setWalls([]);setEditing(null);url.current=next;image.current=null;setReady(false);setMessage("Loading photo…");
   setHistory(emptyMaskHistory());setShowOriginal(false);
   const img=new Image();pending.current=img;
   const release=()=>{img.onload=null;img.onerror=null;img.src="";if(pending.current===img)pending.current=null;if(url.current===next&&next.startsWith("blob:")){URL.revokeObjectURL(next);url.current=null;}};
@@ -198,12 +198,12 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   {scene==="facade"&&<div className="paint-sample-gallery" role="group" aria-label="Choose sample house">{facadeSamples.map(s=><button key={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={s.src} alt="" fill sizes="(max-width:600px) 46vw, (max-width:900px) 42vw, 240px" loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
   <div className="paint-mode" role="group" aria-label="Paint preview mode"><button type="button" aria-pressed={mode==="paint"} onClick={()=>chooseMode("paint")}>Plain paint</button><button type="button" aria-pressed={mode==="design"} onClick={()=>chooseMode("design")}>Paint + design</button></div>
   {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}</button>)}</div>}
-  <p role="status">{ready&&scene==="facade"?"Full exterior applies the chosen shade to all marked surfaces. Choose a section for a separate accent or pattern. Windows, timber, plants and neighbouring buildings stay unchanged.":points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
+  <p className="paint-preview-status" role="status">{scene==="facade"&&(ready||message==="Loading photo…")?"Full exterior applies the chosen shade to all marked surfaces. Choose a section for a separate accent or pattern. Windows, timber, plants and neighbouring buildings stay unchanged.":points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
   <div className="paint-live-workspace"><div className="paint-live-preview" data-can-stick={ready&&(scene==="facade"||valid)?"true":"false"}>
   {ready&&canInspect&&<button type="button" aria-pressed={closeUp} onClick={()=>setCloseUp(v=>!v)}>{closeUp?"See whole scene":"Inspect selected wall"}</button>}
-  <div className="paint-canvas-frame" data-inspecting={closeUp&&canInspect?"true":"false"}>
-  <canvas data-sample={scene==="facade"?sampleId:scene} ref={canvas} role="img" aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Photo of your wall. Tap four corners clockwise to choose a painting region"} onPointerDown={addPoint}
-    style={{transform:wallZoom,transformOrigin:wallCentre,display:ready?"block":"none",width:"100%",height:"auto",cursor:scene!=="facade"&&points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
+  <div className="paint-canvas-frame" aria-busy={!ready} data-inspecting={closeUp&&canInspect?"true":"false"}>
+  <canvas data-sample={scene==="facade"?sampleId:scene} ref={canvas} role="img" aria-hidden={!ready} aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Photo of your wall. Tap four corners clockwise to choose a painting region"} onPointerDown={addPoint}
+    style={{transform:wallZoom,transformOrigin:wallCentre,visibility:ready?"visible":"hidden",display:"block",width:"100%",height:"auto",cursor:scene!=="facade"&&points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   </div>
   {ready&&scene==="facade"&&sampleId==="compact-family"&&<p className="paint-reference-note">AI-generated architectural concept · full elevation shown. Not an approved construction drawing.</p>}
   {ready&&<div className="paint-actions paint-compact-actions paint-preview-actions" role="group" aria-label="Live preview actions"><button type="button" disabled={scene!=="facade"&&!valid&&!walls.length} aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?(scene==="facade"?"Show new paint":"Show new colour"):"View original"}</button><button type="button" className="paint-primary" disabled={originalVisible||(scene!=="facade"&&!valid&&(points.length>0||!walls.length))} onClick={saveImage}>Save colour preview</button></div>}

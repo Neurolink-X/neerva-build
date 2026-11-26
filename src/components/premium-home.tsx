@@ -98,6 +98,7 @@ export function PremiumHome(){
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
  const [quoteCategory,setQuoteCategory]=useState<MaterialCategory>("cement"),[quoteUnit,setQuoteUnit]=useState<MaterialQuantityUnit>("bag"),[quoteMaterial,setQuoteMaterial]=useState("");
  const [plot,setPlot]=useState("18x50");
+ const [homeStep,setHomeStep]=useState<1|2>(1),[homeBedrooms,setHomeBedrooms]=useState(""),[homeParking,setHomeParking]=useState("");
  const [customWidth,setCustomWidth]=useState("18"),[customDepth,setCustomDepth]=useState("50");
  const [homeFloors,setHomeFloors]=useState<1|2|3>(2);
  const [homeRoad,setHomeRoad]=useState<"N"|"E"|"S"|"W">("N");
@@ -107,7 +108,8 @@ export function PremiumHome(){
  const [presetWidth,presetDepth]=plot==="custom"?[w,d]:plot.split("x").map(Number);
  const plotValid=customPlotActive?customPlotValid:true;
  const portfolioDimensions={width:presetWidth,depth:presetDepth};
- const portfolioHref="/design-studio/portfolio?"+new URLSearchParams({width:String(presetWidth),depth:String(presetDepth),floors:String(homeFloors),road:homeRoad}).toString();
+ const portfolioHref="/design-studio/portfolio?"+new URLSearchParams({width:String(presetWidth),depth:String(presetDepth),floors:String(homeFloors),road:homeRoad,bedrooms:homeBedrooms,parking:homeParking}).toString();
+ const roomValid=["1","2","3"].includes(homeBedrooms)&&["true","false"].includes(homeParking);
  const t=copy[lang];
  const suggestions=useMemo(()=>query.trim()?items.filter(item=>(item.en+" "+item.hi+" "+item.description).toLowerCase().includes(query.toLowerCase())).slice(0,4):[],[query]);
  useEffect(()=>{const id=window.setTimeout(()=>{try{const l=localStorage.getItem("neerva-home-lang");if(l==="en"||l==="hi")setLang(l);const r=JSON.parse(localStorage.getItem("neerva-home-search-v1")||"[]");if(Array.isArray(r))setRecent(r.filter((x):x is string=>typeof x==="string"&&x.length<65).slice(0,4));}catch{/* Private browsing: state remains in memory. */}},0);return()=>clearTimeout(id)},[]);
@@ -183,7 +185,8 @@ export function PremiumHome(){
 
     </div>
     <div className="nbh-studio-planner">
-     <div className="nbh-studio-planner-head"><ol className="nbh-studio-progress" aria-label={lang==="hi"?"घर की योजना के चरण":"Home planning steps"}><li aria-current="step"><span>1</span>{lang==="hi"?"प्लॉट की जानकारी":"Plot details"}</li><li>{plotValid?<Link className="nbh-studio-step-link" href={portfolioHref}><span>2</span>{lang==="hi"?"कमरों की जरूरत":"Room requirements"}</Link>:<span className="nbh-studio-step-disabled" aria-disabled="true"><i>2</i>{lang==="hi"?"कमरों की जरूरत":"Room requirements"}</span>}</li></ol><h3>{lang==="hi"?"अपने प्लॉट से शुरुआत करें":"Start with your plot"}</h3><p>{lang==="hi"?"पहले प्लॉट का साइज चुनें। अगली स्क्रीन पर कमरों और पार्किंग के हिसाब से नक्शे बनेंगे।":"Choose the actual plot size first. The next screen creates room layouts using your selected dimensions."}</p></div>
+     <div className="nbh-studio-planner-head"><ol className="nbh-studio-progress" aria-label={lang==="hi"?"घर की योजना के चरण":"Home planning steps"}><li aria-current={homeStep===1?"step":undefined}><button type="button" className="nbh-studio-step-button" onClick={()=>setHomeStep(1)}><span>1</span>{lang==="hi"?"प्लॉट की जानकारी":"Plot details"}</button></li><li aria-current={homeStep===2?"step":undefined}><button type="button" className="nbh-studio-step-button" disabled={!plotValid} onClick={()=>setHomeStep(2)}><span>2</span>{lang==="hi"?"कमरों की जरूरत":"Room requirements"}</button></li></ol><h3>{homeStep===1?(lang==="hi"?"अपने प्लॉट से शुरुआत करें":"Start with your plot"):(lang==="hi"?"अपने परिवार की जरूरतें चुनें":"Plan for your family")}</h3><p>{homeStep===1?(lang==="hi"?"प्लॉट की सही नाप, मंज़िल और सड़क चुनें।":"Choose your actual plot size, floors and road direction."):(lang==="hi"?"बेडरूम और पार्किंग चुनें, फिर नक्शे देखें।":"Choose bedrooms and parking before generating room layouts.")}</p></div>
+     {homeStep===1&&<>
      <label className="nbh-studio-primary-label" htmlFor="nbh-studio-preset">{lang==="hi"?"प्लॉट का आकार (फीट)":"Plot dimensions (feet)"}</label>
      <select className="nbh-studio-preset" id="nbh-studio-preset" value={plot} onChange={e=>setPlot(e.target.value)}>
       <option value="18x50">18 × 50 ft</option>
@@ -207,12 +210,19 @@ export function PremiumHome(){
        <label htmlFor="nbh-studio-road">{lang==="hi"?"सड़क की दिशा":"Road-facing direction"}<select id="nbh-studio-road" value={homeRoad} onChange={e=>setHomeRoad(e.target.value as "N"|"E"|"S"|"W")}><option value="N">North</option><option value="E">East</option><option value="S">South</option><option value="W">West</option></select></label>
       </div>
      </fieldset>
+     </>}
      <div className="nbh-studio-result" aria-live="polite">
       <span>{lang==="hi"?"चुना हुआ प्लॉट":"SELECTED PLOT"}</span>
       <strong>{plotValid?String(portfolioDimensions.width)+" × "+String(portfolioDimensions.depth)+" ft":"—"}</strong>
       <small className="nbh-studio-result-direction">{homeFloors===1?"Ground":"G + "+String(homeFloors-1)} · {homeRoad==="N"?"North":homeRoad==="E"?"East":homeRoad==="S"?"South":"West"} facing</small>{plotValid&&<small className="nbh-studio-result-area">{(presetWidth*presetDepth).toLocaleString("en-IN",{maximumFractionDigits:2})} sq ft · {(presetWidth*presetDepth/9).toLocaleString("en-IN",{maximumFractionDigits:2})} sq gaj</small>}
      </div>
-     {plotValid?<Link className="nbh-studio-generate" href={portfolioHref}>{lang==="hi"?"इस प्लॉट के लिए नक्शे बनाएं":"Continue to room requirements"} <Icon name="arrow"/></Link>:<span className="nbh-studio-generate nbh-studio-disabled" aria-disabled="true">{lang==="hi"?"पहले सही नाप भरें":"Enter valid dimensions to continue"}</span>}
+     {homeStep===1?<button type="button" className="nbh-studio-generate" disabled={!plotValid} onClick={()=>setHomeStep(2)}>{lang==="hi"?"कमरों की जरूरत चुनें":"Continue to room requirements"} <Icon name="arrow"/></button>:<>
+      <fieldset className="nbh-studio-options nbh-room-requirements"><legend>{lang==="hi"?"घर की जरूरतें":"Household requirements"}</legend><div className="nbh-studio-option-grid">
+       <label htmlFor="nbh-studio-bedrooms">{lang==="hi"?"कुल बेडरूम":"Total bedrooms"}<select id="nbh-studio-bedrooms" value={homeBedrooms} onChange={e=>setHomeBedrooms(e.target.value)}><option value="">{lang==="hi"?"चुनें":"Choose bedrooms"}</option>{[1,2,3].map(n=><option key={n} value={n}>{n} BHK</option>)}</select></label>
+       <label htmlFor="nbh-studio-parking">{lang==="hi"?"कार पार्किंग":"Car parking"}<select id="nbh-studio-parking" value={homeParking} onChange={e=>setHomeParking(e.target.value)}><option value="">{lang==="hi"?"चुनें":"Choose parking"}</option><option value="true">{lang==="hi"?"चाहिए":"Required"}</option><option value="false">{lang==="hi"?"नहीं चाहिए":"Not required"}</option></select></label>
+      </div><small>{lang==="hi"?"किचन, बाथरूम, रास्ते और सीढ़ियाँ उपलब्ध जगह के अनुसार जाँची जाती हैं।":"Kitchen, bathrooms, circulation and stairs are determined by the validated layout engine."}</small></fieldset>
+      <div className="nbh-studio-step-actions"><button type="button" className="nbh-studio-back" onClick={()=>setHomeStep(1)}>{lang==="hi"?"← प्लॉट बदलें":"← Edit plot"}</button>{plotValid&&roomValid?<Link className="nbh-studio-generate" href={portfolioHref} prefetch={false}>{lang==="hi"?"नक्शे देखें":"Generate room layouts"} <Icon name="arrow"/></Link>:<button type="button" className="nbh-studio-generate" disabled>{lang==="hi"?"नक्शे देखें":"Generate room layouts"}</button>}</div>
+     </>}
      <p className="nbh-studio-trust">{lang==="hi"?"24 तक वैध कॉन्सेप्ट लेआउट; वास्तविक संख्या आपके प्लॉट और कमरों की शर्तों पर निर्भर है।":"Up to 24 checked concept layouts; actual availability depends on plot and room constraints."}</p>
      <nav className="nbh-studio-more" aria-label="Other home design tools"><Link href="/design-studio/fit">{lang==="hi"?"प्लॉट फिट जांचें":"Check plot fit"}</Link><Link href="/design-studio/visualizer">{lang==="hi"?"दीवार के रंग आज़माएं":"Try wall colours"}</Link><Link href="/studio-pricing">{lang==="hi"?"मुफ्त और प्रीमियम":"Free & premium"}</Link></nav>
     </div>
