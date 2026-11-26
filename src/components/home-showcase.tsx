@@ -14,20 +14,20 @@ export function HomeShowcase({hindi}:{hindi:boolean}) {
   const direction = useRef(1);
   useEffect(() => {
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setMotion(!preference.matches);
-    update();
+    const update = () => {const connection=(navigator as Navigator&{connection?:{saveData?:boolean;effectiveType?:string}}).connection;setMotion(!preference.matches&&!connection?.saveData&&!["slow-2g","2g"].includes(connection?.effectiveType??""));};
+    const start=window.setTimeout(update,1500);
     preference.addEventListener("change",update);
     const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));
     if (root.current) observer.observe(root.current);
-    return () => {observer.disconnect(); preference.removeEventListener("change",update);};
+    return () => {clearTimeout(start);observer.disconnect(); preference.removeEventListener("change",update);};
   },[]);
   const playing = visible && motion && !paused;
   useEffect(() => {
     if (!playing) return;
     const timer = window.setInterval(() => {
       if (document.hidden) return;
-      setReveal(previous => Math.max(12,Math.min(88,previous + direction.current)));
-    },85);
+      setReveal(previous => Math.max(12,Math.min(88,previous + 2*direction.current)));
+    },170);
     return () => clearInterval(timer);
   },[playing]);
   useEffect(() => {
@@ -53,7 +53,7 @@ export function HomeShowcase({hindi}:{hindi:boolean}) {
     <div className="nbh-house-strip" ref={strip} onPointerDown={()=>setPaused(true)} onScroll={e=>{
       const el=e.currentTarget;
       if(el.clientWidth) setIndex(Math.round(el.scrollLeft/el.clientWidth));
-    }}>{heroGalleryPhotos.map((photo,i)=><div key={photo.src}><Image src={photo.src} fill sizes="(max-width:760px) 95vw, 46vw" loading={i===0?"eager":"lazy"} alt={photo.name}/></div>)}</div>
+    }}>{heroGalleryPhotos.map((photo,i)=><div key={photo.src}><Image src={photo.src} fill sizes="(max-width:760px) 95vw, 46vw" loading={i===0?"eager":"lazy"} fetchPriority={i===0?"high":"low"} alt={photo.name}/></div>)}</div>
     <div className="nbh-house-controls">{heroGalleryPhotos.map((photo,i)=><button type="button" key={photo.src} aria-current={i===index?"true":undefined} aria-label={(hindi?"घर ":"House ")+(i+1)} onClick={()=>{setPaused(true);slide(i,motion);}}>{i+1}</button>)}</div>
     <figure className="home-stage-comparison"><div className="nbh-compare-frame">
       <Image src="/images/studio/finished.webp" fill sizes="(max-width:760px) 95vw, 46vw" alt="Finished house concept"/>
