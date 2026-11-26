@@ -23,14 +23,14 @@ export function InstallExperience(){
  useEffect(()=>{
   const allowed=()=>location.pathname!=="/install"&&!standalone()&&!readPreference(INSTALLED)&&Number(readPreference(DISMISS_KEY)||0)<Date.now();
   const frame=window.requestAnimationFrame(()=>{setPlatform(os());setReady(allowed());});
-  if("serviceWorker" in navigator && (location.protocol==="https:"||location.hostname==="localhost")){
-   void navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(()=>undefined);
-  }
+  let disposed=false, registration:ReturnType<typeof setTimeout>|undefined;
+  const register=()=>{if(disposed||registration!==undefined)return;registration=setTimeout(()=>{if(!disposed&&"serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost"))void navigator.serviceWorker.register("/sw.js",{scope:"/"}).catch(()=>undefined)},1000)};
+  if(document.readyState==="complete")register();else window.addEventListener("load",register,{once:true});
   function installable(event:Event){event.preventDefault();deferred.current=event as BeforeInstallPromptEvent;setSupported(true);}
   function installed(){writePreference(INSTALLED,"1");deferred.current=null;setReady(false);setSupported(false);}
   window.addEventListener("beforeinstallprompt",installable);
   window.addEventListener("appinstalled",installed);
-  return()=>{window.cancelAnimationFrame(frame);window.removeEventListener("beforeinstallprompt",installable);window.removeEventListener("appinstalled",installed);};
+  return()=>{disposed=true;clearTimeout(registration);window.removeEventListener("load",register);window.cancelAnimationFrame(frame);window.removeEventListener("beforeinstallprompt",installable);window.removeEventListener("appinstalled",installed);};
  },[]);
  function dismiss(){writePreference(DISMISS_KEY,String(Date.now()+COOLDOWN));setReady(false);setShowHelp(false);}
  async function install(){
