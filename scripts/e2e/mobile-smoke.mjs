@@ -930,9 +930,11 @@ async function main(){
     fs.writeFileSync("test-results/mobile/facade-pixel-evidence.json",JSON.stringify({scope:"390px Chromium canvas sample points; elapsed includes browser automation and is not field INP",samples:evidence},null,2));
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const patternButton=page.getByRole("button",{name:"Diamond lattice",exact:true});
-    await patternButton.evaluate(el=>el.scrollIntoView({block:"center",behavior:"instant"}));
+    await patternButton.evaluate(el=>el.scrollIntoView({block:"end",behavior:"instant"}));
+    await page.waitForFunction(()=>{const b=[...document.querySelectorAll(".wall-pattern-options button")].find(e=>e.textContent?.trim()==="Diamond lattice");if(!b)return false;const r=b.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;return y>0&&y<innerHeight&&b.contains(document.elementFromPoint(x,y));});
     const stableScroll=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(window.scrollY)))));
-    await patternButton.click();
+    const hit=await patternButton.boundingBox();assert.ok(hit);
+    await page.mouse.click(hit.x+hit.width/2,hit.y+hit.height/2);
     const afterPatternScroll=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(window.scrollY)))));
     assert.ok(Math.abs(afterPatternScroll-stableScroll)<=3,"choosing a visible design must not jump the page to the house");
     assert.equal(await patternButton.getAttribute("aria-pressed"),"true");
