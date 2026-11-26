@@ -51,6 +51,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
  const metrics=useMemo(()=>plan?planMetrics(plan):null,[plan]);
  const hasPlan=!!plan;
+ const fewerLevels=brief.bedrooms<brief.floors&&brief.bedrooms>=1&&brief.bedrooms<=3?brief.bedrooms as 1|2|3:null;
+ const alternative=useMemo(()=>!hasPlan&&fewerLevels?generateSpatialPortfolio({...brief,floors:fewerLevels},1).plans[0]??null:null,[brief,hasPlan,fewerLevels]);
  // Download/parse the shared 3D chunk after useful content on capable devices.
  // Warming never mounts a canvas or allocates WebGL before it is needed.
  useEffect(()=>{
@@ -133,9 +135,10 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
    <div className="nroad-results">
     {!plan?<section className="nroad-error" role="alert">
      <h2>{str("No circulation-safe plan for this brief","इस मांग के अनुसार सुरक्षित रास्ते वाला प्लान नहीं है")}</h2>
+     {fewerLevels&&<><p>{str("Your selected bedroom count is lower than the number of floors. This planner currently supports at least one bedroom on each floor; it does not yet generate bedroom-free levels.","चुने गए बेडरूम मंज़िलों से कम हैं। अभी हर मंज़िल पर कम से कम एक बेडरूम वाला नक्शा उपलब्ध है।")}</p>{alternative&&<button type="button" onClick={()=>update("floors",fewerLevels)}>{fewerLevels===1?str("Show ground-floor 1 BHK plan","एक मंज़िल का 1 BHK नक्शा देखें"):str("Show validated "+fewerLevels+"-level plan",fewerLevels+" मंज़िल का नक्शा देखें")}</button>}</>}
      <ul>{result.blockers.map(msg=><li key={msg}>{msg}</li>)}</ul>
-     <p>{str("Try G+1, fewer bedrooms, or review parking and setbacks. We do not shrink rooms below minimums to fabricate a fit.",
-       "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>
+     {!fewerLevels&&<p>{str("Try G+1, fewer bedrooms, or review parking and setbacks. We do not shrink rooms below minimums to fabricate a fit.",
+       "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>}
     </section>:<>
      <p className="nroad-jump"><a href="#selected-plan-drawing">Jump to the selected exact 2D + 3D plan ↓</a></p>
      <div className="nroad-head nroad-choices"><h2>{str("Room-layout options checked for your plot","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} room-layout options, same plot</span></div>
