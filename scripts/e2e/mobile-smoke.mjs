@@ -426,6 +426,15 @@ async function main(){
     const prepareQuote=page.getByRole("link",{name:/Prepare dealer quote/});
     await prepareQuote.waitFor({timeout:15000});
     assert.match((await prepareQuote.getAttribute("href"))??"",/^\/quotes\?/,"list quote link should target quote preparation");
+    // Exercise catalog quick-add and quantity stepper without opening product details.
+    await page.goto(base+"/materials/cement",{waitUntil:"load"});
+    const quickAdd=page.locator(".nb-shop-control").first();
+    await quickAdd.getByRole("button",{name:"Add",exact:true}).click();
+    await quickAdd.getByRole("button",{name:/Increase /}).click();
+    assert.equal(await quickAdd.locator("input[type=number]").inputValue(),"2");
+    await quickAdd.getByRole("button",{name:/Decrease /}).click();
+    await quickAdd.getByRole("button",{name:/Decrease /}).click();
+    await quickAdd.getByRole("button",{name:"Add",exact:true}).waitFor();
     // Exercise a genuine guest order-cart journey, without creating a production order.
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     await page.locator(".product-request-config input[type=number]").fill("3");
