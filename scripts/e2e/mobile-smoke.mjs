@@ -13,6 +13,18 @@ async function main(){
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
  const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
  try{
+  // Focused extra screen sizes without repeating the full expensive suite.
+  for(const v of [{w:320,h:640},{w:1024,h:768},{w:1920,h:1080}]){
+   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
+   try{const page=await ctx.newPage();
+    for(const route of ["/","/materials","/materials/bricks-blocks","/materials/bricks-blocks/red-clay-brick","/brands","/design-studio/visualizer","/build-iq","/checkout?cart=1"]){
+     const response=await page.goto(base+route,{waitUntil:"load",timeout:60000});assert.equal(response?.status(),200,route);
+     const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth),broken:[...document.images].filter(i=>i.complete&&i.getBoundingClientRect().width>0&&!i.naturalWidth).map(i=>i.getAttribute("src"))}));
+     if(result.scroll>result.width+2)failures.push(v.w+"px "+route+": responsive overflow "+(result.scroll-result.width)+"px");
+     if(result.broken.length)failures.push(v.w+"px "+route+": broken visible images "+JSON.stringify(result.broken));
+    }
+   }finally{await ctx.close()}
+  }
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
    const page=await ctx.newPage(),errors=[];
