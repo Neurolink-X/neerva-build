@@ -124,7 +124,13 @@ const promo={code,fixed_paise:5000,rate_bps:0,cap_paise:5000,minimum_paise:10000
 assert.ok((await signed.from("checkout_coupons").insert(promo)).error,"Customer cannot create coupon");
 assert.ifError((await couponAdmin.from("checkout_coupons").insert(promo)).error);
 assert.equal((await signed.rpc("neerva_coupon_available",{p_code:code})).data,true);
-assert.equal((await call(customer,route,"POST",{...payload,idempotencyKey:randomUUID(),couponCode:"MISSING"})).status,409);
+const unavailableCouponKey=randomUUID();
+const unavailableCoupon=await call(customer,route,"POST",{...payload,idempotencyKey:unavailableCouponKey,couponCode:"MISSING"});
+assert.equal(unavailableCoupon.status,409);assert.equal(unavailableCoupon.data.code,"COUPON_UNAVAILABLE");
+const recoveredWithoutCoupon=await call(customer,route,"POST",{...payload,idempotencyKey:unavailableCouponKey});
+assert.equal(recoveredWithoutCoupon.status,201,JSON.stringify(recoveredWithoutCoupon.data));
+assert.equal(recoveredWithoutCoupon.data.order.status,"received");
+
 const withCoupon={...payload,idempotencyKey:randomUUID(),couponCode:code};
 const couponOrder=await call(customer,route,"POST",withCoupon);assert.equal(couponOrder.status,201,JSON.stringify(couponOrder.data));
 assert.equal(couponOrder.data.order.coupon_status,"requested");
