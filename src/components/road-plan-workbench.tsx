@@ -94,7 +94,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
     <form onSubmit={e=>e.preventDefault()} className="nroad-form">
      <label>{str("Frontage / width (ft)","चौड़ाई (फीट)")}<input type="number" min="10" max="200" step="any" value={brief.widthFt} onChange={e=>update("widthFt",Number(e.target.value))}/></label>
      <label>{str("Plot depth (ft)","लंबाई (फीट)")}<input type="number" min="15" max="250" step="any" value={brief.depthFt} onChange={e=>update("depthFt",Number(e.target.value))}/></label>
-     <label>{str("Road along which edge?","सड़क किस दिशा में है?")}<select value={brief.roadSide} onChange={e=>update("roadSide",e.target.value as RoadSide)}>
+     <label>{str("Road along which edge?","सड़क किस दिशा में है?")}<select name="roadSide" aria-label={str("Road along which edge?","सड़क किस दिशा में है?")} value={brief.roadSide} onChange={e=>update("roadSide",e.target.value as RoadSide)}>
       {(["N","E","S","W"] as const).map(side=><option key={side} value={side}>{({N:"North",E:"East",S:"South",W:"West"} as const)[side]}</option>)}
      </select></label>
      <div className="nroad-road-help" role="status">
@@ -104,7 +104,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      </div>
      <details className="nroad-advanced nroad-site-shape"><summary>{str("Plot shape: rectangle or L-shaped land","प्लॉट का आकार: चौकोर या L शेप")}</summary>
       <p>{str("For an L-shaped plot, mark a missing rear corner. The model leaves an entire side strip unbuilt to avoid placing rooms outside your land. A surveyor must confirm boundaries.","L आकार के प्लॉट में पीछे का कटा हुआ कोना बताएं। नक्शा सुरक्षित जगह तक सीमित रहता है, जमीन की सही नाप सर्वेयर से जाँचें।")}</p>
-      <label>{str("Site outline","प्लॉट का आकार")}<select value={brief.siteShape?.kind??"rectangle"}
+      <label>{str("Site outline","प्लॉट का आकार")}<select name="siteShape" aria-label={str("Site outline","प्लॉट का आकार")} value={brief.siteShape?.kind??"rectangle"}
        onChange={e=>update("siteShape",e.target.value==="rectangle"?{kind:"rectangle"}:{kind:e.target.value as "rear-left-notch"|"rear-right-notch",notchWidthFt:2,notchDepthFt:10})}>
        <option value="rectangle">Rectangle · full frontage</option>
        <option value="rear-left-notch">L shape · rear-left missing corner</option>
@@ -118,11 +118,11 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
       </>}
       <p className="nroad-small">These are conservative concept constraints, not municipal setbacks, cadastral proof or licensed architecture.</p>
      </details>
-     <label>{str("Levels","मंज़िलें")}<select value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2|3)}>
+     <label>{str("Levels","मंज़िलें")}<select name="floors" aria-label={str("Levels","मंज़िलें")} value={brief.floors} onChange={e=>update("floors",Number(e.target.value) as 1|2|3)}>
       <option value={1}>G · Ground</option><option value={2}>G+1 · Two levels</option><option value={3}>G+2 · Three levels</option></select></label>
-     <label>{str("Total bedrooms","कुल बेडरूम")}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>
+     <label>{str("Total bedrooms","कुल बेडरूम")}<select name="bedrooms" aria-label={str("Total bedrooms","कुल बेडरूम")} value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>
       {[1,2,3].map(n=><option key={n} value={n}>{n} BHK</option>)}</select></label>
-     <label>{str("Car parking","कार पार्किंग")}<select value={String(brief.parking)} onChange={e=>update("parking",e.target.value==="true")}>
+     <label>{str("Car parking","कार पार्किंग")}<select name="parking" aria-label={str("Car parking","कार पार्किंग")} value={String(brief.parking)} onChange={e=>update("parking",e.target.value==="true")}>
       <option value="true">Yes · minimum 8 × 16 ft</option><option value="false">No parking</option></select></label>
      <details className="nroad-advanced"><summary>{str("Setbacks (unverified)","सेटबैक (सत्यापित नहीं)")}</summary><p>{str("Only enter setbacks confirmed for your own plot. The engine will refuse layouts that cannot accommodate them.","अपने प्लॉट के सत्यापित सेटबैक ही भरें। जगह कम होने पर प्लान नहीं बनेगा।")}</p>
       {(["frontFt","rearFt","leftFt","rightFt"] as const).map(side=><label key={side}>{side.replace("Ft","")} (ft)
@@ -166,7 +166,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The selected floor uses the same room footprints and openings. Wall thickness, stairs and finishes remain conceptual, not verified CAD/BIM.</p>
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
-     <div className="nroad-exterior-workspace">{plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}
+     <div className="nroad-exterior-workspace">{plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select name="facadeKit" aria-label={str("Balcony front style","बालकनी का डिज़ाइन")} value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>
      <div className="nroad-palette"><h2>{str("House colour mood","घर की रंग योजना")}</h2>
       <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>setPalette(x.id)}>
