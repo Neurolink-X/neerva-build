@@ -1,10 +1,24 @@
 "use client";
-import {useEffect,useState,type FormEvent} from "react";
+import {useState,useSyncExternalStore} from "react";
 import Link from "next/link";
-import {DIRECT_CART_KEY,safeDirectCart,cartKey,changeDirectCartQuantity,type CartItem} from "@/modules/orders/direct-cart";
+import {cartKey,type CartItem} from "@/modules/orders/direct-cart";
+import {useShopCart,writeShopCart,setShopQuantity,QuantityStepper} from "./shop-cart";
 import {DirectCheckout} from "./direct-checkout";
-export function DirectCartPanel(){const [rows,setRows]=useState<CartItem[]|null>(null),[checking,setChecking]=useState(false),[notice,setNotice]=useState(""),[received,setReceived]=useState(false);useEffect(()=>{const t=setTimeout(()=>{try{setRows(safeDirectCart(JSON.parse(localStorage.getItem(DIRECT_CART_KEY)??"[]")));}catch{setRows([])}},0);return()=>clearTimeout(t)},[]);
-function persist(next:CartItem[]){try{localStorage.setItem(DIRECT_CART_KEY,JSON.stringify(next));setRows(next);setNotice("");}catch{setNotice("Cart could not be saved. Enable browser storage before continuing.");}}
-function edit(e:FormEvent<HTMLFormElement>,key:string){e.preventDefault();const n=Number(new FormData(e.currentTarget).get("quantity"));if(!Number.isFinite(n)||n<.001||n>1000000||Math.abs(n*1000-Math.round(n*1000))>.00001){setNotice("Enter a valid quantity.");return;}persist(changeDirectCartQuantity(rows,key,n));}
-if(!rows)return <p>Loading order cart…</p>;if(!rows.length)return <p>Your order cart is empty. <Link href="/materials">Browse materials</Link></p>;
-return checking?<>{!received&&<button type="button" className="button button-outline" onClick={()=>setChecking(false)}>← Edit cart</button>}<p>Step 2 of 2 · Delivery details and order request</p><DirectCheckout category={rows[0].category} slug={rows[0].productSlug} name={rows[0].productName} cart={rows} onReceived={()=>setReceived(true)}/></>:<section><h2>Order cart ({rows.length})</h2><p>Step 1 of 2 · Review your materials. Final price and availability will be confirmed before fulfillment.</p>{notice&&<p role="alert">{notice}</p>}{rows.map(r=><article className="admin-record" key={cartKey(r)}><strong>{r.productName}</strong><form onSubmit={e=>edit(e,cartKey(r))}><label>Quantity ({r.unit})<input type="number" name="quantity" min=".001" max="1000000" step=".001" defaultValue={r.quantity} required/></label><button type="submit" className="button button-outline">Update quantity</button></form><button type="button" className="button button-outline" onClick={()=>persist(rows.filter(x=>cartKey(x)!==cartKey(r)))}>Remove</button></article>)}<button type="button" className="button button-dark" onClick={()=>setChecking(true)}>Continue to checkout</button> <Link href="/materials">Add more materials</Link></section>}
+import {quantityUnitLabels,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
+const subscribe=()=>()=>{};
+export function DirectCartPanel(){
+ const rows=useShopCart(),ready=useSyncExternalStore(subscribe,()=>true,()=>false);
+ const [checkout,setCheckout]=useState<CartItem[]|null>(null),[notice,setNotice]=useState(""),[received,setReceived]=useState(false),[unload,setUnload]=useState(false);
+ if(!ready)return <p role="status">Loading cart…</p>;
+ if(checkout)return <>{!received&&<button type="button" className="button button-outline" onClick={()=>setCheckout(null)}>← Edit cart</button>}<DirectCheckout category={checkout[0].category} slug={checkout[0].productSlug} name={checkout[0].productName} cart={checkout} initialUnloading={unload} onReceived={()=>setReceived(true)}/></>;
+ if(!rows.length)return <section className="nb-shop-cart-card"><h2>Your cart is empty</h2><p>Choose construction materials to get started.</p><Link className="button button-dark" href="/materials">Shop materials →</Link><Link href="/basket?view=planner">Open project material planner</Link></section>;
+ function update(key:string,n:number){setNotice(setShopQuantity(key,n)?"":"Cart update failed. Check browser storage.")}
+ return <section className="nb-shop-cart"><div className="nb-shop-cart-card"><div className="nb-shop-cart-head"><h2>My cart ({rows.length})</h2><button type="button" className="nb-shop-quiet" onClick={()=>{if(window.confirm("Remove all materials from your shopping cart?"))setNotice(writeShopCart([])?"":"Unable to clear cart.")}}>Clear cart</button></div>
+ {notice&&<p role="alert">{notice}</p>}
+ {rows.map(r=><article className="nb-shop-cart-line" key={cartKey(r)}><div><Link href={"/materials/"+r.category+"/"+r.productSlug}><strong>{r.productName}</strong></Link><small>{quantityUnitLabels[r.unit as MaterialQuantityUnit]??r.unit} · Price to be confirmed</small></div><QuantityStepper item={r} onChange={n=>update(cartKey(r),n)}/><button type="button" className="nb-shop-quiet" onClick={()=>update(cartKey(r),0)} aria-label={"Remove "+r.productName}>Remove</button></article>)}
+ <Link href="/materials" className="nb-shop-quiet">+ Add more materials</Link></div>
+ <section className="nb-shop-cart-card"><h2>Delivery services</h2><label className="nb-shop-unloading"><input type="checkbox" checked={unload} onChange={e=>setUnload(e.target.checked)}/><span><strong>Request unloading assistance</strong><small>Ground-floor unloading; availability and charge confirmed before approval.</small></span></label></section>
+ <section className="nb-shop-cart-card"><h2>Bill details</h2><dl className="nb-shop-bill">{["Materials","GST","Delivery","Handling",...(unload?["Unloading"]:[])].map(label=><div key={label}><dt>{label}</dt><dd>To be confirmed</dd></div>)}<div className="nb-shop-total"><dt>Final total</dt><dd>Awaiting price</dd></div></dl><p>No payment now. Review and approve the itemised delivered price before supply.</p></section>
+ <div className="nb-shop-checkout-bar"><div><strong>{rows.length} {rows.length===1?"material":"materials"}</strong><small>Final price requires approval</small></div><button type="button" className="button button-dark" onClick={()=>setCheckout(rows)}>Continue →</button></div>
+ </section>
+}
