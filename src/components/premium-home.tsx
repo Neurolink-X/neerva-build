@@ -143,7 +143,16 @@ export function PremiumHome({featuredMaterials}:{featuredMaterials?:ReactNode}={
      <Link className="nbh-journey" href="/design-studio"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
      <Link className="nbh-journey" href="/quotes"><span className="nbh-jicon"><Icon name="file"/></span><span><strong>{t.quote}</strong><small>{t.quoteDesc}</small></span><Icon name="arrow"/></Link>
     </div>
-    <form className="nbh-quick-quote" action="/quotes" method="get">
+
+    <div className="nbh-chip-line"><span>{t.categories}</span>{popular.map(([name,href])=><Link key={name} href={href} prefetch={false} data-intent-prefetch="">{name}</Link>)}</div>
+
+   </div>
+   <div className="nbh-hero-visual">
+   <HomeShowcase hindi={lang==="hi"}/>
+   </div>
+  </section>
+  {featuredMaterials&&<section className="nbh-section nbh-shopping-shelf" aria-labelledby="nbh-shop-heading"><div className="nbh-section-head"><div><p className="nbh-eyebrow">{lang==="hi"?"निर्माण की शुरुआत":"START YOUR BUILD"}</p><h2 id="nbh-shop-heading">{lang==="hi"?"चुनिंदा निर्माण सामग्री":"Featured materials"}</h2><p>{lang==="hi"?"सामग्री चुनें और कार्ट में जोड़ें। अंतिम रेट और उपलब्धता की पुष्टि जरूरी है।":"Choose materials and build your cart. Final price and availability require dealer confirmation."}</p></div><Link href="/materials" prefetch={false} className="nbh-section-link">{lang==="hi"?"सभी सामग्री":"View all materials"} <Icon name="arrow"/></Link></div>{featuredMaterials}<Link className="nbh-shop-bulk" href="/quotes" prefetch={false}><Icon name="building"/><span><strong>{lang==="hi"?"बल्क ऑर्डर या कई सामग्री चाहिए?":"Need a bulk order?"}</strong><small>{lang==="hi"?"मात्रा, पिनकोड और डिलीवरी के अनुसार कोटेशन बनाएं।":"Prepare an itemised quote with quantities and delivery location."}</small></span><Icon name="arrow"/></Link></section>}
+  <section className="nbh-home-quote-wrap" aria-label={lang==="hi"?"सामग्री का कोटेशन":"Material quotation"}>    <form className="nbh-quick-quote" action="/quotes" method="get">
  <strong>{lang==="hi"?"जल्दी कोटेशन ड्राफ्ट तैयार करें":"Get a material quotation"}</strong>
  <div className="nbh-quick-steps"><b>{lang==="hi"?"01 · सामग्री":"01 · Requirements"}</b><span>→</span><span>{lang==="hi"?"02 · समीक्षा":"02 · Review & submit"}</span></div>
  <div className="nbh-quick-fields"><label className="nbh-quick-category">{lang==="hi"?"श्रेणी":"Category"}<select name="category" value={quoteCategory} onChange={e=>{const value=e.target.value;if(isMaterialCategory(value)){setQuoteCategory(value);setQuoteUnit(defaultCategoryUnit(value));setQuoteMaterial("")}}}><option value="cement">Cement</option><option value="steel">TMT / Steel</option><option value="bricks-blocks">Bricks / AAC</option><option value="plumbing">Pipes</option><option value="electrical">Electrical</option><option value="aggregates">Morang / Balu / Gitti</option><option value="paint">Paint</option><option value="tiles">Tiles</option><option value="hardware">Hardware</option></select></label>
@@ -154,15 +163,7 @@ export function PremiumHome({featuredMaterials}:{featuredMaterials?:ReactNode}={
   <label>{lang==="hi"?"डिलीवरी शहर":"Delivery city"}<input required minLength={2} maxLength={80} name="city" placeholder={lang==="hi"?"जैसे लखनऊ":"e.g. Lucknow"} autoComplete="address-level2"/></label><button type="submit">{lang==="hi"?"ड्राफ्ट तैयार करें →":"Review material request →"}</button>
  </div>
  <small>{lang==="hi"?"अगले चरण में विवरण जांचें। अभी कोई अनुरोध या ऑर्डर नहीं भेजा गया है।":"Review your details next. No request or order is created until you confirm."}</small>
-</form>
-    <div className="nbh-chip-line"><span>{t.categories}</span>{popular.map(([name,href])=><Link key={name} href={href} prefetch={false} data-intent-prefetch="">{name}</Link>)}</div>
-
-   </div>
-   <div className="nbh-hero-visual">
-   <HomeShowcase hindi={lang==="hi"}/>
-   </div>
-  </section>
-  {featuredMaterials&&<section className="nbh-section nbh-shopping-shelf" aria-labelledby="nbh-shop-heading"><div className="nbh-section-head"><div><p className="nbh-eyebrow">{lang==="hi"?"निर्माण की शुरुआत":"START YOUR BUILD"}</p><h2 id="nbh-shop-heading">{lang==="hi"?"चुनिंदा निर्माण सामग्री":"Featured materials"}</h2><p>{lang==="hi"?"सामग्री चुनें और कार्ट में जोड़ें। अंतिम रेट और उपलब्धता की पुष्टि जरूरी है।":"Choose materials and build your cart. Final price and availability require dealer confirmation."}</p></div><Link href="/materials" prefetch={false} className="nbh-section-link">{lang==="hi"?"सभी सामग्री":"View all materials"} <Icon name="arrow"/></Link></div>{featuredMaterials}<Link className="nbh-shop-bulk" href="/quotes" prefetch={false}><Icon name="building"/><span><strong>{lang==="hi"?"बल्क ऑर्डर या कई सामग्री चाहिए?":"Need a bulk order?"}</strong><small>{lang==="hi"?"मात्रा, पिनकोड और डिलीवरी के अनुसार कोटेशन बनाएं।":"Prepare an itemised quote with quantities and delivery location."}</small></span><Icon name="arrow"/></Link></section>}
+</form></section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
 
   <section className="nbh-brands-strip" aria-label="Construction manufacturer reference directory">
