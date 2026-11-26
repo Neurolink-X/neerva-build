@@ -188,3 +188,9 @@ test("API literals across frontend and shared modules resolve to real handlers",
  assert.ok(consumers.size>=30,"API scan unexpectedly incomplete");
  console.log("API consumer coverage: "+consumers.size+"/"+api.size+" routes have literal references; dynamic consumers require runtime verification.");
 });
+
+// Vercel builds are budgeted for production; browser tests still run in GitHub CI.
+test("automatic Vercel deployments are restricted to main",()=>{
+ const config=JSON.parse(readFileSync(resolve("vercel.json"),"utf8"));
+ assert.deepEqual(config.git?.deploymentEnabled,{"**":false,main:true},"Do not spend Vercel deployment quota on feature branches; explicit preview deployment requires a separate decision.");
+});

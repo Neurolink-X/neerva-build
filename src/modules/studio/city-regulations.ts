@@ -4,6 +4,7 @@
  */
 import {createClient,type SupabaseClient} from "@supabase/supabase-js";
 import {DESIGN_CITIES} from "./fit.ts";
+const DEDICATED_STUDIO_ORIGIN="https://djgghisbkucprqiezrcn.supabase.co";
 export function normaliseStudioCity(value:string|null):string|null{
  if(!value)return null;
  const clean=value.trim().toLowerCase();
@@ -17,7 +18,7 @@ export function studioPublicClient(...args:[]|[url:string|undefined,key:string|u
  if(!url||!key?.startsWith("sb_publishable_"))return null;
  try{
   const origin=new URL(url);
-  if(origin.protocol!=="https:"||!origin.hostname.endsWith(".supabase.co"))return null;
-  return createClient(origin.toString(),key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  if(origin.origin!==DEDICATED_STUDIO_ORIGIN||origin.username||origin.password||origin.pathname!=="/"||origin.search||origin.hash)return null;
+  return createClient(DEDICATED_STUDIO_ORIGIN,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
  }catch{return null}
 }
