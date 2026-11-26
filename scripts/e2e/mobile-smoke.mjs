@@ -1059,7 +1059,7 @@ async function main(){
      assert.ok(await page.locator(".nbh-mobile-shop-nav").isVisible(),"mobile navigation is visible");
      const homeCartBefore=await page.locator(".nbh-cart-icon").getAttribute("aria-label");
      const homeAdd=homeShelf.locator("button.nb-shop-add").first();
-     if(await homeAdd.count()){const card=homeAdd.locator("xpath=ancestor::article[1]");await homeAdd.click();await page.waitForFunction(before=>document.querySelector(".nbh-cart-icon")?.getAttribute("aria-label")!==before,homeCartBefore);const homeStepper=card.locator(".nb-shop-stepper");assert.ok(await homeStepper.isVisible());await homeStepper.getByRole("button",{name:/Decrease/}).click();}
+     if(await homeAdd.count()){const homeProductIndex=await homeAdd.evaluate(b=>[...document.querySelectorAll(".nbh-shop-product")].indexOf(b.closest("article")));assert.ok(homeProductIndex>=0);const card=homeShelf.locator(".nbh-shop-product").nth(homeProductIndex);await homeAdd.click();await page.waitForFunction(before=>document.querySelector(".nbh-cart-icon")?.getAttribute("aria-label")!==before,homeCartBefore);const homeStepper=card.locator(".nb-shop-stepper");await homeStepper.waitFor({state:"visible"});await homeStepper.getByRole("button",{name:/Decrease/}).click();}
      assert.equal(await page.locator(".nbh-explore-grid a").count(),6,"all six discovery tools preserved");
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
      assert.equal(await page.locator(".home-stage-comparison img").count(),2,"paired construction-stage renders");
