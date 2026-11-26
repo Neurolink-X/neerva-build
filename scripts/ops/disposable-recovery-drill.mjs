@@ -32,13 +32,16 @@ if(process.argv.includes("--preflight")){
 }else{
  try{
   query("create schema "+name+"; create table "+name+".catalog_snapshot as select slug,status::text,attributes from public.products where status='draft' and attributes->>'origin'='neerva-static-reference'");
-  const fingerprint=()=>query("select count(*)||':'||md5(coalesce(string_agg(slug||':'||status||':'||attributes::text,',' order by slug),'')) from "+name+".catalog_snapshot");
-  const before=fingerprint();assert.ok(Number(before.split(":")[0])>0,"Expected imported fixture catalog");
+  // Capture business-critical fixture state without passwords, payment references, contact details or addresses.
+  query("create table "+name+".order_snapshot as select id,status,total_paise from public.direct_orders; create table "+name+".stock_snapshot as select branch_id,variant_id,available_quantity,unit from public.inventory; create table "+name+".coupon_snapshot as select order_id,code,discount_paise,state from neerva_internal.checkout_coupon_uses; create table "+name+".hold_snapshot as select order_id,branch_id,variant_id,quantity,state from neerva_internal.stock_holds");
+  const tables=["catalog_snapshot","order_snapshot","stock_snapshot","coupon_snapshot","hold_snapshot"];
+  const fingerprint=()=>Object.fromEntries(tables.map(table=>[table,query("select count(*)||':'||md5(coalesce(string_agg(row_to_json(t)::text,',' order by row_to_json(t)::text),'')) from "+name+"."+table+" t")]));
+  const before=fingerprint();for(const table of tables)assert.ok(Number(before[table].split(":")[0])>0,"Expected fixture records in "+table);
   const dump=run("pg_dump",[...connection,"--format=custom","--no-owner","--no-acl","--schema="+name]);
   assert.ok(dump.length>5&&dump.subarray(0,5).toString("ascii")==="PGDMP","Expected real PostgreSQL custom archive");
   query("drop schema "+name+" cascade");
   run("pg_restore",[...connection,"--no-owner","--no-acl","--exit-on-error","--single-transaction"],dump);
-  assert.equal(fingerprint(),before);
-  console.log(JSON.stringify({scope:"disposable catalog snapshot only",restoredRows:Number(before.split(":")[0]),checksumMatched:true,postgresMajor:major,matchingContainer:true}));
+  assert.deepEqual(fingerprint(),before);
+  console.log(JSON.stringify({scope:"disposable projected business snapshots, not full production restore",restoredRows:Object.fromEntries(tables.map(t=>[t,Number(before[t].split(":")[0])])),checksumMatched:true,postgresMajor:major,matchingContainer:true}));
  }finally{query("drop schema if exists "+name+" cascade")}
 }
