@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import {InstallLink,FooterAppAccess} from "@/components/pwa-install";
 import {MobileNavigation} from "@/components/mobile-navigation";
 import {ShopCartLink} from "@/components/shop-cart";

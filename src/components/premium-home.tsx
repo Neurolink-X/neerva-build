@@ -2,7 +2,7 @@
 
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import {MobileNavigation} from "@/components/mobile-navigation";
 import {InstallLink} from "@/components/pwa-install";
 import {SiteFooter} from "./site-chrome";

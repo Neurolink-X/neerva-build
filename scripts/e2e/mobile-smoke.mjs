@@ -13,6 +13,20 @@ async function main(){
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
  const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
  try{
+  // Cold and repeat navigation on a constrained connection. Do not confuse
+  // simulated local Chromium timings with field Web Vitals.
+  for(const profile of [{name:"slow-3g",latency:400,download:400000/8,upload:200000/8},{name:"weak-4g",latency:150,download:1500000/8,upload:750000/8}]){
+   const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:2,serviceWorkers:"block"});
+   try{await ctx.addInitScript(()=>{const c=new EventTarget();Object.assign(c,{effectiveType:"3g",saveData:true,downlink:.4,rtt:400});Object.defineProperty(navigator,"connection",{value:c,configurable:true});});
+    const page=await ctx.newPage(),session=await ctx.newCDPSession(page);await session.send("Network.enable");await session.send("Network.emulateNetworkConditions",{offline:false,latency:profile.latency,downloadThroughput:profile.download,uploadThroughput:profile.upload,connectionType:"cellular3g"});
+    let speculative=0;page.on("request",r=>{const h=r.headers();if(h["next-router-prefetch"]||h["purpose"]==="prefetch"||h["sec-purpose"]?.includes("prefetch"))speculative++;});
+    for(const visit of ["cold","repeat"]){const started=Date.now();await page.goto(base+"/",{waitUntil:"domcontentloaded",timeout:120000});await page.locator(".nbh-journey.nbh-primary").waitFor({state:"visible",timeout:60000});const usefulMs=Date.now()-started;
+     await page.waitForLoadState("load",{timeout:120000});const resources=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],r=performance.getEntriesByType("resource");return {documentBytes:n?.transferSize??0,resourceBytes:r.reduce((sum,e)=>sum+e.transferSize,0),resourceCount:r.length};});
+     assert.ok(usefulMs<60000,profile.name+" useful homepage exceeded severe smoke ceiling");assert.equal(speculative,0,profile.name+" must not prefetch routes before interaction");performanceReports.push({profile:profile.name,visit,usefulMs,...resources,scope:"simulated constrained network; not production field latency"});
+    }
+    await page.locator(".nbh-journey.nbh-primary").click({timeout:60000});await page.waitForURL("**/materials",{timeout:120000});assert.equal(new URL(page.url()).pathname,"/materials","real navigation still works with prefetch disabled");
+   }finally{await ctx.close()}
+  }
   // Focused extra screen sizes without repeating the full expensive suite.
   for(const v of [{w:320,h:640},{w:1024,h:768},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
