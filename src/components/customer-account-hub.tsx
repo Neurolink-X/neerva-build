@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import {useState,useRef,type FormEvent} from "react";
+import {useEffect,useState,useRef,type FormEvent} from "react";
 import type {User} from "@supabase/supabase-js";
 import {useShopCart} from "./shop-cart";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
@@ -28,6 +28,12 @@ const paths:Record<string,string>={package:"M4 7l8-4 8 4v10l-8 4-8-4V7m0 0 8 4 8
 function Icon({name}:{name:string}){return <svg aria-hidden="true" viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d={paths[name]??paths.file}/></svg>}
 export function CustomerAccountHub({user,admin,dealer,checkoutReturn,onSignOut}:{user:User;admin:boolean;dealer:boolean;checkoutReturn:string|null;onSignOut:()=>Promise<void>}){
  const cart=useShopCart(),[busy,setBusy]=useState(false),[message,setMessage]=useState(""),[error,setError]=useState(false),lock=useRef(false);
+ const [locale,setLocale]=useState<"en"|"hi">("en"),[localeReady,setLocaleReady]=useState(false),[localeNotice,setLocaleNotice]=useState("");
+ useEffect(()=>{let active=true;const load=async()=>{try{if(!client)return;const {data,error}=await client.from("profiles").select("preferred_locale").eq("id",user.id).maybeSingle();if(!active||error||!data)return;const value=data.preferred_locale==="hi"?"hi":"en";setLocale(value);setLocaleReady(true);try{localStorage.setItem("neerva-home-lang",value)}catch{/* private browsing */}}catch{/* preference stays unavailable */}};void load();return()=>{active=false}},[user.id]);
+ async function saveLocale(value:"en"|"hi"){
+  if(!client||lock.current||!localeReady)return;lock.current=true;setBusy(true);setLocaleNotice("");
+  try{const auth=await client.auth.getUser();if(auth.error||auth.data.user?.id!==user.id)throw Error("Session changed");const r=await client.from("profiles").update({preferred_locale:value}).eq("id",user.id).select("preferred_locale").single();if(r.error||r.data?.preferred_locale!==value)throw Error("Not saved");setLocale(value);try{localStorage.setItem("neerva-home-lang",value)}catch{/* cloud preference remains authoritative */}setLocaleNotice(value==="hi"?"भाषा की पसंद सहेज ली गई।":"Language preference saved.");}catch{setLocaleNotice("Preference could not be saved. Please retry.");}finally{lock.current=false;setBusy(false)}
+ }
  const name=typeof user.user_metadata.display_name==="string"&&user.user_metadata.display_name.trim()?user.user_metadata.display_name.trim().slice(0,100):"Your profile";
  const initials=name==="Your profile"?"":name.split(/\s+/).slice(0,2).map(s=>Array.from(s)[0]??"").join("").toUpperCase();
  async function saveProfile(e:FormEvent<HTMLFormElement>){
@@ -45,7 +51,7 @@ export function CustomerAccountHub({user,admin,dealer,checkoutReturn,onSignOut}:
   <nav className="naccount-shortcuts" aria-label="Quick account actions">{actions.slice(0,3).map(a=><Link key={a.href} href={a.href} prefetch={false}><Icon name={a.icon}/><strong>{a.label}</strong></Link>)}</nav>
   <div className="naccount-sections"><section className="naccount-menu"><h3>Manage your build</h3>{actions.slice(3,12).map(a=><Link key={a.href} href={a.href} prefetch={false}><Icon name={a.icon}/><span><strong>{a.label}{a.icon==="cart"&&cart.length>0?" ("+cart.length+")":""}</strong><small>{a.desc}</small></span><span aria-hidden="true">›</span></Link>)}</section>
   <div className="naccount-secondary"><section className="naccount-menu"><h3>Account & support</h3>{actions.slice(12).map(a=><Link key={a.href} href={a.href} prefetch={false}><Icon name={a.icon}/><span><strong>{a.label}</strong><small>{a.desc}</small></span><span aria-hidden="true">›</span></Link>)}</section>
-  <details className="naccount-settings-panel" id="account-settings"><summary>Account settings · edit profile</summary><form className="account-auth-form" onSubmit={saveProfile}><label>Display name<input name="displayName" defaultValue={name==="Your profile"?"":name} required minLength={2} maxLength={100} autoComplete="name"/></label><button className="button button-dark" disabled={busy}>Save profile</button></form><p>For a password reset, sign out and use the existing secure email recovery option. Changing a name never changes account permissions.</p></details>
+  <details className="naccount-settings-panel" id="account-settings"><summary>Account settings · edit profile</summary><form className="account-auth-form" onSubmit={saveProfile}><label>Display name<input name="displayName" defaultValue={name==="Your profile"?"":name} required minLength={2} maxLength={100} autoComplete="name"/></label><button className="button button-dark" disabled={busy}>Save profile</button></form><div className="naccount-locale"><strong>Preferred language / पसंदीदा भाषा</strong><div role="group" aria-label="Preferred language"><button type="button" className="button button-outline" disabled={busy||!localeReady} aria-pressed={locale==="en"} onClick={()=>void saveLocale("en")}>English</button><button type="button" className="button button-outline" disabled={busy||!localeReady} aria-pressed={locale==="hi"} onClick={()=>void saveLocale("hi")}>हिन्दी</button></div><p>Saved to your account; supported bilingual pages use this preference on this device after opening Account. Other pages may still use English.</p>{localeNotice&&<p role="status">{localeNotice}</p>}</div><p>For a password reset, sign out and use the existing secure email recovery option. Changing a name never changes account permissions.</p></details>
   <button className="naccount-logout" type="button" onClick={()=>void signOut()} disabled={busy}>Sign out</button>
   {message&&<p className="naccount-notice" role={error?"alert":"status"}>{message}</p>}</div></div>
  </div>;
