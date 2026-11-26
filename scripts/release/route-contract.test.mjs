@@ -15,7 +15,7 @@ function files(root){
 }
 const pageFiles=files(app).filter(f=>f.endsWith(sep+"page.tsx"));
 const apiFiles=files(join(app,"api")).filter(f=>f.endsWith(sep+"route.ts"));
-const sourceFiles=[...files(app),...files(components)].filter(f=>/\.(tsx?|mjs|jsx?)$/.test(f));
+const sourceFiles=[...files(app),...files(components),...files(resolve("src/modules"))].filter(f=>/\.(tsx?|mjs|jsx?)$/.test(f));
 function pathnameFor(file){
  const dir=relative(app,dirname(file)).split(sep).filter(segment=>!segment.startsWith("("));
  const path="/"+dir.join("/");
@@ -168,4 +168,23 @@ test("order and paid-access routes never issue backend success without identity 
 test("blog and buying guides remain discoverable from home, shared navigation and article pages",()=>{
  for(const f of ["src/components/premium-home.tsx","src/components/site-chrome.tsx"]){const code=readFileSync(f,"utf8");assert.match(code,/Blog & guides/);assert.match(code,/href="\/blog"/);}
  for(const f of ["src/app/blog/page.tsx","src/app/blog/[slug]/page.tsx"]){assert.match(readFileSync(f,"utf8"),/<SiteFooter\s*\/>/);}
+});
+
+test("API literals across frontend and shared modules resolve to real handlers",()=>{
+ const missing=[],consumers=new Map();
+ // Include helper calls, path constants, arrays and template literals, not only fetch("...").
+ const literal=/["'\x60](\/api\/[a-z0-9/_-]+)(?=[?"'\x60#])/g;
+ for(const file of sourceFiles){
+  if(/\.test\.[cm]?[jt]sx?$/.test(file))continue;
+  const content=readFileSync(file,"utf8");
+  for(const match of content.matchAll(literal)){
+   const target=normalize(match[1]);
+   if(!target||target.endsWith("/")||match[1].endsWith("/"))continue;
+   if(api.has(target)){const list=consumers.get(target)??new Set();list.add(relative(resolve("."),file));consumers.set(target,list);}
+   else if(![...api.keys()].some(r=>r.startsWith(target+"/")||isDynamicMatch(r,target)))missing.push(relative(resolve("."),file)+" → "+target);
+  }
+ }
+ assert.deepEqual([...new Set(missing)],[],"Unresolved internal API references");
+ assert.ok(consumers.size>=30,"API scan unexpectedly incomplete");
+ console.log("API consumer coverage: "+consumers.size+"/"+api.size+" routes have literal references; dynamic consumers require runtime verification.");
 });
