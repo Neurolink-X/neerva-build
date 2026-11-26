@@ -3,14 +3,15 @@ import {requireAuth,apiFailed} from "@/modules/identity/server-auth";
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const hdr={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const fail=(code:number,error:string)=>Response.json({error},{status:code,headers:hdr});
-const schema=z.object({orderId:z.string().uuid().nullable(),issue:z.enum(["payment_not_verified","duplicate_payment","refund_request","studio_access","other"]),message:z.string().trim().min(15).max(1000)}).strict();
+const schema=z.object({orderId:z.string().uuid().nullable(),issue:z.enum(["payment_not_verified","duplicate_payment","refund_request","studio_access","other"]),message:z.string().trim().min(15).max(1000),requestId:z.string().uuid().optional()}).strict();
 export async function GET(request:Request){
  const auth=await requireAuth(request);if(auth instanceof Response)return auth;
  const {data,error}=await auth.client.from("studio_support_tickets")
   .select("id,order_id,issue,message,status,admin_reply,created_at,resolved_at")
   .eq("user_id",auth.userId).order("created_at",{ascending:false}).limit(30);
  if(error)return apiFailed();
- return Response.json({tickets:data??[]},{headers:hdr});
+ const orders=await auth.client.from("studio_paid_orders").select("id,product_code,status,created_at,amount_paise").eq("user_id",auth.userId).order("created_at",{ascending:false}).limit(50);
+ return Response.json({tickets:data??[],orders:orders.data??[]},{headers:hdr});
 }
 export async function POST(request:Request){
  const auth=await requireAuth(request);if(auth instanceof Response)return auth;
@@ -22,8 +23,14 @@ export async function POST(request:Request){
   if(error)return apiFailed();if(!order)return fail(403,"Order reference does not belong to your account.");
  }
  const {data,error}=await auth.client.from("studio_support_tickets").insert({
-  user_id:auth.userId,order_id:p.data.orderId,issue:p.data.issue,message:p.data.message,status:"open"
+  ...(p.data.requestId?{id:p.data.requestId}:{}),user_id:auth.userId,order_id:p.data.orderId,issue:p.data.issue,message:p.data.message,status:"open"
  }).select("id,status").single();
+ if(error?.code==="23505"&&p.data.requestId){
+  const prior=await auth.client.from("studio_support_tickets").select("id,status,order_id,issue,message").eq("id",p.data.requestId).eq("user_id",auth.userId).maybeSingle();
+  if(prior.error)return apiFailed();
+  if(!prior.data||prior.data.order_id!==p.data.orderId||prior.data.issue!==p.data.issue||prior.data.message!==p.data.message)return fail(409,"Request reference conflicts with another submission.");
+  return Response.json({ticket:{id:prior.data.id,status:prior.data.status}},{headers:hdr});
+ }
  if(error||!data)return apiFailed();
  return Response.json({ticket:data},{status:201,headers:hdr});
 }
