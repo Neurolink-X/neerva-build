@@ -48,7 +48,7 @@ export function MaterialsBrowser({products,categories,initialQuery="",initialBra
    <div className="product-card-copy">
     <div className="product-brand-identity"><BrandMark name={p.brand} small/><small>Brand reference · no authorised dealer claim</small></div>
     <h2><Link href={`/materials/${p.category}/${p.slug}`} prefetch={false} data-intent-prefetch="">{variants.length>1?p.name.replace(/\s*[·-]\s*\d+(?:\.\d+)?\s*mm\s*$/i,"")+" · size options":p.name}</Link></h2>
-    <p>{variants.length>1?"Choose a size below to see its specifications and request the matching variant.":p.description}</p>
+    <details className="nb-shop-spec-details"><summary>Product details</summary><p>{variants.length>1?"Choose a size below to see its specifications and request the matching variant.":p.description}</p></details>
     {variants.length>1&&<><p className="catalog-range-note">{variants.length} size options</p>
      <div className="catalog-variant-links" aria-label={"Available "+p.brand+" reference sizes"}>
       {variants.map(item=><Link key={item.slug} href={`/materials/${item.category}/${item.slug}`} prefetch={false} data-intent-prefetch="">{rangeVariantLabel(item)}</Link>)}
