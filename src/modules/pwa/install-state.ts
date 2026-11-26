@@ -1,0 +1,10 @@
+/** Installed display modes only; a full-screen browser or external app referrer is not proof of installation. */
+export function installedDisplayMode(modes:readonly boolean[],iosStandalone:boolean):boolean{
+ return modes.some(Boolean)||iosStandalone;
+}
+
+export const INSTALL_OFFER_DELAY_MS=6000;
+/** Promote only on the homepage, with a real browser install event. Manual help stays in navigation. */
+export function showInstallOffer(state:{ready:boolean;installed:boolean;dismissed:boolean;accepted:boolean;path:string|null;available:boolean}):boolean{
+ return state.ready&&state.available&&!state.installed&&!state.dismissed&&!state.accepted&&state.path==="/";
+}

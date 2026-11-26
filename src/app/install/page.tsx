@@ -3,32 +3,41 @@ import Link from "next/link";
 import {SiteHeader,SiteFooter} from "@/components/site-chrome";
 import {InstallAppAction} from "@/components/install-app-action";
 import "./install.css";
+
 export const metadata:Metadata={
- title:"Install NEERVA BUILD | App and Home Screen",
- description:"How to add NEERVA BUILD construction materials and house planning to your home screen on Android, iPhone or desktop.",
+ title:"Neerva app | Quick access",
+ description:"Keep home planning, construction materials and quotations within easy reach.",
  robots:{index:false,follow:true}
 };
 export default function InstallPage(){
- return <main className="install-page"><SiteHeader/><div className="install-help-page">
-  <Link href="/" style={{display:"inline-block",marginBottom:24}}>← Back to NEERVA BUILD</Link>
-  <p style={{fontSize:12,fontWeight:800,letterSpacing:1.4}}>NEERVA BUILD · QUICK ACCESS</p>
-  <h1 style={{fontFamily:"Georgia,serif",fontSize:"clamp(32px,7vw,48px)",lineHeight:1.2}}>Add NEERVA BUILD to your home screen</h1>
-  <p>Installable as a progressive web app (PWA) on supported browsers. This is not a native Play Store or App Store download. The installer available on this site will use the browser&apos;s real install prompt when supported.</p>
-  <InstallAppAction/><section className="install-guide">
-   <article style={{background:"#fff",padding:20,border:"1px solid #dde5dc",borderRadius:16}}>
-    <h2>Android · Chrome</h2>
-    <p>Open this site in Chrome. Tap the three-dot menu (⋮), then <strong>Install app</strong> or <strong>Add to Home screen</strong>. Some browser versions show their own install prompt.</p>
-   </article>
-   <article style={{background:"#fff",padding:20,border:"1px solid #dde5dc",borderRadius:16}}>
-    <h2>iPhone / iPad · Safari</h2>
-    <p>Open the site in Safari, tap <strong>Share</strong>, choose <strong>Add to Home Screen</strong> and confirm. iOS does not provide the same `beforeinstallprompt` button as Chromium browsers.</p>
-   </article>
-   <article style={{background:"#fff",padding:20,border:"1px solid #dde5dc",borderRadius:16}}>
-    <h2>Desktop · Chrome or Edge</h2>
-    <p>Look for the install icon in the address bar, or use the browser&apos;s menu and select <strong>Install NEERVA BUILD</strong> when available.</p>
-   </article>
-  </section>
-  <p style={{marginTop:24,fontSize:14}}>App installation adds a shortcut and some offline-readable public pages. Login, dealer quotes, prices, live stock, orders and payments still require internet connectivity and active verified services.</p>
-  <div style={{display:"flex",gap:12,flexWrap:"wrap",marginTop:20}}><Link href="/materials" style={{padding:"12px 18px",background:"#244c38",color:"#fff",borderRadius:9}}>Browse materials</Link><Link href="/design-studio/road-planner" style={{padding:"12px 18px",border:"1px solid #c7d4c7",borderRadius:9}}>Explore house plans</Link></div>
- </div><SiteFooter/></main>;
+ return <div className="install-page">
+  <SiteHeader/>
+  <main className="install-help-page">
+   <Link href="/" className="install-back">← Home</Link>
+   <p className="install-eyebrow">NEERVA BUILD · QUICK ACCESS</p>
+   <h1>Your home project, one tap away.</h1>
+   <p>Explore construction materials, plan your home and manage your project from a single shortcut.</p>
+   <InstallAppAction/>
+   <section className="install-benefits" aria-label="What you can do">
+    <article>
+     <h2>Explore materials</h2>
+     <p>Compare brands, grades and product specifications.</p>
+     <Link href="/materials">Browse materials →</Link>
+    </article>
+    <article>
+     <h2>Plan your home</h2>
+     <p>Explore floor plans and try exterior colours.</p>
+     <Link href="/design-studio">Open Design Studio →</Link>
+     <Link href="/design-studio/road-planner">Explore house plans →</Link>
+    </article>
+    <article>
+     <h2>Manage your project</h2>
+     <p>Prepare quotations and check your orders.</p>
+     <Link href="/my-project">My Project →</Link>
+    </article>
+   </section>
+   <p className="install-note">Installation is free and uses your browser, not a Play Store or App Store download. Some browsers only support a home-screen shortcut. An offline information screen is available when the connection drops; login, live quotes, prices, stock, orders and payments require internet.</p>
+  </main>
+  <SiteFooter/>
+ </div>;
 }

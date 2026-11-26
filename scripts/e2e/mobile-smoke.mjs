@@ -320,16 +320,62 @@ async function main(){
     assert.equal(offline.status(),200,"safe offline page");
     assert.match(await offline.text(),/No order or payment has been submitted offline/);
     await page.goto(base+"/install",{waitUntil:"load"});
-    assert.equal(await page.getByRole("heading",{name:"Install on this device"}).count(),1,"dedicated install page displays actual browser action");
+    await page.getByRole("heading",{name:"Get Neerva on your device"}).waitFor({state:"visible"});
     assert.equal(await page.locator(".neerva-install-banner").count(),0,"no duplicate global banner on install instructions");
     await page.evaluate(()=>{
       const event=new Event("beforeinstallprompt",{cancelable:true});
       Object.assign(event,{prompt:async()=>undefined,userChoice:Promise.resolve({outcome:"accepted"})});
       window.dispatchEvent(event);
     });
-    assert.equal(await page.getByRole("button",{name:"Install NEERVA BUILD now"}).count(),1,"real install-event listener must display browser prompt action");
-    await page.getByRole("button",{name:"Install NEERVA BUILD now"}).click();
-    await page.getByText("Installation was accepted. Check your home screen.").waitFor();
+    await page.getByRole("button",{name:"Install Neerva",exact:true}).waitFor({state:"visible"});
+    await page.getByRole("button",{name:"Install Neerva",exact:true}).click();
+    await page.getByText("Installation accepted. Check your home screen.").waitFor();
+    // Acceptance alone is not proof of installation. Exercise the actual browser-event contract.
+    await page.evaluate(()=>window.dispatchEvent(new Event("appinstalled")));
+    await page.getByRole("heading",{name:"Neerva is ready to use"}).waitFor({state:"visible"});
+    assert.equal(await page.locator('a[href="/install"]').count(),0,"installed state hides shared header, menu and footer install links");
+    await page.getByRole("link",{name:"Open Neerva",exact:true}).click();
+    await page.waitForURL(base+"/");
+    await page.locator(".nbh-header").waitFor({state:"visible"});
+    assert.equal(await page.locator('a[href="/install"]').count(),0,"client navigation keeps install controls hidden");
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"installed app never displays install banner");
+    await page.reload({waitUntil:"load"});
+    assert.equal(await page.locator('a[href="/install"]').count(),0,"installed state survives reload");
+    // Simulate an uninstall with a fresh browser installability event. No storage clearing.
+    await page.evaluate(()=>{
+      const event=new Event("beforeinstallprompt",{cancelable:true});
+      Object.assign(event,{prompt:async()=>undefined,userChoice:Promise.resolve({outcome:"dismissed"})});
+      window.dispatchEvent(event);
+    });
+    await page.locator(".nbh-mobile-menu a[href='/install']").waitFor({state:"attached"});
+    await page.waitForFunction(()=>localStorage.getItem("neerva-installed-v1")===null);
+    // Also verify a user can recover if the browser never emits an uninstall or installability signal.
+    await page.evaluate(()=>window.dispatchEvent(new Event("appinstalled")));
+    await page.locator(".nbh-mobile-menu a[href='/install?recovery=1']").waitFor({state:"attached"});
+    await page.goto(base+"/install?recovery=1",{waitUntil:"load"});
+    await page.getByRole("button",{name:"App removed? Set up again",exact:true}).click();
+    await page.getByRole("heading",{name:"Get Neerva on your device"}).waitFor({state:"visible"});
+    assert.equal(await page.evaluate(()=>localStorage.getItem("neerva-installed-v1")),null,"recovery clears only installation preference");
+    await page.goto(base+"/",{waitUntil:"load"});
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"manual recovery does not trigger an immediate popup");
+    // Separately emulate the standalone browser media query before app hydration.
+    const standaloneCtx=await browser.newContext({viewport:{width:390,height:844}});
+    try{
+      await standaloneCtx.addInitScript(()=>{
+        const original=window.matchMedia.bind(window);
+        window.matchMedia=query=>{const result=original(query);return query==="(display-mode: standalone)"?new Proxy(result,{get(target,key){if(key==="matches")return true;const value=Reflect.get(target,key,target);return typeof value==="function"?value.bind(target):value;}}):result;};
+      });
+      const installedPage=await standaloneCtx.newPage();
+      for(const route of ["/install","/","/materials"]){
+        await installedPage.goto(base+route,{waitUntil:"load"});
+        await installedPage.waitForFunction(()=>localStorage.getItem("neerva-installed-v1")==="1");
+        assert.equal(await installedPage.locator('a[href="/install"]').count(),0,route+" standalone hides all install links");
+        assert.equal(await installedPage.locator(".neerva-install-banner").count(),0,route+" standalone hides banner");
+        assert.equal(await installedPage.locator('a[href="/install?recovery=1"]').count(),0,"standalone hides recovery navigation");
+        assert.equal(await installedPage.getByRole("button",{name:"App removed? Set up again",exact:true}).count(),0,"standalone cannot clear installed state");
+        if(route==="/install")await installedPage.getByRole("heading",{name:"Neerva is ready to use"}).waitFor();
+      }
+    }finally{await standaloneCtx.close();}
     const account=await page.goto(base+"/account",{waitUntil:"load"});
     assert.equal(account?.status(),200,"authenticated account route");
     assert.equal(await page.getByRole("heading",{name:/Access your projects and requests/}).count(),1,"account page must not show prelaunch placeholder");
@@ -347,11 +393,27 @@ async function main(){
     const expectedUnauth=process.env.NEERVA_RFQ_INTAKE_ENABLED==="true"&&process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?401:503;
     assert.equal(unauth.status(),expectedUnauth,"RFQ must fail closed: 401 only when intake and auth are enabled, otherwise 503");
     await page.goto(base+"/",{waitUntil:"load"});
-    await page.locator(".neerva-install-banner").waitFor({state:"visible",timeout:15000});
-    assert.equal(await page.locator(".neerva-install-banner").count(),1,"discoverable installation help is available on first visit without scroll");
-     assert.equal(await page.getByRole("button",{name:/How to install|Install app/}).count(),1,"browser-specific install help entry is usable");
-     await page.locator(".neerva-install-banner").getByRole("button",{name:"Not now"}).click();
-     assert.equal(await page.locator(".neerva-install-banner").count(),0,"install assistance dismisses cleanly");
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"no immediate arrival promotion");
+    await page.locator(".nbh-mobile-menu a[href='/install']").waitFor({state:"attached"});
+    const emitInstallPrompt=()=>page.evaluate(()=>{
+      const event=new Event("beforeinstallprompt",{cancelable:true});
+      Object.assign(event,{prompt:async()=>undefined,userChoice:Promise.resolve({outcome:"dismissed"})});
+      window.dispatchEvent(event);
+    });
+    await emitInstallPrompt();
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"native prompt is not promoted immediately");
+    const banner=page.locator(".neerva-install-banner");
+    await banner.waitFor({state:"visible",timeout:15000});
+    assert.equal(await banner.getByRole("button",{name:"Install free app",exact:true}).count(),1,"only real installation is promoted");
+    assert.equal(await banner.getByRole("link").count(),0,"manual installation help remains in navigation, not popup");
+    await banner.getByRole("button",{name:"Continue browsing",exact:true}).click();
+    await banner.waitFor({state:"detached"});
+    assert.ok(await page.evaluate(()=>Number(localStorage.getItem("neerva-install-dismissed-until-v2"))>Date.now()),"dismissal persists cooldown");
+    await page.reload({waitUntil:"load"});
+    await page.locator(".nbh-mobile-menu a[href='/install']").waitFor({state:"attached"});
+    await emitInstallPrompt();
+    assert.equal(await page.locator(".neerva-install-banner").count(),0,"cooldown does not remove manual navigation");
+    // Keep testing private and transaction routes without install interference.
     // Payment safety: public pricing is readable; unauthenticated users must not
     // see a simulated paid QR or receive an entitlement from a bare POST.
     await page.goto(base+"/studio-pricing",{waitUntil:"load"});
@@ -640,10 +702,12 @@ async function main(){
     assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
     // Test actual painted canvas pixels, not merely sample labels or changed image hashes.
     const visualCases=[
-      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100]],protect:[[1050,160],[500,200],[1450,80]]},
+      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100],[750,122],[750,316]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350]]},
       {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
-      {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]}
+      {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]},
+      {id:"compact-family",label:/100 gaj family home/,w:351,h:161,paint:[[115,12],[280,36],[150,78],[280,95]],protect:[[140,40],[210,39],[245,115],[15,15]]}
     ];
+    assert.equal(await page.locator(".paint-sample-gallery button").count(),visualCases.length,"every house must have a pixel regression case");
     const evidence=[];
     for(const sample of visualCases){
       await page.getByRole("button",{name:sample.label}).click();
