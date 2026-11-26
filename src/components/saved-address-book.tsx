@@ -42,7 +42,7 @@ function AddressBook({owner,onChoose}:{owner:string;onChoose?:(address:SavedAddr
   if(!value){setMessage("Check the name, phone, pincode and complete address.");return}
   lock.current=true;setBusy(true);setMessage("");
   try{const {data,error}=await client.auth.getUser();if(error||data.user?.id!==owner)throw Error("Session changed");
-   const result=edit?await client.from("customer_saved_addresses").update(value).eq("user_id",owner).eq("id",edit.id).select(columns).single():await client.from("customer_saved_addresses").insert(value).select(columns).single();
+   const result=edit?await client.from("customer_saved_addresses").update(value).eq("user_id",owner).eq("id",edit.id).select(columns).single():await client.from("customer_saved_addresses").insert({...value,user_id:owner}).select(columns).single();
    const saved=parseSavedAddress(result.data);if(result.error||!saved)throw Error("Save failed");
    setRows(old=>[saved,...old.filter(a=>a.id!==saved.id)]);setDraft(blankAddress);setEdit(null);setMessage("Address saved.");
   }catch{setMessage("Could not save the address. Check your account connection and retry.");}finally{lock.current=false;setBusy(false)}
