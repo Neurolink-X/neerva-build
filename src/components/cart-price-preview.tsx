@@ -23,8 +23,14 @@ export function CartPricePreview({rows,unload,pin,city,onLocation}:{rows:CartIte
  void load();const timer=setInterval(()=>{void load()},30000);
  const wake=()=>{if(!document.hidden){setClock(Date.now());void load()}};
  document.addEventListener("visibilitychange",wake);window.addEventListener("online",wake);
- const tick=setInterval(()=>{if(!document.hidden)setClock(Date.now())},1000);
- return()=>{alive=false;clearInterval(timer);clearInterval(tick);document.removeEventListener("visibilitychange",wake);window.removeEventListener("online",wake)}},[refresh]);
+ return()=>{alive=false;clearInterval(timer);document.removeEventListener("visibilitychange",wake);window.removeEventListener("online",wake)}},[refresh]);
+ // Recompute on actual expiry or data changes, not on every second.
+ useEffect(()=>{const deadlines:number[]=[];
+ if(feed){deadlines.push(feed.at+90000);for(const r of feed.rates)if(r&&typeof r==="object"&&"until" in r&&typeof r.until==="string")deadlines.push(Date.parse(r.until));for(const o of feed.offers)if(o&&typeof o==="object"&&"endsAt" in o&&typeof o.endsAt==="string")deadlines.push(Date.parse(o.endsAt));}
+ if(dealer?.at){deadlines.push(dealer.at+60000);if(dealer.row?.valid_to)deadlines.push(Date.parse(dealer.row.valid_to));}
+ const next=deadlines.filter(t=>Number.isFinite(t)&&t>clock).reduce((a,b)=>Math.min(a,b),Infinity);
+ if(!Number.isFinite(next))return;const timeout=setTimeout(()=>setClock(Date.now()),Math.max(1,next-Date.now()+5));return()=>clearTimeout(timeout);
+ },[feed,dealer,clock]);
  const current=useMemo(()=>feed&&clock-feed.at<90000?feed.rates.filter(r=>validPublicRate(r,clock)):[],[feed,clock]);
  const estimate=estimateCart(rows,pin,city,current,feed&&clock-feed.at<90000?feed.offers:[],clock);
  const referenceRows=rows.map(item=>{const eligible=current.filter(r=>r.category===item.category&&r.slug===item.productSlug&&r.unit===item.unit&&item.quantity>=r.min&&(!city.trim()||r.city.trim().toLowerCase()===city.trim().toLowerCase())&&(!/^[1-9][0-9]{5}$/.test(pin)||!r.prefix||pin.startsWith(r.prefix)));if(!eligible.length)return null;const values=eligible.map(r=>r.paise);return {low:Math.min(...values),high:Math.max(...values),locations:[...new Set(eligible.map(r=>r.city))].join(", ")};});
