@@ -1,3 +1,4 @@
+import {validProductQuantity} from "../catalog/category-units.ts";
 import {validPublicRate,validPublicOffer,type PublicRate,type PublicOffer} from "../catalog/public-feed-validation.ts";
 import {cartKey,type CartItem} from "./direct-cart.ts";
 export type EstimateLine={key:string;sku:string;unitPaise:number;materialPaise:number;discountPaise:number;until:string|null};
@@ -6,7 +7,7 @@ export function estimateCart(items:CartItem[],pin:string,city:string,rates:unkno
  const matches=(x:{city:string;prefix:string|null;min:number},item:CartItem)=>validLocation&&x.city.trim().toLowerCase()===city.trim().toLowerCase()&&(!x.prefix||pin.startsWith(x.prefix))&&item.quantity>=x.min;
  const current=rates.filter((r):r is PublicRate=>validPublicRate(r,now)),campaigns=offers.filter((o):o is PublicOffer=>validPublicOffer(o,now));
  const lines=items.map(item=>{
-  if(!Number.isFinite(item.quantity)||item.quantity<.001||item.quantity>1000000||Math.abs(item.quantity*1000-Math.round(item.quantity*1000))>.00001)return null;
+  if(!validProductQuantity(item.category,item.productSlug,item.unit,item.quantity))return null;
   const eligible=current.filter(r=>r.category===item.category&&r.slug===item.productSlug&&r.unit===item.unit&&matches(r,item));
   // A family reference with multiple SKU identities is not an exact price.
   if(new Set(eligible.map(r=>r.sku)).size!==1)return null;
