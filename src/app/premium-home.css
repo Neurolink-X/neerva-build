@@ -375,3 +375,12 @@
 .nbh .nbh-studio-progress li>.nbh-studio-step-disabled{display:flex;align-items:center;gap:6px;width:auto;height:auto;background:none;border-radius:0;font-size:inherit;min-height:44px;opacity:.7}
 .nbh .nbh-studio-step-disabled i{font-style:normal;display:grid;place-items:center;width:23px;height:23px;background:#e8eee6;border-radius:50%;flex:none}
 .nbh .nbh-studio-progress li[aria-current=step]{min-height:47px}
+
+/* The home wizard keeps both steps in one responsive card. */
+.nbh .nbh-studio-progress li{padding:0;min-height:47px}
+.nbh .nbh-studio-step-button{display:flex;align-items:center;gap:6px;min-height:44px;width:100%;border:0;background:none;color:inherit;font:inherit;text-align:start;cursor:pointer;padding:4px 0}
+.nbh .nbh-studio-step-button:disabled,.nbh .nbh-studio-generate:disabled{opacity:.55;cursor:not-allowed}
+.nbh .nbh-studio-generate{font:inherit;font-weight:700;cursor:pointer;min-height:44px;max-width:100%;white-space:normal}
+.nbh .nbh-studio-step-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.nbh .nbh-studio-back{background:transparent;border:1px solid #cbd8cb;color:#254738;border-radius:10px;min-height:44px;font:inherit;cursor:pointer}
+.nbh .nbh-room-requirements small{display:block;line-height:1.5;margin-top:9px}

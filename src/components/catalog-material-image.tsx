@@ -15,7 +15,7 @@ export function CatalogMaterialImage({category,name,compact=false,product,sizes}
  const categorySrc=categoryImage(category);
  const sources:CatalogVisual[]=product?media:categorySrc?[{src:categorySrc,label:"Category photograph · not exact SKU",alt:"Representative "+category+" material photo",kind:"category"}]:[];
  const isPipe=product&&(category==="plumbing"||category==="electrical")&&!product.referenceImage;
- const current=sources.find(x=>x.src&&!failed.includes(x.src)&&!(isPipe&&x.kind==="category"));
+ const current=sources.find(x=>x.src&&!failed.includes(x.src)&&!((isPipe||(product&&category==="paint"))&&x.kind==="category"));
  const src=current?.src;
  // A real editorial photo is useful if its identity is explicitly labeled. Never render a
  // generic category photo as a particular fitting or cable conduit product.
@@ -24,9 +24,9 @@ export function CatalogMaterialImage({category,name,compact=false,product,sizes}
  return <div className={"catalog-media-frame"+(compact?" compact":"")}><div className={"catalog-material-image"+(compact?" compact":"")+(surfacePreview?" tile-surface-photo":product&&safeSrc?" pack-photo":"")}>
   {safeSrc?<Image key={safeSrc} src={safeSrc} alt={compact?"":current?.alt??name} fill sizes={sizes??(compact?"(max-width:680px) 50vw, 33vw":"(max-width:350px) 100vw, (max-width:680px) 90vw, (max-width:1100px) 50vw, 33vw")}
    quality={75} loading="lazy" unoptimized={current?.kind==="generated"} referrerPolicy="no-referrer" onError={()=>setFailed(previous=>previous.includes(safeSrc)?previous:[...previous,safeSrc])}/>:
-   <MaterialIdentity name={name} category={category} brand={product?.brand} product={product}/>}
+   category==="paint"&&product?<div className="paint-reference-identity" aria-label={"Verified product photo unavailable for "+name}><span className="paint-reference-brand">N · NEERVA BUILD</span><span className="paint-reference-swatches" aria-hidden="true"><i/><i/><i/><i/></span><small>{product.brand}</small><strong>{name}</strong><small>Product reference · photo pending</small></div>:<MaterialIdentity name={name} category={category} brand={product?.brand} product={product}/>}
  </div>
-  {!compact&&<div className="catalog-media-caption"><span>{safeSrc?current?.label:"Photo not yet available"}</span>{safeSrc&&current?.sourceUrl&&<small>{current.credit} · {current.license} · resized/WebP</small>}</div>}
+  {!compact&&<div className="catalog-media-caption"><span>{safeSrc?current?.label:category==="paint"&&product?"Catalog identity · not product packaging":"Photo not yet available"}</span>{safeSrc&&current?.sourceUrl&&<small>{current.credit} · {current.license} · resized/WebP</small>}</div>}
  </div>;
 }
 
