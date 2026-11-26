@@ -4,14 +4,14 @@ import {CatalogOffer} from "@/components/catalog-offer";
 import {ProductPrice} from "@/components/product-price";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
-import {useMemo,useState,useRef,useDeferredValue} from "react";
+import {memo,useMemo,useState,useRef,useDeferredValue} from "react";
 import {referencePage} from "@/modules/catalog/reference-page";
 import {CatalogMaterialImage} from "@/components/catalog-material-image";
 import {BrandMark} from "@/components/brand-mark";
 import type {DemoProduct} from "@/modules/catalog/marketplace";
 import type {CatalogCategory} from "@/modules/catalog/catalog";
 import {filterCatalog,productFacetValues} from "@/modules/catalog/discovery";
-import {groupCatalogByPhoto,rangeVariantLabel} from "@/modules/catalog/media-usage";
+import {groupCatalogByPhoto,rangeVariantLabel,type PhotoFamily} from "@/modules/catalog/media-usage";
 export function MaterialsBrowser({products,categories,initialQuery="",initialBrand="all",initialCategory="all",scopedCategory}:{
  products:DemoProduct[];categories:CatalogCategory[];initialQuery?:string;initialBrand?:string;initialCategory?:string;scopedCategory?:string
 }){
@@ -33,7 +33,7 @@ export function MaterialsBrowser({products,categories,initialQuery="",initialBra
  return <section id="catalog-results" className="catalog-discovery" aria-label="Find materials by brand and technical specification">
   <form className="catalog-toolbar" role="search" onSubmit={e=>e.preventDefault()}>
    <label className="catalog-search">Find materials
-    <input value={query} onChange={e=>{setQuery(e.target.value);setPage(0)}} placeholder="e.g. 550SD, 50 kg PPC, CPVC" maxLength={100}/></label>
+    <input value={query} onChange={e=>{setQuery(e.target.value);setPage(0)}} placeholder="e.g. 550SD, 50 kg PPC, CPVC" maxLength={100} type="search" enterKeyHint="search" autoComplete="off"/></label>
    <label>Category<select value={category} onChange={e=>chooseCategory(e.target.value)}>
     <option value="all">All categories</option>{categories.map(c=><option key={c.slug} value={c.slug}>{c.title}</option>)}</select></label>
    <label>Brand<select value={brand} onChange={e=>{setBrand(e.target.value);setPage(0)}}>
@@ -44,7 +44,18 @@ export function MaterialsBrowser({products,categories,initialQuery="",initialBra
   <div ref={resultsRef} tabIndex={-1} className="catalog-results-meta" aria-busy={query!==deferredQuery}><p aria-live="polite"><strong>{visible.length}</strong> references in {groups.length} distinct product/photo cards{groups.length>0&&<> · Showing {paged.start+1}–{paged.end}</>}</p>
    <button type="button" onClick={clear}>Reset filters</button></div>
   <p className="catalog-demo-note">Choose materials and add to cart. Stock and delivered price are confirmed before purchase.</p>
-  {groups.length?<div className="product-grid">{paged.items.map(({primary:p,variants})=><article className="product-card" key={p.category+":"+p.slug}>
+  {groups.length?<CatalogCards items={paged.items}/>:<div className="catalog-empty">
+   <strong>No matching material reference found.</strong><p>Try another brand, grade, size or category. This is not proof a product is unavailable nationwide.</p>
+   <button className="button button-dark button-small" type="button" onClick={clear}>Clear all filters</button>
+  </div>}
+  {paged.pages>1&&<nav className="catalog-page-nav" aria-label="Material catalog pages"><button type="button" disabled={paged.page===0} onClick={()=>move(paged.page-1)}>← Previous</button><span>Page {paged.page+1} of {paged.pages}</span><button type="button" disabled={paged.page===paged.pages-1} onClick={()=>move(paged.page+1)}>Next →</button></nav>}
+ <ShopCartLink floating/>
+ </section>;
+}
+
+
+// Preserve the committed card tree while the controlled input catches up.
+const CatalogCards=memo(function CatalogCards({items}:{items:PhotoFamily[]}){return <div className="product-grid">{items.map(({primary:p,variants})=><article className="product-card" key={p.category+":"+p.slug}>
    <div className="product-card-art"><CatalogMaterialImage category={p.category} name={p.name} product={p}/></div>
    <div className="product-card-copy">
     <div className="product-brand-identity"><BrandMark name={p.brand} small/><small>Brand reference · no authorised dealer claim</small></div>
@@ -60,12 +71,4 @@ export function MaterialsBrowser({products,categories,initialQuery="",initialBra
      <Link href={`/materials/${p.category}/${p.slug}`} prefetch={false} data-intent-prefetch="">{variants.length>1?"Review range →":"View details →"}</Link></div>
     {variants.length===1?<QuickShopAdd product={p}/>:<Link className="nb-shop-add" href={`/materials/${p.category}/${p.slug}`} prefetch={false} data-intent-prefetch="">Choose size</Link>}<CatalogOffer category={p.category} slug={p.slug} compact/>
    </div>
-  </article>)}</div>:<div className="catalog-empty">
-   <strong>No matching material reference found.</strong><p>Try another brand, grade, size or category. This is not proof a product is unavailable nationwide.</p>
-   <button className="button button-dark button-small" type="button" onClick={clear}>Clear all filters</button>
-  </div>}
-  {paged.pages>1&&<nav className="catalog-page-nav" aria-label="Material catalog pages"><button type="button" disabled={paged.page===0} onClick={()=>move(paged.page-1)}>← Previous</button><span>Page {paged.page+1} of {paged.pages}</span><button type="button" disabled={paged.page===paged.pages-1} onClick={()=>move(paged.page+1)}>Next →</button></nav>}
- <ShopCartLink floating/>
- </section>;
-}
-
+  </article>)}</div>;});
