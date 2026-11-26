@@ -10,13 +10,25 @@ export function productFacetValues(products:readonly DemoProduct[],category="all
   .map(s=>s.value)).filter(v=>v.length<=45))].sort();
  return {brands:brandOptions,gradesAndSizes:options};
 }
+const searchIndex=new WeakMap<DemoProduct,string>();
+const aliases:Record<string,string>={"सीमेंट":"cement","सरिया":"tmt","ईंट":"brick","पाइप":"pipe","बालू":"sand","मौरंग":"sand","गिट्टी":"aggregate","पेंट":"paint","टाइल":"tile","टाइल्स":"tiles","बिजली":"electrical","saria":"tmt","sariya":"tmt","eent":"brick","balu":"sand","gitti":"aggregate"};
+export function normalizeMaterialSearch(value:string){
+ return value.normalize("NFKC").toLocaleLowerCase("en-IN")
+ .replace(/([0-9])(?=[a-z])/g,"$1 ").replace(/([a-z])(?=[0-9])/g,"$1 ")
+ .replace(/[^\p{L}\p{M}\p{N}]+/gu," ").trim().split(/\s+/).filter(Boolean).map(t=>aliases[t]??t).join(" ");
+}
+function indexedText(p:DemoProduct){
+ let value=searchIndex.get(p);
+ if(value===undefined){value=normalizeMaterialSearch(productSearchText(p));searchIndex.set(p,value)}
+ return value;
+}
 export function filterCatalog(products:readonly DemoProduct[],f:ProductFilters):DemoProduct[]{
- const search=f.query.toLocaleLowerCase("en-IN").trim();
+ const tokens=normalizeMaterialSearch(f.query.slice(0,100)).split(" ").filter(Boolean);
  return products.filter(p=>
   (f.category==="all"||p.category===f.category)&&
   (f.brand==="all"||p.brand===f.brand)&&
   (f.gradeOrSize==="all"||p.specifications.some(s=>s.value===f.gradeOrSize))&&
-  (!search||productSearchText(p).includes(search)));
+  (!tokens.length||tokens.every(token=>indexedText(p).includes(token))));
 }
 export function productEvidence(p:DemoProduct):{exactSku:boolean;actualPhoto:boolean;inventoryVerified:boolean}{
  return {exactSku:p.verification==="merchant_verified"&&Boolean(p.manufacturerSku),

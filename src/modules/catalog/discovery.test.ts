@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {demoProducts} from "./marketplace.ts";
 import {catalogCategories} from "./catalog.ts";
-import {filterCatalog,productFacetValues,productEvidence} from "./discovery.ts";
+import {filterCatalog,productFacetValues,productEvidence,normalizeMaterialSearch} from "./discovery.ts";
 test("8+ construction categories and uniquely slugged brand/spec discovery examples",()=>{
  assert.ok(catalogCategories.length>=9);
  assert.equal(new Set(demoProducts.map(p=>p.category+":"+p.slug)).size,demoProducts.length);
@@ -166,4 +166,16 @@ test("reference pagination preserves every product family and every size across 
  assert.deepEqual(all,groups);assert.equal(all.flatMap(g=>g.variants).length,products.length);
  assert.equal(referencePage(groups,99999).page,first.pages-1);
  assert.equal(referencePage(groups,-1).page,0);assert.equal(referencePage([],3).items.length,0);
+});
+
+test("mobile search supports mixed order, compact dimensions, Hindi and Roman Hindi",()=>{
+ const all={category:"all",brand:"all",gradeOrSize:"all"};
+ assert.equal(normalizeMaterialSearch("  CPVC 25MM "),"cpvc 25 mm");
+ assert.equal(normalizeMaterialSearch("सरिया 12mm"),"tmt 12 mm");
+ assert.deepEqual(filterCatalog(demoProducts,{...all,query:"25mm CPVC"}),filterCatalog(demoProducts,{...all,query:"CPVC 25 mm"}));
+ assert.ok(filterCatalog(demoProducts,{...all,query:"25mm CPVC"}).length);
+ assert.deepEqual(filterCatalog(demoProducts,{...all,query:"सरिया 12mm"}),filterCatalog(demoProducts,{...all,query:"sariya 12 mm"}));
+ assert.ok(filterCatalog(demoProducts,{...all,query:"सरिया 12mm"}).length);
+ assert.equal(filterCatalog(demoProducts,{...all,category:"paint",query:"CPVC 25mm"}).length,0);
+ assert.equal(filterCatalog(demoProducts,{...all,query:"unmatched-test-token"}).length,0);
 });
