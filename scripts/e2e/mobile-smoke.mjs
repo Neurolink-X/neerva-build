@@ -163,6 +163,26 @@ async function main(){
    assert.ok(cardRows.every(r=>r.height<=2&&r.cta<=3),"category cards in each row have equal height and aligned actions");
    assert.equal(await page.locator("footer.unified-footer").count(),1,"home shares the unified footer");
    assert.equal(await page.locator("footer.unified-footer nav").count(),4,"footer groups are structured");
+   assert.equal(await page.locator("header a.header-install,header a.nbh-install-header").count(),0,"installation never occupies primary header space");
+   if(v.w<=760){
+    const menu=page.locator(".nbh-mobile-menu"),trigger=menu.locator("summary");
+    await trigger.click();
+    assert.notEqual(await menu.getAttribute("open"),null,"menu opens through icon");
+    assert.ok(await menu.getByRole("navigation").isVisible(),"menu navigation visible");
+    await page.keyboard.press("Escape");
+    assert.equal(await menu.getAttribute("open"),null,"Escape closes menu");
+    assert.ok(await trigger.evaluate(el=>document.activeElement===el),"Escape restores trigger focus");
+    await trigger.click();
+    await page.locator("#nbh-h1").click();
+    assert.equal(await menu.getAttribute("open"),null,"outside click closes menu");
+    await trigger.click();
+    await menu.locator('a[href="/materials"]').click();
+    await page.waitForURL(base+"/materials");
+    const sharedMenu=page.locator(".site-mobile-menu");
+    assert.equal(await sharedMenu.getAttribute("open"),null,"navigation closes menu");
+    assert.equal(await page.locator("header a.header-install").count(),0,"shared header never reserves install space");
+    await page.goto(base+"/",{waitUntil:"load"});
+   }
    const footer=page.locator("footer.unified-footer");
    const footerLayout=await footer.evaluate(el=>{
     const groups=[...el.querySelectorAll(".unified-footer-groups nav")];

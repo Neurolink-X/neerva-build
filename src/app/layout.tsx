@@ -6,6 +6,7 @@ import "./globals.css";
 import "./typography.css";
 import "./interaction-quality.css";
 import "./site-footer.css";
+import "./mobile-navigation.css";
 import "./navigation-feedback.css";
 import {PlatformIncidentMonitor} from "@/components/platform-incident-monitor";
 import {InstallExperience} from "@/components/install-experience";
