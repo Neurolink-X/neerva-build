@@ -149,5 +149,9 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
  .visualizer-app .paint-live-tools{margin-top:8px}
  .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){position:sticky;top:0;overflow:visible}
  .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) canvas{max-height:26svh}
- .visualizer-app .paint-live-tools :is(button,select,input){scroll-margin-top:calc(26svh + 125px)}
+ .visualizer-app .paint-live-tools :is(button,select,input){scroll-margin-block:12px}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-preview-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-preview-actions>button{grid-column:auto;min-height:44px}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-canvas-frame{max-height:26svh}
+
 }
