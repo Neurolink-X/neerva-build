@@ -13,7 +13,7 @@ import { studioDesigns } from "@/modules/studio/library";
 export default function sitemap(): MetadataRoute.Sitemap {
   if(!publicIndexingEnabled(process.env))return [];
   const siteUrl = canonicalPublicOrigin(process.env);
-  return [
+  const entries: MetadataRoute.Sitemap = [
     { url: siteUrl, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${siteUrl}/family-homes`, changeFrequency: "monthly", priority: 0.7 },
@@ -43,4 +43,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.6,
     })),
   ];
+  return [...new Map(entries.map(entry=>[entry.url,entry])).values()];
 }
