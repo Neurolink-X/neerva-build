@@ -173,7 +173,21 @@ async function main(){
     assert.equal(await menu.getAttribute("open"),null,"Escape closes menu");
     assert.ok(await trigger.evaluate(el=>document.activeElement===el),"Escape restores trigger focus");
     await trigger.click();
-    await page.locator("#nbh-h1").click();
+    // The open menu legitimately overlays the hero heading on narrow screens.
+    // Pick a real hit-tested point outside the disclosure, then use native pointer input.
+    const outside=await menu.evaluate(el=>{
+     const panel=el.querySelector("nav")?.getBoundingClientRect();
+     const viewport=document.documentElement.clientWidth;
+     for(const y of [8,24,48,Math.floor(innerHeight*.85),innerHeight-20]){
+      for(const x of [4,Math.floor(viewport*.25),Math.floor(viewport*.5),viewport-5]){
+       const hit=document.elementFromPoint(x,y);
+       if(hit&&!el.contains(hit)&&!(hit.closest("a,button,summary,input,select,textarea,[role=button]"))&&(!panel||x<panel.left||x>panel.right||y<panel.top||y>panel.bottom))return {x,y};
+      }
+     }
+     return null;
+    });
+    assert.ok(outside,"an unobstructed outside-menu pointer target exists");
+    await page.mouse.click(outside.x,outside.y);
     assert.equal(await menu.getAttribute("open"),null,"outside click closes menu");
     await trigger.click();
     await menu.locator('a[href="/materials"]').click();
