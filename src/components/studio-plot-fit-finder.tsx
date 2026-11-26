@@ -36,12 +36,14 @@ export function StudioPlotFitFinder(){
   road:roadCode,floors:String(brief.floors),bedrooms:String(brief.bedrooms),parking:String(brief.parking)});
  const portfolioHref="/design-studio/portfolio?"+portfolioParams.toString();
  const [showModel,setShowModel]=useState(false);
+ const [selectedFloor,setSelectedFloor]=useState(0);
  const preview=useMemo(()=>errors.length?null:generateSpatialPortfolio({
   widthFt:brief.widthFt,depthFt:brief.depthFt,roadSide:roadCode,floors:brief.floors as 1|2|3,
   bedrooms:brief.bedrooms,parking:brief.parking,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}
  },1),[brief,roadCode,errors.length]);
  const plan=preview?.plans[0];
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
+ const floor=plan?Math.min(selectedFloor,plan.floors-1):0;
  const t=lang==="hi"?{
    heading:"पहले अपना प्लॉट समझें",sub:"चौड़ाई, लंबाई और सड़क की दिशा बताएं। आपके नाप से कमरों का नक्शा और उसी घर का 3D रूप बनता है।",
    city:"योजना शहर",width:"चौड़ाई",depth:"लंबाई",units:"माप",facing:"मुख दिशा",road:"सड़क की तरफ",
@@ -75,10 +77,12 @@ export function StudioPlotFitFinder(){
    </div>
    {errors.length>0?<div role="alert" className="nfit-error">{errors.join(" ")}</div>:<p className="nfit-area">{brief.widthFt.toFixed(1)} × {brief.depthFt.toFixed(1)} ft · {Math.round(brief.widthFt*brief.depthFt)} sq ft · {sqFtToGaj(brief.widthFt*brief.depthFt).toFixed(1)} square gaj</p>}
    {plan&&design?<section className="nfit-primary-next">
-    <h3>{lang==="hi"?"आपका भूतल नक्शा":"Your ground-floor plan"}</h3>
-    <OrientedPlanDrawing plan={plan}/>
+    <h3>{lang==="hi"?"आपका प्लॉट-विशिष्ट नक्शा":"Your plot-specific plan"} · {plan.rooms.filter(r=>r.kind==="bedroom").length} BHK</h3>
+    <div className="nfit-floor-tabs" role="group" aria-label="Select floor">{Array.from({length:plan.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>setSelectedFloor(i)}>{(lang==="hi"?["भूतल","पहली मंज़िल","दूसरी मंज़िल"]:["Ground floor","First floor","Second floor"])[i]}</button>)}</div>
+    <p>{plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===floor).length} bedrooms on this floor · {plan.rooms.filter(r=>r.kind==="bedroom").length} total</p>
+    <OrientedPlanDrawing plan={plan} floor={floor}/>
     <button type="button" aria-expanded={showModel} onClick={()=>setShowModel(v=>!v)}>{lang==="hi"?"3D घर देखें / बंद करें":"Show / hide matching 3D house"}</button>
-    {showModel&&<Building design={design} planModel={plan} colour={plan.facade.main}/>}
+    {showModel&&<Building key={`${plan.id}-${floor}`} design={design} planModel={plan} colour={plan.facade.main} selectedFloor={floor}/>}
     <Link href={portfolioHref}>{lang==="hi"?"सभी मंज़िलें और विकल्प देखें →":"Explore floors, front elevation and layout options →"}</Link>
    </section>:preview&&<p role="status">{preview.blockers.join(" ")}</p>}
    <p className="nfit-caution">{designCityStatus}</p><p className="nfit-footnote">Gaj is an area unit (9 sq ft), not a linear dimension. Site setbacks, FAR and vehicle turning must be reviewed separately.</p>

@@ -48,13 +48,14 @@ export function RoadPlanDiagram({plan,floor=0}:{plan:PlanModel;floor?:number}){
 export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;accent:string}){
  const id=useId().replace(/:/g,"");
  const {widthFt,roadSide}=plan.plot,storeyFt=plan.walls.heightFt;
- const scale=Math.min(600/widthFt,285/(plan.floors*storeyFt));
+ const scale=Math.min(600/widthFt,285/(plan.floors*storeyFt+plan.walls.parapetFt));
  const x=(feet:number)=>350+(feet-widthFt/2)*scale;
  const y=(feet:number)=>355-feet*scale;
  const solid=plan.rooms.filter(r=>!["parking","verandah","balcony","terrace"].includes(r.kind));
  // Project only real room spans, ordered from the rear to the road. No invented
  // windows or solid infill across an open car bay.
  const frontRooms=[...solid].sort((a,b)=>b.y-a.y);
+ const depth=Math.max(1,plan.plot.depthFt);
  const openings=plan.openings.flatMap(o=>{
   const r=solid.find(r=>r.id===o.roomId);
   if(!r||o.side!=="front"||o.connectsTo)return [];
@@ -63,7 +64,7 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
   return [{o,r,a}];
  });
  const gates=[plan.gate,plan.pedestrianGate].filter(g=>g.widthFt>0);
- return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel">
+ return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel" data-plan-id={plan.id}>
   <svg viewBox="0 0 700 420" role="img" aria-label={`Road-side elevation for ${widthFt} ft frontage, ${plan.floors} levels`}>
    <defs>
     <linearGradient id={id+"sky"} x2="0" y2="1"><stop stopColor="#cbdedc"/><stop offset="1" stopColor="#f6f4e9"/></linearGradient>
@@ -75,7 +76,8 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
    <rect y="355" width="700" height="65" fill={`url(#${id}ground)`}/>
    <path d="M0 371H700" stroke="#f6f4eb" strokeWidth="2"/>
    <rect x={x(0)} y={355} width={widthFt*scale} height="8" fill="#676f67"/>
-   {frontRooms.map(r=><rect key={r.id} x={x(r.x)} y={y((r.floor+1)*storeyFt)} width={r.w*scale} height={storeyFt*scale} fill={`url(#${id}wall)`}/>)}
+   {frontRooms.map(r=><g key={r.id}><rect x={x(r.x)} y={y((r.floor+1)*storeyFt)} width={r.w*scale} height={storeyFt*scale} fill={main}/><rect x={x(r.x)} y={y((r.floor+1)*storeyFt)} width={r.w*scale} height={storeyFt*scale} fill="#24382c" opacity={Math.min(.20,r.y/depth*.26)}/><path d={`M${x(r.x)} ${y((r.floor+1)*storeyFt)}v${storeyFt*scale}`} stroke="#27392e" opacity=".14" strokeWidth="1.2"/></g>)}
+   {frontRooms.filter(r=>r.floor===plan.floors-1).map(r=><g key={"parapet-"+r.id}><rect x={x(r.x)} y={y(plan.floors*storeyFt+plan.walls.parapetFt)} width={r.w*scale} height={plan.walls.parapetFt*scale} fill={accent}/><rect x={x(r.x)} y={y(plan.floors*storeyFt+plan.walls.parapetFt)} width={r.w*scale} height={Math.max(1,.18*scale)} fill="#43574b"/></g>)}
    {Array.from({length:plan.floors},(_,floor)=>{
     const rs=solid.filter(r=>r.floor===floor);
     return rs.map(r=><g key={r.id}><rect x={x(r.x)} y={y((floor+1)*storeyFt)} width={r.w*scale} height={.35*scale} fill={accent}/><rect x={x(r.x)} y={y((floor+1)*storeyFt)+.35*scale} width={r.w*scale} height={Math.max(1,.09*scale)} fill="#24352b" opacity=".25"/></g>);
@@ -91,6 +93,7 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
     {plan.facade.kit==="jali-screen"&&Array.from({length:8},(_,k)=><rect key={k} x={x(r.x+(k+.5)*r.w/24)} y={y((r.floor+1)*storeyFt)} width={.26*scale} height={storeyFt*scale} fill={accent}/>)}
     {plan.facade.kit==="pergola"&&Array.from({length:6},(_,k)=><rect key={k} x={x(r.x+(k+.5)*r.w/6)} y={y((r.floor+1)*storeyFt)} width={.4*scale} height={.5*scale} fill={accent}/>)}
    </g>)}
+   {plan.facade.kit==="stepped-band"&&frontRooms.filter(r=>r.floor===plan.floors-1).map(r=><rect key={"band-"+r.id} x={x(r.x)} y={y((r.floor+1)*storeyFt)} width={r.w*scale} height={Math.max(2,.45*scale)} fill={accent}/>)}
    {gates.map(g=><g key={g.xFt}><rect x={x(g.xFt)} y={y(4)} width={g.widthFt*scale} height={4*scale} fill="#536359" stroke="#303f35"/>{Array.from({length:7},(_,k)=><line key={k} x1={x(g.xFt+g.widthFt*(k+.5)/7)} x2={x(g.xFt+g.widthFt*(k+.5)/7)} y1={y(3.8)} y2={y(.2)} stroke="#a7b2a6" strokeWidth="1.5"/>)}</g>)}
    <rect x="0" y="384" width="700" height="36" fill="#f4f5ef"/>
    <text x="350" y="407" fontSize="15" textAnchor="middle" fill="#314e3e">{widthFt} ft frontage · Road {roadSide} · Concept elevation</text>

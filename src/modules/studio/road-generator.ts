@@ -13,7 +13,7 @@ export function explainImpossible(b:PlanBrief):string[]{
  if(!valid(b.widthFt)||!valid(b.depthFt)||b.widthFt<10||b.depthFt<15||b.widthFt>200||b.depthFt>250)x.push("Plot dimensions outside supported input range.");
  if(!["N","E","S","W"].includes(b.roadSide))x.push("Select a valid road side.");
  if(![b.setbacks.frontFt,b.setbacks.rearFt,b.setbacks.leftFt,b.setbacks.rightFt].every(valid))x.push("Setbacks must be nonnegative.");
- if(![1,2,3].includes(b.floors)||!Number.isInteger(b.bedrooms)||b.bedrooms<1||b.bedrooms>3)x.push("This audited prototype supports 1–3 bedrooms across one to three levels.");
+ if(![1,2,3].includes(b.floors)||!Number.isInteger(b.bedrooms)||b.bedrooms<1||b.bedrooms>6)x.push("Choose 1–6 bedrooms across one to three levels.");
  const shape=b.siteShape??{kind:"rectangle"} as const;
  x.push(...shapeErrors(b.widthFt,b.depthFt,shape));
  const safe=conservativeEnvelope(b.widthFt,b.depthFt,shape,b.setbacks);
@@ -23,7 +23,8 @@ export function explainImpossible(b:PlanBrief):string[]{
  if(!b.parking&&(W<17.5||D<40)){
   if(W<15||D<30||b.floors!==1||b.bedrooms!==1)x.push("Compact pedestrian layouts need 15 × 30 ft usable area, one floor and one bedroom.");
  }else if(W<17.5||D<40)x.push("This road-front layout family needs at least 17.5 × 40 ft usable area. Check dimensions and setbacks.");
- if(b.floors===1&&(b.bedrooms>2||(b.bedrooms===2&&W<20)))x.push("With this narrow parking-first template, only 1BHK fits on ground. Consider G+1 for 2–3 bedrooms.");
+ if(b.bedrooms<=3&&b.floors===1&&(b.bedrooms>2||(b.bedrooms===2&&W<20))&&!(W>=26&&D>=40&&b.bedrooms===3))x.push("With this narrow parking-first template, only 1BHK fits on ground. Consider G+1 for 2–3 bedrooms.");
+ if(b.bedrooms>3&&(W<26||D<40))x.push("4–6 BHK requires at least 26 × 40 ft usable space in this layout family. Your selected inputs have not been changed.");
  if(b.widthFt<=15&&b.depthFt<=30&&b.parking&&b.bedrooms>=3)x.push("3BHK + car parking on 15 × 30 ft cannot pass the tested room and access constraints.");
  return [...new Set(x)];
 }
@@ -358,6 +359,82 @@ function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
  return {plans:pickDiverse(plans,limit),blockers:plans.length?[]:["Room sizes or access could not be validated within the available footprint."]};
 }
 /** Never display a valid geometry that silently changes the customer's room programme. */
+
+// A wider access-spine family for larger homes. No candidate bypasses the PlanModel validator.
+function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
+ const base=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
+ const aw=b.widthFt-base.leftFt-base.rightFt,ad=b.depthFt-base.frontFt-base.rearFt;
+ if(aw<26||ad<40)return [];
+ const W=Math.min(36,aw),D=Math.min(85,ad),sb={...base,leftFt:base.leftFt+(aw-W)/2,rightFt:base.rightFt+(aw-W)/2,rearFt:base.rearFt+ad-D,verified:false};
+ const plans:PlanModel[]=[],seen=new Set<string>(),meshes=new Set<string>();
+ type Slot={floor:number;x:number;y:number;w:number;d:number;capacity:number;count:number;key:string};
+ for(let recipe=0;recipe<576&&plans.length<limit;recipe++){
+  const spine=4+recipe%2,left=round((W-spine)/2+[0,-2,2,-1,1,3][Math.floor(recipe/2)%6]),right=round(W-spine-left);
+  if(left<9||right<9)continue;
+  const mirror=Math.floor(recipe/12)%2===1,variant=mirror?"parking-right":"parking-left",stairDepth=9+Math.floor(recipe/24)%3,kitchenDepth=8+Math.floor(recipe/72)%2*2,entryDepth=4+Math.floor(recipe/144)%2,bedTarget=12+Math.floor(recipe/288)%2*3;
+  const rooms:Room[]=[],openings:Opening[]=[],joins:[string,string][]=[],slots:Slot[]=[];
+  const add=(id:string,label:string,kind:RoomKind,floor:number,x:number,y:number,w:number,d:number)=>rooms.push(room(id,label,kind,floor,sb.leftFt+(mirror?W-x-w:x),sb.frontFt+y,w,d));
+  function slot(floor:number,x:number,y:number,w:number,d:number,key:string){
+   if(d<.1)return;const minDepth=Math.max(10,Math.ceil(96/w),w/2.5);
+   slots.push({floor,x,y,w,d,capacity:Math.floor(d/minDepth),count:0,key});
+  }
+  for(let floor=0;floor<b.floors;floor++){
+   const hall="wide-hall-"+floor;
+   add(hall,"Access passage","corridor",floor,left,floor===0?16:0,spine,D-(floor===0?16:0));
+   if(floor===0){
+    add("wide-front",b.parking?"Car parking":"Front garden",b.parking?"parking":"terrace",0,0,0,left,16);
+    add("wide-entry","Front verandah","verandah",0,left,0,W-left,entryDepth);
+    add("wide-living","Living room","living",0,left,entryDepth,W-left,16-entryDepth);
+    joins.push(["wide-entry","wide-living"],["wide-living",hall]);
+    add("wide-kitchen","Kitchen","kitchen",0,left+spine,16,right,kitchenDepth);
+    add("wide-bath-0","Bath / WC","bath",0,left+spine,16+kitchenDepth,right,6);
+    joins.push([hall,"wide-kitchen"],[hall,"wide-bath-0"]);
+    slot(0,left+spine,22+kitchenDepth,right,D-22-kitchenDepth,"right-rear");
+   }else{
+    slot(floor,0,0,left,16,"left-front");slot(floor,left+spine,0,right,16,"right-front");
+    add("wide-bath-"+floor,"Bath / WC","bath",floor,left+spine,16,right,8);joins.push([hall,"wide-bath-"+floor]);
+    slot(floor,left+spine,24,right,D-24,"right-rear");
+   }
+   const stair="wide-stair-"+floor;
+   add(stair,"Stairs / landing","stairs",floor,0,16,left,stairDepth);joins.push([hall,stair]);
+   slot(floor,0,16+stairDepth,left,D-16-stairDepth,"left-rear");
+  }
+  const order=slots.filter(s=>s.capacity>0).sort((a,z)=>{
+   const mode=Math.floor(recipe/4)%4;
+   return mode===0?a.floor-z.floor||z.d-a.d:mode===1?z.floor-a.floor||z.d-a.d:mode===2?a.key.localeCompare(z.key)||a.floor-z.floor:z.key.localeCompare(a.key)||z.floor-a.floor;
+  });
+  if(!order.length)continue;
+  const offset=Math.floor(recipe/16)%order.length,rotated=[...order.slice(offset),...order.slice(0,offset)];
+  let remaining=b.bedrooms;
+  while(remaining){let progress=false;for(const s of rotated){if(s.count<s.capacity&&remaining){s.count++;remaining--;progress=true}}if(!progress)break}
+  if(remaining)continue;
+  let n=0;
+  for(const s of slots){
+   const openId="wide-open-"+s.floor+"-"+s.key;
+   if(!s.count){add(openId,"Open court / terrace","terrace",s.floor,s.x,s.y,s.w,s.d);continue}
+   const minDepth=Math.max(10,Math.ceil(96/s.w),s.w/2.5),bedDepth=Math.min(Math.floor(s.d/s.count),Math.max(minDepth,bedTarget));
+   for(let i=0;i<s.count;i++){const id="wide-bed-"+(++n);add(id,"Bedroom "+n,"bedroom",s.floor,s.x,s.y+i*bedDepth,s.w,bedDepth);joins.push(["wide-hall-"+s.floor,id])}
+   const extra=s.d-s.count*bedDepth;
+   if(extra>.1)add(openId,"Open court / terrace","terrace",s.floor,s.x,s.y+s.count*bedDepth,s.w,extra);
+  }
+  const entry=rooms.find(r=>r.id==="wide-entry")!,park=rooms.find(r=>r.id==="wide-front")!;
+  try{
+   for(const [a,z] of joins)connect(rooms,openings,a,z);
+   openings.push({id:"wide-entry-door",roomId:entry.id,side:"front",atFt:round((entry.w-3)/2),widthFt:3,sillFt:0,heightFt:7,kind:"door"});
+   const p:PlanModel={version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,b.parking?"car":"garden",b.siteShape?.kind??"rectangle",...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.notchWidthFt,b.siteShape.notchDepthFt]:[]),"wide",recipe].join("-"),variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},setbacks:sb,walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},floors:b.floors,rooms,openings,gate:{side:"front",xFt:round(park.x+.25),widthFt:b.parking?8:0},pedestrianGate:{side:"front",xFt:round(entry.x+(entry.w-3)/2),widthFt:3},parking:b.parking?{roomId:park.id,clearWidthFt:park.w,clearDepthFt:park.d}:null,stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),note:"Concept stairs; tread, headroom and fire safety unverified."},balcony:null,facade:{kit:recipe%3===0?"stepped-band":recipe%3===1?"jali-screen":"simple-parapet",massing:"box",main:"#e9e2d4",accent:"#8e755b"},score:80,notes:["Wide circulation layout · "+(mirror?"right":"left")+" entry court","City rules, setbacks, structural design, stairs, parking and ventilation require professional review.","Open areas are intentionally unbuilt; not a certified floor plan."],conceptOnly:true};
+   addWindow(p);if(validateRequestedProgramme(p,b).length)continue;
+   const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
+   if(seen.has(signature)||!mesh||meshes.has(mesh))continue;
+   seen.add(signature);meshes.add(mesh);plans.push(p);
+  }catch{/* Discard invalid candidates. */}
+ }
+ return plans;
+}
+function wideResult(b:PlanBrief,limit:number):PlanningResult{
+ const plans=widePortfolio(b,Math.max(1,Math.min(24,Math.floor(limit))));
+ return {plans,blockers:plans.length?[]:["No geometry-checked "+b.bedrooms+" BHK concept fits your selected "+b.widthFt+" × "+b.depthFt+" ft plot, levels and parking. Try more usable space or floors, or fewer bedrooms. Your input has not been changed."]};
+}
+
 export function validateRequestedProgramme(p:PlanModel,b:PlanBrief):string[]{
  const errors=validatePlan(p);
  if(p.floors!==b.floors||p.rooms.filter(r=>r.kind==="bedroom").length!==b.bedrooms||Boolean(p.parking)!==b.parking||p.plot.widthFt!==b.widthFt||p.plot.depthFt!==b.depthFt||p.plot.roadSide!==b.roadSide)errors.push("Plan does not match requested plot, floors, bedrooms or parking.");
@@ -377,6 +454,7 @@ export function pickDiverse(plans:readonly PlanModel[],limit=3):PlanModel[]{
 export function generateRoadPlans(brief:PlanBrief):PlanningResult{
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
+ if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,3);
  const compact=compactPedestrianPlans(brief,2);if(compact)return compact;
  const candidates:PlanModel[]=[];
  for(const variant of ["parking-left","parking-right"] as const){
@@ -399,6 +477,8 @@ export function generateRoadPlans(brief:PlanBrief):PlanningResult{
 export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResult{
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
+ if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,limit);
+ if(brief.bedrooms===1&&brief.widthFt>=26&&brief.depthFt>=40){const wide=wideResult(brief,limit);if(wide.plans.length)return wide;}
  const compact=compactPedestrianPlans(brief,Math.max(1,Math.floor(limit)));if(compact)return compact;
  const envelope=houseEnvelope(brief);
  const W=brief.widthFt-envelope.leftFt-envelope.rightFt;

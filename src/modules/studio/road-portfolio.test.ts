@@ -166,3 +166,20 @@ test("three real front-zone architectures when usable width permits",()=>{
    model.rooms.map(r=>[r.floor,r.x,r.y,r.w,r.d]));
  }
 });
+
+
+test("large 4–6 BHK requests preserve exact inputs and unique wall geometry",()=>{
+ for(const bedrooms of [4,5,6]){
+  const brief={...standard,widthFt:36,depthFt:65,floors:2 as const,bedrooms};
+  const {plans,blockers}=generateSpatialPortfolio(brief,24);
+  assert.equal(blockers.length,0,blockers.join(" / "));
+  assert.equal(plans.length,24,"large plot should deliver all 24 distinct options");
+  assert.equal(new Set(plans.map(p=>meshSignature(p))).size,plans.length);
+  assert.equal(new Set(plans.map(geometrySignature)).size,plans.length);
+  for(const p of plans){assert.deepEqual(validatePlan(p),[]);assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,bedrooms);assert.equal(p.floors,2);assert.equal(p.plot.widthFt,36);assert.equal(p.plot.depthFt,65);assert.equal(studioDesignFromPlan(p).bedrooms,bedrooms);}
+ }
+});
+test("small plot never silently downgrades requested 6 BHK",()=>{
+ const {plans,blockers}=generateSpatialPortfolio({...standard,widthFt:18,depthFt:30,bedrooms:6});
+ assert.equal(plans.length,0);assert.ok(blockers.length);
+});

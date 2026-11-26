@@ -119,9 +119,10 @@ async function main(){
      await page.getByRole("button",{name:"Paint + design",exact:true}).click();
      const pattern=page.locator(".wall-pattern-options button").first();
      await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
-     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");if(!c)return false;const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0},null,{timeout:3000});
      await pattern.click();
-     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");if(!c)return false;const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0},null,{timeout:3000});
+     assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
+     const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
+     assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");
     }
     await gallery.screenshot({path:path.join("test-results/mobile",v.w+"-facade-gallery.png"),animations:"disabled"});
    }finally{await ctx.close()}
@@ -132,6 +133,8 @@ async function main(){
    if(v.w===390)await page.addInitScript(()=>{
     const metrics={lcp:null,cls:0,sessionStart:0,previousShift:0,sessionScore:0};
     window.__neervaPerf=metrics;
+    window.__neervaObservedVitals=[];
+    window.addEventListener("neerva:web-vitals",event=>{if(Array.isArray(event.detail))window.__neervaObservedVitals=event.detail.filter(x=>["LCP","INP","CLS"].includes(x.name)&&Number.isFinite(x.value)&&x.value>=0);});
     try{new PerformanceObserver(list=>{for(const e of list.getEntries())metrics.lcp=e.startTime;}).observe({type:"largest-contentful-paint",buffered:true});}catch{}
     try{new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput){if(e.startTime-metrics.previousShift>1000||e.startTime-metrics.sessionStart>5000){metrics.sessionStart=e.startTime;metrics.sessionScore=0;}metrics.previousShift=e.startTime;metrics.sessionScore+=e.value;metrics.cls=Math.max(metrics.cls,metrics.sessionScore);}}).observe({type:"layout-shift",buffered:true});}catch{}
    });
@@ -191,14 +194,14 @@ async function main(){
     await page.waitForURL("**/materials");
     await page.locator(".catalog-discovery").waitFor();
     await page.waitForFunction(()=>document.querySelector(".neerva-navigation-feedback")?.getAttribute("data-active")!== "true");
-    const nav=await page.evaluate(()=>({feedback:window.__neervaClickFeedback,elapsed:performance.now()-(window.__neervaClickFeedback?.at??performance.now())}));
+    const nav=await page.evaluate(()=>({feedback:window.__neervaClickFeedback,elapsed:performance.now()-(window.__neervaClickFeedback?.at??performance.now()),vitals:window.__neervaObservedVitals??[]}));
     assert.ok(nav.feedback?.active,"internal Link shows feedback synchronously without a full reload");
     assert.equal(await page.locator(".neerva-navigation-feedback").getAttribute("data-active"),null,"feedback clears after navigation");
     // A deliberately missing document emits a browser console 404. Check its HTTP
     // contract through the request context so real browser errors remain fatal.
     const invalid=await page.request.get(base+"/materials/no-such-category");
     try{assert.equal(invalid.status(),404,"missing catalog pages must keep real HTTP 404");}finally{await invalid.dispose();}
-    performanceReports.push({route:"/ → /materials",width:v.w,clickToReadyMs:Math.round(nav.elapsed),scope:"local browser route transition, not field latency"});
+    performanceReports.push({route:"/ → /materials",width:v.w,clickToReadyMs:Math.round(nav.elapsed),observedBrowserVitals:nav.vitals,scope:"actual local Chromium measurements, not production population field data"});
    }
    // Room preview and Academy controls must work on phone and desktop.
    if(v.w===390||v.w===1440){
@@ -721,6 +724,10 @@ async function main(){
     await page.goto(base+"/design-studio/fit",{waitUntil:"load"});
     const floorsSelect=page.locator("#nfit-floors");
     assert.equal(await floorsSelect.count(),1,"plot-fit page must render a labelled floors selector");
+    await page.locator(".nfit-floor-tabs button").nth(1).click();
+    assert.equal(await page.locator(".nfit-primary-next .nroad-diagram").getAttribute("data-selected-floor"),"1","fit preview follows upper-floor selection");
+    await page.locator(".nfit-floor-tabs button").nth(0).click();
+    assert.equal(await page.locator(".nfit-primary-next .nroad-diagram").getAttribute("data-selected-floor"),"0","fit preview returns to ground floor");
     await floorsSelect.selectOption("1");
     assert.equal(await floorsSelect.inputValue(),"1","ground-floor selection must update the plot brief");
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
@@ -1099,13 +1106,40 @@ async function main(){
     },compactFirstId);
     assert.equal(await page.getByRole("button",{name:"First floor"}).count(),0);
     await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
+    // Actual render worker integration; a WebGL fallback must not advertise a working renderer.
+    const liveCanvas=page.locator(".nbd-webgl canvas");
+    if(await liveCanvas.count()){
+     const renderPanel=page.getByRole("region",{name:"Browser architectural rendering"});
+     await renderPanel.getByRole("button",{name:"Generate realistic image"}).click();
+     await renderPanel.getByRole("button",{name:"Cancel render"}).click();
+     await renderPanel.getByText(/Rendering cancelled/).waitFor();
+     await renderPanel.getByRole("button",{name:"Generate realistic image"}).click();
+     await renderPanel.getByRole("button",{name:"Save render (PNG)"}).waitFor({timeout:95000});
+     const output=renderPanel.locator("canvas");
+     assert.ok(await output.evaluate(c=>{const data=c.getContext("2d").getImageData(0,0,c.width,c.height).data;return c.width>=16&&c.height>=16&&data.some((v,i)=>i%4!==3&&v>10)&&data.some((v,i)=>i%4!==3&&v<220)}),"ray-traced output contains actual nonblank pixels");
+     await output.screenshot({path:path.join("test-results/mobile","390-browser-ray-traced-architecture.png")});
+    }else assert.equal(await page.getByRole("region",{name:"Browser architectural rendering"}).count(),0,"unsupported device retains the existing plan fallback");
+    // Large-home input, full 24-option gallery and the exact selected 3D floor.
+    await page.goto(base+"/design-studio/portfolio?width=36&depth=65&floors=2&bedrooms=6&road=W&parking=true",{waitUntil:"load"});
+    await page.getByRole("img",{name:/Road on W side/}).waitFor();
+    assert.equal(await page.locator(".nroad-variants button").count(),24);
+    assert.match(await page.locator(".nroad-plan-summary").innerText(),/6\s*Bedrooms total/);
+    const firstLargeId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
+    await page.locator(".nroad-variants button").last().click();
+    await page.getByRole("button",{name:"First floor",exact:true}).click();
+    await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
+    await page.waitForFunction(previous=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")!==previous&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")&&b.getAttribute("data-selected-floor")==="1"},firstLargeId);
+    await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=2&bedrooms=6&road=N&parking=true",{waitUntil:"load"});
+    assert.equal(await page.locator(".nroad-form").getByRole("combobox",{name:"Total bedrooms",exact:true}).inputValue(),"6");
+    await page.locator(".nroad-error").waitFor();
+    assert.equal(await page.locator(".nroad-variants button").count(),0,"Impossible brief must not show fabricated layouts");
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"load"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
      assert.equal(await page.locator(".nbh-shopping-shelf,.nbh-quick-categories,.nbh-shop-product").count(),0,"no duplicate materials shelf");
      const categories=page.locator(".nbh-category-grid");
      assert.equal(await categories.locator(".nbh-material-card").count(),9,"original nine categories retained");
-     assert.equal(await categories.locator(".nbh-category-cart").count(),4,"quick add inside existing category cards");
+     assert.equal(await categories.locator(".nbh-category-cart").count(),await categories.locator(".nbh-material-card").count(),"every existing category has a catalog-backed action");
      assert.ok(await categories.evaluate(el=>el.scrollWidth<=el.clientWidth+2),"category grid fits mobile");
      const nav=page.locator(".nbh-mobile-shop-nav");
      assert.equal(await nav.locator("a").count(),5);

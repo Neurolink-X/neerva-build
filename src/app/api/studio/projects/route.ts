@@ -10,7 +10,7 @@ export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const error=(status:number,message:string)=>NextResponse.json({error:message},{status,headers});
 const create=z.object({idempotencyKey:z.string().uuid(),title:z.string().trim().min(3).max(120),
- brief,finish:z.object({kit:z.enum(["simple-parapet","jali-screen","pergola"]),main:z.string().regex(/^#[0-9a-f]{6}$/i),accent:z.string().regex(/^#[0-9a-f]{6}$/i)}).strict().optional(),variant:z.enum(["parking-left","parking-right"]),planId:z.string().min(5).max(200),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
+ brief,finish:z.object({kit:z.enum(["simple-parapet","stepped-band","jali-screen","pergola","cantilever","cladding-band"]),main:z.string().regex(/^#[0-9a-f]{6}$/i),accent:z.string().regex(/^#[0-9a-f]{6}$/i)}).strict().optional(),variant:z.enum(["parking-left","parking-right"]),planId:z.string().min(5).max(200),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
 async function parseBounded(request:Request){if(!request.headers.get("content-type")?.includes("application/json"))return null;
  const size=Number(request.headers.get("content-length")??0);if(size>12000)return null;
  try{const text=await request.text();return text.length<=12000?JSON.parse(text) as unknown:null}catch{return null}}
