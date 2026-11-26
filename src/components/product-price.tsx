@@ -27,11 +27,11 @@ function prune(){
 }
 function refresh(){
  prune();scheduleExpiry();
- if(request||!listeners.size||document.visibilityState==="hidden"||Date.now()-lastAttempt<30000)return;
+ if(request||!listeners.size||document.visibilityState==="hidden"||Date.now()-lastAttempt<15000)return;
  lastAttempt=Date.now();
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),10000);
- request=fetch("/api/catalog/prices",{cache:"no-cache",signal:controller.signal}).then(async response=>{
+ request=fetch("/api/catalog/prices",{cache:"no-store",signal:controller.signal}).then(async response=>{
   if(!response.ok)throw Error("Price feed unavailable");
   const body=await response.json();
   const next=new Map<string,Rate>(),now=Date.now();
@@ -45,7 +45,7 @@ function refresh(){
 function onVisible(){if(document.visibilityState==="visible"){prune();scheduleExpiry();notifyRates();if(Date.now()-lastLoaded>=30000)refresh()}}
 function subscribe(notify:()=>void){
  listeners.add(notify);
- if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);timer=setInterval(refresh,30000)}
+ if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);timer=setInterval(refresh,15000)}
  return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;document.removeEventListener("visibilitychange",onVisible)}};
 }
 const noRate=()=>undefined;
