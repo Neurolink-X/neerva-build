@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {loadAllAdminCatalog} from "@/modules/catalog/admin-catalog-paging";
 import {useEffect,useRef,useState,type FormEvent} from "react";
 import {quantityPrecision,validUnitQuantity} from "@/modules/catalog/category-units";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
@@ -16,7 +17,7 @@ async function request(path:string,method="GET",body?:unknown){
 export function PricingReviewPanel(){
  const [rules,setRules]=useState<Rule[]>([]),[skus,setSkus]=useState<SKU[]>([]),[selected,setSelected]=useState(""),[query,setQuery]=useState(""),[filter,setFilter]=useState("all"),[error,setError]=useState(""),[notice,setNotice]=useState(""),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0);
  const lock=useRef(false);
- useEffect(()=>{let active=true;void Promise.all([request("/api/admin/pricing"),request("/api/admin/catalog")]).then(([p,c])=>{if(active){setRules(p.prices??[]);setSkus((c.products as Product[]).filter(x=>x.status==="published"&&x.category?.status==="published").flatMap(x=>x.variants.filter(v=>v.status==="published").map(v=>({...v,label:x.name+" · "+v.sku,quoteOnly:x.category?.pricing_mode==="quote_only"}))));setError("")}}).catch(e=>{if(active){setRules([]);setSkus([]);setError(String(e.message))}}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[revision]);
+ useEffect(()=>{let active=true;void Promise.all([request("/api/admin/pricing"),loadAllAdminCatalog<Product>(request)]).then(([p,products])=>{if(active){setRules(p.prices??[]);setSkus(products.filter(x=>x.status==="published"&&x.category?.status==="published").flatMap(x=>x.variants.filter(v=>v.status==="published").map(v=>({...v,label:x.name+" · "+v.sku,quoteOnly:x.category?.pricing_mode==="quote_only"}))));setError("")}}).catch(e=>{if(active){setRules([]);setSkus([]);setError(String(e.message))}}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[revision]);
  async function save(method:string,body:unknown){if(lock.current)return false;lock.current=true;setBusy(true);setError("");setNotice("");try{await request("/api/admin/pricing",method,body);setNotice("Price rule saved. Check publication and validity.");setLoading(true);setRevision(v=>v+1);return true}catch(e){setError(e instanceof Error?e.message:"Price save failed.");return false}finally{lock.current=false;setBusy(false)}}
  const sku=skus.find(s=>s.id===selected);
  async function create(e:FormEvent<HTMLFormElement>){
