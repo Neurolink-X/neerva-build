@@ -7,7 +7,7 @@ import {facadeZones,facadeSamples,stylesForTarget,activePattern,shadedPixel,type
 import {validWallMask} from "./mask-editor.ts";
 const plain:PaintStyle={colour:"#b6c7a3",accent:"#c4925f",pattern:"plain",opacity:.78};
 test("all sample exterior paint sections have independent normalized masks",()=>{
- assert.equal(new Set(facadeZones.map(z=>z.id)).size,9);
+ assert.equal(new Set(facadeZones.map(z=>z.id)).size,11);
  for(const z of facadeZones){assert.ok(validWallMask(z.points),z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1,z.id);}
  assert.equal(facadeZones.find(z=>z.id==="right")?.mask.holes.length,3);
 });
@@ -15,7 +15,7 @@ test("plain paint is independent of stored pattern and selected base shade",()=>
  assert.equal(activePattern("paint","diamonds"),"plain");
  assert.equal(activePattern("design","diamonds"),"diamonds");
  const full=stylesForTarget({},"all",plain);
- assert.equal(Object.keys(full).length,9);
+ assert.equal(Object.keys(full).length,11);
  const design=stylesForTarget(full,"right",{...plain,pattern:activePattern("design","diamonds")});
  assert.equal(design.right?.colour,plain.colour);
  assert.equal(design.right?.pattern,"diamonds");
@@ -83,4 +83,13 @@ test("photorealistic 100 gaj asset has the reviewed dimensions and immutable byt
  const hits=(x:number,y:number)=>sample.zones.filter(z=>inside(z.mask.outline,x/1536,y/1024)&&!z.mask.holes.some(h=>inside(h,x/1536,y/1024)));
  for(const [x,y] of [[402,240],[800,145],[840,290],[790,285],[820,540],[460,730],[800,645],[370,850],[1244,850]])assert.equal(hits(x,y).length,1,"paintable point "+x+","+y);
  for(const [x,y] of [[480,250],[570,380],[699,350],[965,365],[700,450],[950,470],[620,635],[555,745],[700,740],[950,720],[430,850],[275,865],[970,850],[1120,850],[100,200],[1300,420],[700,55],[700,640]])assert.equal(hits(x,y).length,0,"protected point "+x+","+y);
+});
+
+test("garden wall panels paint exposed plaster without painting protected plant and fixture regions",()=>{
+ const garden=facadeZones.filter(z=>z.id==="garden-left"||z.id==="garden-right");
+ assert.equal(garden.length,2);
+ function inside(r:number[][],x:number,y:number){let hit=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const [a,b]=r[i],[c,d]=r[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
+ const paint=(x:number,y:number)=>garden.some(z=>inside(z.mask.outline,x/1536,y/512)&&!z.mask.holes.some(h=>inside(h,x/1536,y/512)));
+ for(const [x,y] of [[400,442],[438,450],[550,440],[1020,443],[1115,440],[1160,442]])assert.ok(paint(x,y),`plaster ${x},${y}`);
+ for(const [x,y] of [[340,470],[480,475],[423,450],[570,450],[980,478],[1075,465],[1132,450],[1240,470]])assert.equal(paint(x,y),false,`protected ${x},${y}`);
 });
