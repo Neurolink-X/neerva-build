@@ -1047,7 +1047,7 @@ async function main(){
     await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=2&bedrooms=1&road=N&parking=false",{waitUntil:"load"});
     await page.getByRole("button",{name:"Show ground-floor 1 BHK plan"}).click();
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
-    assert.equal(await page.getByLabel("Levels").inputValue(),"1");
+    assert.equal(await page.getByLabel("Levels",{exact:true}).inputValue(),"1");
     assert.equal(await page.locator(".nroad-variants button").count(),6,"standard plot has six geometry-distinct 1 BHK choices");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
