@@ -154,8 +154,7 @@ test("standard 18×50 and compact 15×30 no-parking ground 1 BHK share validated
    assert.ok(p.rooms.some(r=>r.kind==="living")&&p.rooms.some(r=>r.kind==="kitchen")&&p.rooms.some(r=>r.kind==="bath"));
   }
  }
- const unsupported=generateSpatialPortfolio(brief({floors:2,bedrooms:1,parking:false}));
- assert.equal(unsupported.plans.length,0);
+
 });
 
 test("standard no-parking 1 BHK offers six distinct validated room footprints",()=>{
@@ -167,4 +166,31 @@ test("standard no-parking 1 BHK offers six distinct validated room footprints",(
  assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="bedroom")!.d)).size,3);
  for(const p of plans)assert.deepEqual(validatePlan(p),[]);
  assert.equal(generateSpatialPortfolio(brief({parking:false,widthFt:15,depthFt:30})).plans.length,2);
+});
+
+test("1 BHK is one bedroom total, not one bedroom per floor; preserve G+1/G+2 and parking",()=>{
+ for(const floors of [2,3] as const)for(const parking of [true,false])for(const roadSide of ["N","E","S","W"] as const){
+  const b=brief({floors,parking,roadSide,bedrooms:1});
+  const {plans,blockers}=generateSpatialPortfolio(b);
+  assert.ok(plans.length>0,JSON.stringify(b)+" "+blockers.join("; "));
+  assert.ok(plans.length<=6);
+  for(const p of plans){
+   assert.deepEqual(validatePlan(p),[]);assert.equal(p.floors,floors);
+   assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,1);
+   assert.equal(p.rooms.filter(r=>r.kind==="bedroom"&&r.floor===0).length,1);
+   assert.equal(Boolean(p.parking),parking);assert.equal(p.stairs.roomIds.length,floors);
+   for(let level=1;level<floors;level++){
+    assert.ok(p.rooms.some(r=>r.id==="family-room-"+level&&r.kind==="lounge"));
+    assert.ok(p.openings.some(o=>o.roomId==="utility-"+level&&o.connectsTo==="terrace-"+level));
+   }
+  }
+ }
+ const impossible=generateSpatialPortfolio(brief({widthFt:15,depthFt:30,floors:2,parking:false}));
+ assert.equal(impossible.plans.length,0,"do not stretch compact plot or silently remove floors");
+});
+test("ground parking 1 BHK is capped to six useful geometry-distinct choices",()=>{
+ const {plans,blockers}=generateSpatialPortfolio(brief());
+ assert.ok(plans.length>0,blockers.join("; "));assert.ok(plans.length<=6);
+ assert.equal(new Set(plans.map(planSignature)).size,plans.length);
+ for(const p of plans){assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,1);assert.ok(p.parking);assert.deepEqual(validatePlan(p),[])}
 });

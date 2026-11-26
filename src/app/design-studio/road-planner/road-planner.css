@@ -126,3 +126,5 @@
 .nroad-selection-feedback{padding:10px 12px;background:#eef5ee;border-radius:8px;overflow-wrap:anywhere}.nroad-selection-feedback a{display:inline-flex;align-items:center;min-height:44px;color:#254738;font-weight:700;text-decoration:underline}
 @media(hover:hover) and (pointer:fine){.nroad-variants button:hover{border-color:#2f7551;background:#edf5ee}}
 @media(prefers-reduced-motion:reduce){.nroad-variants button{transition:none}}
+
+.nroad-error .nroad-recovery-action{display:block;width:100%;max-width:420px;min-height:44px;margin:12px 0;padding:10px 14px;border:1px solid #254738;background:#254738;color:#fff;border-radius:9px;font-weight:700;cursor:pointer;text-align:center}
