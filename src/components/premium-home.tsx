@@ -1,8 +1,9 @@
 "use client";
 
-import {useEffect,useMemo,useState,type FormEvent} from "react";
+import {useEffect,useMemo,useState,type FormEvent,type ReactNode} from "react";
 import Image from "next/image";
 import Link from "@/components/intent-link";
+import {useShopCart} from "@/components/shop-cart";
 import {MobileNavigation} from "@/components/mobile-navigation";
 import {InstallLink} from "@/components/pwa-install";
 import {SiteFooter} from "./site-chrome";
@@ -93,7 +94,8 @@ const items=[
 ] as const;
 const popular=[["cement","/materials/cement"],["TMT","/materials/steel"],["bricks","/materials/bricks-blocks"],["pipes","/materials/plumbing"]] as const;
 
-export function PremiumHome(){
+export function PremiumHome({featuredMaterials}:{featuredMaterials?:ReactNode}={}){
+ const cart=useShopCart();
  const [lang,setLang]=useState<Language>("en");
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
  const [quoteCategory,setQuoteCategory]=useState<MaterialCategory>("cement"),[quoteUnit,setQuoteUnit]=useState<MaterialQuantityUnit>("bag"),[quoteMaterial,setQuoteMaterial]=useState("");
@@ -123,10 +125,14 @@ export function PremiumHome(){
    <nav className="nbh-nav" aria-label="Primary navigation"><Link href="/materials">{t.navMaterials}</Link><Link href="/brands">{lang==="hi"?"ब्रांड":"Brands"}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/blog">{t.navGuides}</Link></nav><MobileNavigation className="nbh-mobile-menu" language={lang}><Link href="/materials">{t.navMaterials}</Link><Link href="/design-studio">{t.navDesign}</Link><Link href="/quotes">{t.navQuote}</Link><Link href="/brands">{lang==="hi"?"ब्रांड":"Brands"}</Link><InstallLink recoveryLabel={lang==="hi"?"ऐप सहायता":"App help"}>{lang==="hi"?"ऐप इंस्टॉल करें":"Install app"}</InstallLink><Link href="/account">{lang==="hi"?"खाता":"Account"}</Link><Link href="/checkout?cart=1">{lang==="hi"?"कार्ट":"Cart"}</Link><Link href="/my-project">{lang==="hi"?"मेरा प्रोजेक्ट":"My Project"}</Link><Link href="/account/orders" prefetch={false}>{lang==="hi"?"मेरे ऑर्डर":"My Orders"}</Link><Link href="/build-iq">{lang==="hi"?"अकादमी":"Academy"}</Link><Link href="/blog">{t.navGuides}</Link></MobileNavigation>
    <div className="nbh-header-actions">
     <Link className="nbh-icon-link" href="/account" aria-label={lang==="hi"?"अकाउंट":"Account"}><Icon name="home"/></Link>
-    <Link className="nbh-icon-link" href="/checkout?cart=1" aria-label={lang==="hi"?"कार्ट":"Cart"}><Icon name="cart"/></Link>
+    <Link className="nbh-icon-link nbh-cart-icon" href="/checkout?cart=1" prefetch={false} aria-label={(lang==="hi"?"कार्ट":"Cart")+", "+cart.length+(lang==="hi"?" सामग्री":" items")}><Icon name="cart"/>{cart.length>0&&<b aria-hidden="true">{cart.length}</b>}</Link>
     <button className="nbh-language" type="button" onClick={language}>{t.langButton}</button>
    </div>
   </header>
+  <div className="nbh-shop-search">    <form className="nbh-search" action="/materials" method="get" onSubmit={submitSearch} role="search"><Icon name="search"/><input aria-label={t.search} name="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.searchHint} maxLength={80}/><button type="submit">{t.searchGo}</button></form>
+{suggestions.length>0?<div className="nbh-suggestions" aria-label="Search suggestions">{suggestions.map(item=><Link key={item.id} href={item.href} prefetch={false} data-intent-prefetch="">{lang==="hi"?item.hi:item.en}<Icon name="arrow"/></Link>)}</div>:null}
+    {recent.length>0&&<div className="nbh-recent"><small>{t.recent}</small>{recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>)}</div>}</div>
+  <section className="nbh-quick-categories" aria-label={lang==="hi"?"सामग्री श्रेणियां":"Quick material categories"}>{items.map(item=><Link href={item.href} key={item.id} prefetch={false}><span><Image src={item.image} alt="" fill sizes="(max-width:760px) 76px, 100px" loading="lazy"/></span><strong>{lang==="hi"?item.hi:item.en}</strong></Link>)}</section>
   <section className="nbh-hero" aria-labelledby="nbh-h1">
    <div className="nbh-hero-copy">
     <p className="nbh-eyebrow"><span className="nbh-dot"/> {t.eyebrow}</p>
@@ -138,8 +144,16 @@ export function PremiumHome(){
      <Link className="nbh-journey" href="/design-studio"><span className="nbh-jicon"><Icon name="home"/></span><span><strong>{t.design}</strong><small>{t.designDesc}</small></span><Icon name="arrow"/></Link>
      <Link className="nbh-journey" href="/quotes"><span className="nbh-jicon"><Icon name="file"/></span><span><strong>{t.quote}</strong><small>{t.quoteDesc}</small></span><Icon name="arrow"/></Link>
     </div>
-    <form className="nbh-search" action="/materials" method="get" onSubmit={submitSearch} role="search"><Icon name="search"/><input aria-label={t.search} name="search" value={query} onChange={e=>setQuery(e.target.value)} placeholder={t.searchHint} maxLength={80}/><button type="submit">{t.searchGo}</button></form>
-    <form className="nbh-quick-quote" action="/quotes" method="get">
+
+    <div className="nbh-chip-line"><span>{t.categories}</span>{popular.map(([name,href])=><Link key={name} href={href} prefetch={false} data-intent-prefetch="">{name}</Link>)}</div>
+
+   </div>
+   <div className="nbh-hero-visual">
+   <HomeShowcase hindi={lang==="hi"}/>
+   </div>
+  </section>
+  {featuredMaterials&&<section className="nbh-section nbh-shopping-shelf" aria-labelledby="nbh-shop-heading"><div className="nbh-section-head"><div><p className="nbh-eyebrow">{lang==="hi"?"निर्माण की शुरुआत":"START YOUR BUILD"}</p><h2 id="nbh-shop-heading">{lang==="hi"?"चुनिंदा निर्माण सामग्री":"Featured materials"}</h2><p>{lang==="hi"?"सामग्री चुनें और कार्ट में जोड़ें। अंतिम रेट और उपलब्धता की पुष्टि जरूरी है।":"Choose materials and build your cart. Final price and availability require dealer confirmation."}</p></div><Link href="/materials" prefetch={false} className="nbh-section-link">{lang==="hi"?"सभी सामग्री":"View all materials"} <Icon name="arrow"/></Link></div>{featuredMaterials}<Link className="nbh-shop-bulk" href="/quotes" prefetch={false}><Icon name="building"/><span><strong>{lang==="hi"?"बल्क ऑर्डर या कई सामग्री चाहिए?":"Need a bulk order?"}</strong><small>{lang==="hi"?"मात्रा, पिनकोड और डिलीवरी के अनुसार कोटेशन बनाएं।":"Prepare an itemised quote with quantities and delivery location."}</small></span><Icon name="arrow"/></Link></section>}
+  <section className="nbh-home-quote-wrap" aria-label={lang==="hi"?"सामग्री का कोटेशन":"Material quotation"}>    <form className="nbh-quick-quote" action="/quotes" method="get">
  <strong>{lang==="hi"?"जल्दी कोटेशन ड्राफ्ट तैयार करें":"Get a material quotation"}</strong>
  <div className="nbh-quick-steps"><b>{lang==="hi"?"01 · सामग्री":"01 · Requirements"}</b><span>→</span><span>{lang==="hi"?"02 · समीक्षा":"02 · Review & submit"}</span></div>
  <div className="nbh-quick-fields"><label className="nbh-quick-category">{lang==="hi"?"श्रेणी":"Category"}<select name="category" value={quoteCategory} onChange={e=>{const value=e.target.value;if(isMaterialCategory(value)){setQuoteCategory(value);setQuoteUnit(defaultCategoryUnit(value));setQuoteMaterial("")}}}><option value="cement">Cement</option><option value="steel">TMT / Steel</option><option value="bricks-blocks">Bricks / AAC</option><option value="plumbing">Pipes</option><option value="electrical">Electrical</option><option value="aggregates">Morang / Balu / Gitti</option><option value="paint">Paint</option><option value="tiles">Tiles</option><option value="hardware">Hardware</option></select></label>
@@ -150,15 +164,7 @@ export function PremiumHome(){
   <label>{lang==="hi"?"डिलीवरी शहर":"Delivery city"}<input required minLength={2} maxLength={80} name="city" placeholder={lang==="hi"?"जैसे लखनऊ":"e.g. Lucknow"} autoComplete="address-level2"/></label><button type="submit">{lang==="hi"?"ड्राफ्ट तैयार करें →":"Review material request →"}</button>
  </div>
  <small>{lang==="hi"?"अगले चरण में विवरण जांचें। अभी कोई अनुरोध या ऑर्डर नहीं भेजा गया है।":"Review your details next. No request or order is created until you confirm."}</small>
-</form>
-{suggestions.length>0?<div className="nbh-suggestions" aria-label="Search suggestions">{suggestions.map(item=><Link key={item.id} href={item.href} prefetch={false} data-intent-prefetch="">{lang==="hi"?item.hi:item.en}<Icon name="arrow"/></Link>)}</div>:null}
-    <div className="nbh-chip-line"><span>{t.categories}</span>{popular.map(([name,href])=><Link key={name} href={href} prefetch={false} data-intent-prefetch="">{name}</Link>)}</div>
-    {recent.length>0&&<div className="nbh-recent"><small>{t.recent}</small>{recent.map(x=><button key={x} onClick={()=>setQuery(x)}>{x}</button>)}</div>}
-   </div>
-   <div className="nbh-hero-visual">
-   <HomeShowcase hindi={lang==="hi"}/>
-   </div>
-  </section>
+</form></section>
   <section className="nbh-trust" aria-label="Platform approach"><span><Icon name="list"/>{t.trust1}</span><span><Icon name="shield"/>{t.trust2}</span><span><Icon name="check"/>{t.trust3}</span></section>
 
   <section className="nbh-brands-strip" aria-label="Construction manufacturer reference directory">
@@ -256,6 +262,7 @@ export function PremiumHome(){
   <section className="nbh-section nbh-pros"><div className="nbh-section-head"><div><p className="nbh-eyebrow">06 / PROFESSIONALS</p><h2>{t.pros}</h2></div></div><div className="nbh-pro-grid"><div><Icon name="building"/><h3>{t.dealer}</h3><p>{t.dealerDesc}</p><Link href="/account">{t.learn} <Icon name="arrow"/></Link></div><div><Icon name="list"/><h3>{t.contractor}</h3><p>{t.contractorDesc}</p><Link href="/quotes">{t.prepare} <Icon name="arrow"/></Link></div></div></section>
   <section className="nbh-section nbh-faq"><h2>{t.faq}</h2>{([[t.faq1,t.ans1],[t.faq2,t.ans2],[t.faq3,t.ans3],[t.faq4,t.ans4],[t.faq5,t.ans5],[t.faq6,t.ans6],[t.faq7,t.ans7]] as const).map(([q,a])=><details key={q}><summary>{q}</summary><p>{a}</p></details>)}</section>
   <SiteFooter language={lang}/>
+  <nav className="nbh-mobile-shop-nav" aria-label={lang==="hi"?"त्वरित नेविगेशन":"Quick navigation"}><Link href="/" aria-current="page"><Icon name="home"/><span>{lang==="hi"?"होम":"Home"}</span></Link><Link href="/materials" prefetch={false}><Icon name="list"/><span>{lang==="hi"?"सामग्री":"Materials"}</span></Link><Link href="/design-studio" prefetch={false}><Icon name="palette"/><span>{lang==="hi"?"स्टूडियो":"Studio"}</span></Link><Link href="/checkout?cart=1" prefetch={false}><Icon name="cart"/><span>{lang==="hi"?"कार्ट":"Cart"}{cart.length>0?" ("+cart.length+")":""}</span></Link><Link href="/account" prefetch={false}><Icon name="file"/><span>{lang==="hi"?"खाता":"Account"}</span></Link></nav>
  </main>;
 }
 
