@@ -6,3 +6,19 @@ export const cartKey=(x:Pick<CartItem,"category"|"productSlug"|"unit">)=>[x.cate
 export function addDirectCart(raw:unknown,item:CartItem){const rows=safeDirectCart(raw),[next]=safeDirectCart([item]);if(!next)return rows;const match=rows.find(x=>cartKey(x)===cartKey(next));if(match)return rows.map(x=>cartKey(x)===cartKey(next)?{...x,quantity:Math.min(1000000,Math.round((x.quantity+next.quantity)*1000)/1000)}:x);return rows.length<25?[...rows,next]:rows;}
 
 export function changeDirectCartQuantity(raw:unknown,key:string,quantity:number){const rows=safeDirectCart(raw);if(!Number.isFinite(quantity)||quantity<.001||quantity>1000000||Math.abs(quantity*1000-Math.round(quantity*1000))>.00001)return rows;return rows.map(r=>cartKey(r)===key&&validProductQuantity(r.category,r.productSlug,r.unit,quantity)?{...r,quantity}:r);}
+
+/** Reordering is a cart-only operation. Never silently truncate or partially import an order. */
+export function mergePreviousMaterials(raw:unknown,previous:unknown):CartItem[]|null{
+ if(!Array.isArray(previous)||!previous.length||previous.length>25)return null;
+ const items=safeDirectCart(previous);
+ if(items.length!==previous.length||items.some(i=>i.category==="aggregates"))return null;
+ let rows=safeDirectCart(raw);
+ for(const item of items){
+  const existing=rows.find(r=>cartKey(r)===cartKey(item));
+  if(existing){const total=Math.round((existing.quantity+item.quantity)*1000)/1000;
+   if(!validProductQuantity(item.category,item.productSlug,item.unit,total))return null;
+   rows=rows.map(r=>cartKey(r)===cartKey(item)?{...r,quantity:total}:r);
+  }else{if(rows.length>=25)return null;rows=[...rows,item]}
+ }
+ return rows;
+}
