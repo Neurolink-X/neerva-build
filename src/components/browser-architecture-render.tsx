@@ -13,7 +13,8 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
   stop();setHasFrame(false);setProgress(0);
   const snapshot=capture();if(!snapshot||!snapshot.boxes.length){setPhase("error");setMessage("Open your 3D model first, then try again.");return}
   if(typeof Worker==="undefined"){setPhase("error");setMessage("This browser does not support background rendering. Use the interactive 3D preview.");return}
-  const width=quality==="fine"?560:320,height=Math.round(width/1.5),samples=quality==="fine"?12:4;
+  const longest=quality==="fine"?560:320,aspect=Math.max(.5,Math.min(2,snapshot.camera.aspect??1.5));
+  const width=aspect>=1?longest:Math.round(longest*aspect),height=aspect>=1?Math.round(longest/aspect):longest,samples=quality==="fine"?12:4;
   const token=sequence.current;
   const fail=(reason:string)=>{if(token!==sequence.current||!visible.current)return;stop();setPhase("error");setMessage(reason);};
   try{
@@ -42,7 +43,7 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
   <div className="nbd-buttons"><button type="button" onClick={start} disabled={phase==="working"}>Generate realistic image</button>{phase==="working"&&<button type="button" onClick={cancel}>Cancel render</button>}{phase==="done"&&<button type="button" onClick={save}>Save render (PNG)</button>}</div>
   {phase==="working"&&<progress aria-label="Render progress" max={100} value={progress}/>}
   {message&&<p role="status">{message}</p>}
-  <canvas ref={canvas} hidden={!hasFrame} aria-label="Ray-traced architectural concept image" style={{maxWidth:"100%",width:"100%",height:"auto",borderRadius:12}}/>
+  <canvas ref={canvas} hidden={!hasFrame} aria-label="Ray-traced architectural concept image" style={{display:hasFrame?"block":"none",maxWidth:"100%",width:"100%",height:"auto",borderRadius:12}}/>
   <p className="nbd-disclaimer">Uses bounded light bounces and simplified scene materials. Not a certified architectural drawing or a photographic-quality guarantee. Camera changes require a new render.</p>
  </section>;
 }
