@@ -49,3 +49,13 @@ test("full exterior covers previously omitted wall and trim regions in all local
  assert.equal(painted(villa,520/880,210/584),false);
  assert.equal(painted(villa,500/880,460/584),false);
 });
+
+test("compact family concept preserves glazing and paints four independent surfaces",()=>{
+ const sample=facadeSamples.find(s=>s.id==="compact-family");assert.ok(sample);
+ assert.equal(new Set(sample.zones.map(z=>z.id)).size,sample.zones.length);
+ const all=stylesForTarget({},"all",plain,sample.zones);
+ const edited=stylesForTarget(all,"entry",{...plain,colour:"#293f36"},sample.zones);
+ assert.equal(edited.entry?.colour,"#293f36");
+ assert.equal(edited.left?.colour,plain.colour);
+ assert.equal(all.entry?.colour,plain.colour);
+});

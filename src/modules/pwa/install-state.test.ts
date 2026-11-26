@@ -14,3 +14,9 @@ test("manual and native install discovery share the same safety gates",()=>{
   assert.equal(showInstallOffer(state),false);
  }
 });
+
+test("install promotion never obstructs private and transaction workflows",()=>{
+ const base={ready:true,installed:false,dismissed:false,accepted:false,path:"/"};
+ for(const path of ["/account","/admin/catalog","/dealer/orders","/checkout","/basket","/quotes","/orders","/support","/my-project"])assert.equal(showInstallOffer({...base,path}),false,path);
+ for(const path of ["/","/materials","/design-studio","/family-homes"])assert.equal(showInstallOffer({...base,path}),true,path);
+});

@@ -7,6 +7,8 @@ type State={ready:boolean;installed:boolean;available:boolean;busy:boolean;platf
 const initial:State={ready:false,installed:false,available:false,busy:false,platform:"desktop"};
 let state=initial,prompt:PromptEvent|null=null,started=false;
 const listeners=new Set<()=>void>(),key="neerva-installed-v1";
+// Keep confirmation for this document even if browser storage is blocked.
+let confirmedInSession=false;
 const media=["standalone","minimal-ui","window-controls-overlay"];
 const read=()=>{try{return localStorage.getItem(key)==="1"}catch{return false}};
 const remember=(yes:boolean)=>{try{if(yes)localStorage.setItem(key,"1");else localStorage.removeItem(key)}catch{}};
@@ -16,9 +18,9 @@ function start(){
  if(started)return;started=true;
  const ua=navigator.userAgent;
  const platform=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)?"ios":/Android/.test(ua)?"android":"desktop";
- const sync=()=>{const standalone=displayInstalled();if(standalone){remember(true);prompt=null;}const installed=standalone||read();update({ready:true,platform,installed,available:!!prompt&&!installed});};
- window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();if(displayInstalled())return;remember(false);prompt=event as PromptEvent;update({installed:false,available:true});});
- window.addEventListener("appinstalled",()=>{remember(true);prompt=null;update({installed:true,available:false,busy:false});});
+ const sync=()=>{const standalone=displayInstalled();if(standalone){confirmedInSession=true;remember(true);prompt=null;}const installed=standalone||confirmedInSession||read();update({ready:true,platform,installed,available:!!prompt&&!installed});};
+ window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();if(displayInstalled())return;confirmedInSession=false;remember(false);prompt=event as PromptEvent;update({installed:false,available:true});});
+ window.addEventListener("appinstalled",()=>{confirmedInSession=true;remember(true);prompt=null;update({installed:true,available:false,busy:false});});
  for(const mode of media){const query=matchMedia("(display-mode: "+mode+")");query.addEventListener?.("change",sync);}
  window.addEventListener("pageshow",sync);window.addEventListener("storage",sync);document.addEventListener("visibilitychange",sync);
  sync();
