@@ -1,3 +1,4 @@
+import "../account/account-hub.css";
 import {DirectCartPanel} from "@/components/direct-cart-panel";
 import Link from "next/link";
 import {SiteHeader,SiteFooter} from "@/components/site-chrome";

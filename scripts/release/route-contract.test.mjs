@@ -93,6 +93,7 @@ const manifest={
  "/api/studio/payments":["GET","POST","DELETE"],
  "/api/studio/premium-report":["POST"],
  "/api/studio/projects":["GET","POST"],
+ "/api/studio/projects/[id]":["GET"],
  "/api/studio/support":["GET","POST"]
 };
 const clientRoutes=Object.keys(manifest).sort();
@@ -140,10 +141,10 @@ test("literal client fetch URL targets resolve to declared API routes",()=>{
  for(const file of sourceFiles){
   const content=readFileSync(file,"utf8");
   for(const match of content.matchAll(pattern)){
-   const path=normalize(match[1]);
+   const raw=match[1],path=normalize(raw);
    if(path===null)continue;
    checked.add(path);
-   if(!api.has(path))invalid.push(relative(resolve("."),file)+" → "+path);
+   if(!api.has(path)&&!(raw.endsWith("/")&&[...api.keys()].some(r=>isDynamicMatch(r,path+"/fixture-id"))))invalid.push(relative(resolve("."),file)+" → "+path);
   }
  }
  assert.ok(checked.size>=8,"Too few API consumers scanned");
@@ -193,4 +194,32 @@ test("API literals across frontend and shared modules resolve to real handlers",
 test("automatic Vercel deployments are restricted to main",()=>{
  const config=JSON.parse(readFileSync(resolve("vercel.json"),"utf8"));
  assert.deepEqual(config.git?.deploymentEnabled,{"**":false,main:true},"Do not spend Vercel deployment quota on feature branches; explicit preview deployment requires a separate decision.");
+});
+
+test("customer account menu destinations and helper API consumers resolve",()=>{
+ const hub=readFileSync(resolve("src/components/customer-account-hub.tsx"),"utf8");
+ const links=[...hub.matchAll(/href:"(\/[^"]+)"/g)].map(m=>normalize(m[1]));
+ assert.ok(links.length>=16);
+ for(const link of links)assert.ok(isKnownPage(link),"Missing customer account page: "+link);
+ const feed=readFileSync(resolve("src/components/account-private-feed.tsx"),"utf8");
+ for(const route of ["/api/studio/projects","/api/direct-orders","/api/customer/quotes"]) {
+  assert.ok(api.has(route),route+" must exist");
+  assert.ok(feed.includes(route),route+" must be connected");
+ }
+ const detail=readFileSync(api.get("/api/studio/projects/[id]"),"utf8");
+ assert.match(detail,/requireAuth/);assert.match(detail,/\.eq\("owner_id",auth\.userId\)/);
+ assert.match(detail,/validatePlan/);assert.match(detail,/private, no-store/);
+});
+test("production UI never embeds obvious demo contacts or hardcoded contact destinations",()=>{
+ const violations=[];
+ for(const file of sourceFiles){
+  if(/\.test\.[cm]?[jt]sx?$/.test(file))continue;
+  if(!file.startsWith(app+sep)&&!file.startsWith(components+sep))continue;
+  const source=readFileSync(file,"utf8");
+  // Only explicit rendered contacts / input defaults and contact links, not
+  // isolated validation patterns, test data, or user-supplied values.
+  const suspicious=/(?:mailto:|tel:|https?:\/\/(?:wa\.me\/|api\.whatsapp\.com\/send\?phone=))\s*(?:[^\s"'{}<>]*@(?:example\.(?:com|org|net)|test\.com)|(?:\+?91[- ]?)?(?:9876543210|9999999999|1234567890|0000000000))\b|(?:placeholder|defaultValue|value)\s*=\s*["'](?:[^"'\s]+@(?:example\.(?:com|org|net)|test\.com)|9876543210|9999999999|1234567890|0000000000)["']/gi;
+  if(suspicious.test(source))violations.push(relative(resolve("."),file));
+ }
+ assert.deepEqual(violations,[],"Remove demo contact details from production UI; use actual account data or the support form");
 });

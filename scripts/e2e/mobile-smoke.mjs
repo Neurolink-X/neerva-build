@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import {assessPerformance} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
+const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -572,7 +572,7 @@ async function main(){
     }finally{await standaloneCtx.close();}
     const account=await page.goto(base+"/account",{waitUntil:"load"});
     assert.equal(account?.status(),200,"authenticated account route");
-    assert.equal(await page.getByRole("heading",{name:/Access your projects and requests/}).count(),1,"account page must not show prelaunch placeholder");
+    assert.equal(await page.getByRole("heading",{name:/Your account. Your build./}).count(),1,"account page must not show prelaunch placeholder");
     if(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY){
       const form=page.locator("form.account-auth-form").filter({has:page.locator("input[name=password]")});
       await form.getByRole("button",{name:"Sign in securely →",exact:true}).waitFor({state:"visible"});
@@ -583,6 +583,19 @@ async function main(){
     }else{
       assert.equal(await page.getByText("Waiting for backend setup").count(),1,"unconfigured account must not collect passwords");
     }
+    // Exercise the actual account shells at narrow, landscape and wide sizes.
+    // Signed-in card/CRUD checks are reserved for isolated authenticated fixtures.
+    const previousAccountViewport=page.viewportSize();
+    for(const size of [{width:320,height:568},{width:360,height:800},{width:390,height:844},{width:600,height:900},{width:768,height:1024},{width:844,height:390},{width:1024,height:768},{width:1440,height:900},{width:1920,height:1080}]){
+      await page.setViewportSize(size);
+      for(const route of ["/account","/account/addresses"]){
+        await page.goto(base+route,{waitUntil:"load"});
+        const region=page.locator(".naccount-page");await region.waitFor();
+        const metrics=await region.evaluate(el=>{const r=el.getBoundingClientRect();const controls=[...el.querySelectorAll("button,input:not([type=checkbox]),select,textarea")].filter(n=>n.getClientRects().length);return {width:r.width,overflow:document.documentElement.scrollWidth>document.documentElement.clientWidth+2||el.scrollWidth>el.clientWidth+2,fit:controls.every(n=>{const b=n.getBoundingClientRect();return b.left>=r.left-1&&b.right<=r.right+1&&b.height>=44})}});
+        assert.ok(metrics.width>0&&!metrics.overflow&&metrics.fit,route+" responsive account controls at "+size.width+"px");
+      }
+    }
+    if(previousAccountViewport)await page.setViewportSize(previousAccountViewport);
     const unauth=await page.request.post(base+"/api/rfqs",{data:{idempotencyKey:"f1d3068d-3f5f-4e5c-a14e-2546fb9902ed"}});
     const expectedUnauth=process.env.NEERVA_RFQ_INTAKE_ENABLED==="true"&&process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?401:503;
     assert.equal(unauth.status(),expectedUnauth,"RFQ must fail closed: 401 only when intake and auth are enabled, otherwise 503");
@@ -1044,16 +1057,19 @@ async function main(){
     await plotInputs.nth(1).fill("50");
     await page.getByRole("img",{name:/Road on E side/}).waitFor();
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
-    await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=2&bedrooms=1&road=N&parking=false",{waitUntil:"load"});
+    await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=2&bedrooms=1&road=N&parking=true",{waitUntil:"load"});
     const floorSelector=page.locator(".nroad-form").getByRole("combobox",{name:"Levels",exact:true});
     await floorSelector.waitFor({state:"visible"});
-    assert.equal(await floorSelector.count(),1,"floor selector has a unique accessible name");
-    assert.equal(await floorSelector.inputValue(),"2","requested G+1 is preserved before explicit recovery");
-    await page.getByRole("button",{name:"Show ground-floor 1 BHK plan",exact:true}).click();
-    await page.waitForFunction(()=>document.querySelector('.nroad-form select[name="floors"]')?.value==="1");
-    assert.equal(await floorSelector.inputValue(),"1","explicit recovery selects one floor");
+    assert.equal(await floorSelector.inputValue(),"2","G+1 is preserved for one bedroom");
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
-    assert.equal(await page.locator(".nroad-error").count(),0,"validated recovery clears the unsupported-plan notice");
+    assert.equal(await page.locator(".nroad-error").count(),0,"G+1 1 BHK must not be rejected merely for having two floors");
+    assert.match(await page.locator(".nroad-plan-summary").innerText(),/1\s*Bedrooms total/);
+    await page.getByRole("button",{name:"First floor",exact:true}).click();
+    assert.match(await page.locator(".nroad-plan-summary").innerText(),/0\s*Bedrooms on this floor/);
+    await page.getByRole("button",{name:"Ground floor",exact:true}).click();
+    assert.match(await page.locator(".nroad-plan-summary").innerText(),/1\s*Bedrooms on this floor/);
+    await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=1&bedrooms=1&road=N&parking=false",{waitUntil:"load"});
+    await page.getByRole("img",{name:/Road on N side/}).waitFor();
     assert.equal(await page.locator(".nroad-variants button").count(),6,"standard plot has six geometry-distinct 1 BHK choices");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
@@ -1077,16 +1093,30 @@ async function main(){
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"load"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
-     assert.equal(await page.locator(".nbh-quick-categories a").count(),9,"all material category shortcuts preserved");
-     assert.equal(await page.locator(".nbh-shop-product").count(),4,"featured shelf uses existing catalog products");
-     assert.equal(await page.locator(".nbh-shop-product-link").count(),4);
-     const homeShelf=page.locator(".nbh-shop-products");
-     assert.ok(await homeShelf.evaluate(el=>el.scrollWidth<=el.clientWidth+2),"featured shelf fits mobile");
-     assert.equal(await page.locator(".nbh-mobile-shop-nav a").count(),5);
-     assert.ok(await page.locator(".nbh-mobile-shop-nav").isVisible(),"mobile navigation is visible");
+     assert.equal(await page.locator(".nbh-shopping-shelf,.nbh-quick-categories,.nbh-shop-product").count(),0,"no duplicate materials shelf");
+     const categories=page.locator(".nbh-category-grid");
+     assert.equal(await categories.locator(".nbh-material-card").count(),9,"original nine categories retained");
+     assert.equal(await categories.locator(".nbh-category-cart").count(),4,"quick add inside existing category cards");
+     assert.ok(await categories.evaluate(el=>el.scrollWidth<=el.clientWidth+2),"category grid fits mobile");
+     const nav=page.locator(".nbh-mobile-shop-nav");
+     assert.equal(await nav.locator("a").count(),5);
+     assert.ok(await nav.isVisible(),"mobile navigation is visible");
+     const navRoutes=await nav.locator("a").evaluateAll(links=>links.map(a=>a.getAttribute("href")));
+     for(const href of navRoutes){const response=await page.request.get(base+href);assert.equal(response.status(),200,"mobile tab route "+href);}
      const homeCartBefore=await page.locator(".nbh-cart-icon").getAttribute("aria-label");
-     const homeAdd=homeShelf.locator("button.nb-shop-add").first();
-     if(await homeAdd.count()){const homeProductIndex=await homeAdd.evaluate(b=>[...document.querySelectorAll(".nbh-shop-product")].indexOf(b.closest("article")));assert.ok(homeProductIndex>=0);const card=homeShelf.locator(".nbh-shop-product").nth(homeProductIndex);await homeAdd.click();await page.waitForFunction(before=>document.querySelector(".nbh-cart-icon")?.getAttribute("aria-label")!==before,homeCartBefore);const homeStepper=card.locator(".nb-shop-stepper");await homeStepper.waitFor({state:"visible"});await homeStepper.getByRole("button",{name:/Decrease/}).click();}
+     const card=categories.locator(".nbh-material-card").filter({has:page.locator(".nbh-category-cart-product").filter({hasText:/Ultratech PPC Cement/i})});
+     assert.equal(await card.count(),1,"one exact cement product quick-add");
+     await card.locator("button.nb-shop-add").click();
+     await page.waitForFunction(before=>document.querySelector(".nbh-cart-icon")?.getAttribute("aria-label")!==before,homeCartBefore);
+     await card.locator(".nb-shop-stepper").waitFor({state:"visible"});
+     await nav.locator('a[href="/checkout?cart=1"]').click();
+     await page.getByRole("heading",{name:"My cart (1)"}).waitFor();
+     assert.match(await page.locator(".nb-shop-cart-line").first().innerText(),/Ultratech PPC Cement/i);
+     await page.reload({waitUntil:"load"});
+     await page.getByRole("heading",{name:"My cart (1)"}).waitFor();
+     await page.locator(".nb-shop-cart-line").first().getByRole("button",{name:/^Remove /}).click();
+     await page.getByText(/Your cart is empty/).waitFor();
+     await page.goto(base+"/",{waitUntil:"load"});
      assert.equal(await page.locator(".nbh-explore-grid a").count(),6,"all six discovery tools preserved");
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
      assert.equal(await page.locator(".home-stage-comparison img").count(),2,"paired construction-stage renders");
