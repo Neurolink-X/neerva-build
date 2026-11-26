@@ -25,6 +25,23 @@ async function main(){
     }
    }finally{await ctx.close()}
   }
+  // Focused footer geometry across phone, landscape, tablet and desktop sizes in both languages.
+  for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
+   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
+   try{const page=await ctx.newPage();await page.goto(base+"/",{waitUntil:"load"});
+    const footer=page.locator("footer.unified-footer");
+    for(const lang of ["en","hi"]){
+     if(lang==="hi")await page.locator(".nbh-language").click();
+     await footer.locator(".unified-footer-app button").waitFor({state:"visible"});
+     assert.equal(await footer.getAttribute("lang"),lang,"footer language matches selected home language");
+     const metrics=await footer.evaluate(el=>{const frame=el.getBoundingClientRect(),button=el.querySelector(".unified-footer-app button"),copy=el.querySelector(".unified-footer-app-copy"),icon=button.querySelector("svg"),b=button.getBoundingClientRect(),c=copy.getBoundingClientRect();const fits=node=>{const r=node.getBoundingClientRect();return r.left>=frame.left-1&&r.right<=frame.right+1&&node.scrollWidth<=node.clientWidth+2};return {fits:[...el.querySelectorAll(".unified-footer-groups nav,.unified-footer-actions a,.unified-footer-legal a,.unified-footer-app-copy,.unified-footer-app button")].every(fits),iconFits:icon.getBoundingClientRect().width>=20,buttonHeight:b.height,overlap:Math.min(b.right,c.right)-Math.max(b.left,c.left)>1&&Math.min(b.bottom,c.bottom)-Math.max(b.top,c.top)>1,links:el.querySelectorAll(".unified-footer-groups a").length,overflow:el.scrollWidth>el.clientWidth+2,stacked:b.top>=c.bottom-1};});
+     assert.ok(metrics.fits&&metrics.iconFits&&!metrics.overlap&&!metrics.overflow&&metrics.buttonHeight>=43,`${v.w}px ${lang} footer fit: ${JSON.stringify(metrics)}`);
+     assert.equal(metrics.links,22,"all footer navigation links remain");
+     if(v.w<=340)assert.ok(metrics.stacked,"narrow screen app button stacks under copy");
+     await footer.screenshot({path:path.join("test-results/mobile",`${v.w}-${lang}-footer-responsive.png`),animations:"disabled"});
+    }
+   }finally{await ctx.close()}
+  }
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
    const page=await ctx.newPage(),errors=[];
