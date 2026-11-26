@@ -439,6 +439,10 @@ export function validateRequestedProgramme(p:PlanModel,b:PlanBrief):string[]{
  const errors=validatePlan(p);
  if(p.floors!==b.floors||p.rooms.filter(r=>r.kind==="bedroom").length!==b.bedrooms||Boolean(p.parking)!==b.parking||p.plot.widthFt!==b.widthFt||p.plot.depthFt!==b.depthFt||p.plot.roadSide!==b.roadSide)errors.push("Plan does not match requested plot, floors, bedrooms or parking.");
  if(!p.rooms.some(r=>r.kind==="living")||!p.rooms.some(r=>r.kind==="kitchen")||!p.rooms.some(r=>r.kind==="bath"))errors.push("Missing essential BHK spaces.");
+ const requestedShape=b.siteShape??{kind:"rectangle"},actualShape=p.plot.siteShape??{kind:"rectangle"};
+ if(requestedShape.kind!==actualShape.kind||(requestedShape.kind!=="rectangle"&&actualShape.kind!=="rectangle"&&(requestedShape.notchWidthFt!==actualShape.notchWidthFt||requestedShape.notchDepthFt!==actualShape.notchDepthFt)))errors.push("Plan does not match the requested plot outline.");
+ for(const side of ["frontFt","rearFt","leftFt","rightFt"] as const)if(p.setbacks[side]+.00001<b.setbacks[side])errors.push("Plan encroaches on requested "+side+" setback.");
+ for(let floor=0;floor<b.floors;floor++)if(!p.rooms.some(r=>r.floor===floor&&!["parking","terrace","balcony","verandah"].includes(r.kind)))errors.push("Requested floor has no enclosed room or circulation.");
  return errors;
 }
 export function planSignature(p:PlanModel):string{
