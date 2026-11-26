@@ -440,6 +440,23 @@ async function main(){
     await quickAdd.getByRole("button",{name:/Decrease /}).click();
     await quickAdd.getByRole("button",{name:/Decrease /}).click();
     await quickAdd.getByRole("button",{name:"Add",exact:true}).waitFor();
+    // Real brick route: bulk count, not bags, and valid arbitrary integer quantity.
+    await page.goto(base+"/materials/bricks-blocks/red-clay-brick",{waitUntil:"load"});
+    const brickConfig=page.locator(".product-request-config");
+    assert.equal(await brickConfig.locator("select").first().inputValue(),"piece");
+    assert.equal(await brickConfig.locator("input[type=number]").inputValue(),"100");
+    assert.deepEqual(await brickConfig.locator("select").first().locator("option").evaluateAll(options=>options.map(o=>o.value)),["piece","bundle","truck"]);
+    await brickConfig.locator("input[type=number]").fill("1.5");
+    assert.ok(await brickConfig.getByRole("button",{name:"Add to cart",exact:true}).isDisabled());
+    await brickConfig.locator("input[type=number]").fill("750");
+    await brickConfig.getByRole("button",{name:"Add to cart",exact:true}).click();
+    await page.goto(base+"/checkout?cart=1",{waitUntil:"load"});
+    const brickCart=page.locator(".nb-shop-cart-line").first();
+    assert.equal(await brickCart.locator("input[type=number]").inputValue(),"750");
+    await brickCart.getByRole("button",{name:/Increase /}).click();
+    assert.equal(await brickCart.locator("input[type=number]").inputValue(),"850");
+    await brickCart.getByRole("button",{name:/^Remove /}).click();
+    await page.getByText(/Your cart is empty/).waitFor();
     // Exercise a genuine guest order-cart journey, without creating a production order.
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     await page.locator(".product-request-config input[type=number]").fill("3");
