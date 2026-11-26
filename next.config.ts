@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import {customDomainCutoverReady} from "./src/modules/seo/site-origin";
+import {publicIndexingEnabled} from "./src/modules/seo/indexing";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
@@ -15,11 +16,13 @@ const nextConfig: NextConfig = {
   },
   // Redirect only after both hostnames are moved, HTTPS is confirmed and the
   // operator explicitly enables the hostname cutover. No redirect loop.
-  redirects: async () => customDomainCutoverReady(process.env) ? [
+  redirects: async () => process.env.VERCEL_ENV==="production" && customDomainCutoverReady(process.env) ? [
     {source:"/:path*",has:[{type:"host" as const,value:"neerva-build.vercel.app"}],destination:"https://neerva.in/:path*",permanent:true},
     {source:"/:path*",has:[{type:"host" as const,value:"www.neerva.in"}],destination:"https://neerva.in/:path*",permanent:true}
   ] : [],
   headers: async () => [
+    ...(!publicIndexingEnabled(process.env) ? [{source:"/:path*",headers:[{key:"X-Robots-Tag",value:"noindex, nofollow"}]}] : []),
+    ...["/account","/admin","/dealer","/api","/basket","/quotes","/checkout","/orders"].map(path=>({source:`${path}/:path*`,headers:[{key:"X-Robots-Tag",value:"noindex, nofollow"}]})),
     {source:"/sw.js",headers:[{key:"Cache-Control",value:"no-cache, max-age=0, must-revalidate"}]},
     // Approved catalog filenames are content-addressed; changed bytes require a new URL.
     {source:"/images/catalog/approved/:asset([a-f0-9]{24}[.]webp)",headers:[{key:"Cache-Control",value:"public, max-age=31536000, immutable"}]},

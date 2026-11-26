@@ -12,3 +12,12 @@ test("production can index only with explicit verified HTTPS site flag",()=>{
   {...vars,NEXT_PUBLIC_SITE_URL:"https://neerva-build.vercel.app/other"}
  ])assert.equal(publicIndexingEnabled(env),false);
 });
+
+test("only an exact, activated custom origin can be indexed",()=>{
+ const env={VERCEL_ENV:"production",NEXT_PUBLIC_SITE_INDEXABLE:"true",NEERVA_CUSTOM_DOMAIN_ACTIVE:"true",NEXT_PUBLIC_SITE_URL:"https://neerva.in"};
+ assert.equal(publicIndexingEnabled(env),true);
+ for(const url of ["https://neerva.in:8443","https://user@neerva.in","https://neerva.in/","https://neerva.in?x=1","https://www.neerva.in","https://neerva.in.evil.example","https://neerva-build.vercel.app:8443"]){
+  assert.equal(publicIndexingEnabled({...env,NEXT_PUBLIC_SITE_URL:url}),false,url);
+ }
+ assert.equal(publicIndexingEnabled({...env,NEERVA_CUSTOM_DOMAIN_ACTIVE:"false"}),false);
+});
