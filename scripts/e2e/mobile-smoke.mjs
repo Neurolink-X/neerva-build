@@ -510,6 +510,7 @@ async function main(){
     await page.getByRole("heading",{name:"Delivery details",exact:true}).waitFor();
     assert.equal(await page.getByRole("button",{name:"Sign in to submit request"}).isDisabled(),true,"guest can prepare but not submit without authorization");
     await page.getByLabel("Contact name",{exact:true}).fill("Guest draft");
+    await page.getByText("Need help or a copy of your request?",{exact:true}).click();
     await page.getByRole("heading",{name:"Keep your material request"}).waitFor();
     await page.getByRole("button",{name:"Download draft",exact:true}).waitFor();
     assert.equal(await signIn.getAttribute("target"),"_blank","sign in preserves original form tab");
