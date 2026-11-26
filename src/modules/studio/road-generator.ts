@@ -325,8 +325,9 @@ function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
  const w=Math.min(20,width),d=Math.min(38,depth);
  const setbacks={...sb,rightFt:sb.rightFt+width-w,rearFt:sb.rearFt+depth-d,verified:false as const};
  const plans:PlanModel[]=[];
- for(const left of [true,false]){
-  const ox=sb.leftFt,oy=sb.frontFt,livingDepth=Math.floor((d-11)/2);
+ const recipes=[{id:"balanced",label:"Balanced living and bedroom",delta:0},...(d>=34?[{id:"living",label:"Spacious living and dining",delta:2},{id:"bedroom",label:"Spacious private bedroom",delta:-2}]:[])];
+ for(const recipe of recipes)for(const left of [true,false]){
+  const ox=sb.leftFt,oy=sb.frontFt,livingDepth=Math.floor((d-11)/2)+recipe.delta;
   const serviceY=3+livingDepth,bedY=serviceY+8,kitchenW=Math.max(6,w-8);
   const rooms:Room[]=[];
   const add=(id:string,label:string,kind:RoomKind,x:number,y:number,rw:number,rd:number)=>
@@ -342,12 +343,12 @@ function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
   const entry=(w-3)/2;
   openings.push({id:"entry",roomId:"verandah",kind:"door",side:"front",atFt:entry,widthFt:3,heightFt:7,sillFt:0});
   const variant=left?"parking-left":"parking-right";
-  const plan:PlanModel={version:1,id:b.widthFt+"x"+b.depthFt+"-"+b.roadSide+"-pedestrian-"+(left?"left":"right")+(b.siteShape&&b.siteShape.kind!=="rectangle"?"-"+b.siteShape.kind+"-"+b.siteShape.notchWidthFt+"x"+b.siteShape.notchDepthFt:""),
+  const plan:PlanModel={version:1,id:b.widthFt+"x"+b.depthFt+"-"+b.roadSide+"-pedestrian-"+(left?"left":"right")+(recipe.id==="balanced"?"":"-"+recipe.id)+(b.siteShape&&b.siteShape.kind!=="rectangle"?"-"+b.siteShape.kind+"-"+b.siteShape.notchWidthFt+"x"+b.siteShape.notchDepthFt:""),
    variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},setbacks,floors:1,rooms,openings,
    walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},gate:{side:"front",xFt:ox,widthFt:0},
    pedestrianGate:{side:"front",xFt:ox+entry,widthFt:3},parking:null,stairs:{roomIds:[],note:"Single-level pedestrian plan."},
    balcony:null,facade:{kit:"simple-parapet",massing:"box",main:"#e9e2d4",accent:"#8e755b"},
-   score:0,notes:[...(b.siteShape&&b.siteShape.kind!=="rectangle"?["L-plot rear corner omitted. Entire adjacent strip is kept unbuilt as a conservative construction envelope; a cadastral site survey and licensed architect must verify the actual boundary."]:[]),"City rules, setbacks and construction details require local professional review."],conceptOnly:true};
+   score:recipe.id==="balanced"?1:0,notes:[recipe.label,...(b.siteShape&&b.siteShape.kind!=="rectangle"?["L-plot rear corner omitted. Entire adjacent strip is kept unbuilt as a conservative construction envelope; a cadastral site survey and licensed architect must verify the actual boundary."]:[]),"City rules, setbacks and construction details require local professional review."],conceptOnly:true};
   addWindow(plan);
   if(validatePlan(plan).length===0)plans.push(plan);
  }
