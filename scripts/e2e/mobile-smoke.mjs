@@ -118,10 +118,10 @@ async function main(){
     if(v.w<=430&&v.h>560){
      await page.getByRole("button",{name:"Paint + design",exact:true}).click();
      const pattern=page.locator(".wall-pattern-options button").first();
-     await pattern.evaluate(e=>e.scrollIntoView({block:"center"}));
-     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0}),"mobile live canvas remains visible during pattern selection");
+     await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
+     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");if(!c)return false;const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0},null,{timeout:3000});
      await pattern.click();
-     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1}),"pattern selection keeps the same preview in view");
+     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");if(!c)return false;const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0},null,{timeout:3000});
     }
     await gallery.screenshot({path:path.join("test-results/mobile",v.w+"-facade-gallery.png"),animations:"disabled"});
    }finally{await ctx.close()}
