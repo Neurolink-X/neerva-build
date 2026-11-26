@@ -23,6 +23,26 @@ export const knowledgeSources=[
   {
     "label": "CERT-In · phishing and payment fraud",
     "url": "https://www.cert-in.org.in/s2cMainServlet?VLCODE=CIAD-2024-0050&pageid=PUBVLNOTES02"
+  },
+  {
+    "label": "NASA · Mars Dune Alpha / CHAPEA habitat",
+    "url": "https://www.nasa.gov/humans-in-space/chapea/habitat/"
+  },
+  {
+    "label": "NASA · robotic construction for Moon and Mars",
+    "url": "https://www.nasa.gov/directorates/stmd/nasa-enables-construction-technology-for-moon-and-mars-exploration/"
+  },
+  {
+    "label": "NASA · MOXIE Mars experiment completed",
+    "url": "https://www.nasa.gov/missions/mars-2020-perseverance/perseverance-rover/nasas-oxygen-generating-experiment-moxie-completes-mars-mission/"
+  },
+  {
+    "label": "ESA · interlocking space bricks experiment",
+    "url": "https://blogs.esa.int/exploration/lego-bricks-from-space-dust/"
+  },
+  {
+    "label": "NASA · MMPACT technology development",
+    "url": "https://techport.nasa.gov/projects/116319"
   }
 ] as const;
 export const knowledgePaths=[
@@ -271,6 +291,74 @@ export const knowledgePaths=[
         "href": "/account",
         "cta": "Open account tools",
         "source": 5
+      }
+    ]
+  },
+  {
+    "id": "space",
+    "title": "Beyond Earth: Moon & Mars engineering",
+    "hi": "पृथ्वी से परे निर्माण",
+    "intro": "No crewed Mars building has been constructed. Separate real Mars experiments, Earth-based demonstrations, and proposed extraterrestrial infrastructure. Learn what extreme-environment engineering can teach Indian home builders.",
+    "guides": [
+      {
+        "id": "mars-habitat",
+        "title": "Mars Dune Alpha: test the habitat before the mission",
+        "hi": "मंगल आवास का पृथ्वी पर परीक्षण",
+        "example": "Earth demonstration: NASA's roughly 1,700 sq ft 3D-printed Mars Dune Alpha at Johnson Space Center is a simulated habitat, not a building on Mars.",
+        "steps": "Study how sleeping, food, work, sanitation and maintenance share limited space; separate noisy and private areas; mock up service access and test daily routines before finalising your home",
+        "warning": "A successful Earth analogue does not prove that the same structure can contain pressure or withstand radiation on Mars.",
+        "practice": "Draw a one-room emergency shelter layout; identify the exit, sleeping space, water, ventilation and repair access; try a household-scale layout in Room Lab.",
+        "href": "/room-lab",
+        "cta": "Experiment with space planning",
+        "source": 6
+      },
+      {
+        "id": "regolith-printing",
+        "title": "Robot-built Moon and Mars infrastructure",
+        "hi": "रोबोट से चंद्रमा और मंगल पर निर्माण",
+        "example": "Research and Earth prototypes: NASA's MMPACT explores robotic additive construction using local surface material, or regolith, for potential pads, barriers and shelters. Operational off-Earth buildings are not yet demonstrated by this programme.",
+        "steps": "Compare material transport cost with local processing and testing; consider power, dust and maintenance constraints; plan modular equipment access before making a design",
+        "warning": "Regolith is not interchangeable with ordinary soil or concrete. Printed material is not automatically airtight, radiation-safe or structurally certified.",
+        "practice": "For an Indian site, compare transporting every component against using certified local materials; record transport distance, inspection needs, waste and repairability.",
+        "href": "/build-iq/material-atlas",
+        "cta": "Compare material systems",
+        "source": 7
+      },
+      {
+        "id": "moxie-isru",
+        "title": "MOXIE: make useful resources where you need them",
+        "hi": "स्थानीय संसाधनों से ऑक्सीजन बनाना",
+        "example": "Actual Mars experiment: Perseverance's MOXIE produced a total of 122 grams of oxygen from the Martian atmosphere during its completed demonstration. It was not a full life-support system.",
+        "steps": "Distinguish resource input, energy required and useful output; calculate operating and maintenance requirements; identify backup supplies if equipment fails",
+        "warning": "An experimental oxygen generator does not make outdoor Martian air breathable or establish an inhabited settlement.",
+        "practice": "Apply resource accounting at home: estimate daily water demand, available rainwater and storage; check water quality and local rules with a qualified professional.",
+        "href": "/my-project",
+        "cta": "Record resource needs",
+        "source": 8
+      },
+      {
+        "id": "moon-bricks",
+        "title": "ESA space bricks: interlocking and repairable systems",
+        "hi": "अंतरिक्ष ईंटों से मॉड्यूलर निर्माण",
+        "example": "Earth demonstration: ESA's team printed small interlocking bricks using material including meteorite dust as a research concept for future lunar construction.",
+        "steps": "Compare standardised modules with individually cut pieces; study how joints transfer loads and permit replacement; ask for tested material specifications and professional approval",
+        "warning": "A small interlocking brick demonstration is not evidence of a certified full-scale lunar wall or a safe structural block for your house.",
+        "practice": "Use cardboard blocks to compare repeatable room modules; count offcuts and damaged components, then ask a designer how actual connections would be verified.",
+        "href": "/build-iq",
+        "cta": "Explore construction experiments",
+        "source": 9
+      },
+      {
+        "id": "off-earth-systems",
+        "title": "Future settlement: build systems before people arrive",
+        "hi": "भविष्य के अंतरिक्ष आवास की योजना",
+        "example": "Proposed engineering sequence, not a committed mission timetable: survey a site, establish power and communications, test robotic construction and shielding, then verify a pressure-rated habitat and life-support systems before occupation.",
+        "steps": "Identify failure modes such as dust, radiation, pressure loss and power interruption; design redundant critical supplies and accessible maintenance; test remotely before relying on the system",
+        "warning": "Neither a concept drawing nor a proposed mission date proves that human settlements are ready. A habitat needs independent safety and engineering verification.",
+        "practice": "Make a home resilience map: emergency water, safe electrical shutdown, escape route, repair access and outage plans. Ask qualified trades to verify them.",
+        "href": "/my-project",
+        "cta": "Plan home resilience",
+        "source": 10
       }
     ]
   }
