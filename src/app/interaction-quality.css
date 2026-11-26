@@ -158,3 +158,13 @@
 @media(max-width:350px){.nb-shop-cart-line{grid-template-columns:1fr}.nb-shop-cart-line>button{grid-column:1}.nb-shop-checkout-bar{flex-wrap:wrap}.nb-shop-checkout-bar .button{width:100%}}
 
 .nb-shop-location{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.nb-shop-location label{display:grid;gap:5px;font-size:13px;font-weight:650}.nb-shop-location input{width:100%;min-width:0;box-sizing:border-box;min-height:44px;font-size:16px;border:1px solid #c3d2c5;border-radius:9px;padding:8px 10px}@media(max-width:350px){.nb-shop-location{grid-template-columns:1fr}}
+
+/* Contain individual content regions instead of hiding document overflow. */
+:where(.product-card,.product-card-copy,.product-card-art,.catalog-media-frame,.product-gallery,.product-detail-copy,.catalog-discovery,.catalog-toolbar,.nb-shop-cart,.nb-shop-cart-card,.future-home-learning-grid,.paint-live-preview,.paint-live-tools){min-inline-size:0;max-inline-size:100%}
+:where(.product-card-copy,.catalog-media-caption,.product-gallery-caption,.product-detail-copy,.br-card-copy,.future-home-learning-grid) :is(h2,h3,p,small,a,span){overflow-wrap:anywhere}
+:where(.catalog-toolbar,.tile-estimator-fields,.rfq-form-grid,.account-auth-form) :is(label,select,input:not([type=checkbox]):not([type=radio]),textarea){min-inline-size:0;max-inline-size:100%;box-sizing:border-box}
+:where(.catalog-variant-links,.product-gallery-controls,.tile-filter-row,.build-tabs,.order-actions,.paint-mode,.paint-targets){max-inline-size:100%;min-inline-size:0}
+:where(.product-gallery-controls,.catalog-variant-links,.tile-filter-row,.build-tabs,.order-actions){flex-wrap:wrap}
+.product-gallery-thumbs{max-inline-size:100%;min-inline-size:0;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity}.product-gallery-thumbs button{flex-shrink:0;scroll-snap-align:start}
+@media(max-width:480px){.catalog-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.product-gallery-controls button{flex:1 1 auto;min-width:44px}.product-gallery-caption{font-size:.875rem;line-height:1.45}.account-auth-form :is(input:not([type=checkbox]):not([type=radio]),textarea,select){font-size:16px}.catalog-toolbar :is(select,input){font-size:16px}.product-card-copy{padding-inline:clamp(10px,3vw,16px)}}
+@media(max-width:340px){.catalog-toolbar{grid-template-columns:minmax(0,1fr)}.catalog-toolbar .catalog-search{grid-column:auto}.order-actions{display:grid;grid-template-columns:minmax(0,1fr)}}
