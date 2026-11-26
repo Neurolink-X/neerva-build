@@ -183,7 +183,7 @@ export function PremiumHome(){
 
     </div>
     <div className="nbh-studio-planner">
-     <div className="nbh-studio-planner-head"><span>{lang==="hi"?"चरण 1 / 2":"STEP 1 OF 2 · PLOT DETAILS"}</span><h3>{lang==="hi"?"अपने प्लॉट से शुरुआत करें":"Start with your plot"}</h3><p>{lang==="hi"?"पहले प्लॉट का साइज चुनें। अगली स्क्रीन पर कमरों और पार्किंग के हिसाब से नक्शे बनेंगे।":"Choose the actual plot size first. The next screen creates room layouts using your selected dimensions."}</p></div>
+     <div className="nbh-studio-planner-head"><div className="nbh-studio-progress" aria-label={lang==="hi"?"चरण 1 / 2":"Step 1 of 2"}><span aria-current="step">{lang==="hi"?"1 · प्लॉट":"1 · Plot details"}</span><span>{lang==="hi"?"2 · कमरे":"2 · Room needs"}</span></div><h3>{lang==="hi"?"अपने प्लॉट से शुरुआत करें":"Start with your plot"}</h3><p>{lang==="hi"?"पहले प्लॉट का साइज चुनें। अगली स्क्रीन पर कमरों और पार्किंग के हिसाब से नक्शे बनेंगे।":"Choose the actual plot size first. The next screen creates room layouts using your selected dimensions."}</p></div>
      <label className="nbh-studio-primary-label" htmlFor="nbh-studio-preset">{lang==="hi"?"प्लॉट का आकार (फीट)":"Plot dimensions (feet)"}</label>
      <select className="nbh-studio-preset" id="nbh-studio-preset" value={plot} onChange={e=>setPlot(e.target.value)}>
       <option value="18x50">18 × 50 ft</option>
@@ -210,7 +210,7 @@ export function PremiumHome(){
      <div className="nbh-studio-result" aria-live="polite">
       <span>{lang==="hi"?"चुना हुआ प्लॉट":"SELECTED PLOT"}</span>
       <strong>{plotValid?String(portfolioDimensions.width)+" × "+String(portfolioDimensions.depth)+" ft":"—"}</strong>
-      <small>{homeFloors===1?"Ground":"G + "+String(homeFloors-1)} · {homeRoad==="N"?"North":homeRoad==="E"?"East":homeRoad==="S"?"South":"West"} facing</small>{plotValid&&<small>{(presetWidth*presetDepth).toLocaleString("en-IN",{maximumFractionDigits:2})} sq ft · {(presetWidth*presetDepth/9).toLocaleString("en-IN",{maximumFractionDigits:2})} sq gaj</small>}
+      <small className="nbh-studio-result-direction">{homeFloors===1?"Ground":"G + "+String(homeFloors-1)} · {homeRoad==="N"?"North":homeRoad==="E"?"East":homeRoad==="S"?"South":"West"} facing</small>{plotValid&&<small className="nbh-studio-result-area">{(presetWidth*presetDepth).toLocaleString("en-IN",{maximumFractionDigits:2})} sq ft · {(presetWidth*presetDepth/9).toLocaleString("en-IN",{maximumFractionDigits:2})} sq gaj</small>}
      </div>
      {plotValid?<Link className="nbh-studio-generate" href={portfolioHref}>{lang==="hi"?"इस प्लॉट के लिए नक्शे बनाएं":"Continue to room requirements"} <Icon name="arrow"/></Link>:<span className="nbh-studio-generate nbh-studio-disabled" aria-disabled="true">{lang==="hi"?"पहले सही नाप भरें":"Enter valid dimensions to continue"}</span>}
      <p className="nbh-studio-trust">{lang==="hi"?"24 तक वैध कॉन्सेप्ट लेआउट; वास्तविक संख्या आपके प्लॉट और कमरों की शर्तों पर निर्भर है।":"Up to 24 checked concept layouts; actual availability depends on plot and room constraints."}</p>

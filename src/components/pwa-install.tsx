@@ -49,3 +49,14 @@ export function InstallLink({children,className,ariaLabel,recoveryLabel}:{childr
  if(installed)return recoveryLabel?<Link href="/install?recovery=1" prefetch={false}>{recoveryLabel}</Link>:null;
  return <Link href="/install" prefetch={false} className={className} aria-label={ariaLabel}>{children}</Link>;
 }
+
+/** One compact app utility outside the business-navigation columns. Never advertise
+ * installation while running standalone or after a confirmed install. */
+export function FooterAppAccess({language="en"}:{language?:"en"|"hi"}){
+ const {ready,installed,runningStandalone}=usePwaInstall(),hi=language==="hi";
+ if(!ready||runningStandalone)return null;
+ return <div className="unified-footer-app" aria-label={hi?"नीरवा ऐप":"Neerva app access"}>
+  <div className="unified-footer-app-copy"><span className="unified-footer-app-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></span><div><strong>{hi?"नीरवा ऐप":"Neerva on your device"}</strong><span>{installed?(hi?"ऐप की सहायता और दोबारा सेटअप":"App support and setup help"):(hi?"होम स्क्रीन से सीधे खोलें":"Quick access from your home screen")}</span></div></div>
+  <Link className="unified-footer-app-link" href={installed?"/install?recovery=1":"/install"} prefetch={false}>{installed?(hi?"ऐप सहायता":"App help"):(hi?"नीरवा इंस्टॉल करें":"Install Neerva")} <span aria-hidden="true">→</span></Link>
+ </div>;
+}

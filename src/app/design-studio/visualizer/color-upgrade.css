@@ -77,3 +77,22 @@
 @media(max-width:600px){.paint-sample-gallery{scroll-padding-inline:6px}.paint-sample-gallery button{flex-basis:clamp(126px,44%,200px)}.paint-sample-gallery small{display:block}}
 
 @media(min-width:601px){.paint-sample-gallery{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(min-width:601px) and (max-width:900px){.paint-sample-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Preserve the complete original frame; all masking coordinates are normalized
+ * against the actual image. Only an explicit wall-inspection action may zoom. */
+.visualizer-page,.visualizer-app,.visualizer-layout,.neerva-photo-stage,.neerva-photo-stage .nbd-photo,.paint-live-workspace,.paint-live-preview,.paint-live-tools,.paint-adjacent-controls,.paint-adjacent-controls section{min-inline-size:0;max-inline-size:100%;box-sizing:border-box}
+.visualizer-app .visualizer-layout{width:100%}
+.visualizer-app .paint-canvas-frame{width:100%;min-width:0;overflow:hidden;border-radius:12px;background:#edf0e9}
+.visualizer-app .paint-canvas-frame canvas{display:block;max-width:100%;height:auto;object-fit:contain}
+.visualizer-app .paint-canvas-frame[data-inspecting=false] canvas{transform:none!important}
+.paint-sample-photo{aspect-ratio:16/10;background:#e8eee6}
+.paint-sample-photo img{object-fit:contain;object-position:center}
+.paint-adjacent-controls select,.paint-adjacent-controls input,.paint-adjacent-controls button{min-width:0;max-width:100%}
+.paint-adjacent-controls select{width:100%}
+@media(max-width:600px){
+ .visualizer-app{padding-inline:10px}
+ .visualizer-app .neerva-photo-stage .nbd-photo{padding:10px}
+ .visualizer-app .paint-live-preview{position:relative;top:auto;padding:0}
+ .visualizer-app .paint-preview-actions{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .visualizer-app .paint-preview-actions button{min-width:0;white-space:normal;overflow-wrap:anywhere}
+}

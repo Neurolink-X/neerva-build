@@ -1,5 +1,5 @@
 import Link from "next/link";
-import {InstallLink} from "@/components/pwa-install";
+import {InstallLink,FooterAppAccess} from "@/components/pwa-install";
 import {MobileNavigation} from "@/components/mobile-navigation";
 import {ShopCartLink} from "@/components/shop-cart";
 import {footerGroups,footerPolicies} from "@/modules/navigation/footer-links";
@@ -29,9 +29,10 @@ export function SiteFooter({language="en"}:{language?:"en"|"hi"}={}){
    <div className="unified-footer-groups">
     {footerGroups.map(group=><nav key={group.id} aria-label={group.title[locale]}>
      <h3>{group.title[locale]}</h3>
-     <ul>{group.links.map(([href,en,hindi])=><li key={href}>{href==="/install"?<InstallLink recoveryLabel={hi?"ऐप सहायता":"App help"}>{hi?hindi:en}</InstallLink>:<Link href={href} prefetch={false} data-intent-prefetch="">{hi?hindi:en}</Link>}</li>)}</ul>
+     <ul>{group.links.map(([href,en,hindi])=><li key={href}><Link href={href} prefetch={false} data-intent-prefetch="">{hi?hindi:en}</Link></li>)}</ul>
     </nav>)}
    </div>
+   <FooterAppAccess language={language}/>
    <div className="unified-footer-bottom">
     <div className="unified-footer-legal" role="group" aria-label={hi?"नीतियाँ":"Legal policies"}>
      {footerPolicies.map(([href,en,hindi])=><Link key={href} href={href} prefetch={false}>{hi?hindi:en}</Link>)}

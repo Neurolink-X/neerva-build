@@ -59,3 +59,9 @@ test("compact family concept preserves glazing and paints four independent surfa
  assert.equal(edited.left?.colour,plain.colour);
  assert.equal(all.entry?.colour,plain.colour);
 });
+
+test("modern family right-side return and lower wall are covered without touching glazing or plants",()=>{
+ const pointInside=(ring:number[][],x:number,y:number)=>{let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [a,b]=ring[i],[c,d]=ring[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;};
+ const painted=(x:number,y:number)=>facadeZones.some(z=>pointInside(z.mask.outline,x/1536,y/512)&&!z.mask.holes.some(h=>pointInside(h,x/1536,y/512)));
+ assert.ok(painted(952,220));assert.ok(painted(1180,390));assert.equal(painted(920,220),false);assert.equal(painted(1208,320),false);assert.equal(painted(1100,360),false);
+});
