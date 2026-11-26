@@ -60,6 +60,8 @@ async function main(){
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
     assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
+    assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
+    assert.ok(await gallery.evaluate(el=>new Set([...el.querySelectorAll("button")].map(b=>getComputedStyle(b).borderColor+"|"+getComputedStyle(b).backgroundColor)).size===1),"all four cards retain the neutral original layout without a selected mark");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
     const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
     assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
@@ -871,7 +873,13 @@ async function main(){
     }
     fs.writeFileSync("test-results/mobile/facade-pixel-evidence.json",JSON.stringify({scope:"390px Chromium canvas sample points; elapsed includes browser automation and is not field INP",samples:evidence},null,2));
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-    await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
+    const patternButton=page.getByRole("button",{name:"Diamond lattice",exact:true});
+    await patternButton.evaluate(el=>el.scrollIntoView({block:"center",behavior:"instant"}));
+    const stableScroll=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(window.scrollY)))));
+    await patternButton.click();
+    const afterPatternScroll=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(window.scrollY)))));
+    assert.ok(Math.abs(afterPatternScroll-stableScroll)<=3,"choosing a visible design must not jump the page to the house");
+    assert.equal(await patternButton.getAttribute("aria-pressed"),"true");
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
  const canvas=page.locator(".nbd-photo canvas");
  await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
