@@ -997,7 +997,7 @@ async function main(){
     const chosenLayout=page.locator(".nroad-variants button[aria-pressed=true]");
     await chosenLayout.first().waitFor({state:"visible",timeout:20000});
     assert.equal(await chosenLayout.count(),1,"exactly one linked gallery option selected");
-    assert.match((await chosenLayout.innerText()),/^6\./,"gallery card #6 opens option #6, not the default plan");
+    assert.match((await chosenLayout.locator("strong").innerText()),/^6\./,"gallery card #6 opens option #6, not the default plan");
     assert.equal(await page.locator(".nbd-building").count(),0,"3D does not mount before the visitor reaches it");
     await page.getByRole("button",{name:"Ground floor"}).click();
     await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
@@ -1025,7 +1025,7 @@ async function main(){
     if(await qualityOptions.count()){
       assert.equal(await qualityOptions.getAttribute("open"),null,"advanced quality is initially collapsed");
       await qualityOptions.locator("summary").click();
-      const qualityTargets=await qualityOptions.locator("button").evaluateAll(buttons=>buttons.map(button=>button.getBoundingClientRect().height));
+      const qualityTargets=await qualityOptions.getByRole("group",{name:"3D rendering quality"}).locator("button").evaluateAll(buttons=>buttons.map(button=>button.getBoundingClientRect().height));
       assert.equal(qualityTargets.length,2,"both rendering quality choices remain available");
       assert.ok(qualityTargets.every(height=>height>=44),"expanded quality controls have full touch targets");
       await qualityOptions.locator("summary").click();
@@ -1065,8 +1065,8 @@ async function main(){
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
     assert.equal(await page.locator(".nroad-variants button").count(),24,"supported exact-plot 24 checked architectural variations");
     assert.ok((await page.locator(".nroad-variants button").first().locator(".nroad-mini-plan").count())>=1,"every option has real floor previews");
-    await page.getByRole("button",{name:/Car at right/}).first().click();
-    assert.equal(await page.getByRole("button",{name:/Car at right/}).first().getAttribute("aria-pressed"),"true");
+    await page.getByRole("button",{name:/Parking right/}).first().click();
+    assert.equal(await page.getByRole("button",{name:/Parking right/}).first().getAttribute("aria-pressed"),"true");
     const floorToggle=page.getByRole("button",{name:"First floor"});
     await floorToggle.click();
     assert.equal(await floorToggle.getAttribute("aria-pressed"),"true","G+1 levels must switch");
@@ -1143,6 +1143,41 @@ async function main(){
     assert.equal(await page.locator(".nroad-form").getByRole("combobox",{name:"Total bedrooms",exact:true}).inputValue(),"6");
     await page.locator(".nroad-error").waitFor();
     assert.equal(await page.locator(".nroad-variants button").count(),0,"Impossible brief must not show fabricated layouts");
+    // Cross-BHK regression matrix: every requested bedroom must exist as a
+    // visible, dimensioned room in the selected 2D plan and the same 3D source.
+    for(const [bedrooms,width,depth,levels,road,parking] of [
+      [1,18,50,1,"N",false],[2,20,40,1,"E",true],[3,18,50,2,"S",true],
+      [4,36,65,2,"W",true],[5,36,65,2,"N",true],[6,36,65,2,"E",true]
+    ]){
+      await page.goto(base+"/design-studio/portfolio?"+new URLSearchParams({width,depth,floors:levels,bedrooms,road,parking}),{waitUntil:"load"});
+      const drawing=page.locator(".nroad-diagram").first();
+      await drawing.waitFor({state:"visible"});
+      const selectedId=await drawing.getAttribute("data-plan-id");
+      assert.ok(selectedId,bedrooms+" BHK has a valid source plan");
+      const cards=page.locator(".nroad-variants button");
+      assert.ok(await cards.count()>0,bedrooms+" BHK has real layout choices");
+      assert.equal(await cards.first().locator(".nroad-mini-plan").count(),levels,"all levels shown in each option");
+      await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
+      const viewer=page.locator(".nbd-building");
+      await viewer.waitFor({state:"visible",timeout:30000});
+      let total=0,halls=0,kitchens=0;const roomIds=[];
+      for(let floor=0;floor<levels;floor++){
+        await page.getByRole("group",{name:"Select floor"}).getByRole("button",{name:["Ground floor","First floor","Second floor"][floor],exact:true}).click();
+        await page.waitForFunction(({id,floor})=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return a?.getAttribute("data-plan-id")===id&&b?.getAttribute("data-plan-id")===id&&a.getAttribute("data-selected-floor")===String(floor)&&b.getAttribute("data-selected-floor")===String(floor)&&Number(b.getAttribute("data-wall-cells"))>0},{id:selectedId,floor});
+        const bedroomRooms=drawing.locator('svg g[data-room-kind="bedroom"]');
+        const data=await bedroomRooms.evaluateAll(rooms=>rooms.map(room=>{const r=room.querySelector("rect"),label=room.querySelector('text[data-room-label="true"]');return {id:room.getAttribute("data-room-id"),w:Number(r?.getAttribute("width")),h:Number(r?.getAttribute("height")),label:label?.textContent}}));
+        assert.ok(data.every(r=>r.id&&r.w>0&&r.h>0&&r.label),bedrooms+" BHK must show each bedroom label and dimensions");
+        assert.equal(Number(await drawing.getAttribute("data-bedroom-count")),data.length);
+        assert.equal(Number(await drawing.getAttribute("data-total-bedrooms")),bedrooms);
+        total+=data.length;roomIds.push(...data.map(r=>r.id));
+        halls+=await drawing.locator('svg g[data-room-kind="living"]').count();
+        kitchens+=await drawing.locator('svg g[data-room-kind="kitchen"]').count();
+      }
+      assert.equal(total,bedrooms,"exact bedroom count across all floors");
+      assert.equal(new Set(roomIds).size,bedrooms,"no duplicate bedroom IDs across floors");
+      assert.ok(halls>=1&&kitchens>=1,"BHK must contain living room and kitchen");
+      console.log("BHK browser matrix verified:",bedrooms,levels,road,total);
+    }
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"load"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
