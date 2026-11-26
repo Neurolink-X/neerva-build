@@ -46,6 +46,28 @@ jobs:
           key: neerva-next-v1-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'public/**', 'next.config.ts', 'tsconfig.json') }}
           restore-keys: |
             neerva-next-v1-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}-
+      - name: Start isolated local catalog database
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f supabase/config.toml ]; then npx --yes supabase@2.122.1 init; fi
+          npx --yes supabase@2.122.1 start -x studio,imgproxy,logflare,vector,postgres-meta,edge-runtime
+          npx --yes supabase@2.122.1 status -o env > "$RUNNER_TEMP/neerva-mobile-local.env"
+          set -a
+          source "$RUNNER_TEMP/neerva-mobile-local.env"
+          set +a
+          [[ "$API_URL" == "http://127.0.0.1:54321" ]]
+          [[ "$DB_URL" == *"127.0.0.1:54322/"* ]]
+          echo "::add-mask::$ANON_KEY"
+          echo "::add-mask::$SERVICE_ROLE_KEY"
+          {
+            echo "NEERVA_E2E_LOCAL=yes"
+            echo "NEERVA_E2E_DISPOSABLE=yes"
+            echo "NEERVA_E2E_SUPABASE_URL=$API_URL"
+            echo "NEERVA_E2E_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+          } >> "$GITHUB_ENV"
       - run: npm run build
       - name: Start isolated local preview, test 360–1440px
         shell: bash
@@ -69,3 +91,6 @@ jobs:
           path: test-results/mobile/
           if-no-files-found: ignore
           retention-days: 7
+      - name: Destroy isolated local database
+        if: always()
+        run: npx --yes supabase@2.122.1 stop --no-backup
