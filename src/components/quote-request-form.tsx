@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {customerRequestError} from "@/modules/orders/customer-presentation";
 import {MaterialRequestRecovery,materialRequestText} from "./material-request-recovery";
 import {useEffect,useRef,useState,type FormEvent} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
@@ -70,7 +71,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
    const response=await fetch("/api/rfqs",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify(body),cache:"no-store",signal:AbortSignal.timeout(20000)});
    const result=await response.json().catch(()=>null) as {requestId?:string;error?:string;reference?:string;fields?:{message:string}[]}|null;
    if(!response.ok){
-    setMessage({kind:"error",text:result?.error??"Request not saved. Retry safely.",reference:result?.reference,details:result?.fields?.map(f=>f.message)});
+    setMessage({kind:"error",text:customerRequestError(response.status,"quote"),reference:result?.reference});
    }else if(!result?.requestId){
     setMessage({kind:"error",text:"Request status could not be confirmed. Keep the form and retry."});
    }else{
@@ -81,12 +82,12 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   finally{submissionLock.current=false;setBusy(false)}
  }
  return <form id="neerva-quote-form" className="rfq-form" onSubmit={submit}>
-  <div className="rfq-form-title"><span>YOUR MATERIAL REQUIREMENT</span><h2>Tell us what you need.</h2><small>Start with your material, quantity and delivery location. Copy a draft now, or submit securely when dealer sourcing opens.</small></div>
+  <div className="rfq-form-title"><span>YOUR MATERIAL REQUIREMENT</span><h2>Tell us what you need.</h2><small>Enter your materials, quantity and delivery location.</small></div>
   <div className="rfq-form-section-label">01 · Material and delivery</div><div className="rfq-form-grid">
    <label>Material category<select name="categorySlug" value={category} onChange={event=>changeCategory(event.target.value)}><option value="aggregates">Balu, morang or aggregates</option><option value="steel">Steel / TMT</option><option value="cement">Cement</option><option value="bricks-blocks">Bricks / blocks</option><option value="plumbing">Pipes / plumbing</option><option value="electrical">Electrical</option><option value="paint">Paint & coatings</option><option value="tiles">Tiles & flooring</option><option value="hardware">Hardware & adhesive</option></select></label>
    <label>Material details<input name="materialDescription" required minLength={3} maxLength={240} defaultValue={defaultMaterial} placeholder={categoryMaterialHints[category]}/></label>
    <label>Quantity<input name="quantity" required type="number" min={quantityPrecision(unit)} step={quantityPrecision(unit)} inputMode={quantityPrecision(unit)===1?"numeric":"decimal"} max="1000000" defaultValue={defaultQuantity} placeholder="Quantity"/></label>
-   <label>Unit<select name="unit" value={unit} onChange={event=>setUnit(event.target.value as MaterialQuantityUnit)}>{selectedUnits.map(option=><option value={option} key={option}>{materialUnitLabel(category,option)}</option>)}</select><small>Units update automatically with the selected material category.</small></label>
+   <label>Unit<select name="unit" value={unit} onChange={event=>setUnit(event.target.value as MaterialQuantityUnit)}>{selectedUnits.map(option=><option value={option} key={option}>{materialUnitLabel(category,option)}</option>)}</select></label>
    <label>Delivery city<input name="city" required minLength={2} maxLength={80} defaultValue={defaultCity}/></label>
    <label>Delivery pincode<input name="pincode" required inputMode="numeric" pattern="[1-9][0-9]{5}" maxLength={6} defaultValue={defaultPincode}/></label>
    <label>Preferred delivery date (optional)<input name="requestedDate" type="date"/></label>
@@ -96,11 +97,11 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
    <label>Contact mobile<input name="phone" required type="tel" inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10} autoComplete="tel-national"/></label>
   </div>
   <label className="rfq-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to submit my contact number and request details for private quotation handling. <Link href="/privacy">Read the privacy notice</Link>. No payment is requested.</span></label>
-  {!intakeEnabled&&<p className="rfq-unavailable" role="status">Quote intake is currently paused until verified dealer sourcing, support and privacy readiness are approved. You can prepare details, but clicking Submit cannot save a request yet. No payment is requested.</p>}
-  {!supabase?<p role="status">Account service unavailable. You can still copy your material draft.</p>:!ready?<p role="status">Checking your secure account session…</p>:!verified?<p className="rfq-unavailable" role="status">Sign in with a verified email before submitting. <Link href="/account" target="_blank" rel="noopener">Open account access →</Link></p>:<p className="rfq-privacy">Your request is stored privately, with duplicate protection and submission limits. It is not an order or payment confirmation.</p>}
+  {!intakeEnabled&&<p className="rfq-unavailable" role="status">Online quotation requests are temporarily unavailable. Save your material list and try again, or contact support.</p>}
+  {!supabase?<p role="status">Account service unavailable. You can still copy your material draft.</p>:!ready?<p role="status">Checking your secure account session…</p>:!verified?<p className="rfq-unavailable" role="status">Sign in with a verified email before submitting. <Link href="/account" target="_blank" rel="noopener">Open account access →</Link></p>:<p className="rfq-privacy">You can review offers before buying. No payment now.</p>}
   {message&&<div className={`rfq-status ${message.kind}`} role={message.kind==="error"?"alert":"status"}><p>{message.text}</p>{message.details?.length?<ul>{message.details.map(item=><li key={item}>{item}</li>)}</ul>:null}{message.reference&&<small>Reference: {message.reference}</small>}</div>}
   <div className="rfq-actions"><button type="button" className="button rfq-copy" onClick={()=>void copyDraft()}>{draftCopied?"Copy draft again":"Copy material quote draft"}</button><button className="button button-dark rfq-submit" type="submit" disabled={!intakeEnabled||!ready||!verified||busy}>{!intakeEnabled?"Requests not open yet":busy?"Sending securely…":"Submit private request →"}</button></div>
-  <MaterialRequestRecovery getDraft={()=>{const el=document.querySelector<HTMLFormElement>("#neerva-quote-form");const f=el?new FormData(el):null;return materialRequestText([{productName:String(f?.get("materialDescription")??defaultMaterial),quantity:Number(f?.get("quantity")),unit}],String(f?.get("city")??defaultCity),String(f?.get("pincode")??defaultPincode))}}/>
+  <details className="category-guidance"><summary>Need help or a copy of your request?</summary><MaterialRequestRecovery getDraft={()=>{const el=document.querySelector<HTMLFormElement>("#neerva-quote-form");const f=el?new FormData(el):null;return materialRequestText([{productName:String(f?.get("materialDescription")??defaultMaterial),quantity:Number(f?.get("quantity")),unit}],String(f?.get("city")??defaultCity),String(f?.get("pincode")??defaultPincode))}}/></details>
   <small className="rfq-privacy">Copying is local to your device; it does not send an enquiry. Do not enter card details. Any dealer offer must include GST, transport, unloading and valid-until date.</small>
  </form>;
 }
