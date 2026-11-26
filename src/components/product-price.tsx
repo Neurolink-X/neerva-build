@@ -5,6 +5,7 @@ import {paintReferencePrice} from "@/modules/catalog/paint-references";
 import {tileReferencePrice} from "@/modules/catalog/tile-references";
 import {planningRate} from "@/modules/catalog/planning-rate";
 import {useSyncExternalStore} from "react";
+import {loadPublicFeed} from "@/modules/catalog/public-feed-client";
 import {subscribeCatalogPriceSignal} from "./catalog-price-signal";
 import {validPublicRate,type PublicRate as Rate} from "@/modules/catalog/public-feed-validation";
 
@@ -29,26 +30,23 @@ function prune(){
 function refresh(force=false){
  prune();scheduleExpiry();
  if(force){invalidated=true;rates=new Map();lastLoaded=0;notifyRates();}
- if(request||!listeners.size||document.visibilityState==="hidden"||(!invalidated&&Date.now()-lastAttempt<15000))return;
+ if(request||!listeners.size||document.visibilityState==="hidden"||(!invalidated&&Date.now()-lastAttempt<30000))return;
  invalidated=false;
  lastAttempt=Date.now();
- const controller=new AbortController();
- const timeout=setTimeout(()=>controller.abort(),10000);
- request=fetch("/api/catalog/prices",{cache:"no-store",signal:controller.signal}).then(async response=>{
-  if(!response.ok)throw Error("Price feed unavailable");
-  const body=await response.json();
+ request=loadPublicFeed("prices").then(value=>{
+  const body=value as {prices:unknown[]};
   const next=new Map<string,Rate>(),now=Date.now();
   if(Array.isArray(body?.prices))for(const r of body.prices as unknown[]){
    if(!validPublicRate(r,now))continue;
    for(const key of [rateKey(r.category,r.slug,r.sku),rateKey(r.category,r.slug),rateKey(r.category,r.slug,r.sku,r.unit),rateKey(r.category,r.slug,undefined,r.unit)])if(!next.has(key))next.set(key,r);
   }
   if(!invalidated){rates=next;lastLoaded=now;}
- }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{clearTimeout(timeout);request=undefined;notifyRates();scheduleExpiry();if(invalidated)refresh()});
+ }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{request=undefined;notifyRates();scheduleExpiry();if(invalidated)refresh()});
 }
 function onVisible(){if(document.visibilityState==="visible"){prune();scheduleExpiry();notifyRates();if(Date.now()-lastLoaded>=30000)refresh()}}
 function subscribe(notify:()=>void){
  listeners.add(notify);
- if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true));timer=setInterval(()=>refresh(),15000)}
+ if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true));timer=setInterval(()=>refresh(),30000)}
  return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;stopSignal?.();stopSignal=undefined;document.removeEventListener("visibilitychange",onVisible)}};
 }
 const noRate=()=>undefined;
