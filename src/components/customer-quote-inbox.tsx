@@ -1,6 +1,7 @@
 "use client";
 import {useCallback,useEffect,useRef,useState,type FormEvent} from "react";
 import Link from "next/link";
+import {customerQuoteLabel,customerRequestError} from "@/modules/orders/customer-presentation";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 
 type Offer={
@@ -32,7 +33,7 @@ export function CustomerQuoteInbox(){
    if(!token){setMessage("Sign in to view your private quotations and dealer offers.");return;}
    const response=await fetch("/api/customer/quotes",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
    const result=await response.json().catch(()=>({error:"Quotation data is unavailable."})) as InboxResponse;
-   if(!response.ok){setMessage(result.error??"Quotation records cannot be loaded.");return;}
+   if(!response.ok){setMessage("Quotations are temporarily unavailable. Try refreshing.");return;}
    setRequests(Array.isArray(result.requests)?result.requests:[]);
    setMessage("");
   }catch{setMessage("Network error. Refresh your private quotes before continuing.");}
@@ -61,7 +62,7 @@ export function CustomerQuoteInbox(){
    const result=await response.json().catch(()=>({error:"Could not read order response."})) as
     {order?:{code:string};error?:string;duplicate?:boolean};
    if(!response.ok){
-    setMessage(result.error??"No order was confirmed. Review the offer or contact support.");
+    setMessage(customerRequestError(response.status,"order"));
     return;
    }
    setSuccess((result.duplicate?"Existing":"New")+" request "+(result.order?.code??"")+" saved. The dealer must confirm stock and delivery. No payment was taken.");
@@ -91,9 +92,9 @@ export function CustomerQuoteInbox(){
     const offers=[...latest.values()];
     return <article key={quote.id} style={{background:"#fffefa",padding:18,border:"1px solid #d9e4d8",borderRadius:15}}>
      <h3 style={{fontSize:20,margin:"0 0 8px"}}>{quote.material_description}</h3>
-     <p>{quote.quantity} {quote.unit} · {quote.city} {quote.pincode} · Status: <strong>{quote.status.replaceAll("_"," ")}</strong></p>
+     <p>{quote.quantity} {quote.unit} · {quote.city} {quote.pincode} · Status: <strong>{customerQuoteLabel(quote.status)}</strong></p>
      <p style={{fontSize:12}}>Created {new Date(quote.created_at).toLocaleString("en-IN")} · Reference {quote.id.slice(0,8)}</p>
-     {!offers.length&&<p>No eligible dealer has submitted an offer yet. The admin sourcing queue may review your request. No order exists at this stage.</p>}
+     {!offers.length&&<p>Your request is awaiting offers. You can check back here or contact support.</p>}
      {offers.map(offer=>{
       const valid=active&&Number.isFinite(Date.parse(offer.valid_until))&&Date.parse(offer.valid_until)>Date.now();
       return <section key={offer.id} style={{borderTop:"1px solid #e4e9e0",paddingTop:14,marginTop:14}}>
