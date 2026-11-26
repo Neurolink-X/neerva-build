@@ -13,10 +13,12 @@ const actions=[
  {href:"/my-project",label:"My construction project",desc:"Budget and construction checklist",icon:"home"},
  {href:"/checkout?cart=1",label:"Shopping cart",desc:"Review materials and quantities",icon:"cart"},
  {href:"/basket?view=planner",label:"Material planner",desc:"Estimate material requirements",icon:"list"},
+ {href:"/account/designs",label:"Saved house designs",desc:"Open your private cloud concepts",icon:"palette"},
  {href:"/inspiration",label:"Design inspiration",desc:"Open your private mood board",icon:"palette"},
  {href:"/design-studio/visualizer",label:"Colour Studio",desc:"Try colours and download previews",icon:"palette"},
  {href:"/quotes",label:"Bulk order enquiry",desc:"Prepare an itemised request",icon:"file"},
  {href:"/returns",label:"Payments & refunds",desc:"Read cancellation and refund terms",icon:"wallet"},
+ {href:"/account/activity",label:"Order & quote updates",desc:"Latest account activity",icon:"list"},
  {href:"/support",label:"Help & support",desc:"Get assistance with your request",icon:"help"},
  {href:"/privacy",label:"Privacy & security",desc:"How your information is used",icon:"shield"},
  {href:"/terms",label:"Terms of service",desc:"Platform and purchasing terms",icon:"file"},
@@ -41,8 +43,8 @@ export function CustomerAccountHub({user,admin,dealer,checkoutReturn,onSignOut}:
   {checkoutReturn&&<Link className="button button-dark" href={checkoutReturn}>Continue checkout →</Link>}
   {(admin||dealer)&&<section className="naccount-roles" aria-label="Approved business access">{admin&&<Link href="/admin">Open admin control centre →</Link>}{dealer&&<Link href="/dealer/dashboard">Open dealer business centre →</Link>}</section>}
   <nav className="naccount-shortcuts" aria-label="Quick account actions">{actions.slice(0,3).map(a=><Link key={a.href} href={a.href} prefetch={false}><Icon name={a.icon}/><strong>{a.label}</strong></Link>)}</nav>
-  <div className="naccount-sections"><section className="naccount-menu"><h3>Manage your build</h3>{actions.slice(3,11).map(a=><Link key={a.href} href={a.href} prefetch={false}><Icon name={a.icon}/><span><strong>{a.label}{a.icon==="cart"&&cart.length>0?" ("+cart.length+")":""}</strong><small>{a.desc}</small></span><span aria-hidden="true">›</span></Link>)}</section>
-  <div className="naccount-secondary"><section className="naccount-menu"><h3>Account & support</h3>{actions.slice(11).map(a=><Link key={a.href} href={a.href} prefetch={false}><Icon name={a.icon}/><span><strong>{a.label}</strong><small>{a.desc}</small></span><span aria-hidden="true">›</span></Link>)}</section>
+  <div className="naccount-sections"><section className="naccount-menu"><h3>Manage your build</h3>{actions.slice(3,12).map(a=><Link key={a.href} href={a.href} prefetch={false}><Icon name={a.icon}/><span><strong>{a.label}{a.icon==="cart"&&cart.length>0?" ("+cart.length+")":""}</strong><small>{a.desc}</small></span><span aria-hidden="true">›</span></Link>)}</section>
+  <div className="naccount-secondary"><section className="naccount-menu"><h3>Account & support</h3>{actions.slice(12).map(a=><Link key={a.href} href={a.href} prefetch={false}><Icon name={a.icon}/><span><strong>{a.label}</strong><small>{a.desc}</small></span><span aria-hidden="true">›</span></Link>)}</section>
   <details className="naccount-settings-panel" id="account-settings"><summary>Account settings · edit profile</summary><form className="account-auth-form" onSubmit={saveProfile}><label>Display name<input name="displayName" defaultValue={name==="Your profile"?"":name} required minLength={2} maxLength={100} autoComplete="name"/></label><button className="button button-dark" disabled={busy}>Save profile</button></form><p>For a password reset, sign out and use the existing secure email recovery option. Changing a name never changes account permissions.</p></details>
   <button className="naccount-logout" type="button" onClick={()=>void signOut()} disabled={busy}>Sign out</button>
   {message&&<p className="naccount-notice" role={error?"alert":"status"}>{message}</p>}</div></div>
