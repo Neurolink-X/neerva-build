@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {randomUUID} from "node:crypto";
 import {execFileSync} from "node:child_process";
+import {readFileSync} from "node:fs";
 import {createClient} from "@supabase/supabase-js";
 const url=process.env.NEERVA_E2E_SUPABASE_URL;
 assert.equal(url,"http://127.0.0.1:54321","Disposable local Supabase only");
@@ -64,7 +65,35 @@ const localSql=sql=>execFileSync("psql",[db.toString(),"-X","-v","ON_ERROR_STOP=
 const tenantResult=await a.client.from("tenant_memberships").select("tenant_id").eq("user_id",a.id).single();
 assert.ifError(tenantResult.error);const tenant=tenantResult.data.tenant_id;
 const application=randomUUID();
-localSql("insert into public.dealer_applications(id,tenant_id,owner_id,legal_business_name,gstin,shop_city,status,gstin_verification,reviewed_by,reviewed_at) values ("+uuid(application)+","+uuid(tenant)+","+uuid(a.id)+",'Disposable dealer fixture','09ABCDE1234F1Z5','Kanpur','approved','verified',"+uuid(d.id)+",now()); insert into public.dealer_service_pincodes(application_id,pincode) values ("+uuid(application)+",'208001'); insert into public.dealer_categories(application_id,category_id) values ("+uuid(application)+","+uuid(category.id)+");");
+// Provisioning of the tenant/membership is an isolated fixture; KYC itself uses
+// the real dealer-owned database policies, private storage and admin HTTP review.
+localSql("update public.tenants set status='pending' where id="+uuid(tenant));
+const draft=await a.client.from("dealer_applications").insert({id:application,tenant_id:tenant,owner_id:a.id,legal_business_name:"Disposable dealer fixture",gstin:"09ABCDE1234F1Z5",shop_city:"Kanpur"}).select("id,status").single();
+assert.ifError(draft.error);assert.equal(draft.data.status,"draft");
+assert.ifError((await a.client.from("dealer_service_pincodes").insert({application_id:application,pincode:"208001"})).error);
+assert.ifError((await a.client.from("dealer_categories").insert({application_id:application,category_id:category.id})).error);
+const photoBytes=readFileSync("public/images/studio/finished.webp"),photoPath=application+"/"+randomUUID()+".webp";
+assert.ifError((await a.client.storage.from("neerva-dealer-kyc").upload(photoPath,photoBytes,{contentType:"image/webp",upsert:false})).error);
+assert.ifError((await a.client.from("dealer_shop_photos").insert({application_id:application,uploaded_by:a.id,storage_path:photoPath,content_type:"image/webp",file_bytes:photoBytes.length})).error);
+const foreignKyc=await b.client.from("dealer_applications").select("id").eq("id",application);
+assert.ifError(foreignKyc.error);assert.equal(foreignKyc.data.length,0);
+const selfApprove=await a.client.from("dealer_applications").update({status:"approved",gstin_verification:"verified",reviewed_by:a.id,reviewed_at:new Date().toISOString()}).eq("id",application);
+assert.ok(selfApprove.error,"Dealer cannot self-approve");
+const submitted=await a.client.from("dealer_applications").update({status:"submitted",submitted_at:new Date().toISOString()}).eq("id",application).select("status").single();
+assert.ifError(submitted.error);assert.equal(submitted.data.status,"submitted");
+const review=(actor,action,expected="submitted")=>call(actor,"/api/admin/dealers","PATCH",{id:application,expected,action,reason:"Disposable test evidence only; no real GST verification."});
+assert.equal((await review(a,"approve")).status,403);
+assert.equal((await review(d,"approve")).status,400,"Incomplete verification cannot approve");
+assert.equal((await review(d,"verify_gstin")).status,200);
+assert.equal((await review(d,"verify_photo")).status,200);
+const approved=await review(d,"approve");assert.equal(approved.status,200,JSON.stringify(approved.data));
+assert.equal((await call(a,"/api/dealer/overview")).status,200);
+assert.equal((await review(d,"suspend","approved")).status,200);
+assert.equal((await call(a,"/api/dealer/overview")).status,403);
+assert.equal((await review(d,"reactivate","suspended")).status,200);
+assert.equal((await call(a,"/api/dealer/overview")).status,200);
+console.log("Disposable dealer application, KYC privacy, anti-self-approval, admin review and suspension/reactivation verified.");
+
 async function acceptedOrder(customer){
  // Exercise the same authenticated endpoint as the customer enquiry form.
  const rfq=await call(customer,"/api/rfqs","POST",{idempotencyKey:randomUUID(),categorySlug:"cement",materialDescription:"Disposable cement fixture",quantity:10,unit:"bag",city:"Kanpur",pincode:"208001",contactName:"Disposable fixture",phone:"9000000000",privacyAccepted:true});
