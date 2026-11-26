@@ -402,7 +402,23 @@ async function main(){
       window.dispatchEvent(event);
     });
     await page.locator(".nbh-mobile-menu a[href='/install']").waitFor({state:"attached"});
-    await page.locator(".unified-footer-app a[href='/install']").waitFor({state:"visible"});
+    const footerInstall=page.locator(".unified-footer-app button");
+    await footerInstall.waitFor({state:"visible"});
+    assert.equal(await page.locator(".unified-footer-app a[href='/install']").count(),0,"footer install never navigates to installation page");
+    const beforeInstallUrl=page.url();
+    await page.evaluate(()=>{window.__footerNativePrompts=0;const event=new Event("beforeinstallprompt",{cancelable:true});Object.assign(event,{prompt:async()=>{window.__footerNativePrompts++;},userChoice:Promise.resolve({outcome:"dismissed"})});window.dispatchEvent(event);});
+    await footerInstall.click();
+    await page.locator(".unified-footer-install-feedback").filter({hasText:"Installation cancelled"}).waitFor();
+    assert.equal(await page.evaluate(()=>window.__footerNativePrompts),1,"footer calls native install prompt exactly once");
+    assert.equal(page.url(),beforeInstallUrl,"dismissed native install stays on current page");
+    await footerInstall.click();
+    await page.locator(".unified-footer-install-feedback").filter({hasText:"Direct installation is not available"}).waitFor();
+    assert.equal(page.url(),beforeInstallUrl,"unsupported install displays inline guide without redirect");
+    await page.evaluate(()=>{const event=new Event("beforeinstallprompt",{cancelable:true});Object.assign(event,{prompt:async()=>{window.__footerNativePrompts++;},userChoice:Promise.resolve({outcome:"accepted"})});window.dispatchEvent(event);});
+    await footerInstall.click();
+    await page.locator(".unified-footer-install-feedback").filter({hasText:"Installation accepted"}).waitFor();
+    assert.equal(page.url(),beforeInstallUrl,"accepted native install stays on current page");
+    assert.equal(await page.evaluate(()=>window.__footerNativePrompts),2,"fresh native prompt is used on retry");
     await page.waitForFunction(()=>localStorage.getItem("neerva-installed-v1")===null);
     // Also verify a user can recover if the browser never emits an uninstall or installability signal.
     await page.evaluate(()=>window.dispatchEvent(new Event("appinstalled")));
