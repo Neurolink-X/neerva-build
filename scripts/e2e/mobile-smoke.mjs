@@ -196,6 +196,7 @@ async function main(){
    await catalog.getByRole("button",{name:"← Previous",exact:true}).click();
    assert.deepEqual(await catalog.locator(".product-card h2 a").evaluateAll(links=>links.map(a=>a.getAttribute("href"))),firstPage);
    await catalog.locator(".catalog-search input").fill("red clay brick");
+   await catalog.locator('a[href="/materials/bricks-blocks/red-clay-brick"]').first().waitFor({state:"visible",timeout:10000});
    assert.ok(await catalog.locator('a[href="/materials/bricks-blocks/red-clay-brick"]').count()>0,"Search still discovers products beyond first page");
    await page.goto(base+"/materials?category=hardware",{waitUntil:"load"});
    assert.equal(await page.locator('#catalog-results a[href="/materials/hardware/wood-adhesive"]').count(),0,"Minor adhesive bottle must not appear in the public grid");
@@ -206,6 +207,25 @@ async function main(){
    const redBrick=await page.goto(base+"/materials/bricks-blocks/red-clay-brick",{waitUntil:"load"});
    assert.equal(redBrick?.status(),200,"red brick details");
    assert.match(await page.locator("h1").first().innerText(),/red clay brick/i);
+   if(v.w===390){
+    const save=page.getByRole("button",{name:"Save for my project",exact:true});
+    await save.waitFor();await save.click();
+    await page.getByRole("button",{name:"Saved ✓",exact:true}).waitFor();
+    await page.goto(base+"/my-project",{waitUntil:"load"});
+    const shortlist=page.locator("#saved-materials");
+    await shortlist.getByRole("heading",{name:"Saved materials",exact:true}).waitFor();
+    assert.ok(await shortlist.getByRole("link",{name:/red clay brick/i}).count()>=1);
+    await page.getByRole("button",{name:/Foundation/}).first().click();
+    await page.locator('.project-materials a[href="/build-iq/handbook/ground"]').waitFor();
+    await page.goto(base+"/",{waitUntil:"load"});
+    await page.getByRole("heading",{name:"Pick up where you left off"}).waitFor();
+    await page.goto(base+"/my-project",{waitUntil:"load"});
+    await page.getByRole("checkbox",{name:"Remember recently viewed materials on this device"}).uncheck();
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("neerva-material-shortlist-v1")).recent.length),0);
+    await page.locator("#saved-materials").getByRole("button",{name:/Remove red clay brick/i}).click();
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("neerva-material-shortlist-v1")).saved.length),0);
+   }
+
    if(v.w===390||v.w===1440){
     const sizes=v.w===390?[[320,568],[360,800],[390,844],[412,915],[540,720],[768,1024],[844,390]]:[[1024,768],[1280,720],[1440,900],[1920,1080],[2560,1440]];
     for(const route of ["/design-studio/road-planner","/design-studio/portfolio?width=18&depth=50&road=N&bedrooms=3&floors=2&parking=true"]){
