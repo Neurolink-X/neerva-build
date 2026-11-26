@@ -6,7 +6,7 @@ import {useShopCart,writeShopCart,setShopQuantity,QuantityStepper} from "./shop-
 import {ProductPrice} from "./product-price";
 import {CartPricePreview} from "./cart-price-preview";
 import {DirectCheckout} from "./direct-checkout";
-import {quantityUnitLabels,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
+import {materialUnitLabel} from "@/modules/catalog/category-units";
 const subscribe=()=>()=>{};
 export function DirectCartPanel(){
  const rows=useShopCart(),ready=useSyncExternalStore(subscribe,()=>true,()=>false);
@@ -18,7 +18,7 @@ export function DirectCartPanel(){
  function update(key:string,n:number){setNotice(setShopQuantity(key,n)?"":"Cart update failed. Check browser storage.")}
  return <section className="nb-shop-cart"><div className="nb-shop-cart-card"><div className="nb-shop-cart-head"><h2>My cart ({rows.length})</h2><button type="button" className="nb-shop-quiet" onClick={()=>{if(window.confirm("Remove all materials from your shopping cart?"))setNotice(writeShopCart([])?"":"Unable to clear cart.")}}>Clear cart</button></div>
  {notice&&<p role="alert">{notice}</p>}
- {rows.map(r=><article className="nb-shop-cart-line" key={cartKey(r)}><div><Link href={"/materials/"+r.category+"/"+r.productSlug}><strong>{r.productName}</strong></Link><small>{quantityUnitLabels[r.unit as MaterialQuantityUnit]??r.unit}</small><div><ProductPrice category={r.category} slug={r.productSlug} quoteOnly={r.category==="aggregates"}/></div></div><QuantityStepper item={r} onChange={n=>update(cartKey(r),n)}/><button type="button" className="nb-shop-quiet" onClick={()=>update(cartKey(r),0)} aria-label={"Remove "+r.productName}>Remove</button></article>)}
+ {rows.map(r=><article className="nb-shop-cart-line" key={cartKey(r)}><div><Link href={"/materials/"+r.category+"/"+r.productSlug}><strong>{r.productName}</strong></Link><small>{materialUnitLabel(r.category,r.unit)}</small><div><ProductPrice category={r.category} slug={r.productSlug} quoteOnly={r.category==="aggregates"}/></div></div><QuantityStepper item={r} onChange={n=>update(cartKey(r),n)}/><button type="button" className="nb-shop-quiet" onClick={()=>update(cartKey(r),0)} aria-label={"Remove "+r.productName}>Remove</button></article>)}
  <Link href="/materials" className="nb-shop-quiet">+ Add more materials</Link></div>
  <section className="nb-shop-cart-card"><h2>Delivery services</h2><label className="nb-shop-unloading"><input type="checkbox" checked={unload} onChange={e=>{setUnload(e.target.checked);try{sessionStorage.setItem("neerva-unloading",e.target.checked?"yes":"no")}catch{}}}/><span><strong>Request unloading assistance</strong><small>Ground-floor unloading; availability and charge confirmed before approval.</small></span></label></section>
  <CartPricePreview rows={rows} unload={unload} pin={pin} city={city} onLocation={(p,c)=>{setPin(p);setCity(c);try{sessionStorage.setItem("neerva-cart-pin",p);sessionStorage.setItem("neerva-cart-city",c)}catch{}}}/>
