@@ -129,7 +129,8 @@ async function acceptedOrder(customer){
  const outsider=customer.id===c.id?other:c;
  const hiddenRequests=await call(outsider,"/api/customer/quotes");assert.equal(hiddenRequests.status,200);assert.ok(!hiddenRequests.data.requests.some(q=>q.id===req));
  const invite=await call(d,"/api/admin/rfqs","POST",{requestId:req,tenantId:tenant});
- assert.equal(invite.status,201,JSON.stringify(invite.data));
+ assert.equal(invite.status,409,"Automatically routed dealer must not receive a duplicate invite");
+ const applicantInbox=await call(applicant,"/api/dealer/quotes");assert.equal(applicantInbox.status,200);assert.ok(applicantInbox.data.invites.some(q=>q.quote_request_id===req),"Matching approved new dealer receives automatic outreach");
  const inbox=await call(a,"/api/dealer/quotes");assert.equal(inbox.status,200);assert.ok(inbox.data.invites.some(q=>q.quote_request_id===req));
  const foreignInbox=await call(b,"/api/dealer/quotes");assert.equal(foreignInbox.status,200);assert.ok(!foreignInbox.data.invites.some(q=>q.quote_request_id===req));
  const quote=await call(a,"/api/dealer/quotes","POST",{quoteRequestId:req,tenantId:tenant,lines:[{description:"Disposable cement fixture",quantity:10,unit:"bag",unitPricePaise:1000}],taxPaise:0,freightPaise:0,unloadingPaise:0,terms:"Synthetic test; no delivery",validUntil:new Date(Date.now()+3600000).toISOString()});
