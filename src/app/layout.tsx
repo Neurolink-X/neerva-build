@@ -1,4 +1,5 @@
 import {canonicalPublicOrigin} from "@/modules/seo/site-origin";
+import {launchBrand} from "@/modules/pwa/launch-brand";
 import type { Metadata, Viewport } from "next";
 import {Suspense} from "react";
 import {NavigationFeedback} from "@/components/navigation-feedback";
@@ -19,7 +20,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: { default: "NEERVA BUILD — Construction Materials & Home Planning", template: "%s | NEERVA BUILD" },
   description: "Plan your dream home and explore Indian construction materials with NEERVA BUILD. Compare specifications and prepare honest quote drafts; real dealer supply is confirmed locally.",
-  applicationName: "NEERVA BUILD",
+  applicationName: launchBrand.name,
+  appleWebApp: { capable: true, title: launchBrand.name, statusBarStyle: "default" },
   manifest: "/manifest.webmanifest",
   openGraph: {
     type: "website",
@@ -35,8 +37,8 @@ export const metadata: Metadata = {
   robots: { index: isIndexable, follow: isIndexable },
 };
 
-export const viewport: Viewport = { themeColor: "#f5f4ef", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: launchBrand.theme, width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en-IN"><body><Suspense fallback={null}><NavigationFeedback/></Suspense>{children}<InstallExperience/><PlatformIncidentMonitor/></body></html>;
+  return <html lang="en-IN" style={{backgroundColor:launchBrand.background}}><body style={{backgroundColor:launchBrand.background}}><Suspense fallback={null}><NavigationFeedback/></Suspense>{children}<InstallExperience/><PlatformIncidentMonitor/></body></html>;
 }

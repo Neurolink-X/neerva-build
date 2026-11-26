@@ -6,7 +6,7 @@ test("footer uses four balanced bilingual groups and unique internal destination
  assert.equal(footerGroups.length,4);
  const links=[...footerGroups.flatMap(g=>[...g.links]),...footerPolicies];
  assert.equal(new Set(links.map(l=>l[0])).size,links.length);
- for(const g of footerGroups){assert.ok(g.links.length>=5&&g.links.length<=6);assert.ok(g.title.every(Boolean));}
+ for(const g of footerGroups){assert.ok(g.links.length>=4&&g.links.length<=6);assert.ok(g.title.every(Boolean));}
  for(const [href,en,hi] of links){
   assert.ok(en.trim()&&hi.trim());
   assert.ok(href.startsWith("/")&&!href.startsWith("//"));
@@ -15,6 +15,8 @@ test("footer uses four balanced bilingual groups and unique internal destination
 });
 test("customer and legal links remain available; internal admin routes stay private",()=>{
  const paths=[...footerGroups.flatMap(g=>[...g.links]),...footerPolicies].map(l=>l[0] as string);
- for(const href of ["/materials","/brands","/quotes","/account/orders","/account/quotes","/support","/privacy","/terms","/returns","/install","/account/dealer"])assert.ok(paths.includes(href),href);
+ for(const href of ["/materials","/brands","/quotes","/account/orders","/account/quotes","/support","/privacy","/terms","/returns","/account/dealer"])assert.ok(paths.includes(href),href);
  assert.ok(paths.every(p=>!p.startsWith("/admin")&&!p.startsWith("/api")));
 });
+
+test("installation has a dedicated route, not a business-navigation duplicate",()=>{assert.ok(existsSync("src/app/install/page.tsx"));assert.ok(footerGroups.every(g=>g.links.every(l=>String(l[0])!=="/install")));});

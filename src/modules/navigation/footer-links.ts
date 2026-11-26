@@ -143,11 +143,6 @@ export const footerGroups=[
         "/business-model",
         "Dealer information",
         "डीलर जानकारी"
-      ],
-      [
-        "/install",
-        "Install the app",
-        "ऐप इंस्टॉल करें"
       ]
     ]
   }

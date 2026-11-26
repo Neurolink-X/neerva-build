@@ -1,5 +1,5 @@
 /* Neerva premium homepage. All selectors are namespaced to protect Phase 1. */
-.nbh{--nbh-paper:#f7f5f0;--nbh-forest:#254538;--nbh-ink:#203b2f;--nbh-mute:#556b5d;--nbh-accent:#ba5736;--nbh-line:#dce1d6;--nbh-surface:#fffefa;--nbh-shadow:0 16px 45px rgba(29,55,39,.09);font-family:Arial,"Noto Sans Devanagari",sans-serif;background:var(--nbh-paper);color:var(--nbh-ink);font-size:16px;min-height:100vh;overflow-x:clip;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nbh{--nbh-paper:var(--paper,#f5f4ef);--nbh-forest:#254538;--nbh-ink:#203b2f;--nbh-mute:#556b5d;--nbh-accent:#ba5736;--nbh-line:#dce1d6;--nbh-surface:#fffefa;--nbh-shadow:0 16px 45px rgba(29,55,39,.09);font-family:Arial,"Noto Sans Devanagari",sans-serif;background:var(--nbh-paper);color:var(--nbh-ink);font-size:16px;min-height:100vh;overflow-x:clip;padding-bottom:env(safe-area-inset-bottom,0px)}
 .nbh *, .nbh *::before,.nbh *::after{box-sizing:border-box}.nbh a{color:inherit;text-decoration:none}.nbh p{font-size:16px;line-height:1.55}.nbh button,.nbh select,.nbh input{font:inherit}.nbh button,.nbh a,.nbh select,.nbh input{touch-action:manipulation}.nbh button{cursor:pointer}.nbh :is(button,a,input,select,summary):focus-visible{outline:3px solid #dd724a;outline-offset:3px}.nbh button:disabled{opacity:.5;cursor:not-allowed}.nbh .nbh-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .nbh-ribbon{min-height:30px;background:#1b3229;color:#f4f6f0;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:7px clamp(16px,4vw,65px);font-size:11px;letter-spacing:.06em}.nbh-ribbon span:last-child{font-size:11px;letter-spacing:0;color:#d0ddd3}
 .nbh-header{height:76px;background:var(--nbh-surface);display:flex;align-items:center;justify-content:space-between;gap:22px;padding:10px clamp(16px,4vw,65px);border-bottom:1px solid var(--nbh-line);position:relative;z-index:2}.nbh-logo{display:inline-flex;gap:10px;align-items:center;white-space:nowrap;font-size:15px;font-weight:800;letter-spacing:.08em}.nbh-logo i{font-style:normal;font-weight:500;color:#6e7a6f}.nbh-logomark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px 12px 12px 3px;background:var(--nbh-accent);color:white;font-family:Georgia,serif;font-size:24px;font-weight:400}.nbh-nav{display:flex;align-items:center;gap:clamp(11px,2vw,30px);font-size:13px;white-space:nowrap}.nbh-nav a:hover,.nbh-footer a:hover{color:var(--nbh-accent)}.nbh-header-actions{display:flex;align-items:center;gap:10px}.nbh-city{display:flex;align-items:center;gap:4px;min-width:0}.nbh-city svg{width:17px;height:17px;color:#98563b;flex:none}.nbh-city select{max-width:115px;min-height:44px;background:transparent;border:0;color:var(--nbh-ink);font-size:12px;text-overflow:ellipsis}.nbh-icon-link{min-width:44px;min-height:44px;display:grid;place-items:center;border:1px solid #e2e5db;border-radius:12px;color:var(--nbh-forest)}.nbh-language{min-height:44px;min-width:53px;border:1px solid #d3dcd2;border-radius:12px;color:var(--nbh-forest);background:white;font-size:13px;font-weight:700;padding:0 9px}.nbh-city-form{position:absolute;z-index:4;right:clamp(16px,4vw,65px);top:107px;width:min(390px,calc(100% - 32px));background:#fffefa;box-shadow:var(--nbh-shadow);border:1px solid var(--nbh-line);border-radius:16px;padding:18px;display:grid;gap:10px}.nbh-city-form label{font-size:13px;font-weight:700;display:grid;gap:8px}.nbh-city-form input{height:44px;border:1px solid #aebeb0;border-radius:8px;padding:0 12px}.nbh-city-form>div{display:flex;gap:10px}.nbh-city-form button{min-height:44px;padding:0 14px;border:1px solid #b7c6b9;border-radius:8px;background:#eaf0e9}.nbh-city-form button:first-child{background:var(--nbh-forest);color:white}.nbh-city-form small{color:var(--nbh-mute);font-size:13px}
@@ -335,3 +335,34 @@
 
 /* Small screens keep install discovery in the menu without crowding shopping controls. */
 @media(max-width:390px){.nbh-header .nbh-install-header{display:none}.nbh-header-actions .nbh-icon-link{min-width:44px}.nbh-header .nbh-language{min-width:44px}.nbh-mobile-menu summary{min-height:44px}}
+
+/* Plot step: compact progress, grouped inputs and one primary action, no decorative blank rows. */
+.nbh .nbh-studio-planner{display:grid;align-content:start;gap:10px;min-inline-size:0;padding:clamp(16px,2.5vw,28px);align-self:start;border-radius:16px}
+.nbh .nbh-studio-planner-head{padding:0 0 10px;margin:0;border-bottom:1px solid #e1e9df}
+.nbh .nbh-studio-progress{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0;margin:0 0 10px}
+.nbh .nbh-studio-progress li{display:flex;align-items:center;gap:6px;font-size:12px;line-height:1.3;font-weight:650;color:#63786a;min-width:0;padding:0 0 7px;border-bottom:3px solid #dfe7df}
+.nbh .nbh-studio-progress li[aria-current=step]{color:#234b34;border-color:#2b6243}
+.nbh .nbh-studio-progress li span{display:grid;place-items:center;flex:none;width:23px;height:23px;border-radius:50%;background:#e8eee6;color:#425c48;font-size:12px}
+.nbh .nbh-studio-progress li[aria-current=step] span{background:#254738;color:#fff}
+.nbh .nbh-studio-planner-head h3{font-size:clamp(24px,3vw,31px);margin:0 0 5px;line-height:1.15}
+.nbh .nbh-studio-planner-head p{font-size:13px;line-height:1.45;margin:0}
+.nbh .nbh-studio-primary-label{margin:0;font-size:13px}
+.nbh :is(.nbh-studio-preset,.nbh-studio-custom-fields input,.nbh-studio-option-grid select){height:46px;padding-inline:10px;font-size:16px;min-width:0;width:100%;max-width:100%;border-radius:8px}
+.nbh .nbh-studio-options{border:0;border-top:1px solid #e1e9df;margin:2px 0 0;padding:8px 0 0;min-width:0}
+.nbh .nbh-studio-options legend{padding:0 6px 0 0;color:#355c41;font-size:12px;font-weight:700}
+.nbh .nbh-studio-option-grid,.nbh .nbh-studio-custom-fields{margin:0;gap:8px}
+.nbh .nbh-studio-option-grid label,.nbh .nbh-studio-custom-fields label{font-size:12px;gap:4px;line-height:1.35}
+.nbh .nbh-studio-result{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 10px;padding:10px 12px;margin:0;border-radius:9px;align-items:center}
+.nbh .nbh-studio-result span{grid-column:1/-1;width:auto;font-size:10px}
+.nbh .nbh-studio-result strong{font-size:clamp(19px,3vw,24px);grid-row:2/4;overflow-wrap:anywhere}
+.nbh .nbh-studio-result small{font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+.nbh .nbh-studio-generate{min-height:48px;margin:0;padding:9px 12px;font-size:14px}
+.nbh .nbh-studio-trust{margin:0;font-size:12px;line-height:1.45}
+.nbh .nbh-studio-more{margin:0;padding-top:2px;gap:0 12px;justify-content:flex-start}
+.nbh .nbh-studio-more a{min-height:36px;font-size:12px;line-height:1.3}
+@media(max-width:600px){.nbh .nbh-studio-planner{padding:14px;gap:9px}.nbh .nbh-studio-progress{gap:7px}.nbh .nbh-studio-progress li{font-size:11px;gap:4px}.nbh .nbh-studio-result{padding:9px}.nbh .nbh-studio-more{gap:0 8px}}
+@media(max-width:340px){.nbh .nbh-studio-planner{padding:10px}.nbh .nbh-studio-progress li span{width:20px;height:20px}}
+
+.nbh .nbh-studio-more a{min-height:44px}
+.nbh .nbh-studio-result-area,.nbh .nbh-studio-result-direction{min-width:0}
+@media(max-width:340px){.nbh .nbh-studio-result{grid-template-columns:minmax(0,1fr)}.nbh .nbh-studio-result strong{grid-row:auto}}
