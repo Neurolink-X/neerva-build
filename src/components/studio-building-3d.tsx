@@ -26,7 +26,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
   let resumeDrawing:(()=>void)|undefined;
   const scene=new THREE.Scene();scene.background=new THREE.Color("#dce6e1");
   const site=new THREE.Group();const angle=planModel?threeRoadRotation(planModel.plot.roadSide):0;site.rotation.y=angle;scene.add(site);
-  const shared=new THREE.BoxGeometry(1,1,1),materials:THREE.Material[]=[];
+  const shared=new THREE.BoxGeometry(1,1,1),materials:THREE.Material[]=[],textures:THREE.Texture[]=[];
   const material=(hex:string,roughness=.83,metalness=0)=>{const m=new THREE.MeshStandardMaterial({color:hex,roughness,metalness});materials.push(m);return m;};
   try{
    renderer=new THREE.WebGLRenderer({antialias:quality==="detail",alpha:false,powerPreference:quality==="detail"?"high-performance":"low-power"});
@@ -38,6 +38,13 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    const width=design.plot.widthFt*FT,depth=design.plot.depthFt*FT;
    const foundation=material("#cbc3b2"),concrete=material("#ddd5c3"),roofMat=material(design.elevation.surfaces.accent),gateMat=material(design.elevation.surfaces.gate,.48,.25),floorMat=material("#c9b69d"),railingMat=material(design.elevation.surfaces.railing,.3,.45);
    const wall=material(colourRef.current,.88);wallMat.current=wall;
+   // Local procedural plaster microtexture: no external asset, paid renderer or network request.
+   if(quality==="detail"){
+    const size=64,bytes=new Uint8Array(size*size*4);let seed=7183;
+    for(let i=0;i<bytes.length;i+=4){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const shade=110+(seed>>>24)%35;bytes[i]=shade;bytes[i+1]=shade;bytes[i+2]=shade;bytes[i+3]=255;}
+    const texture=new THREE.DataTexture(bytes,size,size);texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(3,3);texture.magFilter=THREE.LinearFilter;texture.minFilter=THREE.LinearMipmapLinearFilter;texture.generateMipmaps=true;texture.needsUpdate=true;textures.push(texture);
+    wall.bumpMap=texture;wall.bumpScale=.018;concrete.bumpMap=texture;concrete.bumpScale=.012;
+   }
    const box=(x:number,y:number,z:number,sx:number,sy:number,sz:number,mat:THREE.MeshStandardMaterial,cast=true)=>{const mesh=new THREE.Mesh(shared,mat);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);mesh.castShadow=cast;mesh.receiveShadow=true;site.add(mesh);return mesh;};
    const xCoord=(v:number)=>(v-design.plot.widthFt/2)*FT;
    const zCoord=(v:number)=>(v-design.plot.depthFt/2)*FT;
@@ -107,14 +114,26 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
     }
    }
    const roofGroup=new THREE.Group();const roof=(x:number,y:number,z:number,sx:number,sy:number,sz:number)=>{const m=new THREE.Mesh(shared,roofMat);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;roofGroup.add(m)};
-   const top=design.floors*height;
+   const top=design.floors*height,parapet=design.layout.parapetHeightFt*FT;
    if(planModel){
-    for(const r of planModel.rooms.filter(r=>r.floor===design.floors-1&&!["parking","verandah","balcony","terrace"].includes(r.kind))){
+    const enclosed=planModel.rooms.filter(r=>r.floor===design.floors-1&&!["parking","verandah","balcony","terrace"].includes(r.kind));
+    for(const r of enclosed){
      roof(xCoord(r.x+r.w/2),top+.08,zCoord(r.y+r.d/2),r.w*FT,.18,r.d*FT);
+     // Split each roof edge at neighboring spans, retaining only its exposed perimeter.
+     for(const side of ["front","rear","left","right"] as const){
+      const horizontal=side==="front"||side==="rear",plane=horizontal?r.y+(side==="rear"?r.d:0):r.x+(side==="right"?r.w:0);
+      const start=horizontal?r.x:r.y,end=start+(horizontal?r.w:r.d);
+      const adjacent=enclosed.filter(s=>s.id!==r.id&&Math.abs((horizontal?s.y+(side==="front"?s.d:0):s.x+(side==="left"?s.w:0))-plane)<.001).map(s=>[horizontal?s.x:s.y,(horizontal?s.x+s.w:s.y+s.d)] as const);
+      const cuts=[start,end,...adjacent.flatMap(([a,b])=>[Math.max(start,a),Math.min(end,b)]).filter(v=>v>start&&v<end)].sort((a,b)=>a-b);
+      for(let i=1;i<cuts.length;i++){const a=cuts[i-1],b=cuts[i],mid=(a+b)/2;if(b-a<.001||adjacent.some(([lo,hi])=>mid>lo&&mid<hi))continue;
+       const x=xCoord(horizontal?mid:plane),z=zCoord(horizontal?plane:mid),span=(b-a)*FT;
+       roof(x,top+.16+parapet/2,z,horizontal?span:.15,parapet,horizontal?.15:span);
+       if(quality==="detail")roof(x,top+.16+parapet+.035,z,horizontal?span:.21,.07,horizontal?.21:span);
+      }
+     }
     }
    }else roof(cx,top+.08,cz,W+.25,.18,D+.25);
    if(!planModel){
-    const parapet=design.layout.parapetHeightFt*FT;
     roof(cx,top+parapet/2+.14,zCoord(fp.minZ),W+.25,parapet,.18);roof(cx,top+parapet/2+.14,zCoord(fp.maxZ),W+.25,parapet,.18);
     roof(xCoord(fp.minX),top+parapet/2+.14,cz,.18,parapet,D+.25);roof(xCoord(fp.maxX),top+parapet/2+.14,cz,.18,parapet,D+.25);
    }
@@ -168,7 +187,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    let activeDirection=direction.clone();
    const corners:THREE.Vector3[]=[];
    const low=showSite?-.3:(selectedFloor??0)*height-.1;
-   const high=mode==="exterior"||selectedFloor===undefined?top+1:(selectedFloor+1)*height;
+   const high=mode==="exterior"||selectedFloor===undefined?top+parapet+.3:(selectedFloor+1)*height;
    for(const x of [-width/2,width/2])for(const y of [low,high])for(const z of [-depth/2,depth/2]){
     corners.push(new THREE.Vector3(x,y,z).applyAxisAngle(up,angle).sub(focus));
    }
@@ -213,8 +232,8 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    };
    observer=new ResizeObserver(resize);observer.observe(target);resize();
   }catch{failedTimer=window.setTimeout(()=>setFallback(true),0)}
-  return()=>{if(resumeDrawing)document.removeEventListener("visibilitychange",resumeDrawing);window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;cameraView.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();scene.traverse(o=>{if(o instanceof THREE.InstancedMesh)o.dispose();if(o instanceof THREE.DirectionalLight)o.shadow.dispose()});renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
+  return()=>{if(resumeDrawing)document.removeEventListener("visibilitychange",resumeDrawing);window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;cameraView.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();for(const t of textures)t.dispose();scene.traverse(o=>{if(o instanceof THREE.InstancedMesh)o.dispose();if(o instanceof THREE.DirectionalLight)o.shadow.dispose()});renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
  },[design,mode,planModel,selectedFloor,wallCells,quality]);
- return <section className="nbd-building" data-plan-id={design.id} data-selected-floor={mode==="exterior"?"all":selectedFloor??"all"} data-wall-cells={wallCells.length}><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>{selectedFloor===undefined?"Full building":mode==="exterior"?"Full building · all floors":`${["Ground floor","First floor","Second floor"][selectedFloor]??`Floor ${selectedFloor+1}`} only`} · touch to rotate</span></div>{fallback?<div><p role="status">Interactive rotation is unavailable on this device.</p>{planModel?<PlanAxonometric plan={planModel} design={design} floor={mode==="exterior"?undefined:selectedFloor}/>:<DesignPlanArt design={design} floor={selectedFloor??0}/>}</div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}{!fallback&&<>{mode!=="walkthrough"&&<div className="nbd-buttons" role="group" aria-label="3D camera views">{(["front","rear","left","right","top"] as CameraView[]).map(view=><button type="button" key={view} onClick={()=>cameraView.current?.(view)}>{({front:"Front view",rear:"Rear view",left:"Left view",right:"Right view",top:"Top view"} as const)[view]}</button>)}</div>}</>}<div className="nbd-buttons nbd-mode-controls" role="group" aria-label="3D display mode">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Selected floor cutaway":"Full exterior · all floors"}</button>)}</div>{!fallback&&<details className="nbd-quality-options"><summary>Rendering quality</summary><div className="nbd-buttons" role="group" aria-label="3D rendering quality"><button type="button" aria-pressed={quality==="balanced"} onClick={()=>setQuality("balanced")}>Smooth preview</button><button type="button" aria-pressed={quality==="detail"} onClick={()=>setQuality("detail")}>Enhanced detail</button></div></details>}<p className="nbd-disclaimer">{selectedFloor!==undefined?"Floor tabs show that level only by default. Choose Full exterior to inspect all selected storeys. ":""}Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Slabs and roofs are simplified; parapet details are not modeled for PlanModel mode. Enhanced detail improves edge smoothing, shadows and opening finishes; it is not a photoreal render. Eye-level beta is not a measured walkthrough.</p></section>;
+ return <section className="nbd-building" data-plan-id={design.id} data-selected-floor={mode==="exterior"?"all":selectedFloor??"all"} data-wall-cells={wallCells.length}><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>{selectedFloor===undefined?"Full building":mode==="exterior"?"Full building · all floors":`${["Ground floor","First floor","Second floor"][selectedFloor]??`Floor ${selectedFloor+1}`} only`} · touch to rotate</span></div>{fallback?<div><p role="status">Interactive rotation is unavailable on this device.</p>{planModel?<PlanAxonometric plan={planModel} design={design} floor={mode==="exterior"?undefined:selectedFloor}/>:<DesignPlanArt design={design} floor={selectedFloor??0}/>}</div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}{!fallback&&<>{mode!=="walkthrough"&&<div className="nbd-buttons" role="group" aria-label="3D camera views">{(["front","rear","left","right","top"] as CameraView[]).map(view=><button type="button" key={view} onClick={()=>cameraView.current?.(view)}>{({front:"Front view",rear:"Rear view",left:"Left view",right:"Right view",top:"Top view"} as const)[view]}</button>)}</div>}</>}<div className="nbd-buttons nbd-mode-controls" role="group" aria-label="3D display mode">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Selected floor cutaway":"Full exterior · all floors"}</button>)}</div>{!fallback&&<details className="nbd-quality-options"><summary>Rendering quality</summary><div className="nbd-buttons" role="group" aria-label="3D rendering quality"><button type="button" aria-pressed={quality==="balanced"} onClick={()=>setQuality("balanced")}>Smooth preview</button><button type="button" aria-pressed={quality==="detail"} onClick={()=>setQuality("detail")}>Enhanced detail</button></div></details>}<p className="nbd-disclaimer">{selectedFloor!==undefined?"Floor tabs show that level only by default. Choose Full exterior to inspect all selected storeys. ":""}Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Roofs and parapets follow modeled upper-floor boundaries; structural details remain conceptual. Enhanced detail adds local plaster texture, edge smoothing and shadows; it is not a photoreal render. Eye-level beta is not a measured walkthrough.</p></section>;
 }
 
