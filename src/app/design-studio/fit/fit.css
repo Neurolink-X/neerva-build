@@ -39,3 +39,12 @@
 
 
 .nfit-primary-next .nroad-diagram svg,.nfit-primary-next .nbd-webgl canvas{display:block;width:100%;max-height:32rem}.nfit-primary-next .nbd-webgl{min-width:0;overflow:hidden}
+
+/* Fit preview is a light drawing inside a dark card; isolate its foreground and intrinsic SVG sizing. */
+.nfit-primary-next .nroad-diagram{color:#253f33;background:#fff;min-width:0;padding:clamp(8px,2vw,16px);border-radius:14px}
+.nfit-primary-next .nroad-diagram svg{width:100%;height:auto;max-height:none;aspect-ratio:auto;display:block}
+.nfit-primary-next .nroad-diagram :is(p,li,summary,strong,span){color:#334d3e;font-size:inherit;line-height:1.5}
+.nfit-primary-next .nroad-diagram details{background:#f2f5f0;border:1px solid #d1ddd2;padding:12px;border-radius:10px}
+.nfit-primary-next .nroad-diagram summary{font-weight:700;cursor:pointer;min-height:44px;display:flex;align-items:center}
+.nfit-primary-next .nroad-diagram .nroad-small{font-size:13px;color:#526458;margin-top:10px}
+.nfit-floor-tabs{display:flex;flex-wrap:wrap;gap:6px}.nfit-floor-tabs button{flex:1;min-width:88px;min-height:44px;background:#fff;color:#244733;border:1px solid #cbd9ca;border-radius:8px;padding:6px;font-size:12px}.nfit-floor-tabs button[aria-pressed=true]{background:#dcebdc;border:2px solid #a6c4a8;font-weight:700}.nfit-primary-next>button{min-height:44px;border:1px solid #b6cbb9;border-radius:8px;color:#fff;background:transparent}
