@@ -303,9 +303,9 @@ async function main(){
     assert.equal(await page.getByRole("heading",{name:/Access your projects and requests/}).count(),1,"account page must not show prelaunch placeholder");
     if(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY){
       const form=page.locator("form.account-auth-form").filter({has:page.locator("input[name=password]")});
-      await form.getByRole("button",{name:"Sign in",exact:true}).waitFor({state:"visible"});
+      await form.getByRole("button",{name:"Sign in securely →",exact:true}).waitFor({state:"visible"});
       assert.equal(await form.count(),1,"one password sign-in form");
-      assert.equal(await form.getByRole("button",{name:"Sign in",exact:true}).count(),1,"one password submission action");
+      assert.equal(await form.getByRole("button",{name:"Sign in securely →",exact:true}).count(),1,"one password submission action");
       assert.equal(await form.locator("input[name=email]").count(),1,"email input present");
       assert.equal(await form.locator("input[name=password]").count(),1,"password input present");
     }else{
