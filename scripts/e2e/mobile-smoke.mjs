@@ -203,13 +203,17 @@ async function main(){
     const rects=groups.map(g=>g.getBoundingClientRect());
     const links=[...el.querySelectorAll(".unified-footer-groups a")].filter(a=>a.getClientRects().length);
     const b=el.getBoundingClientRect();
-    return {columns:new Set(rects.map(r=>Math.round(r.left))).size,topAligned:Math.abs(rects[0].top-rects[1].top)<=2,overflow:el.scrollWidth>el.clientWidth+2,linkFits:links.every(a=>{const r=a.getBoundingClientRect();return r.left>=b.left-1&&r.right<=b.right+1}),touch:links.every(a=>a.getBoundingClientRect().height>=43),height:b.height,legal:el.querySelectorAll(".unified-footer-legal a").length};
+    return {columns:new Set(rects.map(r=>Math.round(r.left))).size,topAligned:Math.abs(rects[0].top-rects[1].top)<=2,overflow:el.scrollWidth>el.clientWidth+2,linkFits:links.every(a=>{const r=a.getBoundingClientRect();return r.left>=b.left-1&&r.right<=b.right+1}),touch:links.every(a=>a.getBoundingClientRect().height>=43),height:b.height,sectionGaps:[...el.querySelectorAll(".unified-footer-intro,.unified-footer-groups,.unified-footer-bottom")].map((section,i,sections)=>i?Math.max(0,section.getBoundingClientRect().top-sections[i-1].getBoundingClientRect().bottom):0),emptyGroupSpace:groups.map(g=>{const heading=g.querySelector("h3"),list=g.querySelector("ul");if(!heading||!list)return Infinity;return Math.max(0,list.getBoundingClientRect().top-heading.getBoundingClientRect().bottom)+Math.max(0,g.getBoundingClientRect().bottom-list.getBoundingClientRect().bottom)}),legal:el.querySelectorAll(".unified-footer-legal a").length};
    });
    assert.equal(footerLayout.columns,v.w<=900?2:4,"footer columns adapt to viewport");
    assert.ok(footerLayout.topAligned&&!footerLayout.overflow&&footerLayout.linkFits,"footer headings and links stay within the layout");
    if(v.w<=650)assert.ok(footerLayout.touch,"mobile footer targets remain at least 44px");
    assert.equal(footerLayout.legal,3,"legal policies have a compact dedicated row");
-   assert.ok(footerLayout.height<1000,"footer avoids excessive vertical whitespace");
+   // Measure empty gaps, not the total height of valid content (e.g. Hindi wrapping).
+   assert.ok(footerLayout.sectionGaps.every(g=>g<=12),"footer section gaps: "+JSON.stringify(footerLayout));
+   assert.ok(footerLayout.emptyGroupSpace.every(g=>g<=12),"footer group whitespace: "+JSON.stringify(footerLayout));
+   assert.ok(footerLayout.height>0&&Number.isFinite(footerLayout.height),"footer height is measurable");
+   fs.writeFileSync(path.join("test-results/mobile",v.w+"-footer-layout.json"),JSON.stringify(footerLayout,null,2));
    await footer.screenshot({path:path.join("test-results/mobile",v.w+"-unified-footer.png"),animations:"disabled"});
    await page.locator(".nbh-material-options summary").first().click();
    assert.equal(await page.locator(".nbh-material-options[open]").count(),1,"subcategory links remain expandable");

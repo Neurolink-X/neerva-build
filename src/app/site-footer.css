@@ -29,3 +29,20 @@ footer.unified-footer a:focus-visible{outline:3px solid #e89a6c;outline-offset:2
 @media(max-width:650px){.unified-footer-groups{padding:18px 0 14px;gap:16px 12px}footer.unified-footer .unified-footer-groups a{min-height:44px;font-size:13px}footer.unified-footer .unified-footer-legal a{min-height:44px}.unified-footer-intro{padding-bottom:16px}.unified-footer-legal{gap:0 12px}}
 @media(max-width:360px){footer.unified-footer{padding-inline:14px}.unified-footer-actions a{font-size:12px}.unified-footer-groups{column-gap:10px}footer.unified-footer .unified-footer-groups h3{font-size:13px}}
 @media print{footer.unified-footer{display:none!important}}
+
+/* Compact content flow on narrow screens; no fixed height or hidden content. */
+footer.unified-footer .unified-footer-inner{display:block}
+footer.unified-footer .unified-footer-intro{margin:0;min-height:0}
+footer.unified-footer .unified-footer-identity p{margin:0;font-size:13px;line-height:1.45}
+footer.unified-footer .unified-footer-identity h2{margin:5px 0 4px;font-size:24px;line-height:1.2}
+footer.unified-footer .unified-footer-groups{margin:0;min-height:0}
+footer.unified-footer .unified-footer-groups ul{grid-auto-rows:auto;align-content:start}
+footer.unified-footer .unified-footer-groups nav{align-self:start;min-height:0}
+@media(max-width:650px){
+ footer.unified-footer{padding-top:18px;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+ footer.unified-footer .unified-footer-intro{gap:10px;padding-bottom:12px}
+ footer.unified-footer .unified-footer-groups{padding:14px 0 12px;row-gap:12px}
+ footer.unified-footer .unified-footer-bottom{padding-top:8px;gap:5px}
+ footer.unified-footer .unified-footer-legal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ footer.unified-footer .unified-footer-legal a{font-size:12px;overflow-wrap:anywhere}
+}
