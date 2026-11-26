@@ -1,7 +1,7 @@
 import {isPublicConstructionProduct} from "@/modules/catalog/discovery-policy";
 import {PublishedMaterials} from "@/components/published-materials";
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import { MaterialsBrowser } from "@/components/materials-browser";
 import { CatalogMaterialImage } from "@/components/catalog-material-image";
 import { SiteFooter, SiteHeader } from "@/components/site-chrome";

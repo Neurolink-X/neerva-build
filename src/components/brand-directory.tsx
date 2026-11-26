@@ -1,6 +1,6 @@
 "use client";
 import {useState} from "react";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import Image from "next/image";
 import {BrandMark} from "@/components/brand-mark";
 import {isLocalCatalogMedia} from "@/modules/catalog/local-media-policy";

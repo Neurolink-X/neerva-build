@@ -56,6 +56,23 @@ async function main(){
     }
    }finally{await ctx.close()}
   }
+  // Audit other image-heavy public pages on a constrained network. The
+  // normal workflow retains its existing route and pixel regression checks.
+  for(const route of ["/materials","/brands","/materials/tiles","/materials/hardware","/design-studio/portfolio?width=18&depth=50&floors=2&road=N&bedrooms=3&parking=true"]){
+   const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:"block"});
+   try{await ctx.addInitScript(()=>{const c=new EventTarget();Object.assign(c,{effectiveType:"3g",saveData:true,downlink:.4,rtt:400});Object.defineProperty(navigator,"connection",{value:c,configurable:true});});
+    const page=await ctx.newPage(),cdp=await ctx.newCDPSession(page);await cdp.send("Network.enable");await cdp.send("Network.emulateNetworkConditions",{offline:false,latency:150,downloadThroughput:1500000/8,uploadThroughput:750000/8,connectionType:"cellular4g"});
+    let prefetch=0;page.on("request",r=>{const h=r.headers();if(h["next-router-prefetch"]||h["purpose"]==="prefetch"||h["sec-purpose"]?.includes("prefetch"))prefetch++;});
+    const started=Date.now();await page.goto(base+route,{waitUntil:"domcontentloaded",timeout:120000});
+    const main=route.includes("/portfolio?")?".nroad-form":route==="/brands"?".br-filters":route==="/materials"?".catalog-toolbar":".tile-showroom";
+    await page.locator(main).first().waitFor({state:"visible",timeout:90000});const usefulMs=Date.now()-started;
+    await page.waitForLoadState("load",{timeout:120000});
+    const resources=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],r=performance.getEntriesByType("resource");return {documentBytes:n?.transferSize??0,resourceBytes:r.reduce((sum,e)=>sum+e.transferSize,0),resourceCount:r.length};});
+    assert.ok(usefulMs<90000,route+" initial useful content exceeded severe test ceiling");
+    if(route.includes("/portfolio?"))assert.equal(await page.locator(".nbd-building").count(),0,"slow link must not eagerly initialize 3D");
+    performanceReports.push({route,profile:"weak-4g",usefulMs,prefetch,...resources,scope:"simulated local Chromium; not field Web Vitals"});
+   }finally{await ctx.close()}
+  }
   // Focused facade gallery and full-aspect canvas checks across nine screen sizes.
   for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
@@ -897,8 +914,10 @@ async function main(){
     await chosenLayout.first().waitFor({state:"visible",timeout:20000});
     assert.equal(await chosenLayout.count(),1,"exactly one linked gallery option selected");
     assert.match((await chosenLayout.innerText()),/^6\./,"gallery card #6 opens option #6, not the default plan");
+    assert.equal(await page.locator(".nbd-building").count(),0,"3D does not mount before the visitor reaches it");
     await page.getByRole("button",{name:"Ground floor"}).click();
-    await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
+    await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
+    await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor({timeout:30000});
     const modelFirst=await page.locator(".nbd-building").evaluate(el=>{const canvas=el.querySelector(".nbd-webgl"),mode=el.querySelector(".nbd-mode-controls");return !canvas||!!mode&&canvas.compareDocumentPosition(mode)&Node.DOCUMENT_POSITION_FOLLOWING});
     assert.ok(modelFirst,"model appears before its display controls");
     assert.equal(await page.getByRole("button",{name:"Selected floor cutaway"}).getAttribute("aria-pressed"),"true","ground-floor 3D defaults to matching floor");
