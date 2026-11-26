@@ -15,12 +15,12 @@ function zone(id:Exclude<FacadeTarget,"all">,label:string,outline:number[][],hol
 // image (3:1). Windows, timber, glazing, door and foreground plants are excluded.
 export const facadeZones=[
  zone("left","Left facade",[[360,18],[458,18],[458,413],[387,413],[387,381],[317,381],[317,112],[350,66]], [rect(400,105,58,276),[[317,344],[354,354],[378,374],[387,396],[347,396],[317,381]]]),
- zone("right","Right facade",[[970,61],[1228,61],[1228,282],[1190,282],[1182,311],[1182,367],[1190,367],[1190,412],[983,412],[983,379],[916,379],[900,365],[900,310],[970,285]], [rect(983,116,187,129),rect(983,322,186,90)]),
+ zone("right","Right facade",[[970,61],[1228,61],[1228,282],[1203,282],[1191,307],[1185,340],[1178,359],[1174,391],[1169,412],[983,412],[983,379],[916,379],[900,365],[900,310],[970,285],[970,251],[938,251],[938,193],[958,193],[958,92],[970,79]], [rect(983,116,187,129),rect(983,322,186,90),[[1190,291],[1203,283],[1220,282],[1228,286],[1228,306],[1207,304],[1198,322],[1191,319]] ]),
  zone("balcony","Balcony frame",[[526,46],[972,46],[972,76],[555,76],[555,251],[972,251],[972,286],[526,286]]),
  zone("entry","Entrance and recessed walls",[[526,286],[554,286],[554,310],[648,310],[648,368],[630,368],[614,394],[575,398],[554,413],[526,413]]),
  zone("boundary","Left boundary band",[[244,398],[277,398],[277,412],[630,412],[630,398],[668,398],[668,508],[630,508],[630,433],[277,433],[277,461],[244,478]]),
  zone("roof","Roof trim",[[901,23],[1239,23],[1239,60],[1228,63],[972,62],[972,46],[891,46]]),
- zone("upper-recess","Balcony recessed wall",[[555,79],[580,116],[887,116],[913,92],[970,76],[970,251],[555,251]],[[[650,132],[850,132],[850,251],[650,251]],[[558,191],[575,177],[575,159],[597,153],[618,162],[641,175],[645,194],[645,251],[558,251]],[[851,166],[864,149],[890,142],[912,156],[915,180],[936,193],[936,251],[851,251]]]),
+ zone("upper-recess","Balcony recessed wall",[[555,79],[580,116],[887,116],[913,92],[958,79],[958,192],[938,192],[938,251],[555,251]],[[[650,132],[850,132],[850,251],[650,251]],[[558,191],[575,177],[575,159],[597,153],[618,162],[641,175],[645,194],[645,251],[558,251]],[[851,166],[864,149],[890,142],[912,156],[915,180],[936,193],[936,251],[851,251]]]),
  zone("lower-recess","Ground floor recessed wall",[[555,288],[578,309],[885,309],[907,288],[971,288],[971,413],[916,413],[916,397],[879,397],[879,413],[850,413],[850,326],[651,326],[651,397],[555,397]],[[[556,383],[575,374],[593,368],[615,374],[641,397],[641,413],[556,413]],[[851,383],[869,371],[886,374],[900,395],[900,413],[851,413]]]),
  zone("boundary-right","Right boundary band",[[879,398],[916,398],[916,414],[1268,414],[1268,399],[1311,399],[1311,457],[1280,444],[1268,433],[916,433],[916,508],[879,508]])
 ] as const;
@@ -54,7 +54,7 @@ export const facadeSamples=[
  {id:"family",label:"Modern family home",description:"Street-facing two-storey home",src:"/images/studio/finished.webp",zones:facadeZones},
  {id:"contemporary",label:"Contemporary home",description:"Clean lines and contrasting cladding",src:"/images/studio/house-3.webp",zones:contemporaryZones},
  {id:"villa",label:"Premium villa",description:"Modern facade with terraces",src:"/images/studio/house-2.webp",zones:villaZones},
- {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 Indian design concept",src:"/images/studio/family/family-18x50.webp",zones:compactFamilyZones}
+ {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 concept reference",src:"/images/studio/family/family-18x50.webp",zones:compactFamilyZones}
 ] as const;
 export type FacadeSampleId=typeof facadeSamples[number]["id"];
 export type FacadeZone=typeof facadeZones[number];

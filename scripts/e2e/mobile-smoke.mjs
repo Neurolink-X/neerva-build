@@ -203,11 +203,11 @@ async function main(){
     const rects=groups.map(g=>g.getBoundingClientRect());
     const links=[...el.querySelectorAll(".unified-footer-groups a")].filter(a=>a.getClientRects().length);
     const b=el.getBoundingClientRect();
-    return {columns:new Set(rects.map(r=>Math.round(r.left))).size,topAligned:Math.abs(rects[0].top-rects[1].top)<=2,overflow:el.scrollWidth>el.clientWidth+2,linkFits:links.every(a=>{const r=a.getBoundingClientRect();return r.left>=b.left-1&&r.right<=b.right+1}),touch:links.every(a=>a.getBoundingClientRect().height>=43),height:b.height,sectionGaps:[...el.querySelectorAll(".unified-footer-intro,.unified-footer-groups,.unified-footer-app,.unified-footer-bottom")].map((section,i,sections)=>i?Math.max(0,section.getBoundingClientRect().top-sections[i-1].getBoundingClientRect().bottom):0),emptyGroupSpace:groups.map(g=>{const heading=g.querySelector("h3"),list=g.querySelector("ul");if(!heading||!list)return Infinity;return Math.max(0,list.getBoundingClientRect().top-heading.getBoundingClientRect().bottom)+Math.max(0,g.getBoundingClientRect().bottom-list.getBoundingClientRect().bottom)}),legal:el.querySelectorAll(".unified-footer-legal a").length};
+    return {columns:new Set(rects.map(r=>Math.round(r.left))).size,topAligned:Math.abs(rects[0].top-rects[1].top)<=2,overflow:el.scrollWidth>el.clientWidth+2,linkFits:links.every(a=>{const r=a.getBoundingClientRect();return r.left>=b.left-1&&r.right<=b.right+1}),touch:links.every(a=>a.getBoundingClientRect().height>=39),rowHeights:links.map(a=>a.getBoundingClientRect().height),appTarget:el.querySelector(".unified-footer-app-link")?.getBoundingClientRect().height??44,height:b.height,sectionGaps:[...el.querySelectorAll(".unified-footer-intro,.unified-footer-groups,.unified-footer-app,.unified-footer-bottom")].map((section,i,sections)=>i?Math.max(0,section.getBoundingClientRect().top-sections[i-1].getBoundingClientRect().bottom):0),emptyGroupSpace:groups.map(g=>{const heading=g.querySelector("h3"),list=g.querySelector("ul");if(!heading||!list)return Infinity;return Math.max(0,list.getBoundingClientRect().top-heading.getBoundingClientRect().bottom)+Math.max(0,g.getBoundingClientRect().bottom-list.getBoundingClientRect().bottom)}),legal:el.querySelectorAll(".unified-footer-legal a").length};
    });
    assert.equal(footerLayout.columns,v.w<=900?2:4,"footer columns adapt to viewport");
    assert.ok(footerLayout.topAligned&&!footerLayout.overflow&&footerLayout.linkFits,"footer headings and links stay within the layout");
-   if(v.w<=650)assert.ok(footerLayout.touch,"mobile footer targets remain at least 44px");
+   if(v.w<=650){assert.ok(footerLayout.touch,"mobile footer navigation targets remain at least 40px");assert.ok(footerLayout.rowHeights.every(h=>h<=56),"footer link rows remain compact");assert.ok(footerLayout.appTarget>=43,"app action retains 44px target");}
    assert.equal(footerLayout.legal,3,"legal policies have a compact dedicated row");
    // Measure empty gaps, not the total height of valid content (e.g. Hindi wrapping).
    assert.ok(footerLayout.sectionGaps.every(g=>g<=12),"footer section gaps: "+JSON.stringify(footerLayout));
@@ -402,6 +402,7 @@ async function main(){
       window.dispatchEvent(event);
     });
     await page.locator(".nbh-mobile-menu a[href='/install']").waitFor({state:"attached"});
+    await page.locator(".unified-footer-app a[href='/install']").waitFor({state:"visible"});
     await page.waitForFunction(()=>localStorage.getItem("neerva-installed-v1")===null);
     // Also verify a user can recover if the browser never emits an uninstall or installability signal.
     await page.evaluate(()=>window.dispatchEvent(new Event("appinstalled")));
@@ -426,6 +427,7 @@ async function main(){
         assert.equal(await installedPage.locator('a[href="/install"]').count(),0,route+" standalone hides all install links");
         assert.equal(await installedPage.locator(".neerva-install-banner").count(),0,route+" standalone hides banner");
         assert.equal(await installedPage.locator('a[href="/install?recovery=1"]').count(),0,"standalone hides recovery navigation");
+        assert.equal(await installedPage.locator(".unified-footer-app").count(),0,"standalone hides the entire footer install utility");
         assert.equal(await installedPage.getByRole("button",{name:"App removed? Set up again",exact:true}).count(),0,"standalone cannot clear installed state");
         if(route==="/install")await installedPage.getByRole("heading",{name:"Neerva is ready to use"}).waitFor();
       }
@@ -756,7 +758,7 @@ async function main(){
     assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
     // Test actual painted canvas pixels, not merely sample labels or changed image hashes.
     const visualCases=[
-      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100],[750,122],[750,316],[952,220],[1180,390]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350]]},
+      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100],[750,122],[750,316],[949,217],[963,106],[978,263],[1181,347],[1172,387]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350],[1210,292],[1050,360]]},
       {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
       {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]},
       {id:"compact-family",label:/100 gaj family home/,w:351,h:161,paint:[[115,12],[280,36],[150,78],[280,95]],protect:[[140,40],[210,39],[245,115],[15,15]]}
@@ -938,7 +940,8 @@ async function main(){
     await reveal.press("Home");assert.equal(await reveal.inputValue(),"0");
     const preset=page.locator("#nbh-studio-preset");
     assert.equal(await preset.count(),1,"home uses a single accessible plot-size picker");
-    assert.equal(await page.locator(".nbh-studio-progress [aria-current=step]").count(),1,"plot planner exposes its current step");
+    assert.equal(await page.locator(".nbh-studio-progress li[aria-current=step]").count(),1,"plot planner exposes its current step");
+    assert.equal(await page.locator(".nbh-studio-progress li").count(),2,"both planning steps visible");
     assert.ok(await page.locator(".nbh-studio-planner").evaluate(el=>el.scrollWidth<=el.clientWidth+2),"plot planner must fit the viewport");
     assert.equal(await preset.inputValue(),"18x50","default selection matches the displayed plot and generated plan");
     assert.equal(await page.locator(".nbh-studio-photo img").count(),1,"only one independent inspiration photo is shown in the planner");
@@ -963,7 +966,7 @@ async function main(){
     }
     await page.locator("#nbh-studio-preset").selectOption("30x40");
     const roadOptions=page.locator(".nbh-studio-options");
-    if(!(await roadOptions.evaluate(el=>el.open)))await roadOptions.locator("summary").click();
+    assert.equal(await roadOptions.locator("legend").count(),1,"floor and road inputs have a permanent accessible fieldset label");
     await roadOptions.locator("#nbh-studio-floors").selectOption("3");
     await roadOptions.locator("#nbh-studio-road").selectOption("W");
     assert.match((await page.locator(".nbh-studio-generate[href]").getAttribute("href"))??"",/width=30&depth=40&floors=3&road=W/,

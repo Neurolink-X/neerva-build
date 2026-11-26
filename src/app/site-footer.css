@@ -68,3 +68,8 @@ footer.unified-footer .unified-footer-app-link{display:inline-flex;align-items:c
  footer.unified-footer .unified-footer-app-link{padding-inline:9px;font-size:12px;max-width:47%;white-space:normal}
 }
 @media(max-width:340px){footer.unified-footer .unified-footer-app{flex-wrap:wrap}footer.unified-footer .unified-footer-app-link{max-width:100%;width:100%}}
+
+/* Density budget: compact navigation rows, with full-size primary/app actions. */
+footer.unified-footer .unified-footer-groups ul{grid-template-columns:minmax(0,1fr)}
+footer.unified-footer .unified-footer-groups a{justify-content:flex-start;text-align:left}
+@media(max-width:650px){footer.unified-footer .unified-footer-groups a{min-height:40px}footer.unified-footer .unified-footer-legal a{min-height:40px}footer.unified-footer .unified-footer-actions a,footer.unified-footer .unified-footer-app-link{min-height:44px}footer.unified-footer .unified-footer-groups{row-gap:12px}footer.unified-footer .unified-footer-identity h2{font-size:22px}}

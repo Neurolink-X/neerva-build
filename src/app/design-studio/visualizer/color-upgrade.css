@@ -96,3 +96,7 @@
  .visualizer-app .paint-preview-actions{width:100%;grid-template-columns:repeat(2,minmax(0,1fr))}
  .visualizer-app .paint-preview-actions button{min-width:0;white-space:normal;overflow-wrap:anywhere}
 }
+
+.neerva-photo-stage .paint-reference-note{font-size:12px;line-height:1.4;color:#59685e;margin:5px 0 0}
+.paint-live-tools .visualizer-controls,.paint-adjacent-controls section{width:100%}
+@media(max-width:340px){.visualizer-app .paint-preview-actions{grid-template-columns:minmax(0,1fr)}}
