@@ -26,7 +26,7 @@ const colours=[
 export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:PlanBrief;initialOption?:number}={}){
  const [brief,setBrief]=useState<PlanBrief>(()=>initialBrief??initial),[chosen,setChosen]=useState(Number.isInteger(initialOption)&&initialOption>=0&&initialOption<24?initialOption:0);
  const [floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
- const [kit,setKit]=useState<PlanModel["facade"]["kit"]>("simple-parapet");
+ const [kitOverride,setKit]=useState<PlanModel["facade"]["kit"]|null>(null);
  const [threeReady,setThreeReady]=useState(false);
  const threeSection=useRef<HTMLDivElement>(null);
  const [saving,setSaving]=useState(false),[saveInfo,setSaveInfo]=useState("");
@@ -46,6 +46,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const result=useMemo(()=>generateSpatialPortfolio(brief,24),[brief]);
  const activeOption=result.plans[chosen]?chosen:0;
  const draft=result.plans[activeOption]??null;
+ const kit=kitOverride??draft?.facade.kit??"simple-parapet";
  const shade=colours.find(c=>c.id===palette)??colours[0];
  const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,kit,main:shade.main,accent:shade.accent}}:null,[draft,shade,kit]);
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
@@ -143,7 +144,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <p className="nroad-jump"><a href="#selected-plan-drawing">Jump to the selected exact 2D + 3D plan ↓</a></p>
      <div className="nroad-head nroad-choices"><h2>{str("Room-layout options checked for your plot","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} room-layout options, same plot</span></div>
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=>{const {widthFt:w,depthFt:d,roadSide:side}=v.plot;const dim=siteDimensions(w,d,side),road=roadSegment(w,d,side);const boundary=siteOutline(w,d,v.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,side));return <button key={v.id} type="button" aria-pressed={v.id===plan.id}
-       onClick={()=>setChosen(i)}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} role="img" aria-label={`Floor ${floor+1} layout preview ${i+1}: ${w} by ${d} feet, road ${side}`}>
+       onClick={()=>{setChosen(i);setKit(null)}}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} role="img" aria-label={`Floor ${floor+1} layout preview ${i+1}: ${w} by ${d} feet, road ${side}`}>
        <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#f7f5ec" stroke="#55765a" strokeWidth=".45"/>
        {v.rooms.filter(r=>r.floor===floor).map(r=>{const box=roadRect(r,w,d,side);return <rect key={r.id} x={box.x} y={box.y} width={box.w} height={box.d}
         fill={({parking:"#d4e6e0",verandah:"#fff3d9",living:"#e0ead9",dining:"#e8ebd7",kitchen:"#f0dfcc",bedroom:"#dce2f1",bath:"#c7e3f0",stairs:"#d4d4d4",corridor:"#f4efd9",utility:"#e5d5c4",lounge:"#d9e8cd",terrace:"#dce8df"} as Record<string,string>)[r.kind]??"#e7e4da"} stroke="#496452" strokeWidth=".18"/>})}
@@ -166,7 +167,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The selected floor uses the same room footprints and openings. Wall thickness, stairs and finishes remain conceptual, not verified CAD/BIM.</p>
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
-     <div className="nroad-exterior-workspace">{plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select name="facadeKit" aria-label={str("Balcony front style","बालकनी का डिज़ाइन")} value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}
+     <div className="nroad-exterior-workspace">{plan.floors>1&&<label>{str("Balcony front style","बालकनी का डिज़ाइन")}<select name="facadeKit" aria-label={str("Balcony front style","बालकनी का डिज़ाइन")} value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Open glass front</option><option value="stepped-band">Stepped facade band</option><option value="jali-screen">Vertical screen</option><option value="pergola">Pergola shade</option></select></label>}
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>
      <div className="nroad-palette"><h2>{str("House colour mood","घर की रंग योजना")}</h2>
       <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>setPalette(x.id)}>
