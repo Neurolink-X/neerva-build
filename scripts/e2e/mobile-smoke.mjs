@@ -1063,6 +1063,17 @@ async function main(){
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"load"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
+     assert.equal(await page.locator(".nbh-quick-categories a").count(),9,"all material category shortcuts preserved");
+     assert.equal(await page.locator(".nbh-shop-product").count(),4,"featured shelf uses existing catalog products");
+     assert.equal(await page.locator(".nbh-shop-product-link").count(),4);
+     const homeShelf=page.locator(".nbh-shop-products");
+     assert.ok(await homeShelf.evaluate(el=>el.scrollWidth<=el.clientWidth+2),"featured shelf fits mobile");
+     assert.equal(await page.locator(".nbh-mobile-shop-nav a").count(),5);
+     assert.ok(await page.locator(".nbh-mobile-shop-nav").isVisible(),"mobile navigation is visible");
+     const homeCartBefore=await page.locator(".nbh-cart-icon").getAttribute("aria-label");
+     const homeAdd=homeShelf.locator("button.nb-shop-add").first();
+     if(await homeAdd.count()){const homeProductIndex=await homeAdd.evaluate(b=>[...document.querySelectorAll(".nbh-shop-product")].indexOf(b.closest("article")));assert.ok(homeProductIndex>=0);const card=homeShelf.locator(".nbh-shop-product").nth(homeProductIndex);await homeAdd.click();await page.waitForFunction(before=>document.querySelector(".nbh-cart-icon")?.getAttribute("aria-label")!==before,homeCartBefore);const homeStepper=card.locator(".nb-shop-stepper");await homeStepper.waitFor({state:"visible"});await homeStepper.getByRole("button",{name:/Decrease/}).click();}
+     assert.equal(await page.locator(".nbh-explore-grid a").count(),6,"all six discovery tools preserved");
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
      assert.equal(await page.locator(".home-stage-comparison img").count(),2,"paired construction-stage renders");
     assert.equal(await page.getByRole("button",{name:/Replay illustration/}).count(),0,"do not fabricate manual state before dragging");
