@@ -257,7 +257,9 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
      for(let i=0;i<source.count;i++){source.getMatrixAt(i,transform);const mesh=new THREE.Mesh(source.geometry,source.material);transform.decompose(mesh.position,mesh.quaternion,mesh.scale);group.add(mesh);}
      parent.add(group);parent.remove(source);
     }
-    const output=await new GLTFExporter().parseAsync(snapshot,{binary:true,onlyVisible:true,includeCustomExtensions:false});
+    const exportRoot=new THREE.Group();exportRoot.add(snapshot);
+    const exportCamera=camera.clone();exportCamera.name="NeervaRenderCamera";exportRoot.add(exportCamera);exportRoot.updateMatrixWorld(true);
+    const output=await new GLTFExporter().parseAsync(exportRoot,{binary:true,onlyVisible:true,includeCustomExtensions:false});
     if(disposed||!(output instanceof ArrayBuffer))throw new Error("Scene changed or export was unavailable.");
     const href=URL.createObjectURL(new Blob([output],{type:"model/gltf-binary"}));
     try{const a=document.createElement("a");a.href=href;a.download="neerva-"+design.id.replace(/[^a-zA-Z0-9_-]/g,"-")+"-"+mode+".glb";a.click();}
