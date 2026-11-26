@@ -1,6 +1,7 @@
 import {apiData,apiFailed,requireAdmin} from "@/modules/identity/server-auth";
 import {catalogCommand,catalogUpdate,errorFields} from "@/modules/marketplace/write-contract";
-import {isAllowedCategoryUnit} from "@/modules/catalog/category-units";
+import {defaultProductUnit,productUnits} from "@/modules/catalog/category-units";
+import {demoProducts} from "@/modules/catalog/marketplace";
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
 const headers={"Cache-Control":"private, no-store"};
@@ -21,9 +22,32 @@ export async function GET(request:Request){
  ]);if(a.error||b.error||c.error)return apiFailed();
  return apiData({categories:a.data??[],brands:b.data??[],products:(c.data??[]).slice(0,100),nextOffset:(c.data??[]).length>100?offset+100:null});}catch{return apiFailed();}
 }
+async function importReferenceBatch(auth:Exclude<Awaited<ReturnType<typeof requireAdmin>>,Response>,offset:number){
+ const size=50;
+ if(!Number.isInteger(offset)||offset<0||offset%size!==0||offset>=demoProducts.length)return err(400,"Invalid reference import batch.");
+ const slice=demoProducts.slice(offset,offset+size);
+ const [cats,brands]=await Promise.all([auth.client.from("categories").select("id,slug"),auth.client.from("brands").select("id,slug")]);
+ if(cats.error||brands.error)return apiFailed();
+ const catMap=new Map((cats.data??[]).map(c=>[c.slug,c.id])),brandMap=new Map((brands.data??[]).map(b=>[b.slug,b.id]));
+ if(slice.some(p=>!catMap.has(p.category)))return err(409,"Required reference taxonomy is missing. Import halted.");
+ const rows=slice.map(p=>({slug:p.slug,category_id:catMap.get(p.category),brand_id:brandMap.get(p.brand.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""))??null,name:p.name,description:p.description,attributes:{origin:"neerva-static-reference",brand_reference:p.brand,reference_only:true,manufacturer_sku:null,quote_only:!!p.quoteOnly,family_key:p.familyKey??p.slug,specifications:p.specifications,source:p.manufacturerReference??p.referenceSource??null},status:"draft"}));
+ const inserted=await auth.client.from("products").upsert(rows,{onConflict:"slug",ignoreDuplicates:true}).select("id");
+ if(inserted.error)return apiFailed();
+ const matched=await auth.client.from("products").select("id,slug,category_id,status,attributes").in("slug",slice.map(p=>p.slug));
+ if(matched.error||matched.data?.length!==slice.length)return err(503,"Catalog reconciliation could not confirm this batch; retry safely.");
+ const eligible=new Map(matched.data.filter(p=>p.status==="draft"&&p.attributes?.origin==="neerva-static-reference"&&p.category_id===catMap.get(slice.find(r=>r.slug===p.slug)!.category)).map(p=>[p.slug,p.id]));
+ const variants=slice.filter(p=>eligible.has(p.slug)).map(p=>({product_id:eligible.get(p.slug),sku:"NEERVA-REF-"+p.slug,unit:defaultProductUnit(p.category,p.slug),attributes:{reference_only:true,internal_reference_code:true},status:"draft"}));
+ const v=variants.length?await auth.client.from("product_variants").upsert(variants,{onConflict:"sku",ignoreDuplicates:true}).select("id"):{data:[],error:null};
+ if(v.error)return err(503,"Draft products saved; variants could not be confirmed. Retry this batch safely.");
+ const checks=variants.length?await auth.client.from("product_variants").select("sku,product_id,unit,status").in("sku",variants.map(x=>x.sku)):{data:[],error:null};
+ if(checks.error||variants.some(x=>!checks.data?.some(y=>y.sku===x.sku&&y.product_id===x.product_id&&y.unit===x.unit&&y.status==="draft")))return err(409,"Reference SKU conflict or unit mismatch. Existing records were not overwritten.");
+ return apiData({referenceRows:demoProducts.length,processed:slice.length,createdProducts:inserted.data?.length??0,createdVariants:v.data?.length??0,existingOrReviewed:slice.length-eligible.size,nextOffset:offset+size<demoProducts.length?offset+size:null,publication:"draft_only",pricesCreated:0,stockCreated:0});
+}
 export async function POST(request:Request){
  const auth=await requireAdmin(request);if(auth instanceof Response)return auth;
- const check=catalogCommand.safeParse(await json(request));if(!check.success)return err(400,"Invalid catalog item.",errorFields(check.error));
+ const body=await json(request);
+ if(body&&typeof body==="object"&&"action" in body&&body.action==="import-reference-drafts"){if(!("offset" in body)||typeof body.offset!=="number")return err(400,"Invalid import request.");try{return await importReferenceBatch(auth,body.offset)}catch{return apiFailed()}}
+ const check=catalogCommand.safeParse(body);if(!check.success)return err(400,"Invalid catalog item.",errorFields(check.error));
  const data=check.data;let table:string,row:Record<string,unknown>;
  switch(data.kind){
  case "category":table="categories";row={slug:data.slug,name_en:data.nameEn,name_hi:data.nameHi,pricing_mode:data.pricingMode,status:"draft"};break;
@@ -37,10 +61,10 @@ export async function POST(request:Request){
   table="products";row={slug:data.slug,name:data.name,description:data.description,category_id:data.categoryId,brand_id:data.brandId??null,attributes:data.attributes,status:"draft"};break;
  }
  case "variant":{
-  const {data:product,error}=await auth.client.from("products").select("category_id").eq("id",data.productId).maybeSingle();
+  const {data:product,error}=await auth.client.from("products").select("category_id,slug").eq("id",data.productId).maybeSingle();
   if(error||!product)return err(404,"Product does not exist.");
   const {data:category,error:categoryError}=await auth.client.from("categories").select("slug").eq("id",product.category_id).maybeSingle();
-  if(categoryError||!category||!isAllowedCategoryUnit(String(category.slug),data.unit))return err(400,"Unit does not match the product category.");
+  if(categoryError||!category||!productUnits(String(category.slug),String(product.slug)).some(u=>u===data.unit))return err(400,"Unit does not match the product category.");
   table="product_variants";row={product_id:data.productId,sku:data.sku,unit:data.unit,attributes:data.attributes,status:"draft"};break;
  }
  }
@@ -75,10 +99,10 @@ export async function PATCH(request:Request){
   if(data.kind==="variant"){
    const {data:variant}=await auth.client.from("product_variants").select("product_id,unit").eq("id",data.id).maybeSingle();
    if(!variant)return err(404,"Variant not found.");
-   const {data:product}=await auth.client.from("products").select("status,category_id").eq("id",variant.product_id).maybeSingle();
+   const {data:product}=await auth.client.from("products").select("status,category_id,slug").eq("id",variant.product_id).maybeSingle();
    if(product?.status!=="published")return err(409,"Publish the parent product first.");
    const {data:cat}=await auth.client.from("categories").select("slug,status").eq("id",product.category_id).maybeSingle();
-   if(cat?.status!=="published"||!isAllowedCategoryUnit(String(cat.slug),String(variant.unit)))return err(409,"Publish the matching category and valid unit first.");
+   if(cat?.status!=="published"||!productUnits(String(cat.slug),String(product.slug)).some(u=>u===variant.unit))return err(409,"Publish the matching category and valid unit first.");
   }
  }
  try{const {data:saved,error}=await auth.client.from(table).update(row).eq("id",data.id).select("*").maybeSingle();
