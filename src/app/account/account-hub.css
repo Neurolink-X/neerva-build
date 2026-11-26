@@ -1,0 +1,105 @@
+
+.naccount-page{max-width:820px;margin:0 auto;padding:22px 16px 60px;min-width:0}
+.naccount-hub{display:grid;gap:14px;min-width:0}
+.naccount-profile{position:relative;display:grid;justify-items:center;gap:6px;text-align:center;background:#254738;color:#fff;border-radius:16px;padding:24px 42px;overflow-wrap:anywhere;min-width:0}
+.naccount-profile h2{color:#fff;margin:6px 0 0;font-size:clamp(24px,5vw,32px)}
+.naccount-profile p,.naccount-profile small{color:#e2eee4;margin:0;line-height:1.5}
+.naccount-avatar{display:grid;place-items:center;background:#edf4eb;color:#254738;border-radius:50%;width:72px;height:72px;font-size:26px;font-weight:700}
+.naccount-avatar svg{width:34px;height:34px}
+.naccount-settings{position:absolute;right:8px;top:8px;display:grid;place-items:center;color:white;width:44px;height:44px;border-radius:8px;background:transparent;border:1px solid #89a18d;cursor:pointer}
+.naccount-shortcuts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.naccount-shortcuts a{display:grid;justify-items:center;align-content:center;gap:7px;min-height:82px;padding:9px;border:1px solid #d6e0d4;background:white;border-radius:10px;text-align:center;font-size:12px;line-height:1.3;overflow-wrap:anywhere;min-width:0;color:#254738}
+.naccount-menu{border:1px solid #d6e0d4;border-radius:12px;background:#fff;padding:0 12px;min-width:0}
+.naccount-menu h3{font-size:13px;color:#647769;margin:14px 0 6px;letter-spacing:.04em}
+.naccount-menu a{display:grid;grid-template-columns:24px minmax(0,1fr) 14px;align-items:center;gap:12px;min-height:64px;padding:10px 2px;border-top:1px solid #edf0eb;color:#254738}
+.naccount-menu a strong,.naccount-menu a small{display:block;overflow-wrap:anywhere;line-height:1.4}
+.naccount-menu a small{font-size:12px;color:#596c60;margin-top:3px}
+.naccount-menu a>span:last-child{font-size:24px;text-align:right}
+.naccount-roles{display:grid;gap:8px;padding:12px;border:1px solid #d6e0d4;border-radius:10px}
+.naccount-roles a{display:flex;align-items:center;min-height:44px;font-weight:700}
+.naccount-settings-panel{border:1px solid #d6e0d4;border-radius:10px;padding:12px;background:white;scroll-margin-top:20px}
+.naccount-settings-panel summary{cursor:pointer;min-height:44px;font-weight:700;align-content:center}
+.naccount-settings-panel p{font-size:13px;line-height:1.5}
+.naccount-logout{border:1px solid #e4c3bd;background:#fff;color:#a23025;border-radius:10px;padding:12px;min-height:44px;font-weight:700;cursor:pointer}
+.naccount-hub :is(a,button,summary):focus-visible,.naccount-addresses :is(a,button):focus-visible{outline:2px solid #ad6a42;outline-offset:2px}
+.naccount-addresses{display:grid;gap:12px;min-width:0}
+.naccount-address{border:1px solid #d6e0d4;border-radius:12px;background:white;padding:12px;min-width:0;overflow-wrap:anywhere}
+.naccount-address p{margin:6px 0;font-size:14px;line-height:1.5}
+.naccount-address-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.naccount-address-actions button{min-height:44px}
+.naccount-addresses .account-auth-form{padding:12px;border:1px solid #d6e0d4;border-radius:12px;background:white;min-width:0}
+.naccount-addresses :is(input,textarea){min-width:0;width:100%;box-sizing:border-box}
+.naccount-picker{border:1px solid #d6e0d4;border-radius:10px;padding:12px;background:#f4f8f3;min-width:0}
+.naccount-picker>summary{font-weight:700;cursor:pointer;min-height:44px;align-content:center}
+@media(hover:hover) and (pointer:fine){.naccount-shortcuts a:hover,.naccount-menu a:hover{background:#edf4eb}.naccount-logout:hover{background:#fff1ee}}
+@media(max-width:360px){.naccount-profile{padding:24px 34px}.naccount-shortcuts{gap:5px}.naccount-shortcuts a{font-size:11px;padding:6px}.naccount-menu{padding-inline:9px}}
+
+/* Account layouts use available space, not device detection. Avoid hiding
+   overflow: long labels and private address content must remain readable. */
+.naccount-page{width:100%;max-width:1160px;padding:clamp(14px,2.5vw,30px) clamp(10px,3vw,28px) clamp(32px,5vw,72px)}
+.account-status-page{padding:clamp(24px,4vw,48px) max(16px,calc((100% - 1104px)/2));}
+.account-status-page h1{font-size:clamp(30px,5vw,48px);line-height:1.12;overflow-wrap:anywhere;margin:10px 0}
+.account-status-page>p{font-size:clamp(14px,1.5vw,16px);margin:0;line-height:1.55}
+.naccount-page .account-access-card{width:100%;min-width:0;padding:clamp(10px,2vw,24px)}
+.naccount-page .account-access-card:not(:has(.naccount-hub)){max-width:660px;margin-inline:auto}
+.naccount-page .account-access-card:has(.naccount-hub){border:0;background:transparent;padding:0}
+.naccount-page .account-mode-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:16px}
+.naccount-page .account-mode-switch button{padding:10px 6px;font-size:14px;white-space:normal;overflow-wrap:anywhere}
+.naccount-page .account-auth-form,.naccount-page .account-auth-form label,.naccount-settings-panel .account-auth-form{min-width:0}
+.naccount-page .account-auth-form :is(input:not([type=checkbox]),select,textarea),.naccount-settings-panel input{width:100%;min-width:0;max-width:100%;min-height:48px;font-size:16px;box-sizing:border-box}
+.naccount-page .account-auth-form button,.naccount-hub button,.naccount-picker button{white-space:normal;overflow-wrap:anywhere;max-width:100%}
+.naccount-hub,.naccount-sections,.naccount-secondary{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(10px,1.7vw,20px);min-width:0;align-items:start}
+.naccount-profile{padding:22px clamp(44px,7vw,72px);gap:8px}
+.naccount-profile :is(h2,p,small){max-width:100%;min-width:0;overflow-wrap:anywhere}
+.naccount-shortcuts{gap:clamp(6px,1.5vw,14px);grid-auto-rows:1fr;min-width:0}
+.naccount-shortcuts a{min-height:88px;font-size:clamp(12px,1.5vw,15px)}
+.naccount-menu{padding:0 clamp(10px,1.8vw,20px) 4px}
+.naccount-menu h3{font-size:14px;margin:15px 0 10px;line-height:1.4;color:#425c49}
+.naccount-menu a{min-width:0;min-height:68px;gap:10px;border-radius:6px}
+.naccount-menu a>span{min-width:0}
+.naccount-menu a strong{font-size:14px}
+.naccount-menu a small{font-size:13px}
+.naccount-logout{width:100%;min-height:48px}
+.naccount-notice{margin:0;padding:10px 12px;background:#f0f5ed;border:1px solid #d6e0d4;border-radius:8px;overflow-wrap:anywhere}
+.naccount-address-list{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0;align-content:start}
+.naccount-address{display:flex;flex-direction:column;gap:4px;min-width:0}
+.naccount-address-actions{margin-top:auto;padding-top:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,96px),1fr));gap:8px}
+.naccount-address-actions button{min-width:0;padding:10px 6px;white-space:normal;overflow-wrap:anywhere}
+.naccount-address-list .naccount-empty{margin:0;padding:16px;background:#fff;border:1px dashed #b8c9ba;border-radius:10px;line-height:1.55}
+.naccount-address-form{grid-template-columns:minmax(0,1fr);gap:12px}
+.naccount-address-form h2,.naccount-address-full{grid-column:1/-1}
+.naccount-address-form h2{font-size:clamp(20px,3vw,26px);margin:0 0 6px}
+.naccount-address-form textarea{min-height:100px;resize:vertical;padding:10px;border:1px solid #9eafa0;border-radius:10px}
+.naccount-picker{display:grid;gap:10px;min-width:0}
+.naccount-picker .naccount-address-list{grid-template-columns:minmax(0,1fr)}
+.naccount-picker .naccount-address>button{width:100%;margin-top:8px;min-height:44px}
+.naccount-addresses-manager>.naccount-notice{grid-column:1/-1}
+@media(min-width:600px){
+ .naccount-profile{padding-block:30px}
+ .naccount-addresses-manager .naccount-address-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .naccount-addresses-manager .naccount-address-form label:nth-of-type(1){grid-column:1/-1}
+ .naccount-address-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(min-width:900px){
+ .naccount-sections{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+ .naccount-profile{min-height:200px}
+ .naccount-addresses-manager{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:20px}
+ .naccount-addresses-manager .naccount-address-list{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:359px){
+ .naccount-profile{padding-inline:38px}
+ .naccount-menu a{grid-template-columns:21px minmax(0,1fr) 10px;gap:7px}
+ .naccount-menu a strong{font-size:13px}
+ .naccount-menu a small{font-size:12px}
+ .naccount-shortcuts a{padding:6px 3px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){.naccount-page :is(a,button),.naccount-picker button{transition:none;scroll-behavior:auto}}
+
+.naccount-private-feed{display:grid;gap:14px;min-width:0}.naccount-private-feed>button{justify-self:start;min-height:44px}
+.naccount-feed-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;min-width:0}
+.naccount-feed-grid article :is(button,a){margin-top:auto;min-height:44px;width:100%;white-space:normal;overflow-wrap:anywhere}
+.naccount-saved-plan{min-width:0;padding:clamp(10px,2vw,22px);background:#fff;border:1px solid #d6e0d4;border-radius:12px;display:grid;gap:12px}
+.naccount-saved-plan :is(svg,canvas){max-width:100%}.naccount-saved-plan .nroad-diagram{width:100%;height:auto}
+.naccount-saved-plan .naccount-address-actions button[aria-pressed=true]{background:#254738;color:#fff}
+
+.naccount-locale{margin-top:16px;border-top:1px solid #d6e0d4;padding-top:12px}.naccount-locale>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}.naccount-locale button{min-height:44px}.naccount-locale button[aria-pressed=true]{background:#254738;color:#fff}

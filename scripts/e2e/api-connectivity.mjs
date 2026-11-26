@@ -1,8 +1,10 @@
-// Read-only authenticated API sweep against the disposable local stack.
+// Authenticated API sweep against the disposable local stack. Dynamic routes
+// use real fixture records created through their public contracts, never literal brackets.
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {randomUUID} from "node:crypto";
 import {createClient} from "@supabase/supabase-js";
+import {generateSpatialPortfolio} from "../../src/modules/studio/road-generator.ts";
 const url=process.env.NEERVA_E2E_SUPABASE_URL;
 assert.equal(url,"http://127.0.0.1:54321");
 assert.equal(process.env.NEERVA_E2E_DISPOSABLE,"yes");
@@ -22,9 +24,25 @@ assert.ok(manifest.length>=50);
 const query={"/api/admin/dealer-members":"?tenant="+membership.data.tenant_id,"/api/catalog":"?limit=1","/api/admin/direct-order-operations":"?orderId="+randomUUID(),"/api/customer/dealer-comparison":"?category=cement&slug=ppc-cement-50kg&pin=208001&qty=1","/api/studio/city-rules":"?city=kanpur","/api/studio/payments":"?product=home_studio"};
 const publicPaths=new Set(["/api/catalog","/api/catalog/prices","/api/catalog/offers","/api/studio/config","/api/studio/city-rules"]);
 const results=[];
-async function check(path,method,token,expected,scope){
+const dynamicPaths=new Map();
+const detailRoute="/api/studio/projects/[id]";
+let savedProjectId=null;
+if(manifest.some(r=>r.path===detailRoute)){
+ const brief={widthFt:18,depthFt:50,roadSide:"N",floors:2,bedrooms:3,parking:true,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
+ const plan=generateSpatialPortfolio(brief,24).plans[0];assert.ok(plan,"real validated fixture geometry required");
+ const response=await fetch("http://127.0.0.1:3000/api/studio/projects",{method:"POST",redirect:"error",signal:AbortSignal.timeout(20000),headers:{Authorization:"Bearer "+customer,"Content-Type":"application/json"},body:JSON.stringify({idempotencyKey:randomUUID(),title:"Isolated API test concept",brief,variant:plan.variant,planId:plan.id})});
+ assert.equal(response.status,201,"saved-design fixture must be created through the authenticated API");
+ const data=await response.json();savedProjectId=data.project?.id;assert.match(savedProjectId??"",/^[0-9a-f-]{36}$/i);
+ dynamicPaths.set(detailRoute,"/api/studio/projects/"+savedProjectId);
+}
+function resolvedPath(path){
+ if(dynamicPaths.has(path))return dynamicPaths.get(path);
+ assert.ok(!path.includes("["),"No concrete fixture resolver registered for "+path);
+ return path;
+}
+async function check(path,method,token,expected,scope,override){
  try{
- const r=await fetch("http://127.0.0.1:3000"+path+(query[path]??""),{method,redirect:"error",signal:AbortSignal.timeout(20000),headers:{Accept:"application/json",...(token?{Authorization:"Bearer "+token}:{})}});
+ const r=await fetch("http://127.0.0.1:3000"+(override??resolvedPath(path))+(query[path]??""),{method,redirect:"error",signal:AbortSignal.timeout(20000),headers:{Accept:"application/json",...(token?{Authorization:"Bearer "+token}:{})}});
  const json=(r.headers.get("content-type")??"").includes("application/json");await r.arrayBuffer();
  const ok=expected.includes(r.status)&&json;
  results.push({path,method,scope,status:r.status,ok});
@@ -39,6 +57,15 @@ for(const {path,methods} of manifest){
   await check(path,"GET",isPublic?null:isAdmin?admin:isDealer?dealer:customer,[200],"authorized_read");
   if(isAdmin||isDealer)await check(path,"GET",customer,[403],"wrong_role_denied");
  }
+}
+if(savedProjectId){
+ await check(detailRoute,"GET",dealer,[404],"cross_owner_denied");
+ await check(detailRoute,"GET",customer,[404],"missing_record","/api/studio/projects/"+randomUUID());
+ await check(detailRoute,"GET",customer,[404],"invalid_id","/api/studio/projects/invalid-id");
+ const detail=await fetch("http://127.0.0.1:3000"+resolvedPath(detailRoute),{headers:{Authorization:"Bearer "+customer},signal:AbortSignal.timeout(20000)});
+ assert.equal(detail.status,200);assert.match(detail.headers.get("cache-control")??"",/private, no-store/);
+ const body=await detail.json();assert.equal(body.project.id,savedProjectId);assert.equal(body.project.plan.conceptOnly,true);
+ assert.equal(body.project.plan.plot.widthFt,18);assert.equal(body.project.plan.floors,2);
 }
 for(const row of results)console.log(JSON.stringify(row));
 assert.deepEqual(results.filter(r=>!r.ok),[],"API connectivity or authorization failure");
