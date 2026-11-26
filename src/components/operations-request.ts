@@ -2,7 +2,7 @@
 import {failureMessage} from "@/modules/observability/error-guidance";
 import {trustedApiPath,readWithRecovery} from "@/modules/observability/recovery";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
-export async function operationsRequest<T>(path:string,method="GET",body?:unknown):Promise<T>{
+export async function operationsRequest<T>(path:string,method="GET",body?:unknown,expectedUserId?:string):Promise<T>{
  const destination=trustedApiPath(path,window.location.origin);
  if(!destination)throw Error("Unsafe request destination.");
  const client=createNeervaBrowserClient();
@@ -11,6 +11,7 @@ export async function operationsRequest<T>(path:string,method="GET",body?:unknow
  if(session.error)throw Error("Account service is temporarily unavailable. Please retry.");
  const current=session.data.session;
  if(!current)throw Error("Sign in using an approved account.");
+ if(expectedUserId&&current.user.id!==expectedUserId)throw Error("Your account changed. Review your details before continuing.");
  const verb=method.toUpperCase();
  const request=(token:string)=>fetch(destination,{method:verb,cache:"no-store",redirect:"error",signal:AbortSignal.timeout(verb==="GET"?12000:20000),headers:{Authorization:"Bearer "+token,"Content-Type":"application/json"},...(body===undefined?{}:{body:JSON.stringify(body)})});
  let retried=false;
