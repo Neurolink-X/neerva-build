@@ -13,7 +13,7 @@ import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 import {PlanShortlist} from "./plan-shortlist";
 import {briefKey} from "@/modules/studio/plan-shortlist";
-import {allowStudioWarmup,type NetworkHint} from "@/modules/navigation/intent";
+import {allowStudioWarmup,studioWarmupDelay,type NetworkHint} from "@/modules/navigation/intent";
 const Building3D=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{
  ssr:false,loading:()=> <p role="status" className="nroad-loading">Loading plan-matched 3D viewer… The 2D plan is available immediately.</p>
 });
@@ -63,7 +63,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
    void import("./studio-building-3d").then(()=>{if(!disposed)node!.dataset.warmState="ready"}).catch(()=>{if(!disposed)node!.dataset.warmState="failed"});
   }
   function schedule(){cancel();if(disposed||started||!eligible()||document.readyState!=="complete")return;
-   timer=setTimeout(()=>{timer=undefined;if(!eligible()||disposed)return;if(typeof window.requestIdleCallback==="function")idle=window.requestIdleCallback(warm);else warm()},900);
+   timer=setTimeout(()=>{timer=undefined;if(!eligible()||disposed)return;if(typeof window.requestIdleCallback==="function")idle=window.requestIdleCallback(warm);else warm()},studioWarmupDelay(conn??{}));
   }
   window.addEventListener("load",schedule);window.addEventListener("online",schedule);window.addEventListener("offline",schedule);document.addEventListener("visibilitychange",schedule);conn?.addEventListener?.("change",schedule);schedule();
   return()=>{disposed=true;cancel();window.removeEventListener("load",schedule);window.removeEventListener("online",schedule);window.removeEventListener("offline",schedule);document.removeEventListener("visibilitychange",schedule);conn?.removeEventListener?.("change",schedule)};

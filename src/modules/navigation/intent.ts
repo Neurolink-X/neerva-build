@@ -20,13 +20,19 @@ export function allowSpeculativeNetwork(connection:NetworkHint|undefined,online=
   (connection.rtt===undefined||connection.rtt<=300);
 }
 
-/** Heavy assets require stronger evidence than ordinary route warming.
- * Unknown network / CPU => demand only; browsers that omit deviceMemory may
- * qualify with a reported capable CPU. Never speculate in hidden/offline tabs. */
+/** Studio assets may warm from 1 Mbps, only after useful content loads and
+ * when measured latency and device capacity permit. This is independent of
+ * route prefetch; unknown/slow links, hidden tabs and data saver stay on demand. */
 export function allowStudioWarmup(connection:NetworkHint|undefined,device:{cores?:number;memory?:number},online=true,visible=true):boolean{
- return allowSpeculativeNetwork(connection,online,visible)&&
-  typeof connection?.downlink==="number"&&connection.downlink>=5&&
+ return online&&visible&&!!connection&&!connection.saveData&&
+  (connection.effectiveType==="4g"||connection.effectiveType==="3g")&&
+  typeof connection.downlink==="number"&&Number.isFinite(connection.downlink)&&connection.downlink>=1&&
   typeof connection.rtt==="number"&&connection.rtt>=0&&connection.rtt<=150&&
   typeof device.cores==="number"&&device.cores>=4&&
   (device.memory===undefined||device.memory>=4);
+}
+
+/** A slower eligible link gets a longer quiet period before optional work. */
+export function studioWarmupDelay(connection:NetworkHint):number{
+ return (connection.downlink??0)<2?1800:900;
 }
