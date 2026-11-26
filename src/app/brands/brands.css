@@ -89,3 +89,16 @@
 /* Brand identification and product photography occupy separate visual slots. */
 .br-category-tile>.nb-brand-name{display:none}.br-category-tile:has(>.nb-brand-name){justify-content:center}.br-category-tile>.nb-brand-mark{max-width:100%;height:44px}.br-category-tile>.nb-brand-mark img{max-width:100%;object-fit:contain}.br-category-name{display:block;max-width:100%;word-break:normal;overflow-wrap:anywhere}.br-category-tile{box-sizing:border-box;align-content:center}.br-category-grid{align-items:stretch}
 @media(max-width:350px){.br-category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Paint shopping: task-first navigation, bounded product cards, honest fallback. */
+.paint-showroom-journey,.paint-page-nav,.paint-result-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.paint-showroom-journey a,.paint-page-nav button{min-height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #cbd8cb;border-radius:9px;padding:8px 12px;background:#f5f7f1;color:#254738;font:inherit;text-decoration:none;flex:1 1 130px}
+.paint-page-nav button:disabled{opacity:.5;cursor:not-allowed}.paint-page-nav span{font-size:13px;text-align:center}
+.paint-result-bar{justify-content:space-between}.paint-result-bar p{margin:0}.paint-result-bar button{min-height:44px}
+#paint-products,#paint-estimate{scroll-margin-top:20px}
+.paint-reference-identity{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;padding:12px;background:linear-gradient(145deg,#f5f5ee,#e3e9df);color:#254738;text-align:center;overflow:auto}
+.paint-reference-identity strong{font-size:clamp(12px,2vw,17px);line-height:1.2;overflow-wrap:anywhere;max-width:100%}
+.paint-reference-identity small{font-size:11px;line-height:1.3}.paint-reference-brand{font-weight:800;font-size:11px;letter-spacing:.06em}
+.paint-reference-swatches{display:flex;gap:4px}.paint-reference-swatches i{width:18px;height:18px;border-radius:5px;background:#d6c7b3}.paint-reference-swatches i:nth-child(2){background:#a8bba4}.paint-reference-swatches i:nth-child(3){background:#647d74}.paint-reference-swatches i:nth-child(4){background:#b88066}
+.paint-showroom .tile-show-card{min-width:0;overflow-wrap:anywhere}
+@media(max-width:350px){.paint-showroom-journey a{flex-basis:100%}.paint-page-nav button{flex-basis:90px}}
