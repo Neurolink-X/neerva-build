@@ -29,6 +29,8 @@ self.addEventListener("fetch",event=>{
    const response=await fetch(request);return {response,done:cache&&cacheable(response)?store(cache,request,response.clone()).catch(()=>{}):Promise.resolve()};})();
   event.respondWith(task.then(x=>x.response));event.waitUntil(task.then(x=>x.done).catch(()=>{}));return;
  }
- if(request.mode!=="navigate"||request.headers.has("authorization")||url.search)return;
+ // Preserve the existing offline fallback for public query-based navigation.
+ // Documents are always network-first and never placed in the asset cache.
+ if(request.mode!=="navigate"||request.headers.has("authorization"))return;
  event.respondWith(fetch(request).catch(async()=>{let response;try{response=await caches.match(OFFLINE);}catch{}return response??new Response("Offline. No request was submitted.",{status:503,headers:{"Content-Type":"text/plain"}});}));
 });
