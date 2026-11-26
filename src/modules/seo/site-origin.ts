@@ -1,11 +1,19 @@
-/** Fail closed: a custom hostname is never canonical before explicit cutover approval. */
-export function canonicalPublicOrigin(env:Record<string,string|undefined>):string{
- if(env.NEERVA_CUSTOM_DOMAIN_ACTIVE==="true"&&env.NEXT_PUBLIC_SITE_URL==="https://neerva.in")return "https://neerva.in";
- const supplied=env.NEXT_PUBLIC_SITE_URL;
- if(supplied==="https://neerva-build.vercel.app")return supplied;
- // Do not derive SEO authority from arbitrary request Host/X-Forwarded-Host input.
- return "https://neerva-build.vercel.app";
+const DEFAULT_ORIGIN="https://neerva-build.vercel.app";
+const CUSTOM_ORIGINS=["https://neerva.in","https://www.neerva.in"] as const;
+type Env=Record<string,string|undefined>;
+export function customDomainCutoverReady(env:Env):boolean{
+ return env.NEERVA_CUSTOM_DOMAIN_ACTIVE==="true"&&CUSTOM_ORIGINS.some(origin=>origin===env.NEXT_PUBLIC_SITE_URL);
 }
-export function customDomainCutoverReady(env:Record<string,string|undefined>):boolean{
- return env.NEERVA_CUSTOM_DOMAIN_ACTIVE==="true"&&env.NEXT_PUBLIC_SITE_URL==="https://neerva.in";
+/** Never use an untrusted request Host as SEO authority. */
+export function canonicalPublicOrigin(env:Env):string{
+ return customDomainCutoverReady(env)?env.NEXT_PUBLIC_SITE_URL!:DEFAULT_ORIGIN;
+}
+/** Use only the chosen verified custom host; never redirect that host to itself. */
+export function canonicalRedirects(env:Env){
+ if(env.VERCEL_ENV!=="production"||!customDomainCutoverReady(env))return [];
+ const origin=canonicalPublicOrigin(env);
+ const canonicalHost=new URL(origin).hostname;
+ return [new URL(DEFAULT_ORIGIN).hostname,...CUSTOM_ORIGINS.map(value=>new URL(value).hostname)]
+  .filter(host=>host!==canonicalHost)
+  .map(host=>({source:"/:path*",has:[{type:"host" as const,value:host}],destination:origin+"/:path*",permanent:true}));
 }

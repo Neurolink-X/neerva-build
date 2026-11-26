@@ -3,5 +3,5 @@ export type IndexingEnv=NodeJS.ProcessEnv|{VERCEL_ENV?:string;NEXT_PUBLIC_SITE_I
 export function publicIndexingEnabled(env:IndexingEnv):boolean{
  if(env.VERCEL_ENV!=="production"||env.NEXT_PUBLIC_SITE_INDEXABLE!=="true")return false;
  return env.NEXT_PUBLIC_SITE_URL==="https://neerva-build.vercel.app"||
-  (env.NEXT_PUBLIC_SITE_URL==="https://neerva.in"&&env.NEERVA_CUSTOM_DOMAIN_ACTIVE==="true");
+  ((env.NEXT_PUBLIC_SITE_URL==="https://neerva.in"||env.NEXT_PUBLIC_SITE_URL==="https://www.neerva.in")&&env.NEERVA_CUSTOM_DOMAIN_ACTIVE==="true");
 }
