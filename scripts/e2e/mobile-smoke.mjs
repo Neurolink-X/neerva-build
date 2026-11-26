@@ -363,7 +363,8 @@ async function main(){
     const sizes=v.w===390?[[320,568],[360,800],[390,844],[412,915],[540,720],[768,1024],[844,390]]:[[1024,768],[1280,720],[1440,900],[1920,1080],[2560,1440]];
     for(const route of ["/design-studio/road-planner","/design-studio/portfolio?width=18&depth=50&road=N&bedrooms=3&floors=2&parking=true"]){
      await page.goto(base+route,{waitUntil:"load"});
-     await page.locator(".nbd-building canvas, .nbd-building svg").first().waitFor();
+     await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
+     await page.locator(".nbd-building canvas, .nbd-building svg").first().waitFor({timeout:30000});
      for(const [width,height] of sizes){
       await page.setViewportSize({width,height});
       for(const language of ["English","Hindi"]){
