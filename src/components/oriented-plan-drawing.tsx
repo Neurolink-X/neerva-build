@@ -30,7 +30,7 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
    {rooms.map(r=>{const rect=roadRect(r,w,d,side),cx=rect.x+rect.w/2,cy=rect.y+rect.d/2,small=Math.min(rect.w,rect.d)<5,label=r.kind==="bedroom"?r.label:(shortLabels[r.kind]??r.label),font=Math.min(small?.65:1.07,rect.w/(Math.max(label.length,1)*.64),rect.d*.20);
     return <g key={r.id}>
      <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={colors[r.kind]??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
-     <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font}><title>{r.label}</title>{label}</text>
+     <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font}><title>{r.label}</title>{label.toUpperCase()}</text>
      <text x={cx} y={cy+(small?.6:.95)} textAnchor="middle" fill="#526955" fontSize={Math.min(small?.52:.84,rect.w*.1,rect.d*.18)}>{r.w.toFixed(1)} × {r.d.toFixed(1)} ft</text>
     </g>;
    })}
