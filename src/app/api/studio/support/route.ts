@@ -11,7 +11,7 @@ export async function GET(request:Request){
   .eq("user_id",auth.userId).order("created_at",{ascending:false}).limit(30);
  if(error)return apiFailed();
  const orders=await auth.client.from("studio_paid_orders").select("id,product_code,status,created_at,amount_paise").eq("user_id",auth.userId).order("created_at",{ascending:false}).limit(50);
- return Response.json({tickets:data??[],orders:orders.data??[]},{headers:hdr});
+ return Response.json({tickets:data??[],orders:orders.data??[],ordersUnavailable:!!orders.error},{headers:hdr});
 }
 export async function POST(request:Request){
  const auth=await requireAuth(request);if(auth instanceof Response)return auth;
