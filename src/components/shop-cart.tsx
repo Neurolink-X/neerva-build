@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import {useState,useSyncExternalStore} from "react";
-import {DIRECT_CART_KEY,safeDirectCart,addDirectCart,cartKey,changeDirectCartQuantity,type CartItem} from "@/modules/orders/direct-cart";
+import {DIRECT_CART_KEY,safeDirectCart,addDirectCart,mergePreviousMaterials,cartKey,changeDirectCartQuantity,type CartItem} from "@/modules/orders/direct-cart";
 import {defaultProductUnit,materialUnitLabel,quantityIncrement,quantityPrecision,initialMaterialQuantity,validProductQuantity} from "@/modules/catalog/category-units";
 const EMPTY:CartItem[]=[];let snapshot=EMPTY,raw:string|null=null;
 const eventName="neerva:order-cart";
@@ -9,6 +9,7 @@ function read(){try{const next=localStorage.getItem(DIRECT_CART_KEY)??"[]";if(ne
 function subscribe(fn:()=>void){window.addEventListener(eventName,fn);window.addEventListener("storage",fn);return()=>{window.removeEventListener(eventName,fn);window.removeEventListener("storage",fn)}}
 export function useShopCart(){return useSyncExternalStore(subscribe,read,()=>EMPTY)}
 export function writeShopCart(rows:CartItem[]){try{const clean=safeDirectCart(rows);localStorage.setItem(DIRECT_CART_KEY,JSON.stringify(clean));window.dispatchEvent(new Event(eventName));return true}catch{return false}}
+export function repeatShopMaterials(items:unknown){const next=mergePreviousMaterials(read(),items);return next!==null&&writeShopCart(next)}
 export function addShopItem(item:CartItem){const old=read(),next=addDirectCart(old,item);return JSON.stringify(old)!==JSON.stringify(next)&&writeShopCart(next)}
 export function setShopQuantity(key:string,n:number){const old=read();const line=old.find(i=>cartKey(i)===key);if(!line||(n!==0&&!validProductQuantity(line.category,line.productSlug,line.unit,n)))return false;return writeShopCart(n===0?old.filter(x=>cartKey(x)!==key):changeDirectCartQuantity(old,key,n))}
 export function clearSubmittedCart(items:CartItem[]){const submitted=new Map(items.map(i=>[cartKey(i),i.quantity]));return writeShopCart(read().flatMap(i=>{const n=Math.round((i.quantity-(submitted.get(cartKey(i))??0))*1000)/1000;return n>0?[{...i,quantity:n}]:[]}))}
