@@ -119,9 +119,10 @@ async function main(){
      await page.getByRole("button",{name:"Paint + design",exact:true}).click();
      const pattern=page.locator(".wall-pattern-options button").first();
      await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
-     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");if(!c)return false;const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0},null,{timeout:3000});
      await pattern.click();
-     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");if(!c)return false;const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0},null,{timeout:3000});
+     assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
+     const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
+     assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");
     }
     await gallery.screenshot({path:path.join("test-results/mobile",v.w+"-facade-gallery.png"),animations:"disabled"});
    }finally{await ctx.close()}
