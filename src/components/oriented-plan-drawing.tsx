@@ -2,6 +2,7 @@
 import type {Opening,PlanModel,Room} from "@/modules/studio/plan-model";
 import {roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {siteOutline} from "@/modules/studio/site-shape";
+const shortLabels:Record<string,string>={parking:"Car parking",verandah:"Verandah",living:"Living room",dining:"Dining / family",kitchen:"Kitchen",bath:"Bath / WC",stairs:"Stairs",corridor:"Passage",utility:"Utility",balcony:"Balcony",terrace:"Terrace",lounge:"Lounge"};
 const colors:Record<string,string>={parking:"#d9e5e1",verandah:"#edebd5",living:"#dceee1",dining:"#e6edd6",kitchen:"#f2e5d2",bedroom:"#e7e8f4",bath:"#d5e8ed",stairs:"#dedbd6",corridor:"#f6f3e7",utility:"#eee1d7",balcony:"#dcece2",terrace:"#f0eee8",lounge:"#e2eed5"};
 function ends(o:Opening,r:Room){
  if(o.side==="front")return [[r.x+o.atFt,r.y],[r.x+o.atFt+o.widthFt,r.y]];
@@ -19,17 +20,17 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
  const gates=(g:{xFt:number;widthFt:number})=>[point(g.xFt,0),point(g.xFt+g.widthFt,0)];
  const roadLabel={x:mid.x+(side==="E"?2.6:side==="W"?-2.6:0),y:mid.y+(side==="N"?-1.7:side==="S"?2.2:0)};
  return <section className="nroad-diagram" aria-label="Single-source geographical floor plan" data-plan-id={plan.id} data-selected-floor={floor} data-room-count={rooms.length}>
-  <svg role="img" aria-label={`Road on ${side} side. Floor ${floor+1} with matching doors and rooms.`} viewBox={[-6,-6,dim.w+12,dim.d+12].join(" ")}>
+  <svg role="img" aria-label={`Road on ${side} side. Floor ${floor+1} with matching doors and rooms.`} viewBox={[-4,-4,dim.w+8,dim.d+8].join(" ")}>
    <rect width={dim.w} height={dim.d} fill="#f1eee6" stroke="#b0b0a7" strokeDasharray=".6 .3" strokeWidth=".15"/>
    <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#fdfcf7" stroke="#516552" strokeWidth=".4"/>
    <line x1={road.start.x} y1={road.start.y} x2={road.end.x} y2={road.end.y} stroke="#a96743" strokeWidth="1.25"/>
    <text x={roadLabel.x} y={roadLabel.y} textAnchor="middle" fontSize="1.1" fontWeight="800" fill="#8b4a2e">ROAD · {side}</text>
    <g><path d={`M ${dim.w-1.5} 3.5 V 1.6 l -.7 .9 M ${dim.w-1.5} 1.6 l .7 .9`} fill="none" stroke="#284735" strokeWidth=".3"/>
     <text x={dim.w-1.5} y=".9" textAnchor="middle" fontSize="1" fontWeight="800">N</text></g>
-   {rooms.map(r=>{const rect=roadRect(r,w,d,side),cx=rect.x+rect.w/2,cy=rect.y+rect.d/2,small=Math.min(rect.w,rect.d)<5;
+   {rooms.map(r=>{const rect=roadRect(r,w,d,side),cx=rect.x+rect.w/2,cy=rect.y+rect.d/2,small=Math.min(rect.w,rect.d)<5,label=r.kind==="bedroom"?r.label:(shortLabels[r.kind]??r.label),font=Math.min(small?.65:1.07,rect.w/(Math.max(label.length,1)*.64),rect.d*.20);
     return <g key={r.id}>
      <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={colors[r.kind]??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
-     <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={Math.min(small?.65:1.07,rect.w*.12,rect.d*.20)}>{r.label.toUpperCase().slice(0,14)}</text>
+     <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font}><title>{r.label}</title>{label}</text>
      <text x={cx} y={cy+(small?.6:.95)} textAnchor="middle" fill="#526955" fontSize={Math.min(small?.52:.84,rect.w*.1,rect.d*.18)}>{r.w.toFixed(1)} × {r.d.toFixed(1)} ft</text>
     </g>;
    })}
