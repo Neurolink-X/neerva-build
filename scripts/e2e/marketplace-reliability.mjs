@@ -121,6 +121,38 @@ assert.equal((await reviewDealer(d,"reactivate","suspended")).status,200);
 assert.equal((await call(a,"/api/dealer/overview")).status,200);
 console.log("Disposable dealer application, KYC privacy, anti-self-approval, admin review and suspension/reactivation verified.");
 
+ // Two real catalog references, with disposable reviewed prices and stock.
+ const combinedLines=[];
+ for(const [slug,amount] of [["ppc-cement-50kg",20000],["opc-cement-53-grade",30000]]){
+  let found=await d.client.from("products").select("id,status").eq("category_id",category.id).eq("slug",slug).maybeSingle();assert.ifError(found.error);
+  let product=found.data;
+  if(!product){const created=await call(d,catalog,"POST",{action:"create",kind:"product",categoryId:category.id,slug,name:"Disposable "+slug,description:"Local test fixture only",attributes:{}});assert.equal(created.status,201,JSON.stringify(created.data));product=created.data.item;}
+  if(product.status!=="published")assert.equal((await call(d,catalog,"PATCH",{kind:"product",id:product.id,status:"published"})).status,200);
+  const made=await call(d,catalog,"POST",{action:"create",kind:"variant",productId:product.id,sku:"COMBINED-"+randomUUID().slice(0,8),unit:"bag",attributes:{}});assert.equal(made.status,201,JSON.stringify(made.data));
+  const vid=made.data.item.id;assert.equal((await call(d,catalog,"PATCH",{kind:"variant",id:vid,status:"published"})).status,200);
+  assert.equal((await call(a,"/api/dealer/inventory","POST",{branchId:branches[0],variantId:vid,quantity:20,unit:"bag",expectedUpdatedAt:null})).status,200);
+  const rate=await call(d,"/api/admin/pricing","POST",{variantId:vid,tenantId:tenant,branchId:branches[0],city:"Kanpur",pincodePrefix:"208001",minimumQuantity:1,unit:"bag",amountPaise:amount,visibility:"public",validFrom:new Date(Date.now()-60000).toISOString()});
+  assert.equal(rate.status,201,JSON.stringify(rate.data));assert.equal((await call(d,"/api/admin/pricing","PATCH",{id:rate.data.rule.id,status:"published"})).status,200);
+  assert.equal((await call(d,"/api/admin/sku-tax","POST",{variantId:vid,hsn:"2523",rateBps:0,priceIncludesTax:true,reason:"Disposable test fixture only"})).status,200);
+  combinedLines.push({category:"cement",productSlug:slug,quantity:2,unit:"bag"});
+ }
+ const shipping=await call(a,"/api/dealer/delivery-settings","POST",{branchId:branches[0],pincode:"208001",freightPaise:9000,unloadingPaise:3000,minimumMaterialPaise:0,leadDays:1,acceptingOrders:true});
+ assert.equal(shipping.status,200,JSON.stringify(shipping.data));assert.equal((await call(d,"/api/admin/delivery-settings","PATCH",{id:shipping.data.row.id,status:"approved"})).status,200);
+ const estimate=await c.client.rpc("neerva_combined_cart_estimate",{p_items:combinedLines,p_pin:"208001",p_unload:true});assert.ifError(estimate.error);assert.ok(estimate.data,JSON.stringify(estimate));assert.equal(estimate.data.material_paise,100000);assert.equal(estimate.data.freight_paise,9000);assert.equal(estimate.data.unloading_paise,3000);assert.equal(estimate.data.branch_id,branches[0]);
+ const noUnload=await c.client.rpc("neerva_combined_cart_estimate",{p_items:combinedLines,p_pin:"208001",p_unload:false});assert.ifError(noUnload.error);assert.equal(noUnload.data.unloading_paise,0);assert.equal(estimate.data.estimated_total_paise-noUnload.data.estimated_total_paise,3000);
+ const noCoverage=await c.client.rpc("neerva_combined_cart_estimate",{p_items:combinedLines,p_pin:"999999",p_unload:true});assert.ifError(noCoverage.error);assert.equal(noCoverage.data,null);
+ const direct=await call(c,"/api/direct-orders","POST",{...combinedLines[0],items:combinedLines,idempotencyKey:randomUUID(),contactName:"Disposable order",phone:"9000000000",city:"Kanpur",pincode:"208001",deliveryAddress:"Disposable staging address, never dispatch",notes:"Synthetic combined shipment",unloadingRequested:true,consent:true});assert.equal(direct.status,201,JSON.stringify(direct.data));
+ const assignedId=direct.data.order.id;
+ const assignment=await a.client.from("direct_order_sourcing").select("order_id,status,estimate").eq("order_id",assignedId).single();assert.ifError(assignment.error);assert.equal(assignment.data.status,"assigned");assert.equal(assignment.data.estimate.freight_paise,9000);
+ const hiddenAssignment=await b.client.from("direct_order_sourcing").select("order_id").eq("order_id",assignedId);assert.ifError(hiddenAssignment.error);assert.equal(hiddenAssignment.data.length,0);
+ assert.equal((await b.client.rpc("neerva_respond_direct_sourcing",{p_order:assignedId,p_accept:true})).data,false);
+ assert.equal((await a.client.rpc("neerva_respond_direct_sourcing",{p_order:assignedId,p_accept:true})).data,true);
+ assert.equal((await a.client.rpc("neerva_respond_direct_sourcing",{p_order:assignedId,p_accept:false})).data,false);
+ assert.equal((await call(c,"/api/direct-orders","PATCH",{orderId:assignedId,expectedStatus:"received",status:"cancelled"})).status,200);
+ const closed=await a.client.from("direct_order_sourcing").select("status").eq("order_id",assignedId).single();assert.ifError(closed.error);assert.equal(closed.data.status,"closed");
+ console.log("Combined shipment, one freight charge, unloading option, automatic sourcing, dealer isolation, acknowledgement and cancellation verified.");
+
+
 async function acceptedOrder(customer){
  // Exercise the same authenticated endpoint as the customer enquiry form.
  const rfq=await call(customer,"/api/rfqs","POST",{idempotencyKey:randomUUID(),categorySlug:"cement",materialDescription:"Disposable cement fixture",quantity:10,unit:"bag",city:"Kanpur",pincode:"208001",contactName:"Disposable fixture",phone:"9000000000",privacyAccepted:true});
