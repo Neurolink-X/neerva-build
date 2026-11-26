@@ -566,14 +566,36 @@ async function main(){
     await preview.waitFor({state:"visible"});
     assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
-    const original=await preview.evaluate(c=>c.toDataURL());
-    await page.getByRole("button",{name:"View original",exact:true}).click();
-    await page.waitForFunction(previous=>document.querySelector(".nbd-photo canvas").toDataURL()!==previous,original);
-    await page.getByRole("button",{name:"Show new paint",exact:true}).click();
-    await page.getByRole("button",{name:/Contemporary home/}).click();
-    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="contemporary"&&c.getBoundingClientRect().height>0;});
-    await page.getByRole("button",{name:/Premium villa/}).click();
-    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="villa"&&c.getBoundingClientRect().height>0;});
+    // Test actual painted canvas pixels, not merely sample labels or changed image hashes.
+    const visualCases=[
+      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100]],protect:[[1050,160],[500,200],[1450,80]]},
+      {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
+      {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]}
+    ];
+    const evidence=[];
+    for(const sample of visualCases){
+      await page.getByRole("button",{name:sample.label}).click();
+      await page.waitForFunction(id=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample===id&&c.getBoundingClientRect().height>0&&!!document.querySelector(".paint-preview-actions button")},sample.id);
+      await page.getByRole("button",{name:"Full exterior",exact:true}).click();
+      await page.getByRole("button",{name:"View original",exact:true}).click();
+      const points=[...sample.paint,...sample.protect].map(([x,y])=>[x/sample.w,y/sample.h]);
+      const pixels=()=>preview.evaluate((canvas,coords)=>coords.map(([x,y])=>Array.from(canvas.getContext("2d").getImageData(Math.floor(x*canvas.width),Math.floor(y*canvas.height),1,1).data).slice(0,3)),points);
+      const unpainted=await pixels();
+      await preview.screenshot({path:path.join("test-results/mobile","390-facade-"+sample.id+"-original.png")});
+      await page.getByRole("button",{name:"Show new paint",exact:true}).click();
+      await page.getByRole("button",{name:"Select #edf2db",exact:true}).click();
+      const pale=await pixels();
+      const started=Date.now();
+      await page.getByRole("button",{name:"Select #293f36",exact:true}).click();
+      await page.waitForFunction(({coords,count})=>{const c=document.querySelector(".nbd-photo canvas");return coords.slice(0,count).every(([x,y])=>{const p=c.getContext("2d").getImageData(Math.floor(x*c.width),Math.floor(y*c.height),1,1).data;return p[1]>p[0]&&p[1]>p[2]&&p[1]<100})},{coords:points,count:sample.paint.length},{timeout:1500});
+      const elapsed=Date.now()-started,dark=await pixels();
+      for(let i=0;i<sample.paint.length;i++)assert.ok(pale[i][1]>dark[i][1]+45,sample.id+" wall "+i+" changes shade");
+      assert.deepEqual(dark.slice(sample.paint.length),unpainted.slice(sample.paint.length),sample.id+" windows/cladding/pool/sky remain unchanged");
+      assert.deepEqual(pale.slice(sample.paint.length),unpainted.slice(sample.paint.length),sample.id+" protected areas remain unchanged with pale shade");
+      await preview.screenshot({path:path.join("test-results/mobile","390-facade-"+sample.id+"-painted.png")});
+      evidence.push({sample:sample.id,wallPoints:sample.paint.length,protectedPoints:sample.protect.length,automationElapsedMs:elapsed});
+    }
+    fs.writeFileSync("test-results/mobile/facade-pixel-evidence.json",JSON.stringify({scope:"390px Chromium canvas sample points; elapsed includes browser automation and is not field INP",samples:evidence},null,2));
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
