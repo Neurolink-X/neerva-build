@@ -434,7 +434,7 @@ async function main(){
     // Exercise catalog quick-add and quantity stepper without opening product details.
     await page.goto(base+"/materials/cement",{waitUntil:"load"});
     const quickAdd=page.locator(".nb-shop-control").first();
-    await quickAdd.getByRole("button",{name:"Add",exact:true}).click();
+    await quickAdd.getByRole("button",{name:/^Add(?: \d+)?$/}).click();
     await quickAdd.getByRole("button",{name:/Increase /}).click();
     assert.equal(await quickAdd.locator("input[type=number]").inputValue(),"2");
     await quickAdd.getByRole("button",{name:/Decrease /}).click();
