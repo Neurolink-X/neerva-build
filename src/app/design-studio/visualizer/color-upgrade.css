@@ -117,8 +117,17 @@
 .visualizer-app .paint-sample-gallery button[aria-pressed=true]{border-color:#d5dfd4;background:#fff}
 .visualizer-app .paint-canvas-frame{overflow-anchor:none}
 .visualizer-app .paint-preview-status{overflow-anchor:none}
-/* On touch-sized screens the house preview scrolls normally with the page.
-   Editing must not make the house jump to a sticky position above the controls. */
-@media(max-width:850px){.visualizer-app .paint-live-preview{position:relative;top:auto;z-index:auto;padding-block:0}}
+/* Keep the same live canvas visible during editing without programmatic scroll,
+   duplicate rendering, or changing the four-card gallery. Short landscape and
+   custom-photo corner marking retain normal document flow. */
+@media(max-width:850px) and (min-height:561px){
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){position:sticky;top:0;z-index:3;align-self:start;background:#fff;padding-block:4px;min-width:0;max-width:100%}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) canvas{width:auto!important;max-width:100%;max-height:30svh;height:auto;margin-inline:auto}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-reference-note{margin-block:3px;font-size:11px}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-preview-actions{margin:4px 0}
+}
+.visualizer-app .paint-live-workspace,.visualizer-app .paint-live-preview,.visualizer-app .paint-live-tools{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.visualizer-app .paint-preview-actions button{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.visualizer-app .wall-pattern-options{min-width:0;max-width:100%}
 /* Scope scroll anchoring suppression to the editor, not the rest of the site. */
 html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
