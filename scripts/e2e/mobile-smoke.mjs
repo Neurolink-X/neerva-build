@@ -1106,6 +1106,19 @@ async function main(){
     },compactFirstId);
     assert.equal(await page.getByRole("button",{name:"First floor"}).count(),0);
     await page.getByRole("button",{name:"Selected floor cutaway"}).waitFor();
+    // Actual render worker integration; a WebGL fallback must not advertise a working renderer.
+    const liveCanvas=page.locator(".nbd-webgl canvas");
+    if(await liveCanvas.count()){
+     const renderPanel=page.getByRole("region",{name:"Browser architectural rendering"});
+     await renderPanel.getByRole("button",{name:"Generate realistic image"}).click();
+     await renderPanel.getByRole("button",{name:"Cancel render"}).click();
+     await renderPanel.getByText(/Rendering cancelled/).waitFor();
+     await renderPanel.getByRole("button",{name:"Generate realistic image"}).click();
+     await renderPanel.getByRole("button",{name:"Save render (PNG)"}).waitFor({timeout:95000});
+     const output=renderPanel.locator("canvas");
+     assert.ok(await output.evaluate(c=>{const data=c.getContext("2d").getImageData(0,0,c.width,c.height).data;return c.width>=16&&c.height>=16&&data.some((v,i)=>i%4!==3&&v>10)&&data.some((v,i)=>i%4!==3&&v<220)}),"ray-traced output contains actual nonblank pixels");
+     await output.screenshot({path:path.join("test-results/mobile","390-browser-ray-traced-architecture.png")});
+    }else assert.equal(await page.getByRole("region",{name:"Browser architectural rendering"}).count(),0,"unsupported device retains the existing plan fallback");
     // Large-home input, full 24-option gallery and the exact selected 3D floor.
     await page.goto(base+"/design-studio/portfolio?width=36&depth=65&floors=2&bedrooms=6&road=W&parking=true",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
