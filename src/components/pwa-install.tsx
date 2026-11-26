@@ -16,7 +16,7 @@ function start(){
  if(started)return;started=true;
  const ua=navigator.userAgent;
  const platform=/iPad|iPhone|iPod/.test(ua)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)?"ios":/Android/.test(ua)?"android":"desktop";
- const sync=()=>{const standalone=displayInstalled();if(standalone)remember(true);update({ready:true,platform,installed:standalone||read(),available:!!prompt&&!standalone});};
+ const sync=()=>{const standalone=displayInstalled();if(standalone){remember(true);prompt=null;}const installed=standalone||read();update({ready:true,platform,installed,available:!!prompt&&!installed});};
  window.addEventListener("beforeinstallprompt",event=>{event.preventDefault();if(displayInstalled())return;remember(false);prompt=event as PromptEvent;update({installed:false,available:true});});
  window.addEventListener("appinstalled",()=>{remember(true);prompt=null;update({installed:true,available:false,busy:false});});
  for(const mode of media){const query=matchMedia("(display-mode: "+mode+")");query.addEventListener?.("change",sync);}

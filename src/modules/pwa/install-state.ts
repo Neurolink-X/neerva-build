@@ -2,3 +2,8 @@
 export function installedDisplayMode(modes:readonly boolean[],iosStandalone:boolean):boolean{
  return modes.some(Boolean)||iosStandalone;
 }
+
+/** Manual browser installation remains discoverable even without a native prompt. */
+export function showInstallOffer(state:{ready:boolean;installed:boolean;dismissed:boolean;accepted:boolean;path:string|null}):boolean{
+ return state.ready&&!state.installed&&!state.dismissed&&!state.accepted&&state.path!=="/install"&&state.path!=="/install/";
+}
