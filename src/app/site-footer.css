@@ -24,7 +24,7 @@ footer.unified-footer .unified-footer-groups li:empty{display:none}
 footer.unified-footer .unified-footer-groups a{display:flex;align-items:center;justify-content:flex-start;text-align:left;min-height:var(--footer-link-row);padding:3px 0;margin:0;font-size:13px;line-height:1.35;color:#c8d6cb;overflow-wrap:anywhere}
 footer.unified-footer .unified-footer-app{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #ffffff26}
 .unified-footer-app-copy{display:flex;align-items:center;min-width:0;gap:10px}
-/* Independent app-grid icon: conveys installation without representing an app store. */
+/* Neerva's own sage, clay and slate app-grid icon. No third-party store marks. */
 .unified-footer-app-mark{display:block;flex:none;width:23px;height:23px;color:#e9f1e8}
 .unified-footer-app-copy strong,.unified-footer-app-copy div>span{display:block}
 .unified-footer-app-copy strong{font-size:14px;font-weight:700;color:#fff;line-height:1.3}
