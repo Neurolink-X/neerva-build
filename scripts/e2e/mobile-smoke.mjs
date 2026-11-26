@@ -409,8 +409,8 @@ async function main(){
     const footerInstall=page.locator(".unified-footer-app button");
     await footerInstall.waitFor({state:"visible"});
     assert.equal(await footerInstall.getAttribute("type"),"button","installation is a native action, not a store link");
-    assert.equal(await footerInstall.locator(".unified-footer-app-mark").count(),1,"one original Neerva brand mark");
-    assert.equal(await footerInstall.innerText().then(s=>s.replace(/\s+/g," ").trim()),"N Install Neerva","install action has no arrow or misleading store branding");
+    assert.equal(await footerInstall.locator("svg.unified-footer-app-mark").count(),1,"one independent app installation icon");
+    assert.equal(await footerInstall.innerText().then(s=>s.replace(/\s+/g," ").trim()),"Install Neerva","install action has no arrow or misleading store branding");
     assert.equal(await page.locator(".unified-footer-app a[href='/install']").count(),0,"footer install never navigates to installation page");
     const beforeInstallUrl=page.url();
     await page.evaluate(()=>{window.__footerNativePrompts=0;const event=new Event("beforeinstallprompt",{cancelable:true});Object.assign(event,{prompt:async()=>{window.__footerNativePrompts++;},userChoice:Promise.resolve({outcome:"dismissed"})});window.dispatchEvent(event);});
