@@ -114,6 +114,14 @@ async function main(){
     await page.getByRole("button",{name:/100 gaj family home/}).click();
     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="compact-family"&&!!document.querySelector(".paint-preview-actions button")&&c.getBoundingClientRect().height>0});
     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect(),p=c.parentElement.getBoundingClientRect();return Math.abs(r.width/r.height-c.width/c.height)<.025&&r.left>=p.left-1&&r.right<=p.right+1&&p.right<=innerWidth+1}),v.w+"px full facade fits its source aspect ratio");
+    if(v.w<=430&&v.h>560){
+     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+     const pattern=page.locator(".wall-pattern-options button").first();
+     await pattern.evaluate(e=>e.scrollIntoView({block:"center"}));
+     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1&&r.height>0}),"mobile live canvas remains visible during pattern selection");
+     await pattern.click();
+     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect();return r.top>=-1&&r.bottom<=innerHeight+1}),"pattern selection keeps the same preview in view");
+    }
     await gallery.screenshot({path:path.join("test-results/mobile",v.w+"-facade-gallery.png"),animations:"disabled"});
    }finally{await ctx.close()}
   }
@@ -1033,6 +1041,12 @@ async function main(){
     await plotInputs.nth(1).fill("50");
     await page.getByRole("img",{name:/Road on E side/}).waitFor();
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
+    await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=2&bedrooms=1&road=N&parking=false",{waitUntil:"load"});
+    await page.getByRole("button",{name:"Show ground-floor 1 BHK plan"}).click();
+    await page.getByRole("img",{name:/Road on N side/}).waitFor();
+    assert.equal(await page.getByLabel("Levels").inputValue(),"1");
+    await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")});
     await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=1&bedrooms=1&road=W&parking=false",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
     assert.equal(await page.locator(".nroad-variants button").count(),2,"compact 1 BHK has two genuine kitchen orientations");
