@@ -1,8 +1,9 @@
 "use client";
+import {createBackgroundSuspension} from "@/modules/catalog/background-suspension";
 import {invalidatePublicFeeds} from "@/modules/catalog/public-feed-client";
 type Listener=()=>void;
 const listeners=new Set<Listener>();
-let stop:(()=>void)|undefined,timer:ReturnType<typeof setTimeout>|undefined,startTimer:ReturnType<typeof setTimeout>|undefined,hiddenTimer:ReturnType<typeof setTimeout>|undefined,generation=0,starting=false;
+let stop:(()=>void)|undefined,timer:ReturnType<typeof setTimeout>|undefined,startTimer:ReturnType<typeof setTimeout>|undefined,generation=0,starting=false;
 function invalidateNow(){clearTimeout(timer);invalidatePublicFeeds();for(const listener of listeners)listener();}
 function invalidate(){clearTimeout(timer);timer=setTimeout(invalidateNow,250);}
 function schedule(){
@@ -21,8 +22,9 @@ function schedule(){
   }).catch(()=>{/* foreground polling remains available */}).finally(()=>{if(current===generation)starting=false});
  },2500);
 }
+const background=createBackgroundSuspension(suspendTransport,()=>document.visibilityState!=="visible");
 function suspendTransport(){
- generation++;starting=false;clearTimeout(startTimer);startTimer=undefined;clearTimeout(hiddenTimer);hiddenTimer=undefined;stop?.();stop=undefined;
+ generation++;starting=false;clearTimeout(startTimer);startTimer=undefined;background.cancel();stop?.();stop=undefined;
 }
 function onNetwork(event:Event){
  if(event.type==="offline"){
@@ -34,10 +36,10 @@ function onNetwork(event:Event){
   clearTimeout(startTimer);startTimer=undefined;
   // Short app switches should not churn connections; prolonged background
   // tabs release the realtime socket. Foreground HTTP polling is unchanged.
-  if(hiddenTimer===undefined)hiddenTimer=setTimeout(()=>{hiddenTimer=undefined;if(document.visibilityState!=="visible")suspendTransport()},15000);
+  background.schedule();
   return;
  }
- clearTimeout(hiddenTimer);hiddenTimer=undefined;schedule();
+ background.cancel();schedule();
 }
 export function subscribeCatalogPriceSignal(listener:Listener){
  listeners.add(listener);
