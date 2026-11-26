@@ -721,6 +721,10 @@ async function main(){
     await page.goto(base+"/design-studio/fit",{waitUntil:"load"});
     const floorsSelect=page.locator("#nfit-floors");
     assert.equal(await floorsSelect.count(),1,"plot-fit page must render a labelled floors selector");
+    await page.locator(".nfit-floor-tabs button").nth(1).click();
+    assert.equal(await page.locator(".nfit-primary-next .nroad-diagram").getAttribute("data-selected-floor"),"1","fit preview follows upper-floor selection");
+    await page.locator(".nfit-floor-tabs button").nth(0).click();
+    assert.equal(await page.locator(".nfit-primary-next .nroad-diagram").getAttribute("data-selected-floor"),"0","fit preview returns to ground floor");
     await floorsSelect.selectOption("1");
     assert.equal(await floorsSelect.inputValue(),"1","ground-floor selection must update the plot brief");
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
