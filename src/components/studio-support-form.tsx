@@ -1,58 +1,58 @@
 "use client";
-import {useEffect,useState,type FormEvent} from "react";
+import {useEffect,useRef,useState,type FormEvent} from "react";
 import Link from "next/link";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
+import {operationsRequest} from "./operations-request";
 type Ticket={id:string;order_id:string|null;issue:string;message:string;status:string;admin_reply:string|null;created_at:string};
+type Order={id:string;product_code:string;status:string;created_at:string;amount_paise:number};
+const reasons={payment_not_verified:"Payment not verified",duplicate_payment:"Duplicate payment",refund_request:"Refund request",studio_access:"Studio access issue",other:"Other issue"} as const;
 export function StudioSupportForm(){
- const [jwt,setJwt]=useState(""),[tickets,setTickets]=useState<Ticket[]>([]);
- const [orderId,setOrderId]=useState(""),[issue,setIssue]=useState("payment_not_verified"),[message,setMessage]=useState("");
- const [status,setStatus]=useState("Sign in to open your private support request."),[busy,setBusy]=useState(false);
- async function load(token:string){
-  const r=await fetch("/api/studio/support",{cache:"no-store",headers:{Authorization:"Bearer "+token}});
-  if(!r.ok){setStatus("Ticket service is temporarily unavailable.");return;}
-  const data=await r.json();setTickets(data.tickets??[]);setStatus("Your ticket history is private to your account.");
+ const [account,setAccount]=useState<string|null>(null),[ready,setReady]=useState(false),[tickets,setTickets]=useState<Ticket[]>([]),[orders,setOrders]=useState<Order[]>([]);
+ const [orderId,setOrderId]=useState(""),[issue,setIssue]=useState<keyof typeof reasons>("other"),[message,setMessage]=useState("");
+ const [notice,setNotice]=useState<{kind:"success"|"error";text:string;id?:string}|null>(null),[historyError,setHistoryError]=useState(""),[busy,setBusy]=useState(false),[loading,setLoading]=useState(false);
+ const lock=useRef(false),historyVersion=useRef(0),identity=useRef<string|null>(null),requestKey=useRef<{fingerprint:string;id:string}|null>(null),feedback=useRef<HTMLDivElement>(null);
+ async function load(userId:string){
+  const version=++historyVersion.current;setLoading(true);setHistoryError("");
+  try{const data=await operationsRequest<{tickets:Ticket[];orders?:Order[]}>("/api/studio/support");
+   if(identity.current===userId&&version===historyVersion.current){setTickets(data.tickets??[]);setOrders(data.orders??[]);}
+  }catch(e){if(identity.current===userId&&version===historyVersion.current)setHistoryError(e instanceof Error?e.message:"Unable to refresh tickets.")}
+  finally{if(identity.current===userId&&version===historyVersion.current)setLoading(false);}
  }
  useEffect(()=>{
-  let gone=false;const client=createNeervaBrowserClient();
-  if(!client)return;
-  void client.auth.getSession().then(async s=>{
-   if(gone)return;
-   const bearer=s.data.session?.access_token;
-   if(!bearer)return;setJwt(bearer);await load(bearer);
-  });
-  return ()=>{gone=true};
+  const client=createNeervaBrowserClient();if(!client){setReady(true);return}
+  let active=true;
+  function apply(id:string|null){if(!active)return;setReady(true);if(identity.current===id)return;identity.current=id;historyVersion.current++;setAccount(id);setTickets([]);setOrders([]);setNotice(null);setHistoryError("");setLoading(false);setMessage("");setOrderId("");requestKey.current=null;if(id)void load(id)}
+  const {data:listener}=client.auth.onAuthStateChange((_event,session)=>{if(active)queueMicrotask(()=>apply(session?.user.id??null))});
+  void client.auth.getSession().then(s=>apply(s.data.session?.user.id??null)).catch(()=>apply(null));
+  return()=>{active=false;identity.current=null;historyVersion.current++;listener.subscription.unsubscribe()};
  },[]);
+ useEffect(()=>{if(notice)feedback.current?.focus()},[notice]);
  async function submit(e:FormEvent<HTMLFormElement>){
-  e.preventDefault();if(!jwt||busy)return;
-  setBusy(true);
-  try{
-   const r=await fetch("/api/studio/support",{method:"POST",
-    headers:{"Content-Type":"application/json",Authorization:"Bearer "+jwt},
-    body:JSON.stringify({orderId:orderId.trim()||null,issue,message})});
-   const x=await r.json();
-   setStatus(r.ok?"Support ticket created; keep your order/UPI reference and check this page for replies.":String(x.error??"Support request not saved."));
-   if(r.ok){setMessage("");await load(jwt);}
-  }catch{setStatus("Network error. Ticket was not confirmed saved.")}
-  finally{setBusy(false)}
+  e.preventDefault();const userId=identity.current;if(!userId||lock.current)return;
+  const payload={orderId:orderId||null,issue,message:message.trim()};
+  const fingerprint=JSON.stringify([userId,payload]);if(requestKey.current?.fingerprint!==fingerprint)requestKey.current={fingerprint,id:crypto.randomUUID()};
+  lock.current=true;setBusy(true);setNotice(null);
+  try{const data=await operationsRequest<{ticket:{id:string;status:string}}>("/api/studio/support","POST",{...payload,requestId:requestKey.current.id});
+   if(identity.current!==userId)return;
+   if(!data.ticket?.id)throw Error("Ticket receipt not confirmed. Retry with the same details.");
+   setNotice({kind:"success",text:"Your support request was received. Track its status and replies below.",id:data.ticket.id});setMessage("");setOrderId("");requestKey.current=null;
+   void load(userId);
+  }catch(e){if(identity.current===userId)setNotice({kind:"error",text:(e instanceof Error?e.message:"Support request not confirmed.")+" Your message is retained; retry with the same details."})}
+  finally{lock.current=false;setBusy(false)}
  }
  return <section className="studio-support-form">
-  <h2>Private customer support</h2><p>Report a mistaken or duplicate UPI transfer, delayed verification, or access problem. Do not upload passwords, OTPs, full bank statements or card details.</p>
-  <p role="status">{status}</p>
-  {!jwt?<Link href="/account">Sign in to create a support ticket →</Link>:<>
+  <span className="nb-support-kicker">HELP CENTRE · PRIVATE ACCOUNT</span><h2>How can we help?</h2><p>Get help with Studio, payments or other platform issues. Never share passwords, OTPs, UPI PINs or bank statements.</p>
+  {!ready?<p role="status">Checking your secure session…</p>:!account?<Link href="/account">Sign in to create a support ticket →</Link>:<>
   <form onSubmit={submit}>
-   <label>What happened?<select value={issue} onChange={e=>setIssue(e.target.value)}>
-    <option value="payment_not_verified">₹149 paid but not verified</option>
-    <option value="duplicate_payment">Duplicate payment</option>
-    <option value="refund_request">Refund request</option>
-    <option value="studio_access">Paid Studio access issue</option>
-    <option value="other">Other issue</option>
-   </select></label>
-   <label>Order ID (optional if no order was generated)<input type="text" value={orderId} onChange={e=>setOrderId(e.target.value)} maxLength={36} placeholder="Your order reference"/></label>
-   <label>Describe the issue<textarea rows={5} minLength={15} maxLength={1000} required value={message} onChange={e=>setMessage(e.target.value)} placeholder="Date, UPI reference (UTR), what happened, expected action. Do not share passwords or PINs."/></label>
-   <button type="submit" disabled={busy}>Create support request</button>
+   <label>What do you need help with?<select value={issue} disabled={busy} onChange={e=>setIssue(e.target.value as keyof typeof reasons)}>{Object.entries(reasons).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+   <label>Related Studio order (optional)<select value={orderId} disabled={busy} onChange={e=>setOrderId(e.target.value)}><option value="">No Studio order / not applicable</option>{orders.map(o=><option key={o.id} value={o.id}>{o.product_code.replaceAll("_"," ")} · {new Date(o.created_at).toLocaleDateString("en-IN")} · ₹{o.amount_paise/100} · {o.status} · {o.id.slice(0,8)}</option>)}</select><small>Only orders belonging to your account appear here. For material orders, include the reference in your description.</small></label>
+   <label>Describe your issue<textarea rows={4} minLength={15} maxLength={1000} required disabled={busy} value={message} onChange={e=>setMessage(e.target.value)} placeholder="What happened, when, and what help do you need?"/><small>{message.length}/1000 characters · minimum 15</small></label>
+   <button type="submit" disabled={busy}>{busy?"Sending request…":"Send support request"}</button>
+   {notice&&<div ref={feedback} tabIndex={-1} className={"nb-support-notice "+notice.kind} role={notice.kind==="error"?"alert":"status"}><strong>{notice.kind==="success"?"Request received":"Request not confirmed"}</strong><p>{notice.text}</p>{notice.id&&<small>Ticket ID: {notice.id}</small>}</div>}
   </form>
-  <h3>My support history</h3>
-  {tickets.length? tickets.map(t=><article key={t.id}><strong>{t.issue.replaceAll("_"," ")} · {t.status.replaceAll("_"," ")}</strong><p>{t.message}</p><small>{new Date(t.created_at).toLocaleString("en-IN")} · Ticket {t.id}</small>{t.admin_reply&&<blockquote>{t.admin_reply}</blockquote>}</article>):<p>No support tickets recorded.</p>}
+  <div className="nb-support-history-heading"><h3>My support requests</h3><button type="button" disabled={loading} onClick={()=>void load(account)}>{loading?"Refreshing…":"Refresh"}</button></div>
+  {historyError&&<p role="alert">{historyError}</p>}
+  {tickets.length?tickets.map(t=><article key={t.id}><div className="nb-support-history-heading"><strong>{reasons[t.issue as keyof typeof reasons]??t.issue.replaceAll("_"," ")}</strong><span className="nb-support-state">{t.status.replaceAll("_"," ")}</span></div><p>{t.message}</p><small>{new Date(t.created_at).toLocaleString("en-IN")} · Ticket {t.id}</small>{t.admin_reply?<blockquote><strong>Support reply</strong><p>{t.admin_reply}</p></blockquote>:<p><small>Awaiting support response.</small></p>}</article>):<p>{loading?"Loading your requests…":historyError?"History could not be loaded.":"No support tickets recorded."}</p>}
   </>}
  </section>;
 }
