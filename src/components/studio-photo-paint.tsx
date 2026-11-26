@@ -14,11 +14,11 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
  corners.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
  ctx.closePath();ctx.clip();
  if(wall.mask){
-  ctx.beginPath();
-  for(const ring of [wall.mask.outline,...(wall.mask.holes??[])]){
-   ring.forEach(([x,y],i)=>i?ctx.lineTo(x*w,y*h):ctx.moveTo(x*w,y*h));ctx.closePath();
-  }
-  ctx.clip("evenodd");
+  const trace=(ring:number[][])=>{ring.forEach(([x,y],i)=>i?ctx.lineTo(x*w,y*h):ctx.moveTo(x*w,y*h));ctx.closePath();};
+  // Clip the outline first, then subtract each exclusion separately. A hole
+  // that touches an edge or overlaps another hole must not add paint back.
+  ctx.beginPath();trace(wall.mask.outline);ctx.clip();
+  for(const hole of wall.mask.holes??[]){ctx.beginPath();ctx.rect(0,0,w,h);trace(hole);ctx.clip("evenodd");}
  }
  // The tint already contains the selected RGB plus source luminance. Do not blend
  // the old wall hue back into a dark shade or apply a second darkening pass.

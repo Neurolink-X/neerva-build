@@ -7,11 +7,11 @@ type State={ready:boolean;installed:boolean;available:boolean;busy:boolean;platf
 const initial:State={ready:false,installed:false,available:false,busy:false,platform:"desktop"};
 let state=initial,prompt:PromptEvent|null=null,started=false;
 const listeners=new Set<()=>void>(),key="neerva-installed-v1";
-const media=["standalone","minimal-ui","fullscreen","window-controls-overlay"];
+const media=["standalone","minimal-ui","window-controls-overlay"];
 const read=()=>{try{return localStorage.getItem(key)==="1"}catch{return false}};
 const remember=(yes:boolean)=>{try{if(yes)localStorage.setItem(key,"1");else localStorage.removeItem(key)}catch{}};
 function update(next:Partial<State>){const value={...state,...next};if(Object.keys(value).every(k=>value[k as keyof State]===state[k as keyof State]))return;state=value;listeners.forEach(fn=>fn());}
-function displayInstalled(){return installedDisplayMode(media.map(mode=>matchMedia("(display-mode: "+mode+")").matches),Boolean((navigator as Navigator&{standalone?:boolean}).standalone),document.referrer);}
+function displayInstalled(){return installedDisplayMode(media.map(mode=>matchMedia("(display-mode: "+mode+")").matches),Boolean((navigator as Navigator&{standalone?:boolean}).standalone));}
 function start(){
  if(started)return;started=true;
  const ua=navigator.userAgent;
@@ -28,7 +28,7 @@ export function usePwaInstall(){return useSyncExternalStore(subscribe,()=>state,
 export async function requestPwaInstall():Promise<"accepted"|"dismissed"|"unavailable">{
  if(!prompt||state.busy||state.installed)return "unavailable";
  const event=prompt;update({busy:true});
- try{await event.prompt();const decision=await event.userChoice;if(decision.outcome==="accepted"){remember(true);update({installed:true});}return decision.outcome;}
+ try{await event.prompt();const decision=await event.userChoice;if(decision.outcome==="accepted"){update({available:false});}return decision.outcome;}
  catch{return "unavailable"}
  finally{prompt=null;update({busy:false,available:false});}
 }
