@@ -70,7 +70,7 @@ jobs:
           import {appendFileSync} from "node:fs";
           import {execFileSync} from "node:child_process";
           const client=createClient(process.env.API_URL,process.env.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
-          for(const role of ["CUSTOMER","OTHER_CUSTOMER","RFQ_CUSTOMER","ADMIN","DEALER_A","DEALER_B"]){
+          for(const role of ["CUSTOMER","OTHER_CUSTOMER","RFQ_CUSTOMER","ADMIN","DEALER_A","DEALER_B","ONBOARDING"]){
             const email=role.toLowerCase()+"-"+randomUUID()+"@example.test";
             const password=randomUUID()+"Aa1!";
             console.log("::add-mask::"+password);
