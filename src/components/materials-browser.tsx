@@ -4,7 +4,7 @@ import {CatalogOffer} from "@/components/catalog-offer";
 import {ProductPrice} from "@/components/product-price";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
-import {useMemo,useState,useRef} from "react";
+import {useMemo,useState,useRef,useDeferredValue} from "react";
 import {referencePage} from "@/modules/catalog/reference-page";
 import {CatalogMaterialImage} from "@/components/catalog-material-image";
 import {BrandMark} from "@/components/brand-mark";
@@ -20,10 +20,11 @@ export function MaterialsBrowser({products,categories,initialQuery="",initialBra
  const [brand,setBrand]=useState(initialBrand);
  const [gradeOrSize,setGradeOrSize]=useState("all");
  const [query,setQuery]=useState(initialQuery);
+ const deferredQuery=useDeferredValue(query);
  const [page,setPage]=useState(0);
  const resultsRef=useRef<HTMLDivElement>(null);
  const facets=useMemo(()=>productFacetValues(products,category),[products,category]);
- const visible=useMemo(()=>filterCatalog(products,{category,brand,gradeOrSize,query}),[products,category,brand,gradeOrSize,query]);
+ const visible=useMemo(()=>filterCatalog(products,{category,brand,gradeOrSize,query:deferredQuery}),[products,category,brand,gradeOrSize,deferredQuery]);
  const groups=useMemo(()=>groupCatalogByPhoto(visible),[visible]);
  const paged=useMemo(()=>referencePage(groups,page),[groups,page]);
  function chooseCategory(c:string){if(scopedCategory&&c!==scopedCategory){window.dispatchEvent(new Event("neerva:navigation-start"));router.push("/materials?"+new URLSearchParams({category:c,search:query})+"#catalog-results");return}setCategory(c);setBrand("all");setGradeOrSize("all");setPage(0)}
@@ -40,7 +41,7 @@ export function MaterialsBrowser({products,categories,initialQuery="",initialBra
    <label>Size / grade<select value={gradeOrSize} onChange={e=>{setGradeOrSize(e.target.value);setPage(0)}}>
     <option value="all">All sizes and grades</option>{facets.gradesAndSizes.map(x=><option key={x} value={x}>{x}</option>)}</select></label>
   </form>
-  <div ref={resultsRef} tabIndex={-1} className="catalog-results-meta"><p aria-live="polite"><strong>{visible.length}</strong> references in {groups.length} distinct product/photo cards{groups.length>0&&<> · Showing {paged.start+1}–{paged.end}</>}</p>
+  <div ref={resultsRef} tabIndex={-1} className="catalog-results-meta" aria-busy={query!==deferredQuery}><p aria-live="polite"><strong>{visible.length}</strong> references in {groups.length} distinct product/photo cards{groups.length>0&&<> · Showing {paged.start+1}–{paged.end}</>}</p>
    <button type="button" onClick={clear}>Reset filters</button></div>
   <p className="catalog-demo-note">Choose materials and add to cart. Stock and delivered price are confirmed before purchase.</p>
   {groups.length?<div className="product-grid">{paged.items.map(({primary:p,variants})=><article className="product-card" key={p.category+":"+p.slug}>
@@ -56,8 +57,8 @@ export function MaterialsBrowser({products,categories,initialQuery="",initialBra
     <div className="catalog-spec-chips">{(variants.length>1?p.specifications.filter(s=>!/diameter|thickness|nominal mass/i.test(s.label)):p.specifications).slice(0,3).map(s=><span key={s.label}><b>{s.label}:</b> {s.value}</span>)}</div>
     <div className="catalog-sku-status"><span>Availability by pincode</span></div>
     <div className="product-card-foot"><ProductPrice category={p.category} slug={p.slug} quoteOnly={p.quoteOnly}/>
-     <Link href={`/materials/${p.category}/${p.slug}`}>{variants.length>1?"Review range →":"View details →"}</Link></div>
-    {variants.length===1?<QuickShopAdd product={p}/>:<Link className="nb-shop-add" href={`/materials/${p.category}/${p.slug}`}>Choose size</Link>}<CatalogOffer category={p.category} slug={p.slug} compact/>
+     <Link href={`/materials/${p.category}/${p.slug}`} prefetch={false} data-intent-prefetch="">{variants.length>1?"Review range →":"View details →"}</Link></div>
+    {variants.length===1?<QuickShopAdd product={p}/>:<Link className="nb-shop-add" href={`/materials/${p.category}/${p.slug}`} prefetch={false} data-intent-prefetch="">Choose size</Link>}<CatalogOffer category={p.category} slug={p.slug} compact/>
    </div>
   </article>)}</div>:<div className="catalog-empty">
    <strong>No matching material reference found.</strong><p>Try another brand, grade, size or category. This is not proof a product is unavailable nationwide.</p>
