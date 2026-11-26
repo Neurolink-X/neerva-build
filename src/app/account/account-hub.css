@@ -94,3 +94,10 @@
  .naccount-shortcuts a{padding:6px 3px;font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){.naccount-page :is(a,button),.naccount-picker button{transition:none;scroll-behavior:auto}}
+
+.naccount-private-feed{display:grid;gap:14px;min-width:0}.naccount-private-feed>button{justify-self:start;min-height:44px}
+.naccount-feed-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr));gap:12px;min-width:0}
+.naccount-feed-grid article :is(button,a){margin-top:auto;min-height:44px;width:100%;white-space:normal;overflow-wrap:anywhere}
+.naccount-saved-plan{min-width:0;padding:clamp(10px,2vw,22px);background:#fff;border:1px solid #d6e0d4;border-radius:12px;display:grid;gap:12px}
+.naccount-saved-plan :is(svg,canvas){max-width:100%}.naccount-saved-plan .nroad-diagram{width:100%;height:auto}
+.naccount-saved-plan .naccount-address-actions button[aria-pressed=true]{background:#254738;color:#fff}
