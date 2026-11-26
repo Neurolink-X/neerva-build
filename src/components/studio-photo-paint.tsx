@@ -198,7 +198,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   {scene==="facade"&&<div className="paint-sample-gallery" role="group" aria-label="Choose sample house">{facadeSamples.map(s=><button key={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={s.src} alt="" fill sizes="(max-width:600px) 30vw, 180px" loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
   <div className="paint-mode" role="group" aria-label="Paint preview mode"><button type="button" aria-pressed={mode==="paint"} onClick={()=>chooseMode("paint")}>Plain paint</button><button type="button" aria-pressed={mode==="design"} onClick={()=>chooseMode("design")}>Paint + design</button></div>
   {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}</button>)}</div>}
-  <p role="status">{ready&&scene==="facade"?"Full exterior applies the chosen shade to all marked surfaces. Choose a section for a separate accent or pattern. Unmarked details are preserved.":points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
+  <p role="status">{ready&&scene==="facade"?"Full exterior applies the chosen shade to all marked surfaces. Choose a section for a separate accent or pattern. Windows, timber, plants and neighbouring buildings stay unchanged.":points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
   <div className="paint-live-workspace"><div className="paint-live-preview" data-can-stick={ready&&(scene==="facade"||valid)?"true":"false"}>
   {ready&&canInspect&&<button type="button" aria-pressed={closeUp} onClick={()=>setCloseUp(v=>!v)}>{closeUp?"See whole scene":"Inspect selected wall"}</button>}
   <div style={{overflow:"hidden",borderRadius:12}}>
@@ -238,7 +238,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    <button type="button" className="paint-quiet" onClick={()=>{setCloseUp(false);setHistory(emptyMaskHistory());setEditing(null);setShowOriginal(false)}}>Reset wall selection ({points.length}/4)</button>
    </div></details>
   </div>}
-  <p className="nbd-disclaimer">Sample photos have pre-marked paintable surfaces. Full exterior colours all marked areas, not glass, timber, plants or neighbouring buildings. For your own photo, mark a flat wall and avoid openings. Preview shades retain lighting; edges and colours are approximate. Verify physical shade cards and measured wall area before buying.</p>
+  <p className="nbd-disclaimer">Sample photos and architectural concepts have pre-marked paintable surfaces. The 100 gaj sample is design inspiration, not a verified construction drawing. Full exterior colours all marked areas, not glass, timber, plants or neighbouring buildings. For your own photo, mark a flat wall and avoid openings. Preview shades retain lighting; edges and colours are approximate. Verify physical shade cards and measured wall area before buying.</p>
  </section>;
 }
 

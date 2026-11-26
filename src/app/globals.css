@@ -205,3 +205,7 @@ footer.unified-footer .unified-footer-groups nav a{display:flex;align-items:cent
 .nbd-quality-options summary::after{content:"+";margin-left:auto}.nbd-quality-options[open] summary::after{content:"−"}
 .nbd-quality-options .nbd-buttons{margin:0 0 8px}
 @media(max-width:380px){.nbd-building .nbd-buttons[aria-label="3D camera views"] button{font-size:11px}.nbd-building .nbd-mode-controls button{font-size:11px}}
+
+/* A single compact shared header: keep navigation reachable on narrow screens. */
+@media(max-width:1120px){.site-header{display:flex;flex-wrap:nowrap;justify-content:space-between;padding-inline:clamp(10px,2.5vw,24px);gap:8px}.site-header .brand{margin-right:auto;min-width:0;flex:0 1 auto;white-space:nowrap}.site-header .header-utility{margin-left:0;gap:8px;flex:0 0 auto;order:1}.site-header .site-mobile-menu{order:2;flex:0 0 auto}.site-header .header-quote{display:none}.site-header .site-mobile-menu summary,.site-header .header-install,.site-header .nb-shop-nav{min-height:44px;display:inline-flex;align-items:center;justify-content:center}}
+@media(max-width:390px){.site-header .header-install{display:none}.site-header .header-utility{gap:4px}.site-header .brand{font-size:11px;gap:5px}.site-header .site-mobile-menu summary{padding-inline:8px}}
