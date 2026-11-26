@@ -157,3 +157,14 @@ test("standard 18×50 and compact 15×30 no-parking ground 1 BHK share validated
  const unsupported=generateSpatialPortfolio(brief({floors:2,bedrooms:1,parking:false}));
  assert.equal(unsupported.plans.length,0);
 });
+
+test("standard no-parking 1 BHK offers six distinct validated room footprints",()=>{
+ const {plans,blockers}=generateSpatialPortfolio(brief({parking:false}));
+ assert.deepEqual(blockers,[]);assert.equal(plans.length,6);
+ assert.equal(new Set(plans.map(planSignature)).size,6);
+ assert.equal(new Set(plans.map(p=>p.id)).size,6);
+ assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size,3);
+ assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="bedroom")!.d)).size,3);
+ for(const p of plans)assert.deepEqual(validatePlan(p),[]);
+ assert.equal(generateSpatialPortfolio(brief({parking:false,widthFt:15,depthFt:30})).plans.length,2);
+});
