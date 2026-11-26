@@ -11,13 +11,15 @@
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "target": "aggregates:morang-coarse-sand",
       "note": "Red coarse sand candidate only, not proof of locally sourced morang",
-      "status": "visual-review-required",
+      "status": "visually-reviewed",
       "file": "741c006561e80d09aeef4508.webp",
       "width": 900,
       "height": 1200,
       "bytes": 227104,
       "originalSha256": "8c2f62a20d9707129fcfc61c03726ec32f50b7a31adec7b5d6eea20424eae5aa",
-      "sha256": "741c006561e80d09aeef4508c93f99bd1249896f4610c63e8bd1dc6f60b3908a"
+      "sha256": "741c006561e80d09aeef4508c93f99bd1249896f4610c63e8bd1dc6f60b3908a",
+      "publishedPath": "/images/catalog/approved/741c006561e80d09aeef4508.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "crushed-stone-stockpile",
@@ -332,13 +334,15 @@
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
       "target": "electrical:generic-conduit",
       "note": "Installed underground conduit; verify material and intended family before approval.",
-      "status": "visual-review-required",
+      "status": "visually-reviewed",
       "file": "3ea9f3e846b2739ac4f83841.webp",
       "width": 900,
       "height": 1200,
       "bytes": 112684,
       "originalSha256": "082e27699e035d46647464144ade634f2569cd7457d083a36b293ac3aed2aef4",
-      "sha256": "3ea9f3e846b2739ac4f838418b17ed6651c09350657933caa4592dadc127ab49"
+      "sha256": "3ea9f3e846b2739ac4f838418b17ed6651c09350657933caa4592dadc127ab49",
+      "publishedPath": "/images/catalog/approved/3ea9f3e846b2739ac4f83841.webp",
+      "storage": "shared-public-copy"
     },
     {
       "key": "sail-corporate-mark",
