@@ -2,7 +2,7 @@
 import {useCallback,useEffect,useMemo,useRef,useState,type FormEvent} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {AdminProductMedia} from "./admin-product-media";
-import {categoryUnits} from "@/modules/catalog/category-units";
+import {productUnits,materialUnitLabel} from "@/modules/catalog/category-units";
 type Status="draft"|"published"|"archived";
 type Category={id:string;slug:string;name_en:string;name_hi:string;pricing_mode:"public"|"quote_only";status:Status};
 type Brand={id:string;name:string;slug:string;status:Status;authorized_source:string|null};
@@ -47,6 +47,7 @@ export function CatalogAdminPanel(){
   catch(e){setError(e instanceof Error?e.message:"Save failed.");return false}
   finally{lock.current=false;setBusy(false)}
  }
+ async function importDrafts(){if(lock.current||!window.confirm("Import reference products as private drafts? No prices, stock, or public listings will be created."))return;lock.current=true;setBusy(true);setError("");let next:number|null=0,processed=0,created=0,variants=0;try{while(next!==null){const r=await api("POST",{action:"import-reference-drafts",offset:next});processed+=Number(r.processed);created+=Number(r.createdProducts);variants+=Number(r.createdVariants);setNotice("Reference drafts: "+processed+" / "+r.referenceRows+" checked");if(r.nextOffset!==null&&(!Number.isInteger(r.nextOffset)||r.nextOffset<=next))throw Error("Unexpected batch cursor.");next=r.nextOffset;}await load();setNotice("Reference import checked "+processed+" items. Created "+created+" draft products and "+variants+" draft SKUs. Review actual SKUs and prices before publication.");}catch(e){setError(e instanceof Error?e.message:"Import interrupted. Retry safely; existing records will not be overwritten.")}finally{lock.current=false;setBusy(false)}}
  function moveBatch(next:number){if(busy||loading)return;setOffset(next);setPage(0);setParent("");setEdit(null);setEditVariant(null);}
  function change(payload:Record<string,unknown>){if(payload.status==="archived"&&!window.confirm("Archive this record? It will be hidden from active listings."))return;void mutate("PATCH",payload)}
  async function create(e:FormEvent<HTMLFormElement>){
@@ -65,10 +66,10 @@ export function CatalogAdminPanel(){
  const shown=visible.slice(currentPage*15,currentPage*15+15);
  const parentProduct=products.find(p=>p.id===parent);
  return <div className="admin-catalog-workbench">
- <section className="admin-box"><div className="admin-inline"><div><h2>Material inventory</h2><p>Manage actual database records. Archived items retain their references.</p></div><button type="button" disabled={loading||busy} onClick={()=>void load()}>{loading?"Loading…":"Refresh"}</button></div>
+ <section className="admin-box"><div className="admin-inline"><div><h2>Material inventory</h2><p>Manage actual database records. Archived items retain their references.</p><button type="button" disabled={busy||loading||!data} onClick={()=>void importDrafts()}>Synchronize reference catalog as drafts</button></div><button type="button" disabled={loading||busy} onClick={()=>void load()}>{loading?"Loading…":"Refresh"}</button></div>
  {error&&<p role="alert" className="admin-error">{error}</p>}{notice&&<p role="status">{notice}</p>}
  {data&&<div className="admin-metrics">{[["Products",data.products.length],["Categories",data.categories.length],["Brands",data.brands.length]].map(([label,n])=><div key={label}><small>{label} loaded</small><strong>{n}</strong></div>)}</div>}
- {!loading&&data&&products.length===0&&<p className="admin-empty">No database products in this batch. Public reference catalog entries are not automatically editable stock. Use the batch navigation or add a real product.</p>}
+ {!loading&&data&&products.length===0&&<p className="admin-empty">No database products in this batch. Use Synchronize reference catalog as drafts to prepare review records. Reference products are not automatically published or stocked.</p>}
  </section>
  {data&&<><section className="admin-box"><h2>Add a catalog record</h2><div className="admin-tabs" aria-label="Record type">{(["product","variant","brand","category"] as const).map(k=><button key={k} type="button" aria-pressed={kind===k} disabled={busy} onClick={()=>{setKind(k);setParent("")}}>{k}</button>)}</div>
  <form key={kind} className="catalog-admin-form" onSubmit={create}>
@@ -76,7 +77,7 @@ export function CatalogAdminPanel(){
  {kind==="category"?<><label>English name<input name="nameEn" required minLength={2} maxLength={120}/></label><label>Hindi name<input name="nameHi" required minLength={2} maxLength={120}/></label><label>Pricing mode<select name="pricingMode"><option value="public">Public price</option><option value="quote_only">Quote only</option></select></label></>:null}
  {kind==="brand"?<><label>Brand name<input name="name" required minLength={2} maxLength={120}/></label><label>Manufacturer reference (required before publication)<input name="source" type="url" maxLength={500}/></label></>:null}
  {kind==="product"?<><label>Product name<input name="name" required minLength={2} maxLength={180}/></label><label>Category<select name="categoryId" required defaultValue=""><option value="" disabled>Choose category</option>{data.categories.map(c=><option key={c.id} value={c.id}>{c.name_en}</option>)}</select></label><label>Brand<select name="brandId"><option value="">No brand</option>{data.brands.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></label><label className="wide-field">Description<textarea name="description" maxLength={2000} rows={4}/></label></>:null}
- {kind==="variant"?<><label>Parent product<select name="productId" required value={parent} onChange={e=>setParent(e.target.value)}><option value="">Choose product</option>{products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label><label>SKU<input name="sku" required minLength={2} maxLength={100}/></label><label>Unit<select name="unit" key={parent} required defaultValue=""><option value="">Choose unit</option>{categoryUnits(parentProduct?.category?.slug??"").map(u=><option key={u}>{u}</option>)}</select></label></>:null}
+ {kind==="variant"?<><label>Parent product<select name="productId" required value={parent} onChange={e=>setParent(e.target.value)}><option value="">Choose product</option>{products.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label><label>SKU<input name="sku" required minLength={2} maxLength={100}/></label><label>Unit<select name="unit" key={parent} required defaultValue=""><option value="">Choose unit</option>{productUnits(parentProduct?.category?.slug??"",parentProduct?.slug??"").map(u=><option key={u} value={u}>{materialUnitLabel(parentProduct?.category?.slug??"",u)}</option>)}</select></label></>:null}
  {(kind==="product"||kind==="variant")&&<label className="wide-field">Technical specifications<textarea name="specifications" rows={4} placeholder={"Grade: PPC\nWeight: 50 kg"}/></label>}
  <button disabled={busy||loading} className="wide-field">{busy?"Saving…":"Create draft "+kind}</button>
  </form><p>New records begin as drafts. Publish a verified category, brand and product before selling its variant.</p></section>

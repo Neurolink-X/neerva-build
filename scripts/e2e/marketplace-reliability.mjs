@@ -36,6 +36,23 @@ for(const [i,actor] of [a,b].entries()){
 const catalog="/api/admin/catalog";
 const taxonomy=await call(d,catalog);
 assert.equal(taxonomy.status,200);
+const draftCommand={action:"import-reference-drafts",offset:0};
+assert.equal((await call(c,catalog,"POST",draftCommand)).status,403);
+assert.equal((await call(d,catalog,"POST",{...draftCommand,offset:1})).status,400);
+let refOffset=0,checkedReferences=0;
+while(refOffset!==null){
+ const batch=await call(d,catalog,"POST",{...draftCommand,offset:refOffset});
+ assert.equal(batch.status,200,JSON.stringify(batch.data));
+ assert.equal(batch.data.publication,"draft_only");
+ assert.equal(batch.data.pricesCreated,0);assert.equal(batch.data.stockCreated,0);
+ checkedReferences+=batch.data.processed;
+ assert.ok(batch.data.nextOffset===null||batch.data.nextOffset>refOffset);
+ refOffset=batch.data.nextOffset;
+}
+assert.ok(checkedReferences>300,"All reference batches reconciled");
+const retryDrafts=await call(d,catalog,"POST",draftCommand);
+assert.equal(retryDrafts.status,200,JSON.stringify(retryDrafts.data));assert.equal(retryDrafts.data.createdProducts,0);assert.equal(retryDrafts.data.createdVariants,0);
+
 const category=taxonomy.data.categories.find(x=>x.slug==="cement");assert.ok(category);
 if(category.status!=="published")assert.equal((await call(d,catalog,"PATCH",{kind:"category",id:category.id,status:"published"})).status,200);
 // A genuinely new account starts without a tenant, branch or dealer role.

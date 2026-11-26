@@ -70,3 +70,8 @@
 @media(max-width:340px){.neerva-photo-stage .paint-compact-actions,.paint-edit-grid{grid-template-columns:minmax(0,1fr)}}
 
 .neerva-photo-stage .paint-preview-actions{margin:6px 0 0}.neerva-photo-stage .paint-preview-actions button{min-height:44px}.paint-live-preview .paint-preview-actions{background:transparent}.neerva-photo-stage .paint-live-preview[data-can-stick=false]{position:relative}.neerva-photo-stage .paint-preview-actions>button.paint-primary{background:#254738;color:white}.neerva-photo-stage .paint-preview-actions>button.paint-primary:disabled{background:#f5f8f3;color:#526459}
+
+@media(max-width:600px){.paint-sample-gallery{display:flex;overflow-x:auto;scroll-snap-type:x proximity;overscroll-behavior-inline:contain;padding:3px 2px 8px}.paint-sample-gallery button{flex:0 0 42%;scroll-snap-align:start;min-width:118px}.paint-sample-gallery small{display:block}}
+
+.paint-sample-gallery{min-width:0;max-width:100%;align-items:stretch}.paint-sample-gallery button{box-sizing:border-box}.paint-sample-photo{flex:none}.paint-sample-gallery button strong,.paint-sample-gallery button small{max-width:100%;overflow-wrap:anywhere}.paint-live-preview canvas{max-inline-size:100%;display:block}.paint-sample-gallery button:focus-visible{outline-offset:-2px}
+@media(max-width:600px){.paint-sample-gallery{scroll-padding-inline:6px}.paint-sample-gallery button{flex-basis:clamp(126px,44%,200px)}.paint-sample-gallery small{display:block}}

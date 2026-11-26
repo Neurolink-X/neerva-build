@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useState,useRef,useCallback,type FormEvent} from "react";
 import {pricingRequest} from "./pricing-request";
+import {loadAllAdminCatalog} from "@/modules/catalog/admin-catalog-paging";
 type Row={id:number;branch_id:string;pincode:string;freight_paise:number;unloading_paise:number;minimum_material_paise:number;lead_days:number;accepting_orders:boolean;status:string};
 type Branch={id:string;name:string;city:string};
 type Variant={id:string;sku:string;status:string};
@@ -8,7 +9,7 @@ type Tax={id:number;variant_id:string;hsn:string;rate_bps:number;price_includes_
 export function DeliveryPolicyPanel({role}:{role:"admin"|"dealer"}){
  const path=role==="admin"?"/api/admin/delivery-settings":"/api/dealer/delivery-settings";
  const [rows,setRows]=useState<Row[]>([]),[branches,setBranches]=useState<Branch[]>([]),[variants,setVariants]=useState<Variant[]>([]),[tax,setTax]=useState<Tax[]>([]),[message,setMessage]=useState("Loading policies…"),[busy,setBusy]=useState(false);const lock=useRef(false);
- const load=useCallback(async()=>{const a=await pricingRequest(path);setRows(a.rows??[]);if(role==="dealer"){const b=await pricingRequest("/api/dealer/inventory");setBranches(b.branches??[]);}else{const [c,t]=await Promise.all([pricingRequest("/api/admin/catalog"),pricingRequest("/api/admin/sku-tax")]);setVariants((c.products??[]).flatMap((p:{variants?:Variant[]})=>p.variants??[]).filter((v:Variant)=>v.status==="published"));setTax(t.rows??[]);}},[path,role]);
+ const load=useCallback(async()=>{const a=await pricingRequest(path);setRows(a.rows??[]);if(role==="dealer"){const b=await pricingRequest("/api/dealer/inventory");setBranches(b.branches??[]);}else{const [products,t]=await Promise.all([loadAllAdminCatalog<{variants?:Variant[]}>(pricingRequest),pricingRequest("/api/admin/sku-tax")]);setVariants(products.flatMap((p:{variants?:Variant[]})=>p.variants??[]).filter((v:Variant)=>v.status==="published"));setTax(t.rows??[]);}},[path,role]);
  useEffect(()=>{const t=setTimeout(()=>{void load().then(()=>setMessage("")).catch(e=>setMessage(e.message))},0);return()=>clearTimeout(t)},[load]);
  async function save(url:string,method:string,data:unknown){if(lock.current)return;lock.current=true;setBusy(true);try{await pricingRequest(url,method,data);await load();setMessage("Policy saved.");}catch(e){setMessage(e instanceof Error?e.message:"Save failed.");}finally{lock.current=false;setBusy(false);}}
  function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);const n=(k:string)=>Math.round(Number(f.get(k))*100);void save(path,"POST",{branchId:String(f.get("branch")),pincode:String(f.get("pin")),freightPaise:n("freight"),unloadingPaise:n("unloading"),minimumMaterialPaise:n("minimum"),leadDays:Number(f.get("days")),acceptingOrders:f.get("available")==="yes"});}

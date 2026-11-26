@@ -9,7 +9,7 @@ import {catalogVisuals} from "@/modules/catalog/catalog-visuals";
 import {MaterialIdentity} from "./material-identity";
 import {manufacturerPhotoSource} from "@/modules/catalog/manufacturer-photo-sources";
 import type { DemoProduct } from "@/modules/catalog/marketplace";
-import {categoryUnits,quantityUnitLabels} from "@/modules/catalog/category-units";
+import {productUnits,materialUnitLabel,quantityPrecision,initialMaterialQuantity,validProductQuantity} from "@/modules/catalog/category-units";
 
 export function ProductGallery({product}:{product:DemoProduct}){
  const [selected,setSelected]=useState<string|null>(null);
@@ -51,17 +51,17 @@ export function ProductGallery({product}:{product:DemoProduct}){
  </figure>;
 }
 export function ProductDetailTools({ product,quoteHref }: { product: DemoProduct;quoteHref?:string }) {
-  const units=categoryUnits(product.category);
+  const units=productUnits(product.category,product.slug);
   const [unit,setUnit]=useState<string>(units[0]??"piece");
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(()=>initialMaterialQuantity(product.category,product.slug,units[0]??"piece"));
   const [added, setAdded] = useState(false);
   const [notice, setNotice] = useState("");
   const [planningOpen,setPlanningOpen]=useState(false);
-  const validQuantity=Number.isFinite(quantity)&&quantity>=.001&&quantity<=1000000&&Math.abs(quantity*1000-Math.round(quantity*1000))<.00001;
+  const validQuantity=validProductQuantity(product.category,product.slug,unit,quantity);
   function addToOrderCart(){try{if(!validQuantity){setNotice('Enter a valid quantity.');return;}if(!addShopItem({category:product.category,productSlug:product.slug,productName:product.name,unit,quantity})){setNotice('Cart limit reached or storage unavailable.');return;}setNotice('Added to cart.');}catch{setNotice('Cart storage unavailable; use direct order instead.');}}
   function saveMaterial() {
     try {
-      if(!validQuantity){setNotice("Enter a quantity from 0.001 to 1,000,000, with at most three decimal places.");return;}
+      if(!validQuantity){setNotice("Enter a valid quantity for the selected unit. Packages and pieces must be whole numbers.");return;}
       const previous = safePlanningList(JSON.parse(window.localStorage.getItem(PLANNING_STORAGE_KEY) ?? "[]"));
       const next = appendPlanningLine(previous, { id: crypto.randomUUID(), name: `${product.name} · ${product.brand}`.slice(0,160), unit: isPlanningUnit(unit) ? unit : "piece", quantity });
       if (next.length === previous.length) { setNotice("List is full. Review the 25 existing items before adding another."); return; }
@@ -73,12 +73,12 @@ export function ProductDetailTools({ product,quoteHref }: { product: DemoProduct
     <div className="product-request-config">
       <h2>Choose quantity / मात्रा चुनें</h2><p className="option-confirmation-note">Choose quantity and unit, then request your order. No payment now; approve the final delivered price first.</p><div className="product-choice-grid">
         <label>Quantity unit
-          <select value={unit} onChange={(event) => setUnit(event.target.value)}>
-            {units.map((choice) => <option key={choice} value={choice}>{quantityUnitLabels[choice]}</option>)}
+          <select value={unit} onChange={(event) => {const next=event.target.value;setUnit(next);setQuantity(initialMaterialQuantity(product.category,product.slug,next));}}>
+            {units.map((choice) => <option key={choice} value={choice}>{materialUnitLabel(product.category,choice)}</option>)}
           </select>
         </label>
         <label>Quantity
-          <input type="number" min="0.001" max="1000000" step="0.001" value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} />
+          <input type="number" min={quantityPrecision(unit)} max="1000000" step={quantityPrecision(unit)} inputMode={quantityPrecision(unit)===1?"numeric":"decimal"} value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} />
         </label>
       </div>
       <p className="option-confirmation-note">Neerva confirms your exact size, stock and delivery price before fulfilment.</p>

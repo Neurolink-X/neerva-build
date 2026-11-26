@@ -13,6 +13,18 @@ async function main(){
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
  const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
  try{
+  // Focused extra screen sizes without repeating the full expensive suite.
+  for(const v of [{w:320,h:640},{w:1024,h:768},{w:1920,h:1080}]){
+   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
+   try{const page=await ctx.newPage();
+    for(const route of ["/","/materials","/materials/bricks-blocks","/materials/bricks-blocks/red-clay-brick","/brands","/design-studio/visualizer","/build-iq","/checkout?cart=1"]){
+     const response=await page.goto(base+route,{waitUntil:"load",timeout:60000});assert.equal(response?.status(),200,route);
+     const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth),broken:[...document.images].filter(i=>i.complete&&i.getBoundingClientRect().width>0&&!i.naturalWidth).map(i=>i.getAttribute("src"))}));
+     if(result.scroll>result.width+2)failures.push(v.w+"px "+route+": responsive overflow "+(result.scroll-result.width)+"px");
+     if(result.broken.length)failures.push(v.w+"px "+route+": broken visible images "+JSON.stringify(result.broken));
+    }
+   }finally{await ctx.close()}
+  }
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
    const page=await ctx.newPage(),errors=[];
@@ -184,6 +196,7 @@ async function main(){
    await catalog.getByRole("button",{name:"← Previous",exact:true}).click();
    assert.deepEqual(await catalog.locator(".product-card h2 a").evaluateAll(links=>links.map(a=>a.getAttribute("href"))),firstPage);
    await catalog.locator(".catalog-search input").fill("red clay brick");
+   await catalog.locator('a[href="/materials/bricks-blocks/red-clay-brick"]').first().waitFor({state:"visible",timeout:10000});
    assert.ok(await catalog.locator('a[href="/materials/bricks-blocks/red-clay-brick"]').count()>0,"Search still discovers products beyond first page");
    await page.goto(base+"/materials?category=hardware",{waitUntil:"load"});
    assert.equal(await page.locator('#catalog-results a[href="/materials/hardware/wood-adhesive"]').count(),0,"Minor adhesive bottle must not appear in the public grid");
@@ -194,6 +207,25 @@ async function main(){
    const redBrick=await page.goto(base+"/materials/bricks-blocks/red-clay-brick",{waitUntil:"load"});
    assert.equal(redBrick?.status(),200,"red brick details");
    assert.match(await page.locator("h1").first().innerText(),/red clay brick/i);
+   if(v.w===390){
+    const save=page.getByRole("button",{name:"Save for my project",exact:true});
+    await save.waitFor();await save.click();
+    await page.getByRole("button",{name:"Saved ✓",exact:true}).waitFor();
+    await page.goto(base+"/my-project",{waitUntil:"load"});
+    const shortlist=page.locator("#saved-materials");
+    await shortlist.getByRole("heading",{name:"Saved materials",exact:true}).waitFor();
+    assert.ok(await shortlist.getByRole("link",{name:/red clay brick/i}).count()>=1);
+    await page.getByRole("button",{name:/Foundation/}).first().click();
+    await page.locator('.project-materials a[href="/build-iq/handbook/ground"]').waitFor();
+    await page.goto(base+"/",{waitUntil:"load"});
+    await page.getByRole("heading",{name:"Pick up where you left off"}).waitFor();
+    await page.goto(base+"/my-project",{waitUntil:"load"});
+    await page.getByRole("checkbox",{name:"Remember recently viewed materials on this device"}).uncheck();
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("neerva-material-shortlist-v1")).recent.length),0);
+    await page.locator("#saved-materials").getByRole("button",{name:/Remove red clay brick/i}).click();
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("neerva-material-shortlist-v1")).saved.length),0);
+   }
+
    if(v.w===390||v.w===1440){
     const sizes=v.w===390?[[320,568],[360,800],[390,844],[412,915],[540,720],[768,1024],[844,390]]:[[1024,768],[1280,720],[1440,900],[1920,1080],[2560,1440]];
     for(const route of ["/design-studio/road-planner","/design-studio/portfolio?width=18&depth=50&road=N&bedrooms=3&floors=2&parking=true"]){
@@ -434,12 +466,29 @@ async function main(){
     // Exercise catalog quick-add and quantity stepper without opening product details.
     await page.goto(base+"/materials/cement",{waitUntil:"load"});
     const quickAdd=page.locator(".nb-shop-control").first();
-    await quickAdd.getByRole("button",{name:"Add",exact:true}).click();
+    await quickAdd.getByRole("button",{name:/^Add(?: \d+)?$/}).click();
     await quickAdd.getByRole("button",{name:/Increase /}).click();
     assert.equal(await quickAdd.locator("input[type=number]").inputValue(),"2");
     await quickAdd.getByRole("button",{name:/Decrease /}).click();
     await quickAdd.getByRole("button",{name:/Decrease /}).click();
     await quickAdd.getByRole("button",{name:"Add",exact:true}).waitFor();
+    // Real brick route: bulk count, not bags, and valid arbitrary integer quantity.
+    await page.goto(base+"/materials/bricks-blocks/red-clay-brick",{waitUntil:"load"});
+    const brickConfig=page.locator(".product-request-config");
+    assert.equal(await brickConfig.locator("select").first().inputValue(),"piece");
+    assert.equal(await brickConfig.locator("input[type=number]").inputValue(),"100");
+    assert.deepEqual(await brickConfig.locator("select").first().locator("option").evaluateAll(options=>options.map(o=>o.value)),["piece","bundle","truck"]);
+    await brickConfig.locator("input[type=number]").fill("1.5");
+    assert.ok(await brickConfig.getByRole("button",{name:"Add to cart",exact:true}).isDisabled());
+    await brickConfig.locator("input[type=number]").fill("750");
+    await brickConfig.getByRole("button",{name:"Add to cart",exact:true}).click();
+    await page.goto(base+"/checkout?cart=1",{waitUntil:"load"});
+    const brickCart=page.locator(".nb-shop-cart-line").first();
+    assert.equal(await brickCart.locator("input[type=number]").inputValue(),"750");
+    await brickCart.getByRole("button",{name:/Increase /}).click();
+    assert.equal(await brickCart.locator("input[type=number]").inputValue(),"850");
+    await brickCart.getByRole("button",{name:/^Remove /}).click();
+    await page.getByText(/Your cart is empty/).waitFor();
     // Exercise a genuine guest order-cart journey, without creating a production order.
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     await page.locator(".product-request-config input[type=number]").fill("3");
@@ -454,10 +503,18 @@ async function main(){
     await page.reload({waitUntil:"load"});
     await page.getByRole("heading",{name:"My cart (2)"}).waitFor();
     assert.equal(await page.locator(".nb-shop-cart-line input[type=number]").first().inputValue(),"5","quantity persists after reload");
-    await page.getByRole("button",{name:"Continue →"}).click();
+    await page.getByRole("button",{name:"Continue to delivery →"}).click();
     const signIn=page.getByRole("link",{name:/Sign in and continue/});
     await signIn.waitFor();
     assert.equal(new URL(await signIn.getAttribute("href"),base).searchParams.get("next"),"/checkout?cart=1","cart survives the sign-in return");
+    await page.getByRole("heading",{name:"Delivery details",exact:true}).waitFor();
+    assert.equal(await page.getByRole("button",{name:"Sign in to submit request"}).isDisabled(),true,"guest can prepare but not submit without authorization");
+    await page.getByLabel("Contact name",{exact:true}).fill("Guest draft");
+    await page.getByText("Need help or a copy of your request?",{exact:true}).click();
+    await page.getByRole("heading",{name:"Keep your material request"}).waitFor();
+    await page.getByRole("button",{name:"Download draft",exact:true}).waitFor();
+    assert.equal(await signIn.getAttribute("target"),"_blank","sign in preserves original form tab");
+
     await page.getByRole("button",{name:/Edit cart/}).click();
     await page.locator(".nb-shop-cart-line").last().getByRole("button",{name:/^Remove /}).click();
     await page.getByRole("heading",{name:"My cart (1)"}).waitFor();

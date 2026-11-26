@@ -500,5 +500,45 @@ export const approvedMedia:readonly ApprovedMedia[]=[
     "sha256": "eb31c5436f3d0e037c1f0ef8386aecaa5529d56b71531c3056cf8f1585d47176",
     "path": "/images/catalog/approved/eb31c5436f3d0e037c1f0ef8.webp",
     "sortOrder": 1
-  }
+  },
+{
+  "category": "aggregates",
+  "family": "morang-coarse-sand",
+  "scope": "family",
+  "path": "/images/catalog/approved/741c006561e80d09aeef4508.webp",
+  "sourceType": "curated",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:A_Coarse_sand_typical_reddish_in_nature.jpg",
+  "license": "CC BY-SA 4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+  "credit": "Liteekanem1",
+  "verified": true,
+  "primary": true,
+  "alt": "Reddish natural coarse sand at an excavation site; illustrative texture only, not proof of Indian morang origin, grading or suitability",
+  "view": "site",
+  "width": 900,
+  "height": 1200,
+  "sha256": "741c006561e80d09aeef4508c93f99bd1249896f4610c63e8bd1dc6f60b3908a",
+  "bytes": 227104,
+  "sortOrder": 0
+},
+{
+  "category": "electrical",
+  "family": "generic-conduit",
+  "scope": "family",
+  "path": "/images/catalog/approved/3ea9f3e846b2739ac4f83841.webp",
+  "sourceType": "curated",
+  "sourceUrl": "https://commons.wikimedia.org/wiki/File:Usage_of_electrical_counduit.JPG",
+  "license": "CC BY-SA 3.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "credit": "Dmitry G",
+  "verified": true,
+  "primary": false,
+  "alt": "Yellow underground electrical conduit installed at a street utility site; illustration of routing, not a residential conduit specification",
+  "view": "installed",
+  "width": 900,
+  "height": 1200,
+  "sha256": "3ea9f3e846b2739ac4f838418b17ed6651c09350657933caa4592dadc127ab49",
+  "bytes": 112684,
+  "sortOrder": 1
+}
 ];

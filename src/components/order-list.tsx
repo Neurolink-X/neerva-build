@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {customerOrderLabel,customerRequestError} from "@/modules/orders/customer-presentation";
 import {useCallback,useEffect,useState} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {OrderInvoice,type VerifiedInvoice} from "./order-invoice";
@@ -25,7 +26,7 @@ export function OrderList(){
    if(!token){setMessage("Sign in to view your private orders.");return;}
    const response=await fetch("/api/orders",{headers:{Authorization:"Bearer "+token},cache:"no-store",signal});
    const data=await response.json().catch(()=>({error:"Could not read order service response."})) as {orders?:Order[];error?:string};
-   if(!response.ok){setMessage(data.error??"Order service is currently unavailable.");return;}
+   if(!response.ok){setMessage("Orders are temporarily unavailable. Try refreshing.");return;}
    setOrders(Array.isArray(data.orders)?data.orders:[]);
   }catch{if(!signal?.aborted)setMessage("Network interruption. Refresh orders before taking another action.");}
   finally{if(!signal?.aborted)setLoading(false);}
@@ -45,8 +46,8 @@ export function OrderList(){
     headers:{"Content-Type":"application/json",Authorization:"Bearer "+data.session.access_token},
     body:JSON.stringify({orderId:order.id,expectedStatus:order.status,status})
    });
-   const result=await response.json().catch(()=>({error:"Could not confirm order update."})) as {error?:string};
-   if(!response.ok){setMessage(result.error??"Order update failed.");return;}
+   await response.json().catch(()=>null);
+   if(!response.ok){setMessage(customerRequestError(response.status));return;}
    await load();
   }catch{setMessage("Network error. Refresh to check the latest order status.")}
   finally{setBusy(null);}
@@ -62,7 +63,7 @@ export function OrderList(){
   :orders.length===0?<p>No accepted orders for your account. Start with a <Link href="/quotes">material quotation request</Link>.</p>
   :orders.map(order=><article key={order.id} style={{border:"1px solid #dbe3db",padding:16,borderRadius:14,marginBottom:14,background:"#fffefa"}}>
    <h2 style={{fontSize:19}}>Order {order.code}</h2>
-   <p><strong>{names[order.status]??order.status.replaceAll("_"," ")}</strong> · {order.business_name}</p>
+   <p><strong>{names[order.status]??customerOrderLabel(order.status)}</strong> · {order.business_name}</p>
    <p>{order.city}, {order.pincode} · {order.delivery_address}</p>
    <p style={{fontSize:12}}>Request accepted {new Date(order.created_at).toLocaleString("en-IN")}</p>
    {Array.isArray(order.line_items)&&<OrderInvoice order={order}/>}

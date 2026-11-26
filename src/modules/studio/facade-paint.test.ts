@@ -41,7 +41,7 @@ test("full exterior covers previously omitted wall and trim regions in all local
  function inside(ring:number[][],x:number,y:number){let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [a,b]=ring[i],[c,d]=ring[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
  function painted(sample:typeof facadeSamples[number],x:number,y:number){return sample.zones.some(z=>inside(z.mask.outline,x,y)&&!z.mask.holes.some(h=>inside(h,x,y)));}
  const family=facadeSamples[0],modern=facadeSamples[1],villa=facadeSamples[2];
- assert.ok(painted(family,250/1536,420/512));assert.ok(painted(family,600/1536,335/512));
+ assert.ok(painted(family,940/1536,330/512));assert.ok(painted(family,1175/1536,350/512));assert.equal(painted(family,1050/1536,360/512),false);assert.ok(painted(family,250/1536,420/512));assert.ok(painted(family,600/1536,335/512));
  assert.ok(painted(modern,575/880,414/738));assert.ok(painted(modern,270/880,490/738));
  assert.ok(painted(villa,790/880,320/584));assert.ok(painted(villa,640/880,300/584));
  assert.equal(painted(family,1050/1536,160/512),false);

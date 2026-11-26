@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { catalogCategories } from "../catalog/catalog.ts";
-import {allMaterialUnits,isAllowedCategoryUnit} from "../catalog/category-units.ts";
+import {allMaterialUnits,isAllowedCategoryUnit,validUnitQuantity} from "../catalog/category-units.ts";
 
 const categorySlugs = catalogCategories.map((category) => category.slug) as [string, ...string[]];
 
@@ -22,6 +22,7 @@ export const rfqSchema = baseRfqSchema.superRefine((value, context) => {
   if (!isAllowedCategoryUnit(value.categorySlug,value.unit)) {
     context.addIssue({ code: "custom", path: ["unit"], message: "Choose a unit suitable for this material category." });
   }
+  if (!validUnitQuantity(value.unit,value.quantity)) context.addIssue({code:"custom",path:["quantity"],message:"Enter a valid quantity for the selected unit; pieces and packs must be whole numbers."});
 });
 
 export type RfqInput = z.infer<typeof rfqSchema>;

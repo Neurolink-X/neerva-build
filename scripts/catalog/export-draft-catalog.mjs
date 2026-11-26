@@ -2,10 +2,10 @@
 import assert from "node:assert/strict";
 import {writeFileSync,mkdirSync} from "node:fs";
 import {demoProducts} from "../../src/modules/catalog/marketplace.ts";
-import {defaultCategoryUnit,isMaterialCategory} from "../../src/modules/catalog/category-units.ts";
+import {defaultProductUnit,isMaterialCategory} from "../../src/modules/catalog/category-units.ts";
 const rows=demoProducts.map(p=>{
  assert.ok(isMaterialCategory(p.category)&&/^[a-z0-9-]{1,100}$/.test(p.slug)&&p.name.trim());
- return {slug:p.slug,category:p.category,name:p.name,description:p.description,brand_slug:p.brand.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),unit:defaultCategoryUnit(p.category),attributes:{origin:"neerva-static-reference",brand_reference:p.brand,reference_only:true,manufacturer_sku:null,quote_only:!!p.quoteOnly,family_key:p.familyKey??p.slug,specifications:p.specifications,source:p.manufacturerReference??p.referenceSource??null}};
+ return {slug:p.slug,category:p.category,name:p.name,description:p.description,brand_slug:p.brand.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,""),unit:defaultProductUnit(p.category,p.slug),attributes:{origin:"neerva-static-reference",brand_reference:p.brand,reference_only:true,manufacturer_sku:null,quote_only:!!p.quoteOnly,family_key:p.familyKey??p.slug,specifications:p.specifications,source:p.manufacturerReference??p.referenceSource??null}};
 });
 assert.equal(new Set(rows.map(r=>r.slug)).size,rows.length,"Duplicate product slug");
 const data=Buffer.from(JSON.stringify(rows),"utf8").toString("hex");
