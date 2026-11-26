@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {MaterialRequestRecovery,materialRequestText} from "./material-request-recovery";
 import {useEffect,useRef,useState,type FormEvent} from "react";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {categoryUnits,defaultCategoryUnit,categoryMaterialHints,materialUnitLabel,quantityPrecision,validMaterialQuantity,isAllowedCategoryUnit,isMaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
@@ -61,10 +62,11 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
    };
    if(!validMaterialQuantity(payload.categorySlug,payload.unit,payload.quantity)){setMessage({kind:"error",text:"Check the quantity and unit for this material."});return;}
    const fingerprint=JSON.stringify([session.data.session.user.id,payload]);
-   const idempotencyKey=requestKeys.current.get(fingerprint)??crypto.randomUUID();
+   const digest=Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(fingerprint)))).map(b=>b.toString(16).padStart(2,"0")).join("");
+   const key="neerva-rfq-retry:"+digest;let idempotencyKey=requestKeys.current.get(fingerprint)??crypto.randomUUID();try{idempotencyKey=sessionStorage.getItem(key)??idempotencyKey;sessionStorage.setItem(key,idempotencyKey)}catch{/* in-memory retry remains available */}
    requestKeys.current.set(fingerprint,idempotencyKey);
    const body={idempotencyKey,...payload};
-   const response=await fetch("/api/rfqs",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify(body),cache:"no-store"});
+   const response=await fetch("/api/rfqs",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify(body),cache:"no-store",signal:AbortSignal.timeout(20000)});
    const result=await response.json().catch(()=>null) as {requestId?:string;error?:string;reference?:string;fields?:{message:string}[]}|null;
    if(!response.ok){
     setMessage({kind:"error",text:result?.error??"Request not saved. Retry safely.",reference:result?.reference,details:result?.fields?.map(f=>f.message)});
@@ -72,7 +74,7 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
     setMessage({kind:"error",text:"Request status could not be confirmed. Keep the form and retry."});
    }else{
     setMessage({kind:"success",text:"Your material request was securely recorded. No dealer offer or delivery is guaranteed yet.",reference:result.requestId});
-    element.reset();requestKeys.current.delete(fingerprint);setCategory(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates");setUnit(isAllowedCategoryUnit(defaultCategory,defaultUnit)?defaultUnit:defaultCategoryUnit(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates"));
+    element.reset();requestKeys.current.delete(fingerprint);try{sessionStorage.removeItem(key)}catch{}setCategory(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates");setUnit(isAllowedCategoryUnit(defaultCategory,defaultUnit)?defaultUnit:defaultCategoryUnit(isMaterialCategory(defaultCategory)?defaultCategory:"aggregates"));
    }
   }catch{setMessage({kind:"error",text:"Network issue. Your details remain in the form; retry with the same request reference."})}
   finally{submissionLock.current=false;setBusy(false)}
@@ -94,9 +96,10 @@ export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defau
   </div>
   <label className="rfq-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to submit my contact number and request details for private quotation handling. <Link href="/privacy">Read the privacy notice</Link>. No payment is requested.</span></label>
   {!intakeEnabled&&<p className="rfq-unavailable" role="status">Quote intake is currently paused until verified dealer sourcing, support and privacy readiness are approved. You can prepare details, but clicking Submit cannot save a request yet. No payment is requested.</p>}
-  {!supabase?<p role="status">Account service unavailable. You can still copy your material draft.</p>:!ready?<p role="status">Checking your secure account session…</p>:!verified?<p className="rfq-unavailable" role="status">Sign in with a verified email before submitting. <Link href="/account">Open account access →</Link></p>:<p className="rfq-privacy">Your request is stored privately, with duplicate protection and submission limits. It is not an order or payment confirmation.</p>}
+  {!supabase?<p role="status">Account service unavailable. You can still copy your material draft.</p>:!ready?<p role="status">Checking your secure account session…</p>:!verified?<p className="rfq-unavailable" role="status">Sign in with a verified email before submitting. <Link href="/account" target="_blank" rel="noopener">Open account access →</Link></p>:<p className="rfq-privacy">Your request is stored privately, with duplicate protection and submission limits. It is not an order or payment confirmation.</p>}
   {message&&<div className={`rfq-status ${message.kind}`} role={message.kind==="error"?"alert":"status"}><p>{message.text}</p>{message.details?.length?<ul>{message.details.map(item=><li key={item}>{item}</li>)}</ul>:null}{message.reference&&<small>Reference: {message.reference}</small>}</div>}
   <div className="rfq-actions"><button type="button" className="button rfq-copy" onClick={()=>void copyDraft()}>{draftCopied?"Copy draft again":"Copy material quote draft"}</button><button className="button button-dark rfq-submit" type="submit" disabled={!intakeEnabled||!ready||!verified||busy}>{!intakeEnabled?"Requests not open yet":busy?"Sending securely…":"Submit private request →"}</button></div>
+  <MaterialRequestRecovery getDraft={()=>{const el=document.querySelector<HTMLFormElement>("#neerva-quote-form");const f=el?new FormData(el):null;return materialRequestText([{productName:String(f?.get("materialDescription")??defaultMaterial),quantity:Number(f?.get("quantity")),unit}],String(f?.get("city")??defaultCity),String(f?.get("pincode")??defaultPincode))}}/>
   <small className="rfq-privacy">Copying is local to your device; it does not send an enquiry. Do not enter card details. Any dealer offer must include GST, transport, unloading and valid-until date.</small>
  </form>;
 }
