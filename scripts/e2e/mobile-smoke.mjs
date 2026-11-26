@@ -1031,7 +1031,7 @@ async function main(){
     const floorToggle=page.getByRole("button",{name:"First floor"});
     await floorToggle.click();
     assert.equal(await floorToggle.getAttribute("aria-pressed"),"true","G+1 levels must switch");
-    const roadSelector=page.getByLabel("Road along which edge?");
+    const roadSelector=page.locator(".nroad-form").getByRole("combobox",{name:"Road along which edge?",exact:true});
     await roadSelector.selectOption("E");
     assert.equal(await page.getByRole("img",{name:/Road on E side/}).count(),1,"east-side road is still the entry edge");
     const plotInputs=page.locator(".nroad-controls input[type=number]");
@@ -1045,9 +1045,15 @@ async function main(){
     await page.getByRole("img",{name:/Road on E side/}).waitFor();
     await page.screenshot({path:path.join("test-results/mobile","390-road-planner-18x50.png"),fullPage:true,animations:"disabled"});
     await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=2&bedrooms=1&road=N&parking=false",{waitUntil:"load"});
-    await page.getByRole("button",{name:"Show ground-floor 1 BHK plan"}).click();
+    const floorSelector=page.locator(".nroad-form").getByRole("combobox",{name:"Levels",exact:true});
+    await floorSelector.waitFor({state:"visible"});
+    assert.equal(await floorSelector.count(),1,"floor selector has a unique accessible name");
+    assert.equal(await floorSelector.inputValue(),"2","requested G+1 is preserved before explicit recovery");
+    await page.getByRole("button",{name:"Show ground-floor 1 BHK plan",exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector('.nroad-form select[name="floors"]')?.value==="1");
+    assert.equal(await floorSelector.inputValue(),"1","explicit recovery selects one floor");
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
-    assert.equal(await page.getByLabel("Levels",{exact:true}).inputValue(),"1");
+    assert.equal(await page.locator(".nroad-error").count(),0,"validated recovery clears the unsupported-plan notice");
     assert.equal(await page.locator(".nroad-variants button").count(),6,"standard plot has six geometry-distinct 1 BHK choices");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
@@ -1123,7 +1129,7 @@ async function main(){
       await page.locator(".nbh-studio-back").click();assert.equal(await dimensions.nth(0).inputValue(),w);assert.equal(await dimensions.nth(1).inputValue(),d);
       await page.locator(".nbh-studio-generate").click();assert.equal(await page.locator("#nbh-studio-bedrooms").inputValue(),"2");assert.equal(await page.locator("#nbh-studio-parking").inputValue(),"false");
       await link.click();await page.waitForURL("**/design-studio/portfolio?**");await page.locator(".nroad-form").waitFor({state:"visible"});
-      assert.equal(await page.getByLabel("Total bedrooms").inputValue(),"2");assert.equal(await page.getByLabel("Car parking").inputValue(),"false");
+      assert.equal(await page.locator(".nroad-form").getByRole("combobox",{name:"Total bedrooms",exact:true}).inputValue(),"2");assert.equal(await page.locator(".nroad-form").getByRole("combobox",{name:"Car parking",exact:true}).inputValue(),"false");
       assert.equal(await page.locator("summary").filter({hasText:/Coordinated design|China and seismic/}).count(),0,"no unrelated educational banner above planner");
       await page.goto(base+"/",{waitUntil:"load"});await page.locator("#nbh-studio-preset").selectOption("custom");
     }
