@@ -20,7 +20,7 @@ export function SystemHealthPanel(){
     const d=await operationsRequest<{incidents:Incident[]}>("/api/admin/system-incidents");
     if(!Array.isArray(d.incidents))throw Error("Incident response unavailable.");
     if(active){if(editing.current.size===0)setRows(d.incidents);setError("");setLastSync(Date.now());failures=0;}
-   }catch(e){if(active){setError(e instanceof Error?e.message:"Incident monitoring unavailable.");failures++;}}
+   }catch(e){if(active){if(!editing.current.size)setRows([]);setError(e instanceof Error?e.message:"Incident monitoring unavailable.");failures++;}}
    finally{requestLock.current=false;if(active){setLoading(false);schedule()}}
   }
   function wake(){if(document.visibilityState==="visible"&&navigator.onLine!==false&&!requestLock.current)void poll();else schedule()}
