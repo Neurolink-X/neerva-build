@@ -10,3 +10,8 @@ test("matching location, slab and active campaign use integer paise",()=>{const 
 test("wrong city, PIN, unit, expired rate or ambiguous SKU is unpriced",()=>{for(const rates of [[{...base,city:"Noida"}],[{...base,prefix:"110"}],[{...base,unit:"tonne"}],[{...base,until:"2026-01-01T00:00:00Z"}],[base,{...base,sku:"OTHER"}]])assert.equal(estimateCart([line],"208001","Kanpur",rates,[],now).complete,false);});
 test("partial cart never claims a complete subtotal",()=>{const r=estimateCart([line,{...line,productSlug:"missing"}],"208001","Kanpur",[base],[],now);assert.equal(r.complete,false);});
 test("quantity below slab excludes campaign",()=>{const r=estimateCart([{...line,quantity:2}],"208001","Kanpur",[base,slab],[offer],now);assert.equal(r.subtotalPaise,80000);assert.equal(r.discountPaise,0);});
+
+test("non-finite, fractional precision and contradictory equal-rank prices cannot become estimates",()=>{
+ for(const quantity of [NaN,Infinity,0,-1,1.0001,1000001])assert.equal(estimateCart([{...line,quantity}],"208001","Kanpur",[base],[],now).complete,false);
+ assert.equal(estimateCart([line],"208001","Kanpur",[base,{...base,paise:base.paise+1}],[],now).complete,false);
+});
