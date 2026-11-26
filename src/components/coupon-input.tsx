@@ -1,0 +1,8 @@
+"use client";
+import {useState} from "react";
+import {createNeervaBrowserClient} from "@/modules/supabase/browser";
+export function CouponInput({value,onChange}:{value:string;onChange:(v:string)=>void}){
+ const [draft,setDraft]=useState(""),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");
+ async function check(){const code=draft.trim().toUpperCase();if(!/^[A-Z0-9-]{3,24}$/.test(code)){setNotice("Enter a valid coupon code.");return}setBusy(true);setNotice("");try{const db=createNeervaBrowserClient();if(!db)throw Error();const {data,error}=await db.rpc("neerva_coupon_available",{p_code:code});if(error)throw Error();if(data===true){onChange(code);setNotice("Code saved. Eligibility and savings are checked against the final reviewed bill.")}else{onChange("");setNotice("Coupon unavailable or already used.")}}catch{setNotice("Could not check coupon. Retry.")}finally{setBusy(false)}}
+ return <section className="nb-shop-cart-card"><h3>Coupon</h3>{value?<><strong>{value}</strong><button type="button" className="button button-outline" onClick={()=>{onChange("");setNotice("");setDraft("")}}>Remove coupon</button></>:<><label>Coupon code<input value={draft} maxLength={24} disabled={busy} onChange={e=>setDraft(e.target.value.toUpperCase())}/></label><button type="button" className="button button-outline" disabled={busy} onClick={()=>void check()}>{busy?"Checking…":"Apply code"}</button></>}{notice&&<p role="status">{notice}</p>}</section>
+}
