@@ -71,7 +71,7 @@ export function StudioPlotFitFinder(){
     <label>{t.depth} ({unit})<input type="number" value={depth} min="0" step="any" inputMode="decimal" onChange={e=>updateDimension("depthFt",e.target.value)}/></label>
     
     <label>{t.road}<select value={brief.roadSide} onChange={e=>{const road=e.target.value as Facing;setBrief(previous=>({...previous,roadSide:road,facing:road}));setShowAll(false)}}>{dirs.map(d=><option key={d}>{d}</option>)}</select></label>
-    <label>{t.bedrooms}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>{[1,2,3].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
+    <label>{t.bedrooms}<select value={brief.bedrooms} onChange={e=>update("bedrooms",Number(e.target.value))}>{[1,2,3,4,5,6].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
     <label htmlFor="nfit-floors">{t.floors}<select id="nfit-floors" value={brief.floors} onChange={e=>update("floors",Number(e.target.value))}>{[1,2,3].map(n=><option key={n} value={n}>{n}</option>)}</select></label>
     <label>{t.parking}<select value={brief.parking?"yes":"no"} onChange={e=>update("parking",e.target.value==="yes")}><option value="yes">{t.yes}</option><option value="no">{t.no}</option></select></label>
    </div>
