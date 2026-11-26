@@ -341,9 +341,22 @@ async function main(){
     assert.equal(await page.locator(".neerva-install-banner").count(),0,"installed app never displays install banner");
     await page.reload({waitUntil:"load"});
     assert.equal(await page.locator('a[href="/install"]').count(),0,"installed state survives reload");
-    // Reset only the simulated preference before testing an uninstalled browser.
-    await page.evaluate(()=>localStorage.removeItem("neerva-installed-v1"));
-    await page.reload({waitUntil:"load"});
+    // Simulate an uninstall with a fresh browser installability event. No storage clearing.
+    await page.evaluate(()=>{
+      const event=new Event("beforeinstallprompt",{cancelable:true});
+      Object.assign(event,{prompt:async()=>undefined,userChoice:Promise.resolve({outcome:"dismissed"})});
+      window.dispatchEvent(event);
+    });
+    await page.locator(".nbh-mobile-menu a[href='/install']").waitFor({state:"attached"});
+    await page.waitForFunction(()=>localStorage.getItem("neerva-installed-v1")===null);
+    // Also verify a user can recover if the browser never emits an uninstall or installability signal.
+    await page.evaluate(()=>window.dispatchEvent(new Event("appinstalled")));
+    await page.locator(".nbh-mobile-menu a[href='/install?recovery=1']").waitFor({state:"attached"});
+    await page.goto(base+"/install?recovery=1",{waitUntil:"load"});
+    await page.getByRole("button",{name:"App removed? Set up again",exact:true}).click();
+    await page.getByRole("heading",{name:"Get Neerva on your device"}).waitFor({state:"visible"});
+    assert.equal(await page.evaluate(()=>localStorage.getItem("neerva-installed-v1")),null,"recovery clears only installation preference");
+    await page.goto(base+"/",{waitUntil:"load"});
     await page.locator(".neerva-install-banner").waitFor({state:"visible"});
     // Separately emulate the standalone browser media query before app hydration.
     const standaloneCtx=await browser.newContext({viewport:{width:390,height:844}});
@@ -358,6 +371,8 @@ async function main(){
         await installedPage.waitForFunction(()=>localStorage.getItem("neerva-installed-v1")==="1");
         assert.equal(await installedPage.locator('a[href="/install"]').count(),0,route+" standalone hides all install links");
         assert.equal(await installedPage.locator(".neerva-install-banner").count(),0,route+" standalone hides banner");
+        assert.equal(await installedPage.locator('a[href="/install?recovery=1"]').count(),0,"standalone hides recovery navigation");
+        assert.equal(await installedPage.getByRole("button",{name:"App removed? Set up again",exact:true}).count(),0,"standalone cannot clear installed state");
         if(route==="/install")await installedPage.getByRole("heading",{name:"Neerva is ready to use"}).waitFor();
       }
     }finally{await standaloneCtx.close();}

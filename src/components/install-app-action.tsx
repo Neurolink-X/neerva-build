@@ -1,7 +1,7 @@
 "use client";
 import {useState} from "react";
 import Link from "next/link";
-import {usePwaInstall,requestPwaInstall} from "@/components/pwa-install";
+import {usePwaInstall,requestPwaInstall,resetInstallPreference} from "@/components/pwa-install";
 
 const guides={
  android:{title:"Android · Chrome",steps:["Open Neerva in Chrome.","Tap the three-dot menu (⋮).","Choose Install app or Add to Home screen."],note:"Some in-app browsers do not support installation. Open Chrome directly."},
@@ -13,8 +13,9 @@ export function InstallAppAction(){
  if(!state.ready)return <section className="install-action" aria-busy="true">Checking your device…</section>;
  if(state.installed)return <section className="install-action" aria-labelledby="install-action-title">
   <h2 id="install-action-title">Neerva is ready to use</h2>
-  <p role="status">The app is already installed on this device.</p>
+  <p role="status">{state.runningStandalone?"Neerva is running as an installed app.":"Neerva was previously installed on this device."}</p>
   <Link className="install-primary" href="/">Open Neerva</Link>
+  {!state.runningStandalone&&<p><button type="button" onClick={()=>{if(resetInstallPreference())setMessage("Installation options restored. Follow the steps for your device.");}}>App removed? Set up again</button></p>}
  </section>;
  const guide=guides[state.platform];
  async function begin(){
