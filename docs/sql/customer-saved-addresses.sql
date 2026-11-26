@@ -17,7 +17,7 @@ create index customer_saved_addresses_owner_idx on public.customer_saved_address
 alter table public.customer_saved_addresses enable row level security;
 revoke all on public.customer_saved_addresses from public,anon,authenticated;
 grant select,delete on public.customer_saved_addresses to authenticated;
-grant insert(label,contact_name,phone,city,pincode,delivery_address) on public.customer_saved_addresses to authenticated;
+grant insert(user_id,label,contact_name,phone,city,pincode,delivery_address) on public.customer_saved_addresses to authenticated;
 grant update(label,contact_name,phone,city,pincode,delivery_address) on public.customer_saved_addresses to authenticated;
 create policy address_owner_select on public.customer_saved_addresses for select to authenticated using ((select auth.uid())=user_id);
 create policy address_owner_insert on public.customer_saved_addresses for insert to authenticated with check ((select auth.uid())=user_id);
