@@ -1,7 +1,7 @@
 "use client";
 import {useEffect} from "react";
 type Code="API_5XX"|"NETWORK_FAILURE"|"UI_EXCEPTION"|"AUTH_SERVICE_FAILURE";
-function area(path:string){return path.startsWith("/admin")?"admin":path.startsWith("/dealer")?"dealer":path.startsWith("/account")?"account":path.startsWith("/materials")?"catalog":path.startsWith("/design-studio")?"studio":path.startsWith("/studio-pricing")?"payments":path.startsWith("/customer")?"customer":"platform"}
+function area(path:string){return path.startsWith("/admin")?"admin":path.startsWith("/dealer")?"dealer":path.startsWith("/account")?"account":path.startsWith("/materials")?"catalog":path.startsWith("/design-studio")?"studio":path.startsWith("/studio-pricing")?"payments":path.startsWith("/support")?"customer":path.startsWith("/customer")?"customer":"platform"}
 export function PlatformIncidentMonitor(){
  useEffect(()=>{const recent=new Map<string,number>();let reporting=false;
  const report=async(code:Code)=>{if(reporting)return;const a=area(window.location.pathname),key=a+":"+code,now=Date.now();if(now-(recent.get(key)??0)<60000)return;recent.set(key,now);reporting=true;try{const {createNeervaBrowserClient}=await import("@/modules/supabase/browser");const db=createNeervaBrowserClient();const session=await db?.auth.getSession();if(session?.data.session){const result=await db?.rpc("neerva_report_client_incident",{p_area:a,p_code:code});if(result?.data===true&&!result.error)window.dispatchEvent(new Event("neerva:incident-recorded"))}}catch{/* Monitoring must never interrupt the original action. */}finally{reporting=false}};

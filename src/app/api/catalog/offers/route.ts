@@ -7,7 +7,7 @@ type Price={id:string;amount_paise:number;unit:string;city:string;minimum_quanti
 const single=<T,>(record:T|T[]|null|undefined):T|null=>Array.isArray(record)?record[0]??null:record??null;
 export async function GET(){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
- if(!url||!key)return Response.json({offers:[]},{headers:{"Cache-Control":"public, max-age=30"}});
+ if(!url||!key)return Response.json({offers:[],error:"Published offers temporarily unavailable."},{status:503,headers:{"Cache-Control":"no-store","x-neerva-service-state":"degraded"}});
  try{
   const db=createClient(url,key,{auth:{persistSession:false}});
   const now=new Date().toISOString();

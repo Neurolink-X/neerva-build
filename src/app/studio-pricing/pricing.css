@@ -68,3 +68,8 @@
 .nb-studio-audit{display:grid;gap:10px}.nb-studio-audit article{border:1px solid #d5dfd4;border-radius:12px;background:#fff;padding:12px;overflow-wrap:anywhere}
 .nb-studio-audit article p,.nb-studio-audit article small{font-size:12px}
 @media(max-width:760px){.nb-studio-admin-grid{grid-template-columns:1fr}}
+
+/* Independent action receipt and history states; usable on narrow phones. */
+.nb-support-kicker{display:block;color:#52735e;font-size:11px;font-weight:800;letter-spacing:.1em;margin-bottom:8px}.studio-support-form form{max-width:none;margin-block:20px}.studio-support-form form button{width:100%}.studio-support-form :is(input,select,textarea){box-sizing:border-box;min-width:0;font-size:16px;font-weight:500}.studio-support-form label small{font-weight:400;color:#526459;line-height:1.45}.nb-support-notice{padding:14px;border:1px solid #98bea2;border-radius:12px;background:#f0f7ef;overflow-wrap:anywhere}.nb-support-notice.error{background:#fff5f1;border-color:#d79b89;color:#763b2d}.nb-support-notice p{margin:4px 0}.nb-support-history-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.nb-support-history-heading button{min-height:44px;padding:8px 14px;border:1px solid #bccdbf;border-radius:10px;background:#f5f8f3;color:#254538}.nb-support-state{font-size:12px;padding:4px 9px;border:1px solid #ccd9cc;border-radius:20px;text-transform:capitalize}.studio-support-form button:disabled{opacity:.65;cursor:wait}
+
+.studio-support-form form .nb-support-secondary{width:auto;justify-self:start;min-height:44px;padding:8px 12px;background:#f5f8f3;color:#254538;border:1px solid #bccdbf;font-weight:600;font-size:13px}

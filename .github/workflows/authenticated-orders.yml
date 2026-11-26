@@ -70,7 +70,7 @@ jobs:
           import {appendFileSync} from "node:fs";
           import {execFileSync} from "node:child_process";
           const client=createClient(process.env.API_URL,process.env.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
-          for(const role of ["CUSTOMER","OTHER_CUSTOMER","RFQ_CUSTOMER","ADMIN","DEALER_A","DEALER_B"]){
+          for(const role of ["CUSTOMER","OTHER_CUSTOMER","RFQ_CUSTOMER","ADMIN","DEALER_A","DEALER_B","ONBOARDING"]){
             const email=role.toLowerCase()+"-"+randomUUID()+"@example.test";
             const password=randomUUID()+"Aa1!";
             console.log("::add-mask::"+password);
@@ -116,12 +116,14 @@ jobs:
             if curl -fsS http://127.0.0.1:3000/ >/dev/null; then break; fi
             sleep 2
           done
+          node scripts/e2e/api-connectivity.mjs | tee test-results/authenticated/api-connectivity.jsonl
           node scripts/e2e/authenticated-direct-orders.mjs | tee test-results/authenticated/result.json
           node scripts/ops/rehearse-studio-concurrency.mjs
           node scripts/ops/rehearse-order-acceptance.mjs
           node scripts/ops/rehearse-stock-reservation.mjs
           node scripts/e2e/marketplace-reliability.mjs | tee test-results/authenticated/reliability.json
           node scripts/ops/benchmark-public.mjs http://127.0.0.1:3000 > test-results/authenticated/benchmark.json
+          node scripts/ops/rehearse-read-capacity.mjs > test-results/authenticated/capacity.json
           node --experimental-strip-types scripts/ops/disposable-recovery-drill.mjs > test-results/authenticated/recovery.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()

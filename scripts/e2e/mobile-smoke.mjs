@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import {assessPerformance} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
+const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -302,7 +302,12 @@ async function main(){
     assert.equal(account?.status(),200,"authenticated account route");
     assert.equal(await page.getByRole("heading",{name:/Access your projects and requests/}).count(),1,"account page must not show prelaunch placeholder");
     if(process.env.NEXT_PUBLIC_SUPABASE_URL&&process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY){
-      assert.equal(await page.getByRole("button",{name:"Sign in"}).count(),1,"account form requires configured Supabase credentials");
+      const form=page.locator("form.account-auth-form").filter({has:page.locator("input[name=password]")});
+      await form.getByRole("button",{name:"Sign in securely →",exact:true}).waitFor({state:"visible"});
+      assert.equal(await form.count(),1,"one password sign-in form");
+      assert.equal(await form.getByRole("button",{name:"Sign in securely →",exact:true}).count(),1,"one password submission action");
+      assert.equal(await form.locator("input[name=email]").count(),1,"email input present");
+      assert.equal(await form.locator("input[name=password]").count(),1,"password input present");
     }else{
       assert.equal(await page.getByText("Waiting for backend setup").count(),1,"unconfigured account must not collect passwords");
     }
@@ -421,38 +426,48 @@ async function main(){
     const listLink=page.getByRole("link",{name:/Review material list/});
     assert.equal(await listLink.count(),1,"added item must link to the existing planning list");
     await listLink.click();
-    await page.waitForURL("**/basket",{timeout:15000});
+    await page.waitForURL("**/basket?view=planner",{timeout:15000});
     await page.getByText(/TMT bar.*12 mm/).first().waitFor({timeout:10000});
     const prepareQuote=page.getByRole("link",{name:/Prepare dealer quote/});
     await prepareQuote.waitFor({timeout:15000});
     assert.match((await prepareQuote.getAttribute("href"))??"",/^\/quotes\?/,"list quote link should target quote preparation");
+    // Exercise catalog quick-add and quantity stepper without opening product details.
+    await page.goto(base+"/materials/cement",{waitUntil:"load"});
+    const quickAdd=page.locator(".nb-shop-control").first();
+    await quickAdd.getByRole("button",{name:"Add",exact:true}).click();
+    await quickAdd.getByRole("button",{name:/Increase /}).click();
+    assert.equal(await quickAdd.locator("input[type=number]").inputValue(),"2");
+    await quickAdd.getByRole("button",{name:/Decrease /}).click();
+    await quickAdd.getByRole("button",{name:/Decrease /}).click();
+    await quickAdd.getByRole("button",{name:"Add",exact:true}).waitFor();
     // Exercise a genuine guest order-cart journey, without creating a production order.
     await page.goto(base+"/materials/cement/ppc-cement-50kg",{waitUntil:"load"});
     await page.locator(".product-request-config input[type=number]").fill("3");
-    await page.getByRole("button",{name:"Add to order cart",exact:true}).click();
+    await page.getByRole("button",{name:"Add to cart",exact:true}).click();
     await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"load"});
-    await page.getByRole("button",{name:"Add to order cart",exact:true}).click();
-    await page.getByRole("link",{name:/View order cart/}).click();
-    await page.getByRole("heading",{name:"Order cart (2)"}).waitFor();
-    const firstCart=page.locator("article.admin-record").first();
-    await firstCart.locator("input[name=quantity]").fill("5");
-    await firstCart.getByRole("button",{name:"Update quantity"}).click();
+    await page.getByRole("button",{name:"Add to cart",exact:true}).click();
+    await page.locator(".nb-shop-floating").click();
+    await page.getByRole("heading",{name:"My cart (2)"}).waitFor();
+    const firstCart=page.locator(".nb-shop-cart-line").first();
+    await firstCart.locator("input[type=number]").fill("5");
+    await firstCart.locator("input[type=number]").blur();
     await page.reload({waitUntil:"load"});
-    await page.getByRole("heading",{name:"Order cart (2)"}).waitFor();
-    assert.equal(await page.locator("article.admin-record input[name=quantity]").first().inputValue(),"5","quantity persists after reload");
-    await page.getByRole("button",{name:"Continue to checkout"}).click();
+    await page.getByRole("heading",{name:"My cart (2)"}).waitFor();
+    assert.equal(await page.locator(".nb-shop-cart-line input[type=number]").first().inputValue(),"5","quantity persists after reload");
+    await page.getByRole("button",{name:"Continue →"}).click();
     const signIn=page.getByRole("link",{name:/Sign in and continue/});
     await signIn.waitFor();
     assert.equal(new URL(await signIn.getAttribute("href"),base).searchParams.get("next"),"/checkout?cart=1","cart survives the sign-in return");
     await page.getByRole("button",{name:/Edit cart/}).click();
-    await page.locator("article.admin-record").last().getByRole("button",{name:"Remove"}).click();
-    await page.getByRole("heading",{name:"Order cart (1)"}).waitFor();
-    await page.locator("article.admin-record").first().getByRole("button",{name:"Remove"}).click();
-    await page.getByText(/Your order cart is empty/).waitFor();
+    await page.locator(".nb-shop-cart-line").last().getByRole("button",{name:/^Remove /}).click();
+    await page.getByRole("heading",{name:"My cart (1)"}).waitFor();
+    await page.locator(".nb-shop-cart-line").first().getByRole("button",{name:/^Remove /}).click();
+    await page.getByText(/Your cart is empty/).waitFor();
     await page.goto(base+"/build-iq",{waitUntil:"load"});
     await page.goto(base+"/build-iq#build-workbench-title",{waitUntil:"load"});
-    await page.waitForFunction(()=>Boolean(document.querySelector("#build-workbench-title")?.getClientRects().length));
-    const coreInput=page.locator("#build-workbench-title").locator("..").locator("input").first();
+    await page.getByRole("heading",{name:"Calculate the next job."}).waitFor();
+    await page.getByRole("button",{name:"Smart Construction & Materials"}).click();
+    const coreInput=page.getByLabel("Wall length (ft)",{exact:true});
     await coreInput.fill("17");
     await page.getByRole("button",{name:"Smart Plot & Design"}).click();
     await page.getByRole("button",{name:"Smart Construction & Materials"}).click();
@@ -566,14 +581,36 @@ async function main(){
     await preview.waitFor({state:"visible"});
     assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
-    const original=await preview.evaluate(c=>c.toDataURL());
-    await page.getByRole("button",{name:"View original",exact:true}).click();
-    await page.waitForFunction(previous=>document.querySelector(".nbd-photo canvas").toDataURL()!==previous,original);
-    await page.getByRole("button",{name:"Show new paint",exact:true}).click();
-    await page.getByRole("button",{name:/Contemporary home/}).click();
-    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="contemporary"&&c.getBoundingClientRect().height>0;});
-    await page.getByRole("button",{name:/Premium villa/}).click();
-    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="villa"&&c.getBoundingClientRect().height>0;});
+    // Test actual painted canvas pixels, not merely sample labels or changed image hashes.
+    const visualCases=[
+      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100]],protect:[[1050,160],[500,200],[1450,80]]},
+      {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
+      {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]}
+    ];
+    const evidence=[];
+    for(const sample of visualCases){
+      await page.getByRole("button",{name:sample.label}).click();
+      await page.waitForFunction(id=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample===id&&c.getBoundingClientRect().height>0&&!!document.querySelector(".paint-preview-actions button")},sample.id);
+      await page.getByRole("button",{name:"Full exterior",exact:true}).click();
+      await page.getByRole("button",{name:"View original",exact:true}).click();
+      const points=[...sample.paint,...sample.protect].map(([x,y])=>[x/sample.w,y/sample.h]);
+      const pixels=()=>preview.evaluate((canvas,coords)=>coords.map(([x,y])=>Array.from(canvas.getContext("2d").getImageData(Math.floor(x*canvas.width),Math.floor(y*canvas.height),1,1).data).slice(0,3)),points);
+      const unpainted=await pixels();
+      await preview.screenshot({path:path.join("test-results/mobile","390-facade-"+sample.id+"-original.png")});
+      await page.getByRole("button",{name:"Show new paint",exact:true}).click();
+      await page.getByRole("button",{name:"Select #edf2db",exact:true}).click();
+      const pale=await pixels();
+      const started=Date.now();
+      await page.getByRole("button",{name:"Select #293f36",exact:true}).click();
+      await page.waitForFunction(({coords,count})=>{const c=document.querySelector(".nbd-photo canvas");return coords.slice(0,count).every(([x,y])=>{const p=c.getContext("2d").getImageData(Math.floor(x*c.width),Math.floor(y*c.height),1,1).data;return p[1]>p[0]&&p[1]>p[2]&&p[1]<100})},{coords:points,count:sample.paint.length},{timeout:1500});
+      const elapsed=Date.now()-started,dark=await pixels();
+      for(let i=0;i<sample.paint.length;i++)assert.ok(pale[i][1]>dark[i][1]+45,sample.id+" wall "+i+" changes shade");
+      assert.deepEqual(dark.slice(sample.paint.length),unpainted.slice(sample.paint.length),sample.id+" windows/cladding/pool/sky remain unchanged");
+      assert.deepEqual(pale.slice(sample.paint.length),unpainted.slice(sample.paint.length),sample.id+" protected areas remain unchanged with pale shade");
+      await preview.screenshot({path:path.join("test-results/mobile","390-facade-"+sample.id+"-painted.png")});
+      evidence.push({sample:sample.id,wallPoints:sample.paint.length,protectedPoints:sample.protect.length,automationElapsedMs:elapsed});
+    }
+    fs.writeFileSync("test-results/mobile/facade-pixel-evidence.json",JSON.stringify({scope:"390px Chromium canvas sample points; elapsed includes browser automation and is not field INP",samples:evidence},null,2));
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
     await page.getByRole("button",{name:"Sample room",exact:true}).click();

@@ -1,5 +1,5 @@
 "use client";
-import {DIRECT_CART_KEY,addDirectCart,safeDirectCart} from "@/modules/orders/direct-cart";
+import {addShopItem,ShopCartLink} from "@/components/shop-cart";
 
 import { useState, useRef } from "react";
 import Image from "next/image";
@@ -58,7 +58,7 @@ export function ProductDetailTools({ product,quoteHref }: { product: DemoProduct
   const [notice, setNotice] = useState("");
   const [planningOpen,setPlanningOpen]=useState(false);
   const validQuantity=Number.isFinite(quantity)&&quantity>=.001&&quantity<=1000000&&Math.abs(quantity*1000-Math.round(quantity*1000))<.00001;
-  function addToOrderCart(){try{if(!validQuantity){setNotice('Enter a valid quantity.');return;}const old=safeDirectCart(JSON.parse(localStorage.getItem(DIRECT_CART_KEY)??'[]'));const next=addDirectCart(old,{category:product.category,productSlug:product.slug,productName:product.name,unit,quantity});if(JSON.stringify(old)===JSON.stringify(next)){setNotice('Cart limit reached or invalid item.');return;}localStorage.setItem(DIRECT_CART_KEY,JSON.stringify(next));setNotice('Added to order cart. Review before submitting.');}catch{setNotice('Cart storage unavailable; use direct order instead.');}}
+  function addToOrderCart(){try{if(!validQuantity){setNotice('Enter a valid quantity.');return;}if(!addShopItem({category:product.category,productSlug:product.slug,productName:product.name,unit,quantity})){setNotice('Cart limit reached or storage unavailable.');return;}setNotice('Added to cart.');}catch{setNotice('Cart storage unavailable; use direct order instead.');}}
   function saveMaterial() {
     try {
       if(!validQuantity){setNotice("Enter a quantity from 0.001 to 1,000,000, with at most three decimal places.");return;}
@@ -82,7 +82,7 @@ export function ProductDetailTools({ product,quoteHref }: { product: DemoProduct
         </label>
       </div>
       <p className="option-confirmation-note">Neerva confirms your exact size, stock and delivery price before fulfilment.</p>
-      <div className="order-actions">{validQuantity?<Link className="button button-dark" prefetch={false} href={"/checkout?"+new URLSearchParams({category:product.category,product:product.slug,qty:String(quantity),unit})}>Request order →</Link>:<button type="button" className="button button-dark" disabled>Enter a valid quantity to order</button>} <button type="button" className="button button-outline" onClick={addToOrderCart} disabled={!validQuantity}>Add to order cart</button></div><div className="order-secondary"><Link href="/checkout?cart=1" prefetch={false} className="order-cart-link">View order cart →</Link>{quoteHref&&<Link href={quoteHref} className="order-quote-link">Request quote →</Link>}</div><details open={planningOpen} onToggle={e=>setPlanningOpen(e.currentTarget.open)}><summary>Planning a project? Save to material list</summary><p>For estimates and dealer quotes, not an order cart.</p><button type="button" className="button button-orange product-add-button" onClick={saveMaterial} disabled={!validQuantity}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}</details>{notice && <p role="status" className="option-confirmation-note">{notice}</p>}
+      <div className="order-actions">{validQuantity?<Link className="button button-dark" prefetch={false} href={"/checkout?"+new URLSearchParams({category:product.category,product:product.slug,qty:String(quantity),unit})}>Request order →</Link>:<button type="button" className="button button-dark" disabled>Enter a valid quantity to order</button>} <button type="button" className="button button-outline" onClick={addToOrderCart} disabled={!validQuantity}>Add to cart</button></div><div className="order-secondary"><Link href="/checkout?cart=1" prefetch={false} className="order-cart-link">View cart →</Link>{quoteHref&&<Link href={quoteHref} className="order-quote-link">Request quote →</Link>}</div><details open={planningOpen} onToggle={e=>setPlanningOpen(e.currentTarget.open)}><summary>Planning a project? Save to material list</summary><p>For estimates and dealer quotes, not an order cart.</p><button type="button" className="button button-orange product-add-button" onClick={saveMaterial} disabled={!validQuantity}>{added ? "Add another to material list" : "Add to material list"}</button>{added && <Link href="/basket?view=planner" className="button button-outline" style={{marginLeft:10}}>Review material list →</Link>}</details>{notice && <p role="status" className="option-confirmation-note">{notice}</p>}<ShopCartLink floating/>
     </div>
   );
 }

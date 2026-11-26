@@ -36,3 +36,16 @@ test("each local house has its own validated paint zones and independent whole-e
 });
 
 test("deep green remains dark on a bright beige wall instead of inheriting beige luminance",()=>{const rgb=[41,63,54];const lit=shadedPixel(220,204,178,rgb);assert.ok(lit[1]>lit[0]&&lit[1]>lit[2]);assert.ok(Math.max(...lit)<90);assert.ok(shadedPixel(110,100,90,rgb)[1]<lit[1]);});
+
+test("full exterior covers previously omitted wall and trim regions in all local samples",()=>{
+ function inside(ring:number[][],x:number,y:number){let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [a,b]=ring[i],[c,d]=ring[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
+ function painted(sample:typeof facadeSamples[number],x:number,y:number){return sample.zones.some(z=>inside(z.mask.outline,x,y)&&!z.mask.holes.some(h=>inside(h,x,y)));}
+ const family=facadeSamples[0],modern=facadeSamples[1],villa=facadeSamples[2];
+ assert.ok(painted(family,250/1536,420/512));assert.ok(painted(family,600/1536,335/512));
+ assert.ok(painted(modern,575/880,414/738));assert.ok(painted(modern,270/880,490/738));
+ assert.ok(painted(villa,790/880,320/584));assert.ok(painted(villa,640/880,300/584));
+ assert.equal(painted(family,1050/1536,160/512),false);
+ assert.equal(painted(modern,575/880,365/738),false);
+ assert.equal(painted(villa,520/880,210/584),false);
+ assert.equal(painted(villa,500/880,460/584),false);
+});
