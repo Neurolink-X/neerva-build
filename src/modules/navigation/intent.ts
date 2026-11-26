@@ -19,3 +19,14 @@ export function allowSpeculativeNetwork(connection:NetworkHint|undefined,online=
   (connection.downlink===undefined||connection.downlink>=1.5)&&
   (connection.rtt===undefined||connection.rtt<=300);
 }
+
+/** Heavy assets require stronger evidence than ordinary route warming.
+ * Unknown network / CPU => demand only; browsers that omit deviceMemory may
+ * qualify with a reported capable CPU. Never speculate in hidden/offline tabs. */
+export function allowStudioWarmup(connection:NetworkHint|undefined,device:{cores?:number;memory?:number},online=true,visible=true):boolean{
+ return allowSpeculativeNetwork(connection,online,visible)&&
+  typeof connection?.downlink==="number"&&connection.downlink>=5&&
+  typeof connection.rtt==="number"&&connection.rtt>=0&&connection.rtt<=150&&
+  typeof device.cores==="number"&&device.cores>=4&&
+  (device.memory===undefined||device.memory>=4);
+}

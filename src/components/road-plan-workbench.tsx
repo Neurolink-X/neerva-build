@@ -13,6 +13,7 @@ import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 import {PlanShortlist} from "./plan-shortlist";
 import {briefKey} from "@/modules/studio/plan-shortlist";
+import {allowStudioWarmup,type NetworkHint} from "@/modules/navigation/intent";
 const Building3D=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{
  ssr:false,loading:()=> <p role="status" className="nroad-loading">Loading plan-matched 3D viewer… The 2D plan is available immediately.</p>
 });
@@ -50,6 +51,23 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
  const metrics=useMemo(()=>plan?planMetrics(plan):null,[plan]);
  const hasPlan=!!plan;
+ // Download/parse the shared 3D chunk after useful content on capable devices.
+ // Warming never mounts a canvas or allocates WebGL before it is needed.
+ useEffect(()=>{
+  const node=threeSection.current;if(!hasPlan||threeReady||!node)return;
+  const nav=navigator as Navigator&{connection?:NetworkHint&EventTarget;deviceMemory?:number};
+  const conn=nav.connection;let timer:ReturnType<typeof setTimeout>|undefined,idle:number|undefined,disposed=false,started=false;
+  const eligible=()=>allowStudioWarmup(conn,{cores:nav.hardwareConcurrency,memory:nav.deviceMemory},nav.onLine,document.visibilityState==="visible");
+  function cancel(){clearTimeout(timer);timer=undefined;if(idle!==undefined){window.cancelIdleCallback?.(idle);idle=undefined;}}
+  function warm(){idle=undefined;if(disposed||started||!eligible())return;started=true;node!.dataset.warmState="loading";
+   void import("./studio-building-3d").then(()=>{if(!disposed)node!.dataset.warmState="ready"}).catch(()=>{if(!disposed)node!.dataset.warmState="failed"});
+  }
+  function schedule(){cancel();if(disposed||started||!eligible()||document.readyState!=="complete")return;
+   timer=setTimeout(()=>{timer=undefined;if(!eligible()||disposed)return;if(typeof window.requestIdleCallback==="function")idle=window.requestIdleCallback(warm);else warm()},900);
+  }
+  window.addEventListener("load",schedule);window.addEventListener("online",schedule);window.addEventListener("offline",schedule);document.addEventListener("visibilitychange",schedule);conn?.addEventListener?.("change",schedule);schedule();
+  return()=>{disposed=true;cancel();window.removeEventListener("load",schedule);window.removeEventListener("online",schedule);window.removeEventListener("offline",schedule);document.removeEventListener("visibilitychange",schedule);conn?.removeEventListener?.("change",schedule)};
+ },[hasPlan,threeReady]);
  // Keep Three.js and WebGL off the initial route critical path. Auto-load near
  // the viewer, or load immediately on explicit request; 2D remains independent.
  useEffect(()=>{const node=threeSection.current;if(!hasPlan||threeReady||!node||!("IntersectionObserver" in window))return;
@@ -140,7 +158,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <OrientedPlanDrawing plan={plan} floor={floor}/>
      <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0)setChosen(i)}}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
-     <div ref={threeSection} className="nroad-3d-slot">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. The interactive 3D viewer loads when you reach this section.","2D नक्शा तैयार है। 3D व्यू इस भाग में आने पर लोड होगा।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
+     <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. The interactive 3D viewer loads when you reach this section.","2D नक्शा तैयार है। 3D व्यू इस भाग में आने पर लोड होगा।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The selected floor uses the same room footprints and openings. Wall thickness, stairs and finishes remain conceptual, not verified CAD/BIM.</p>
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>

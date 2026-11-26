@@ -84,6 +84,21 @@ async function main(){
     performanceReports.push({route,profile:"weak-4g",usefulMs,prefetch,...resources,scope:"simulated local Chromium; not field Web Vitals"});
    }finally{await ctx.close()}
   }
+  // Verify real chunk preparation without creating an offscreen WebGL viewer.
+  for(const profile of [{name:"capable-fast",downlink:12,rtt:60,saveData:false,memory:8,warm:true},{name:"data-saver",downlink:12,rtt:60,saveData:true,memory:8,warm:false},{name:"low-memory",downlink:12,rtt:60,saveData:false,memory:2,warm:false}]){
+   const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:"block"});
+   try{await ctx.addInitScript(p=>{const c=new EventTarget();Object.assign(c,{effectiveType:"4g",downlink:p.downlink,rtt:p.rtt,saveData:p.saveData});Object.defineProperty(navigator,"connection",{value:c,configurable:true});Object.defineProperty(navigator,"hardwareConcurrency",{value:8,configurable:true});Object.defineProperty(navigator,"deviceMemory",{value:p.memory,configurable:true});},profile);
+    const page=await ctx.newPage();await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=2&road=N&bedrooms=3&parking=true",{waitUntil:"load"});
+    const slot=page.locator(".nroad-3d-slot");await slot.waitFor({state:"attached"});
+    if(profile.warm)await page.waitForFunction(()=>document.querySelector(".nroad-3d-slot")?.dataset.warmState==="ready",null,{timeout:20000});
+    else {await page.waitForTimeout(1800);assert.equal(await slot.getAttribute("data-warm-state"),"idle",profile.name+" must not warm");}
+    assert.equal(await page.locator(".nbd-building").count(),0,profile.name+" must not mount offscreen");
+    const requested=Date.now();await slot.scrollIntoViewIfNeeded();
+    await page.getByRole("button",{name:"Selected floor cutaway",exact:true}).waitFor({timeout:30000});
+    assert.equal(await page.locator(".nbd-building").getAttribute("data-plan-id"),await page.locator(".nroad-diagram").getAttribute("data-plan-id"));
+    performanceReports.push({profile:profile.name,viewerRequestToControlsMs:Date.now()-requested,scope:"local browser interaction, includes scroll and automation; not field INP"});
+   }finally{await ctx.close()}
+  }
   // Focused facade gallery and full-aspect canvas checks across nine screen sizes.
   for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
