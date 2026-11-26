@@ -128,3 +128,14 @@
 @media(prefers-reduced-motion:reduce){.nroad-variants button{transition:none}}
 
 .nroad-error .nroad-recovery-action{display:block;width:100%;max-width:420px;min-height:44px;margin:12px 0;padding:10px 14px;border:1px solid #254738;background:#254738;color:#fff;border-radius:9px;font-weight:700;cursor:pointer;text-align:center}
+
+/* Compare every storey rather than visually repeating only the ground floor. */
+.nroad-mini-wrap{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;align-items:start;min-width:0}
+.nroad-mini-wrap>div{min-width:0;text-align:center}
+.nroad-mini-wrap .nroad-mini-plan{width:100%;max-width:none;height:clamp(78px,12vw,128px);padding:3px;margin:0}
+.nroad-mini-wrap small{display:block;font-weight:650;margin-top:3px;color:#345342}
+.nroad .nroad-variants button{border:2px solid #cbd9ca;align-content:start;min-height:0;gap:5px}
+.nroad .nroad-variants button[aria-pressed=true]{border-color:#215e41}
+.nroad .nroad-variants{max-height:560px}
+.nroad-bhk-explanation{padding:9px 12px;border-radius:8px;background:#eef3eb;color:#334b3b;line-height:1.5}
+@media(max-width:540px){.nroad .nroad-variants{max-height:440px}.nroad-mini-wrap .nroad-mini-plan{height:clamp(72px,23vw,100px)}}

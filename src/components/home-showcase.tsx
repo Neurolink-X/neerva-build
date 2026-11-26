@@ -61,8 +61,8 @@ export function HomeShowcase({hindi}:{hindi:boolean}) {
     <figure className="home-stage-comparison"><div className="nbh-compare-frame">
       <Image src="/images/studio/finished.webp" fill sizes="(max-width:760px) 95vw, 46vw" loading="lazy" fetchPriority="low" alt="Finished house concept"/>
       <Image src="/images/studio/shell.webp" fill sizes="(max-width:760px) 95vw, 46vw" loading="lazy" fetchPriority="low" alt="Unfinished house concept" style={{clipPath:`inset(0 ${100-reveal}% 0 0)`}}/>
-      <span aria-hidden="true" style={{left:reveal+"%"}}>↔</span>
+      <span aria-hidden="true" style={{left:reveal+"%"}}/>
       <input type="range" min={0} max={100} value={reveal} aria-label={hindi?"निर्माण के चरणों की तुलना":"Compare construction-stage views"} onFocus={()=>setPaused(true)} onPointerDown={()=>setPaused(true)} onChange={e=>{setPaused(true);setReveal(Number(e.target.value));}}/>
-    </div><figcaption>{hindi?"निर्माणाधीन और तैयार घर · खींचकर तुलना करें":"Under construction and finished · Drag to compare"}</figcaption></figure>
+    </div><figcaption>{hindi?"निर्माणाधीन और तैयार घर · खींचकर तुलना करें":"Construction and finished concepts · Drag to compare"}</figcaption></figure>
   </div>;
 }

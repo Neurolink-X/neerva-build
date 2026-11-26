@@ -439,6 +439,10 @@ export function validateRequestedProgramme(p:PlanModel,b:PlanBrief):string[]{
  const errors=validatePlan(p);
  if(p.floors!==b.floors||p.rooms.filter(r=>r.kind==="bedroom").length!==b.bedrooms||Boolean(p.parking)!==b.parking||p.plot.widthFt!==b.widthFt||p.plot.depthFt!==b.depthFt||p.plot.roadSide!==b.roadSide)errors.push("Plan does not match requested plot, floors, bedrooms or parking.");
  if(!p.rooms.some(r=>r.kind==="living")||!p.rooms.some(r=>r.kind==="kitchen")||!p.rooms.some(r=>r.kind==="bath"))errors.push("Missing essential BHK spaces.");
+ const requestedShape=b.siteShape??({kind:"rectangle"} as const),actualShape=p.plot.siteShape??({kind:"rectangle"} as const);
+ if(requestedShape.kind!==actualShape.kind||(requestedShape.kind!=="rectangle"&&actualShape.kind!=="rectangle"&&(requestedShape.notchWidthFt!==actualShape.notchWidthFt||requestedShape.notchDepthFt!==actualShape.notchDepthFt)))errors.push("Plan does not match the requested plot outline.");
+ for(const side of ["frontFt","rearFt","leftFt","rightFt"] as const)if(p.setbacks[side]+.00001<b.setbacks[side])errors.push("Plan encroaches on requested "+side+" setback.");
+ for(let floor=0;floor<b.floors;floor++)if(!p.rooms.some(r=>r.floor===floor&&!["parking","terrace","balcony","verandah"].includes(r.kind)))errors.push("Requested floor has no enclosed room or circulation.");
  return errors;
 }
 export function planSignature(p:PlanModel):string{
@@ -464,6 +468,29 @@ export function generateRoadPlans(brief:PlanBrief):PlanningResult{
  }
  const plans=pickDiverse(candidates,3);
  return {plans,blockers:plans.length?[]:blockers.length?blockers:["No circulation-safe candidate fits; revise requested programme."]};
+}
+
+/** Prefer genuinely different room zoning before small dimensional adjustments.
+ * Preserve the original first plan and keep deterministic option IDs. All inputs
+ * and validated coordinates are untouched; only the gallery ordering changes.
+ */
+function prioritizeSpatialDiversity(plans:PlanModel[]):PlanModel[]{
+ if(plans.length<3)return plans;
+ const important:RoomKind[]=["bedroom","living","kitchen","stairs","bath","terrace","parking"];
+ const features=(p:PlanModel)=>important.flatMap(kind=>Array.from({length:p.floors},(_,floor)=>{
+  const rooms=p.rooms.filter(r=>r.kind===kind&&r.floor===floor);
+  if(!rooms.length)return [0,0,0,0];
+  const areaSum=rooms.reduce((sum,r)=>sum+r.w*r.d,0);
+  return [rooms.length,rooms.reduce((sum,r)=>sum+(r.x+r.w/2)*r.w*r.d,0)/areaSum/p.plot.widthFt,rooms.reduce((sum,r)=>sum+(r.y+r.d/2)*r.w*r.d,0)/areaSum/p.plot.depthFt,areaSum/(p.plot.widthFt*p.plot.depthFt)];
+ }).flat());
+ const vectors=new Map(plans.map(p=>[p.id,features(p)]));
+ const distance=(a:PlanModel,b:PlanModel)=>vectors.get(a.id)!.reduce((sum,x,i)=>sum+Math.abs(x-vectors.get(b.id)![i])*(i%4===0?2:1),0);
+ const ordered=[plans[0]],remaining=plans.slice(1);
+ while(remaining.length){let best=0,bestScore=-1;
+  for(let i=0;i<remaining.length;i++){const score=Math.min(...ordered.map(p=>distance(p,remaining[i])));if(score>bestScore){best=i;bestScore=score}}
+  ordered.push(remaining.splice(best,1)[0]);
+ }
+ return ordered;
 }
 
 /** Deterministic portfolio for a single EXACT plot/road/floor brief.
@@ -523,7 +550,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
  for(let i=0;i<Math.max(left.length,right.length);i++){
   if(left[i])ordered.push(left[i]);if(right[i])ordered.push(right[i]);
  }
- return {plans:ordered.slice(0,normalized),
+ return {plans:prioritizeSpatialDiversity(ordered).slice(0,normalized),
   blockers:ordered.length?[]:["No validated distinct spatial layout fits these dimensions, rooms, parking and setbacks."]};
 }
 
