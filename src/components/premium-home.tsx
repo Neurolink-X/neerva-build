@@ -111,7 +111,7 @@ export function PremiumHome({categoryCartActions}:{categoryCartActions?:Record<s
  const plotValid=customPlotActive?customPlotValid:true;
  const portfolioDimensions={width:presetWidth,depth:presetDepth};
  const portfolioHref="/design-studio/portfolio?"+new URLSearchParams({width:String(presetWidth),depth:String(presetDepth),floors:String(homeFloors),road:homeRoad,bedrooms:homeBedrooms,parking:homeParking}).toString();
- const roomValid=["1","2","3"].includes(homeBedrooms)&&["true","false"].includes(homeParking);
+ const roomValid=["1","2","3","4","5","6"].includes(homeBedrooms)&&["true","false"].includes(homeParking);
  const t=copy[lang];
  const suggestions=useMemo(()=>query.trim()?items.filter(item=>(item.en+" "+item.hi+" "+item.description).toLowerCase().includes(query.toLowerCase())).slice(0,4):[],[query]);
  useEffect(()=>{const id=window.setTimeout(()=>{try{const l=localStorage.getItem("neerva-home-lang");if(l==="en"||l==="hi")setLang(l);const r=JSON.parse(localStorage.getItem("neerva-home-search-v1")||"[]");if(Array.isArray(r))setRecent(r.filter((x):x is string=>typeof x==="string"&&x.length<65).slice(0,4));}catch{/* Private browsing: state remains in memory. */}},0);return()=>clearTimeout(id)},[]);
@@ -222,7 +222,7 @@ export function PremiumHome({categoryCartActions}:{categoryCartActions?:Record<s
      </div>
      {homeStep===1?<button type="button" className="nbh-studio-generate" disabled={!plotValid} onClick={()=>setHomeStep(2)}>{lang==="hi"?"कमरों की जरूरत चुनें":"Continue to room requirements"} <Icon name="arrow"/></button>:<>
       <fieldset className="nbh-studio-options nbh-room-requirements"><legend>{lang==="hi"?"घर की जरूरतें":"Household requirements"}</legend><div className="nbh-studio-option-grid">
-       <label htmlFor="nbh-studio-bedrooms">{lang==="hi"?"कुल बेडरूम":"Total bedrooms"}<select id="nbh-studio-bedrooms" value={homeBedrooms} onChange={e=>setHomeBedrooms(e.target.value)}><option value="">{lang==="hi"?"चुनें":"Choose bedrooms"}</option>{[1,2,3].map(n=><option key={n} value={n}>{n} BHK</option>)}</select></label>
+       <label htmlFor="nbh-studio-bedrooms">{lang==="hi"?"कुल बेडरूम":"Total bedrooms"}<select id="nbh-studio-bedrooms" value={homeBedrooms} onChange={e=>setHomeBedrooms(e.target.value)}><option value="">{lang==="hi"?"चुनें":"Choose bedrooms"}</option>{[1,2,3,4,5,6].map(n=><option key={n} value={n}>{n} BHK</option>)}</select></label>
        <label htmlFor="nbh-studio-parking">{lang==="hi"?"कार पार्किंग":"Car parking"}<select id="nbh-studio-parking" value={homeParking} onChange={e=>setHomeParking(e.target.value)}><option value="">{lang==="hi"?"चुनें":"Choose parking"}</option><option value="true">{lang==="hi"?"चाहिए":"Required"}</option><option value="false">{lang==="hi"?"नहीं चाहिए":"Not required"}</option></select></label>
       </div><small>{lang==="hi"?"किचन, बाथरूम, रास्ते और सीढ़ियाँ उपलब्ध जगह के अनुसार जाँची जाती हैं।":"Kitchen, bathrooms, circulation and stairs are determined by the validated layout engine."}</small></fieldset>
       <div className="nbh-studio-step-actions"><button type="button" className="nbh-studio-back" onClick={()=>setHomeStep(1)}>{lang==="hi"?"← प्लॉट बदलें":"← Edit plot"}</button>{plotValid&&roomValid?<Link className="nbh-studio-generate" href={portfolioHref} prefetch={false}>{lang==="hi"?"नक्शे देखें":"Generate room layouts"} <Icon name="arrow"/></Link>:<button type="button" className="nbh-studio-generate" disabled>{lang==="hi"?"नक्शे देखें":"Generate room layouts"}</button>}</div>
