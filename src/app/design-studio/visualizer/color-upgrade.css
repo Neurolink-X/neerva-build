@@ -131,3 +131,13 @@
 .visualizer-app .wall-pattern-options{min-width:0;max-width:100%}
 /* Scope scroll anchoring suppression to the editor, not the rest of the site. */
 html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
+
+/* Selection feedback without badges, layout shifts or image zoom. */
+.visualizer-app .paint-sample-gallery button{transition:border-color 120ms ease,box-shadow 120ms ease,background-color 120ms ease;touch-action:manipulation}
+.visualizer-app .paint-sample-gallery button[aria-pressed=true]{border-color:#35674e;background:#f2f7f1;box-shadow:inset 0 0 0 1px #35674e}
+.visualizer-app .paint-sample-gallery button:active,.visualizer-app .wall-pattern-options button:active{box-shadow:inset 0 0 0 2px #35674e}
+.visualizer-app .wall-pattern-options button[aria-pressed=true]{outline:2px solid #35674e;outline-offset:-2px;background:#edf5ee}
+.visualizer-app .paint-sample-feedback{margin:4px 0 12px;color:#365740;overflow-wrap:anywhere}
+@media(hover:hover) and (pointer:fine){.visualizer-app .paint-sample-gallery button:hover,.visualizer-app .wall-pattern-options button:hover{border-color:#35674e;box-shadow:inset 0 0 0 1px #35674e}}
+.visualizer-app :is(.paint-sample-gallery,.wall-pattern-options,.paint-targets,.paint-mode,.paint-adjacent-controls) button:focus-visible{outline:3px solid #a46b35;outline-offset:-3px}
+@media(prefers-reduced-motion:reduce){.visualizer-app .paint-sample-gallery button{transition:none}}
