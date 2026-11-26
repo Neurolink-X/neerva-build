@@ -127,7 +127,9 @@ console.log("Disposable dealer application, KYC privacy, anti-self-approval, adm
   let found=await d.client.from("products").select("id,status").eq("category_id",category.id).eq("slug",slug).maybeSingle();assert.ifError(found.error);
   let product=found.data;
   if(!product){const created=await call(d,catalog,"POST",{action:"create",kind:"product",categoryId:category.id,slug,name:"Disposable "+slug,description:"Local test fixture only",attributes:{}});assert.equal(created.status,201,JSON.stringify(created.data));product=created.data.item;}
-  if(product.status!=="published")assert.equal((await call(d,catalog,"PATCH",{kind:"product",id:product.id,status:"published"})).status,200);
+  // Reference import contains unreviewed brand drafts. For this disposable fixture only, remove brand linkage instead of claiming manufacturer authorization.
+  localSql("update public.products set brand_id=null where id="+uuid(product.id));
+  if(product.status!=="published"){const published=await call(d,catalog,"PATCH",{kind:"product",id:product.id,status:"published"});assert.equal(published.status,200,JSON.stringify(published.data));}
   const made=await call(d,catalog,"POST",{action:"create",kind:"variant",productId:product.id,sku:"COMBINED-"+randomUUID().slice(0,8),unit:"bag",attributes:{}});assert.equal(made.status,201,JSON.stringify(made.data));
   const vid=made.data.item.id;assert.equal((await call(d,catalog,"PATCH",{kind:"variant",id:vid,status:"published"})).status,200);
   assert.equal((await call(a,"/api/dealer/inventory","POST",{branchId:branches[0],variantId:vid,quantity:20,unit:"bag",expectedUpdatedAt:null})).status,200);
