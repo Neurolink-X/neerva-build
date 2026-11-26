@@ -50,7 +50,7 @@ declare c public.checkout_coupons%rowtype; amount bigint;
 begin
  if tg_op='INSERT' then
   if new.coupon_code is not null then
-   if not neerva_internal.coupon_available(new.coupon_code) then raise exception 'COUPON_UNAVAILABLE' using errcode='22023';end if;
+   if not exists(select 1 from public.direct_orders o where o.customer_id=new.customer_id and o.idempotency_key=new.idempotency_key and o.coupon_code=new.coupon_code) and not neerva_internal.coupon_available(new.coupon_code) then raise exception 'COUPON_UNAVAILABLE' using errcode='22023';end if;
    new.coupon_status:='requested';
   end if;
   return new;
