@@ -3,7 +3,7 @@ import {z} from "zod";
 export const planBriefSchema=z.object({
  widthFt:z.number().finite().min(10).max(200),depthFt:z.number().finite().min(15).max(250),
  roadSide:z.enum(["N","E","S","W"]),floors:z.union([z.literal(1),z.literal(2),z.literal(3)]),
- bedrooms:z.number().int().min(1).max(3),parking:z.boolean(),
+ bedrooms:z.number().int().min(1).max(6),parking:z.boolean(),
  siteShape:z.discriminatedUnion("kind",[
   z.object({kind:z.literal("rectangle")}).strict(),
   z.object({kind:z.literal("rear-left-notch"),notchWidthFt:z.number().finite().min(1).max(112.5),notchDepthFt:z.number().finite().min(1).max(112.5)}).strict(),
