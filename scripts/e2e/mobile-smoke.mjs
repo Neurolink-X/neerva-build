@@ -1050,6 +1050,17 @@ async function main(){
     // Home construction comparison and arbitrary plot-size journey.
     await page.goto(base+"/",{waitUntil:"load"});
     assert.equal(await page.locator(".nbh-quick-quote").count(),1,"materials-first homepage needs itemised quote draft");
+     assert.equal(await page.locator(".nbh-quick-categories a").count(),9,"all material category shortcuts preserved");
+     assert.equal(await page.locator(".nbh-shop-product").count(),4,"featured shelf uses existing catalog products");
+     assert.equal(await page.locator(".nbh-shop-product-link").count(),4);
+     const shelf=page.locator(".nbh-shop-products");
+     assert.ok(await shelf.evaluate(el=>el.scrollWidth<=el.clientWidth+2),"featured shelf fits mobile");
+     assert.equal(await page.locator(".nbh-mobile-shop-nav a").count(),5);
+     assert.ok(await page.locator(".nbh-mobile-shop-nav").isVisible(),"mobile navigation is visible");
+     const cartBefore=await page.locator(".nbh-cart-icon").getAttribute("aria-label");
+     const add=shelf.locator("button.nb-shop-add").first();
+     if(await add.count()){await add.click();await page.waitForFunction(before=>document.querySelector(".nbh-cart-icon")?.getAttribute("aria-label")!==before,cartBefore);const stepper=shelf.locator(".nb-shop-stepper").first();assert.ok(await stepper.isVisible());await stepper.getByRole("button",{name:/Decrease/}).click();}
+     assert.equal(await page.locator(".nbh-explore-grid a").count(),6,"all six discovery tools preserved");
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
      assert.equal(await page.locator(".home-stage-comparison img").count(),2,"paired construction-stage renders");
     assert.equal(await page.getByRole("button",{name:/Replay illustration/}).count(),0,"do not fabricate manual state before dragging");
