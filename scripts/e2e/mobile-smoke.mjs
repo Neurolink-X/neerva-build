@@ -42,6 +42,22 @@ async function main(){
     }
    }finally{await ctx.close()}
   }
+  // Focused facade gallery and full-aspect canvas checks across nine screen sizes.
+  for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
+   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
+   try{const page=await ctx.newPage();await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
+    await page.getByRole("button",{name:"Sample house exterior"}).click();
+    const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
+    assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
+    for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
+    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
+    assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
+    await page.getByRole("button",{name:/100 gaj family home/}).click();
+    await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="compact-family"&&!!document.querySelector(".paint-preview-actions button")&&c.getBoundingClientRect().height>0});
+    assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect(),p=c.parentElement.getBoundingClientRect();return Math.abs(r.width/r.height-c.width/c.height)<.025&&r.left>=p.left-1&&r.right<=p.right+1&&p.right<=innerWidth+1}),v.w+"px full facade fits its source aspect ratio");
+    await gallery.screenshot({path:path.join("test-results/mobile",v.w+"-facade-gallery.png"),animations:"disabled"});
+   }finally{await ctx.close()}
+  }
   for(const v of views){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
    const page=await ctx.newPage(),errors=[];
