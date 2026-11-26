@@ -962,7 +962,7 @@ async function main(){
     }
     await page.locator("#nbh-studio-preset").selectOption("30x40");
     const roadOptions=page.locator(".nbh-studio-options");
-    if(!(await roadOptions.evaluate(el=>el.open)))await roadOptions.locator("summary").click();
+    assert.equal(await roadOptions.evaluate(el=>el.tagName),"FIELDSET","floor and direction fields are always available");
     await roadOptions.locator("#nbh-studio-floors").selectOption("3");
     await roadOptions.locator("#nbh-studio-road").selectOption("W");
     assert.match((await page.locator(".nbh-studio-generate[href]").getAttribute("href"))??"",/width=30&depth=40&floors=3&road=W/,

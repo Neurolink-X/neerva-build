@@ -89,5 +89,5 @@
 .paint-adjacent-controls section>div{grid-template-columns:repeat(4,minmax(0,1fr))!important}
 .neerva-photo-stage .paint-preview-actions{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
 .neerva-photo-stage .paint-preview-actions>button{white-space:normal;min-width:0;max-width:100%;padding-inline:7px}
-@media(max-width:600px){.visualizer-app{padding-inline:clamp(8px,3vw,12px)}.neerva-photo-stage .nbd-photo{padding:clamp(8px,3vw,12px)}.paint-live-workspace{width:100%}.paint-sample-gallery button{flex-basis:clamp(118px,44%,200px)}.paint-live-preview{position:relative;top:auto}.paint-adjacent-controls h2{font-size:22px!important}}
+@media(max-width:600px){.visualizer-app{padding-inline:clamp(8px,3vw,12px)}.neerva-photo-stage .nbd-photo{padding:clamp(8px,3vw,12px)}.paint-live-workspace{width:100%}.paint-sample-gallery button{flex-basis:clamp(118px,44%,200px)}.paint-adjacent-controls h2{font-size:22px!important}}
 @media(max-width:340px){.neerva-photo-stage .paint-preview-actions{grid-template-columns:minmax(0,1fr)}}
