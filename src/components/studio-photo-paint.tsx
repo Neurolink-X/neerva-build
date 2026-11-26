@@ -54,6 +54,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  const [override,setOverride]=useState<{source:string;value:string}|null>(null);
  const base=override?.source===colour?override.value:colour;
  const canvas=useRef<HTMLCanvasElement>(null),image=useRef<HTMLCanvasElement|null>(null),url=useRef<string|null>(null),pending=useRef<HTMLImageElement|null>(null),generation=useRef(0);
+ const photoTimer=useRef<number|null>(null);
  const tintCache=useRef(new Map<string,HTMLCanvasElement>());
  const sourceLuma=useRef<Uint8Array|null>(null),tintPixels=useRef<ImageData|null>(null);
  const [history,setHistory]=useState(emptyMaskHistory),[ready,setReady]=useState(false);
@@ -117,6 +118,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask)=>{
   const ticket=++generation.current;
+  if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}
   for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;tintPixels.current=null;
   if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}
   if(image.current){image.current.width=0;image.current.height=0;}
@@ -125,10 +127,10 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   setWalls([]);setEditing(null);url.current=next;image.current=null;setReady(false);setMessage("Loading photo…");
   setHistory(emptyMaskHistory());setShowOriginal(false);
   const img=new Image();pending.current=img;
-  const release=()=>{img.onload=null;img.onerror=null;img.src="";if(pending.current===img)pending.current=null;if(url.current===next&&next.startsWith("blob:")){URL.revokeObjectURL(next);url.current=null;}};
+  const release=()=>{if(pending.current===img&&photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}img.onload=null;img.onerror=null;img.src="";if(pending.current===img)pending.current=null;if(url.current===next&&next.startsWith("blob:")){URL.revokeObjectURL(next);url.current=null;}};
   img.onload=()=>{
    if(generation.current!==ticket){release();return;}
-   const el=canvas.current;if(!el){release();return;}
+   const el=canvas.current;if(!el){release();setMessage("Preview not ready. Please retry the sample.");return;}
    if(!photoDimensionsAllowed(img.naturalWidth,img.naturalHeight)){release();setMessage("Photo dimensions are too large. Resize the image before trying again.");return;}
    const scale=Math.min(1,maxPreviewSide/Math.max(img.naturalWidth,img.naturalHeight));
    const source=document.createElement("canvas");source.width=Math.max(1,Math.round(img.naturalWidth*scale));source.height=Math.max(1,Math.round(img.naturalHeight*scale));
@@ -139,6 +141,8 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    setMessage(next.startsWith("/images/studio/")?"Sample photo ready. Choose a wall or shade.":"Tap the top-left corner first, then top-right, bottom-right and bottom-left. Avoid windows or doors if possible.");
   };
   img.onerror=()=>{if(generation.current!==ticket){release();return;}release();image.current=null;setReady(false);setMessage("Image could not be opened. Try another photo.")};
+  img.fetchPriority="high";
+  photoTimer.current=window.setTimeout(()=>{if(generation.current!==ticket)return;release();image.current=null;setReady(false);setMessage("Photo loading timed out. Retry the sample or choose another photo.");},15000);
   img.src=next;
  },[setCloseUp,setPreset,setWalls,setEditing,setReady,setHistory,setShowOriginal,setMessage]);
  const openRoom=useCallback(()=>{setScene("room");setMode("paint");openPhoto("/images/studio/paint-room.webp",[{x:40/420,y:34/280},{x:373/420,y:37/280},{x:373/420,y:215/280},{x:40/420,y:215/280}],roomMask)},[openPhoto,setScene]);
@@ -163,7 +167,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  }
  function toggleOriginal(){setOriginalKey(styleKey);setShowOriginal(!originalVisible);}
 
- useEffect(()=>{const frame=requestAnimationFrame(openRoom);return ()=>{++generation.current;cancelAnimationFrame(frame);if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;tintPixels.current=null;if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
+ useEffect(()=>{const frame=requestAnimationFrame(openRoom);return ()=>{++generation.current;cancelAnimationFrame(frame);if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;tintPixels.current=null;if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
  async function load(e:ChangeEvent<HTMLInputElement>){
   const f=e.target.files?.[0];e.target.value="";if(!f)return;
   if(!["image/jpeg","image/png","image/webp"].includes(f.type)||f.size>10*1024*1024){
@@ -203,9 +207,11 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   <div className="paint-live-workspace"><div className="paint-live-preview" data-can-stick={ready&&(scene==="facade"||valid)?"true":"false"}>
   {ready&&canInspect&&<button type="button" aria-pressed={closeUp} onClick={()=>setCloseUp(v=>!v)}>{closeUp?"See whole scene":"Inspect selected wall"}</button>}
   <div className="paint-canvas-frame" aria-busy={!ready} data-inspecting={closeUp&&canInspect?"true":"false"}>
+  {!ready&&scene!=="custom"&&message==="Loading photo…"&&<NextImage src={scene==="room"?"/images/studio/paint-room.webp":sample.src} alt="Original sample while the colour preview prepares" fill unoptimized loading="eager" className="paint-photo-placeholder"/>}
   <canvas data-sample={scene==="facade"?sampleId:scene} ref={canvas} role="img" aria-hidden={!ready} aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Photo of your wall. Tap four corners clockwise to choose a painting region"} onPointerDown={addPoint}
-    style={{transform:wallZoom,transformOrigin:wallCentre,visibility:ready?"visible":"hidden",display:"block",width:"100%",height:"auto",cursor:scene!=="facade"&&points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
+    style={{transform:wallZoom,transformOrigin:wallCentre,visibility:ready?"visible":"hidden",display:ready?"block":"none",width:"100%",height:"auto",cursor:scene!=="facade"&&points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   </div>
+  {!ready&&message!=="Loading photo…"&&scene!=="custom"&&<button type="button" className="paint-retry" onClick={()=>scene==="room"?openRoom():openFacade()}>Retry photo</button>}
   {ready&&scene==="facade"&&sampleId==="compact-family"&&<p className="paint-reference-note">AI-generated architectural concept · full elevation shown. Not an approved construction drawing.</p>}
   {ready&&<div className="paint-actions paint-compact-actions paint-preview-actions" role="group" aria-label="Live preview actions"><button type="button" disabled={scene!=="facade"&&!valid&&!walls.length} aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?(scene==="facade"?"Show new paint":"Show new colour"):"View original"}</button><button type="button" className="paint-primary" disabled={originalVisible||(scene!=="facade"&&!valid&&(points.length>0||!walls.length))} onClick={saveImage}>Save colour preview</button></div>}
   </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><h3 className="paint-pattern-title">Wall design</h3><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
