@@ -1,5 +1,6 @@
 "use client";
 import {useEffect,useState} from "react";
+import {validCombinedEstimate} from "@/modules/orders/combined-estimate";
 import {estimateCart} from "@/modules/orders/cart-estimate";
 import {cartKey,type CartItem} from "@/modules/orders/direct-cart";
 import {createNeervaBrowserClient} from "@/modules/supabase/browser";
@@ -7,14 +8,16 @@ const money=(n:number)=>new Intl.NumberFormat("en-IN",{style:"currency",currency
 type Seller={seller:string;material_paise:number;fee_paise:number;discount_paise:number;freight_paise:number|null;unloading_paise:number|null;tax_paise:number|null;estimated_total_paise:number|null;valid_to:string|null};
 export function CartPricePreview({rows,unload,pin,city,onLocation}:{rows:CartItem[];unload:boolean;pin:string;city:string;onLocation:(pin:string,city:string)=>void}){
  const [feed,setFeed]=useState<{rates:unknown[];offers:unknown[];at:number}|null>(null),[failed,setFailed]=useState(false),[clock,setClock]=useState(0),[refresh,setRefresh]=useState(0),[dealer,setDealer]=useState<{fingerprint:string;row:Seller|null;message:string;at?:number}|null>(null),[busy,setBusy]=useState(false);
- useEffect(()=>{let alive=true;const abort=new AbortController();let fetching=false;async function load(){if(fetching)return;fetching=true;try{const [p,o]=await Promise.all(["/api/catalog/prices","/api/catalog/offers"].map(u=>fetch(u,{signal:abort.signal,cache:"no-store"})));if(!p.ok||!o.ok)throw Error();const [a,b]=await Promise.all([p.json(),o.json()]);if(alive){const at=Date.now();setClock(at);setFeed({rates:Array.isArray(a.prices)?a.prices:[],offers:Array.isArray(b.offers)?b.offers:[],at});setFailed(false)}}catch{if(alive){setFeed(null);setFailed(true)}}finally{fetching=false}}void load();const timer=setInterval(()=>{setClock(Date.now());void load()},30000);const tick=setInterval(()=>setClock(Date.now()),1000);return()=>{alive=false;abort.abort();clearInterval(timer);clearInterval(tick)}},[refresh]);
+ useEffect(()=>{let alive=true;const abort=new AbortController();let fetching=false;async function load(){if(fetching)return;fetching=true;try{const [p,o]=await Promise.all(["/api/catalog/prices","/api/catalog/offers"].map(u=>fetch(u,{signal:AbortSignal.any([abort.signal,AbortSignal.timeout(12000)]),cache:"no-store"})));if(!p.ok||!o.ok)throw Error();const [a,b]=await Promise.all([p.json(),o.json()]);if(alive){const at=Date.now();setClock(at);if(!Array.isArray(a.prices)||!Array.isArray(b.offers))throw Error("Invalid price response");setFeed({rates:a.prices,offers:b.offers,at});setFailed(false)}}catch{if(alive){setFeed(null);setFailed(true)}}finally{fetching=false}}void load();const timer=setInterval(()=>{setClock(Date.now());void load()},30000);const tick=setInterval(()=>setClock(Date.now()),1000);return()=>{alive=false;abort.abort();clearInterval(timer);clearInterval(tick)}},[refresh]);
  const estimate=estimateCart(rows,pin,city,feed&&clock-feed.at<90000?feed.rates:[],feed&&clock-feed.at<90000?feed.offers:[],clock);
  const fingerprint=JSON.stringify([rows,pin,city,unload]),seller=dealer?.fingerprint===fingerprint?dealer.row:null;
  const activeSeller=seller&&dealer?.at&&clock-dealer.at<60000&&(!seller.valid_to||Date.parse(seller.valid_to)>clock)?seller:null;
  async function compare(){if(busy||!rows.length||!(/^[1-9][0-9]{5}$/).test(pin))return;setBusy(true);setDealer(null);try{
  const client=createNeervaBrowserClient(),session=await client?.auth.getSession();if(!session?.data.session){setDealer({fingerprint,row:null,message:"Sign in to check local dealer estimates. Your cart is saved."});return}
- const {data,error}=await client!.rpc("neerva_combined_cart_estimate",{p_items:rows.map(({category,productSlug,quantity,unit})=>({category,productSlug,quantity,unit})),p_pin:pin,p_unload:unload});
+ const {data,error}=await client!.rpc("neerva_combined_cart_estimate",{p_items:rows.map(({category,productSlug,quantity,unit})=>({category,productSlug,quantity,unit})),p_pin:pin,p_unload:unload}).abortSignal(AbortSignal.timeout(15000));
  if(error)throw Error("Local pricing service unavailable. Retry.");
+ const latest=await client!.auth.getSession();if(latest.error||latest.data.session?.user.id!==session.data.session.user.id)throw Error("Account changed. Check prices again.");
+ if(data!==null&&!validCombinedEstimate(data,unload,Date.now()))throw Error("Dealer estimate could not be verified. Request a reviewed quote.");
  const exact=data as Seller|null;
  setDealer({fingerprint,row:exact,at:Date.now(),message:exact?"One eligible branch can quote the full cart. Delivery is counted once. Stock is not reserved.":"No single fully priced branch covers the entire cart. Neerva will arrange supply."});
  }catch(e){setDealer({fingerprint,row:null,message:e instanceof Error?e.message:"Dealer estimates unavailable."})}finally{setBusy(false)}}
