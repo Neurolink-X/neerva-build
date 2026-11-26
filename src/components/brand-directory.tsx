@@ -1,5 +1,5 @@
 "use client";
-import {useState} from "react";
+import {useDeferredValue,useMemo,useState} from "react";
 import Link from "@/components/intent-link";
 import Image from "next/image";
 import {BrandMark} from "@/components/brand-mark";
@@ -13,14 +13,15 @@ export function BrandDirectory({sections}:{sections:Section[]}) {
   const [query,setQuery]=useState("");
   const [selected,setSelected]=useState("");
   const [failed,setFailed]=useState<string[]>([]);
-  const term=query.trim().toLowerCase();
-  const filtered=sections.filter(s=>!selected||s.slug===selected).map(s=>({
+  const deferredQuery=useDeferredValue(query);
+  const term=deferredQuery.trim().toLowerCase();
+  const filtered=useMemo(()=>sections.filter(s=>!selected||s.slug===selected).map(s=>({
     ...s,cards:s.cards.filter(c=>[s.title,c.name,c.detail].some(text=>text.toLowerCase().includes(term)))
-  })).filter(s=>s.cards.length||!term||s.title.toLowerCase().includes(term));
+  })).filter(s=>s.cards.length||!term||s.title.toLowerCase().includes(term)),[sections,selected,term]);
   return <>
     <div className="br-filters"><label>Find a brand or material<input type="search" placeholder="Try Ramco, pipes or tiles" value={query} onChange={e=>setQuery(e.target.value)}/></label>
     <label>Material category<select value={selected} onChange={e=>setSelected(e.target.value)}><option value="">All materials</option>{sections.map(s=><option key={s.slug} value={s.slug}>{s.title}</option>)}</select></label></div>
-    <p className="br-result" aria-live="polite">{filtered.reduce((sum,s)=>sum+s.cards.length,0)} brand options · {filtered.length} material categories</p>
+    <p className="br-result" aria-live="polite" aria-busy={query!==deferredQuery}>{filtered.reduce((sum,s)=>sum+s.cards.length,0)} brand options · {filtered.length} material categories</p>
     {!filtered.length&&<p role="status">No matching brands. <button onClick={()=>{setQuery("");setSelected("");}}>Clear filters</button></p>}
     {filtered.map(s=><section className="br-group" key={s.slug}><div className="br-heading"><div><h2>{s.title}</h2><p>{s.description}</p></div><Link href={s.dealer}>Dealer-listed options →</Link></div>
       <div className="br-grid">{s.cards.map(c=>{const photo=[c.image,c.rangeImage].find(src=>isLocalCatalogMedia(src)&&!failed.includes(src));return <article className="br-card" key={c.href}><div className="br-brand-header"><BrandMark name={c.name} small/></div><Link className="br-media-link" href={c.href} aria-label={"Explore "+c.name}>

@@ -3,7 +3,8 @@ import {invalidatePublicFeeds} from "@/modules/catalog/public-feed-client";
 type Listener=()=>void;
 const listeners=new Set<Listener>();
 let stop:(()=>void)|undefined,timer:ReturnType<typeof setTimeout>|undefined,startTimer:ReturnType<typeof setTimeout>|undefined,generation=0,starting=false;
-function invalidate(){clearTimeout(timer);timer=setTimeout(()=>{invalidatePublicFeeds();for(const listener of listeners)listener()},250);}
+function invalidateNow(){clearTimeout(timer);invalidatePublicFeeds();for(const listener of listeners)listener();}
+function invalidate(){clearTimeout(timer);timer=setTimeout(invalidateNow,250);}
 function schedule(){
  if(!listeners.size||stop||starting||startTimer!==undefined||document.visibilityState!=="visible"||navigator.onLine===false)return;
  // HTTP feeds can render immediately. Start the optional realtime transport
@@ -20,7 +21,14 @@ function schedule(){
   }).catch(()=>{/* foreground polling remains available */}).finally(()=>{if(current===generation)starting=false});
  },2500);
 }
-function onNetwork(){if(navigator.onLine===false||document.visibilityState!=="visible"){clearTimeout(startTimer);startTimer=undefined;return;}schedule();}
+function onNetwork(event:Event){
+ if(event.type==="offline"){
+  generation++;starting=false;clearTimeout(startTimer);startTimer=undefined;stop?.();stop=undefined;
+  invalidateNow();return;
+ }
+ if(event.type==="online")invalidateNow();
+ if(document.visibilityState!=="visible"){clearTimeout(startTimer);startTimer=undefined;return;}schedule();
+}
 export function subscribeCatalogPriceSignal(listener:Listener){
  listeners.add(listener);
  if(listeners.size===1){generation++;schedule();window.addEventListener("online",onNetwork);window.addEventListener("offline",onNetwork);document.addEventListener("visibilitychange",onNetwork);}

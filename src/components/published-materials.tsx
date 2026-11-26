@@ -2,7 +2,7 @@
 import {isPublicConstructionProduct} from "@/modules/catalog/discovery-policy";
 import {useEffect,useMemo,useState} from "react";
 import {ProductPrice} from "@/components/product-price";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import Image from "next/image";
 
 type Product={id:string;slug:string;name:string;description:string;category:{slug:string}|null;brand:{name:string}|null;

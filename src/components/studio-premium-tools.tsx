@@ -1,6 +1,6 @@
 "use client";
 import {useState} from "react";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import {planGeometryDigest,type PlanBrief,type PlanModel} from "@/modules/studio/plan-model";
 import "@/app/studio-pricing/pricing.css";
 import {useStudioSettings} from "@/components/use-studio-settings";

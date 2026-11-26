@@ -1,7 +1,7 @@
 "use client";
 import {isPublicConstructionProduct} from "@/modules/catalog/discovery-policy";
 import {useState} from "react";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import {CatalogMaterialImage} from "@/components/catalog-material-image";
 import {catalogVisuals} from "@/modules/catalog/catalog-visuals";
 import {ProductPrice} from "@/components/product-price";
