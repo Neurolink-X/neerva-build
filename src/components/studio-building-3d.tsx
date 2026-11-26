@@ -259,7 +259,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
      const append=(matrix:THREE.Matrix4)=>{
       const b=bounds.clone().applyMatrix4(matrix);
       if(b.isEmpty()||!Number.isFinite(b.min.x+b.min.y+b.min.z+b.max.x+b.max.y+b.max.z))return;
-      boxes.push({lo:b.min.toArray(),hi:b.max.toArray(),color:mat.color.toArray(),opacity:mat.transparent?mat.opacity:1,metal:mat.metalness,rough:mat.roughness});
+      boxes.push({lo:b.min.toArray(),hi:b.max.toArray(),color:[mat.color.r,mat.color.g,mat.color.b],opacity:mat.transparent?mat.opacity:1,metal:mat.metalness,rough:mat.roughness});
      };
      transform.multiplyMatrices(inverse,object.matrixWorld);
      if(object instanceof THREE.InstancedMesh){for(let i=0;i<object.count;i++){object.getMatrixAt(i,instance);append(transform.clone().multiply(instance));}}
