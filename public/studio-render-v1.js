@@ -78,7 +78,7 @@ function shade(tree,origin,dir,rng,evening){
 function toByte(x){const a=clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0,1);return Math.round(255*Math.pow(a,1/2.2))}
 export function renderScene(job,report){
  const {boxes,camera,width,height,samples,evening}=job;
- if(!Array.isArray(boxes)||!boxes.length||boxes.length>2500||!Number.isInteger(width)||!Number.isInteger(height)||width<16||height<16||width*height>420000||!Number.isInteger(samples)||samples<1||samples>16)throw Error("Unsupported render size or scene complexity.");
+ if(!Array.isArray(boxes)||!boxes.length||boxes.length>2500||!Number.isInteger(width)||!Number.isInteger(height)||width<16||height<16||width>768||height>768||width*height>420000||!Number.isInteger(samples)||samples<1||samples>16)throw Error("Unsupported render size or scene complexity.");
  const tree=bvh(boxes),acc=new Float32Array(width*height*3),rng=random(7319);
  const scale=Math.tan(camera.fov*Math.PI/360),aspect=width/height;
  for(let s=0;s<samples;s++){
