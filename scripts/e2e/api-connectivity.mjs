@@ -11,13 +11,15 @@ const key=process.env.NEERVA_E2E_SUPABASE_ANON_KEY;
 async function login(role){
  const client=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
  const {data,error}=await client.auth.signInWithPassword({email:process.env["NEERVA_E2E_"+role+"_EMAIL"],password:process.env["NEERVA_E2E_"+role+"_PASSWORD"]});
- assert.ok(!error&&data.session,role+" login unavailable");return data.session.access_token;
+ assert.ok(!error&&data.session,role+" login unavailable");return {token:data.session.access_token,client};
 }
-const [admin,dealer,customer]=await Promise.all(["ADMIN","DEALER_A","CUSTOMER"].map(login));
+const [adminIdentity,dealerIdentity,customerIdentity]=await Promise.all(["ADMIN","DEALER_A","CUSTOMER"].map(login));
+const admin=adminIdentity.token,dealer=dealerIdentity.token,customer=customerIdentity.token;
+const membership=await dealerIdentity.client.from("tenant_memberships").select("tenant_id").eq("active",true).limit(1).single();assert.ifError(membership.error);assert.ok(membership.data.tenant_id);
 const source=readFileSync("scripts/release/route-contract.test.mjs","utf8");
 const manifest=[...source.matchAll(/^\s*"(\/api\/[^"]+)":\[(.*?)\]/gm)].map(m=>({path:m[1],methods:JSON.parse("["+m[2]+"]")}));
 assert.ok(manifest.length>=50);
-const query={"/api/catalog":"?limit=1","/api/admin/direct-order-operations":"?orderId="+randomUUID(),"/api/customer/dealer-comparison":"?category=cement&slug=ppc-cement-50kg&pin=208001&qty=1","/api/studio/city-rules":"?city=kanpur","/api/studio/payments":"?product=home_studio"};
+const query={"/api/admin/dealer-members":"?tenant="+membership.data.tenant_id,"/api/catalog":"?limit=1","/api/admin/direct-order-operations":"?orderId="+randomUUID(),"/api/customer/dealer-comparison":"?category=cement&slug=ppc-cement-50kg&pin=208001&qty=1","/api/studio/city-rules":"?city=kanpur","/api/studio/payments":"?product=home_studio"};
 const publicPaths=new Set(["/api/catalog","/api/catalog/prices","/api/catalog/offers","/api/studio/config","/api/studio/city-rules"]);
 const results=[];
 async function check(path,method,token,expected,scope){
