@@ -1,8 +1,7 @@
 "use client";
 import {useEffect,useRef} from "react";
 import {usePathname,useRouter,useSearchParams} from "next/navigation";
-import {navigationPath,prefetchPath,takePrefetch} from "@/modules/navigation/intent";
-type Connection={saveData?:boolean;effectiveType?:string};
+import {navigationPath,prefetchPath,takePrefetch,allowSpeculativeNetwork,type NetworkHint} from "@/modules/navigation/intent";
 export function NavigationFeedback(){
  const router=useRouter(),pathname=usePathname(),search=useSearchParams().toString();
  const bar=useRef<HTMLDivElement>(null),deadline=useRef<ReturnType<typeof setTimeout>|undefined>(undefined),recent=useRef(new Map<string,number>());
@@ -14,7 +13,7 @@ export function NavigationFeedback(){
   function anchor(target:EventTarget|null){return target instanceof Element?target.closest<HTMLAnchorElement>("a[href]"):null}
   function ordinary(a:HTMLAnchorElement){return (!a.target||a.target==="_self")&&!a.hasAttribute("download")&&a.getAttribute("aria-disabled")!=="true"}
   function click(e:MouseEvent){const a=anchor(e.target);if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||!a||!ordinary(a)||!navigationPath(a.href,location.href))return;start()}
-  function intent(a:HTMLAnchorElement){const conn=(navigator as Navigator&{connection?:Connection}).connection;if(document.visibilityState!=="visible"||navigator.onLine===false||conn?.saveData||["slow-2g","2g"].includes(conn?.effectiveType??""))return;const path=prefetchPath(a.href,location.href);if(path&&takePrefetch(recent.current,path,Date.now())){try{router.prefetch(path)}catch{recent.current.delete(path)}}}
+  function intent(a:HTMLAnchorElement){const conn=(navigator as Navigator&{connection?:NetworkHint}).connection;if(!allowSpeculativeNetwork(conn,navigator.onLine,document.visibilityState==="visible"))return;const path=prefetchPath(a.href,location.href);if(path&&takePrefetch(recent.current,path,Date.now())){try{router.prefetch(path)}catch{recent.current.delete(path)}}}
   function hoverStart(e:PointerEvent){const a=anchor(e.target);if(e.pointerType==="touch"||!a||!ordinary(a)||!a.hasAttribute("data-intent-prefetch")||e.relatedTarget instanceof Node&&a.contains(e.relatedTarget))return;clearTimeout(hover);hover=setTimeout(()=>intent(a),100)}
   function hoverEnd(e:PointerEvent){const a=anchor(e.target);if(a&&e.relatedTarget instanceof Node&&a.contains(e.relatedTarget))return;clearTimeout(hover)}
   function focus(e:FocusEvent){const a=anchor(e.target);if(a&&ordinary(a)&&a.hasAttribute("data-intent-prefetch"))intent(a)}
