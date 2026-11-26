@@ -101,3 +101,5 @@
 .naccount-saved-plan{min-width:0;padding:clamp(10px,2vw,22px);background:#fff;border:1px solid #d6e0d4;border-radius:12px;display:grid;gap:12px}
 .naccount-saved-plan :is(svg,canvas){max-width:100%}.naccount-saved-plan .nroad-diagram{width:100%;height:auto}
 .naccount-saved-plan .naccount-address-actions button[aria-pressed=true]{background:#254738;color:#fff}
+
+.naccount-locale{margin-top:16px;border-top:1px solid #d6e0d4;padding-top:12px}.naccount-locale>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}.naccount-locale button{min-height:44px}.naccount-locale button[aria-pressed=true]{background:#254738;color:#fff}
