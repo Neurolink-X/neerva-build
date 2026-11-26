@@ -426,3 +426,7 @@
 }
 @media(max-width:340px){.nbh-shop-product .nb-shop-stepper{grid-template-columns:27px minmax(0,1fr) 27px}.nbh-mobile-shop-nav a{font-size:9px}}
 @media print{.nbh-mobile-shop-nav{display:none!important}.nbh{padding-bottom:0}}
+
+.nbh-home-quote-wrap{max-width:1550px;margin:0 auto;padding:0 clamp(16px,5vw,76px) 26px;min-width:0}
+.nbh-home-quote-wrap .nbh-quick-quote{max-width:740px;margin:0 auto}
+@media(max-width:760px){.nbh-home-quote-wrap{padding-inline:16px}}
