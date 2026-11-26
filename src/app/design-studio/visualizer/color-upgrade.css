@@ -117,8 +117,41 @@
 .visualizer-app .paint-sample-gallery button[aria-pressed=true]{border-color:#d5dfd4;background:#fff}
 .visualizer-app .paint-canvas-frame{overflow-anchor:none}
 .visualizer-app .paint-preview-status{overflow-anchor:none}
-/* On touch-sized screens the house preview scrolls normally with the page.
-   Editing must not make the house jump to a sticky position above the controls. */
-@media(max-width:850px){.visualizer-app .paint-live-preview{position:relative;top:auto;z-index:auto;padding-block:0}}
+/* Keep the same live canvas visible during editing without programmatic scroll,
+   duplicate rendering, or changing the four-card gallery. Short landscape and
+   custom-photo corner marking retain normal document flow. */
+@media(max-width:850px) and (min-height:561px){
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){position:sticky;top:0;z-index:3;align-self:start;background:#fff;padding-block:4px;min-width:0;max-width:100%}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) canvas{width:auto!important;max-width:100%;max-height:30svh;height:auto;margin-inline:auto}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-reference-note{margin-block:3px;font-size:11px}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-preview-actions{margin:4px 0}
+}
+.visualizer-app .paint-live-workspace,.visualizer-app .paint-live-preview,.visualizer-app .paint-live-tools{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.visualizer-app .paint-preview-actions button{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.visualizer-app .wall-pattern-options{min-width:0;max-width:100%}
 /* Scope scroll anchoring suppression to the editor, not the rest of the site. */
 html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
+
+/* Selection feedback without badges, layout shifts or image zoom. */
+.visualizer-app .paint-sample-gallery button{transition:border-color 120ms ease,box-shadow 120ms ease,background-color 120ms ease;touch-action:manipulation}
+.visualizer-app .paint-sample-gallery button[aria-pressed=true]{border-color:#35674e;background:#f2f7f1;box-shadow:inset 0 0 0 1px #35674e}
+.visualizer-app .paint-sample-gallery button:active,.visualizer-app .wall-pattern-options button:active{box-shadow:inset 0 0 0 2px #35674e}
+.visualizer-app .wall-pattern-options button[aria-pressed=true]{outline:2px solid #35674e;outline-offset:-2px;background:#edf5ee}
+.visualizer-app .paint-sample-feedback{margin:4px 0 12px;color:#365740;overflow-wrap:anywhere}
+@media(hover:hover) and (pointer:fine){.visualizer-app .paint-sample-gallery button:hover,.visualizer-app .wall-pattern-options button:hover{border-color:#35674e;box-shadow:inset 0 0 0 1px #35674e}}
+.visualizer-app :is(.paint-sample-gallery,.wall-pattern-options,.paint-targets,.paint-mode,.paint-adjacent-controls) button:focus-visible{outline:3px solid #a46b35;outline-offset:-3px}
+@media(prefers-reduced-motion:reduce){.visualizer-app .paint-sample-gallery button{transition:none}}
+
+/* A single-column block gives sticky preview the entire editing workspace as
+   its containing block, rather than a single grid row on narrow screens. */
+@media(max-width:850px) and (min-height:561px){
+ .visualizer-app .paint-live-workspace{display:block;overflow:visible}
+ .visualizer-app .paint-live-tools{margin-top:8px}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){position:sticky;top:0;overflow:visible}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) canvas{max-height:26svh}
+ .visualizer-app .paint-live-tools :is(button,select,input){scroll-margin-block:12px}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-preview-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-preview-actions>button{grid-column:auto;min-height:44px}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-canvas-frame{max-height:26svh}
+
+}

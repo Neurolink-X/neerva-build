@@ -2,7 +2,7 @@ import type {MaskCorner} from "./mask-editor.ts";
 import type {Pattern} from "./wall-patterns.ts";
 export type PhotoMask={outline:number[][];holes?:number[][][]};
 export type PaintStyle={colour:string;accent:string;pattern:Pattern;opacity:number};
-export type FacadeTarget="all"|"left"|"right"|"balcony"|"entry"|"boundary"|"roof"|"boundary-right"|"upper-recess"|"lower-recess";
+export type FacadeTarget="all"|"left"|"right"|"balcony"|"entry"|"boundary"|"roof"|"boundary-right"|"upper-recess"|"lower-recess"|"garden-left"|"garden-right";
 const ring=(p:number[][],width=1536,height=512)=>p.map(([x,y])=>[x/width,y/height]);
 const rect=(x:number,y:number,w:number,h:number)=>[[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
 function zone(id:Exclude<FacadeTarget,"all">,label:string,outline:number[][],holes:number[][][]=[],bounds?:number[][],width=1536,height=512){
@@ -22,7 +22,19 @@ export const facadeZones=[
  zone("roof","Roof trim",[[901,23],[1239,23],[1239,60],[1228,63],[972,62],[972,46],[891,46]]),
  zone("upper-recess","Balcony recessed wall",[[555,79],[580,116],[887,116],[913,92],[958,79],[958,192],[938,192],[938,251],[555,251]],[[[650,132],[850,132],[850,251],[650,251]],[[558,191],[575,177],[575,159],[597,153],[618,162],[641,175],[645,194],[645,251],[558,251]],[[851,166],[864,149],[890,142],[912,156],[915,180],[936,193],[936,251],[851,251]]]),
  zone("lower-recess","Ground floor recessed wall",[[555,288],[578,309],[885,309],[907,288],[971,288],[971,413],[916,413],[916,397],[879,397],[879,413],[850,413],[850,326],[651,326],[651,397],[555,397]],[[[556,383],[575,374],[593,368],[615,374],[641,397],[641,413],[556,413]],[[851,383],[869,371],[886,374],[900,395],[900,413],[851,413]]]),
- zone("boundary-right","Right boundary band",[[879,398],[916,398],[916,414],[1268,414],[1268,399],[1311,399],[1311,457],[1280,444],[1268,433],[916,433],[916,508],[879,508]])
+ zone("boundary-right","Right boundary band",[[879,398],[916,398],[916,414],[1268,414],[1268,399],[1311,399],[1311,457],[1280,444],[1268,433],[916,433],[916,508],[879,508]]),
+ // The garden-facing panels were previously excluded wholesale. Trace the
+ // exposed plaster and keep conservative holes around leaves and wall lights.
+ zone("garden-left","Left garden wall",rect(278,434,351,64),[
+  [[278,452],[302,448],[322,438],[350,439],[373,451],[388,465],[391,498],[278,498]],
+  [[377,474],[400,468],[429,469],[447,478],[452,498],[377,498]],
+  [[444,467],[461,451],[476,438],[508,438],[532,452],[543,470],[543,498],[444,498]],
+  [[535,476],[554,467],[581,464],[597,455],[620,449],[629,451],[629,498],[535,498]],rect(417,441,12,25),rect(565,441,13,25)]),
+ zone("garden-right","Right garden wall",rect(917,434,350,64),[
+  [[927,477],[944,458],[966,443],[991,445],[1005,465],[1020,476],[1023,498],[927,498]],
+  [[1013,480],[1035,470],[1052,461],[1061,437],[1080,437],[1096,449],[1109,474],[1117,498],[1013,498]],
+  [[1104,481],[1133,467],[1153,457],[1184,459],[1201,476],[1201,498],[1104,498]],
+  [[1197,434],[1267,434],[1267,498],[1197,498]],rect(1125,441,14,25)])
 ] as const;
 // Every photograph owns its mask geometry. Never reuse a polygon from another home.
 const villaZones=[
