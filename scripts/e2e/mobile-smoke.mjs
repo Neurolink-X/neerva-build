@@ -1039,6 +1039,7 @@ async function main(){
     const compactFirstId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
+    await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
     await page.waitForFunction(previous=>{
       const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");
       return !!a&&!!b&&a.getAttribute("data-plan-id")!==previous
