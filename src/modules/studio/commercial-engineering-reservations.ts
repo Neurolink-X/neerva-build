@@ -1,4 +1,5 @@
 import {validateBuildingConcept,type BuildingConcept} from "./building-purpose.ts";
+import {commercialInternalSpaces} from "./commercial-internal.ts";
 import {commercialPortals} from "./commercial-detail.ts";
 const EPS=1e-5;
 export type Reservation={id:string;kind:"stair"|"lift"|"escalator"|"service";widthFt:number;depthFt:number;count:number};
@@ -37,7 +38,7 @@ export function auditCandidateAccess(plan:BuildingConcept,floor:number){
  if(hall){connected.add(hall.id);for(const z of zones){
   const edgeX=Math.abs(z.x+z.w-hall.x)<EPS||Math.abs(z.x-hall.x-hall.w)<EPS;
   const sharedMin=Math.max(z.y,hall.y),sharedMax=Math.min(z.y+z.d,hall.y+hall.d);
-  if(edgeX&&portals.some(p=>p.zoneId===z.id&&p.axis==="y"&&(Math.abs(p.x-hall.x)<EPS||Math.abs(p.x-hall.x-hall.w)<EPS)&&p.y>=sharedMin-EPS&&p.y+p.length<=sharedMax+EPS))connected.add(z.id);
+  if(edgeX&&portals.some(p=>(p.zoneId===z.id||commercialInternalSpaces(plan).some(r=>r.id===p.zoneId&&r.parentId===z.id))&&p.axis==="y"&&(Math.abs(p.x-hall.x)<EPS||Math.abs(p.x-hall.x-hall.w)<EPS)&&p.y>=sharedMin-EPS&&p.y+p.length<=sharedMax+EPS))connected.add(z.id);
  }}
  return {unconnected:zones.filter(z=>["primary","support","toilet","core","service"].includes(z.kind)&&!connected.has(z.id)).map(z=>({id:z.id,label:z.label})),connectedCoreCount:zones.filter(z=>z.kind==="core"&&connected.has(z.id)).length,groundEntryCandidate:floor===0&&!!hall&&portals.some(p=>p.zoneId===hall.id&&p.axis==="x"&&Math.abs(p.y-hall.y)<EPS),approval:"NOT_VERIFIED" as const};
 }
