@@ -8,6 +8,7 @@ export default function manifest():MetadataRoute.Manifest{
   background_color:launchBrand.background,theme_color:launchBrand.theme,
   lang:"en-IN",
   icons:[
+   {src:"/pwa-icon",sizes:"192x192",type:"image/png",purpose:"any"},
    {src:"/icon",sizes:"512x512",type:"image/png",purpose:"any"},
    {src:"/icon",sizes:"512x512",type:"image/png",purpose:"maskable"},
    {src:"/apple-icon",sizes:"180x180",type:"image/png",purpose:"any"}

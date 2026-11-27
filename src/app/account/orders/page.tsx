@@ -1,6 +1,5 @@
 import Link from "next/link";
-import {DirectOrdersPanel} from "@/components/direct-orders-panel";
-import { OrderList } from "@/components/order-list";
+import {CustomerOrdersWorkspace} from "@/components/customer-orders-workspace";
 import { SiteHeader, SiteFooter } from "@/components/site-chrome";
 export const metadata = {
   title: "My Orders",
@@ -11,8 +10,8 @@ export default function Orders() {
     <main className="catalog-page">
       <SiteHeader />
       <section className="section ops-content">
-        <h1>My Orders</h1><nav className="neerva-journey-links" aria-label="Order help and next actions"><Link href="/account/quotes">My quotations →</Link><Link href="/my-project">My construction project →</Link><Link href="/support">Order help →</Link><Link href="/returns">Returns & refunds →</Link></nav>
-        <DirectOrdersPanel role="customer"/><h2>Dealer offer orders</h2><OrderList />
+        <span className="eyebrow">YOUR ACCOUNT</span><h1>My orders</h1><p>Track material purchases, review final prices and manage deliveries in one place.</p><nav className="neerva-journey-links" aria-label="Order help and next actions"><Link href="/account/quotes">My quotations →</Link><Link href="/my-project">My construction project →</Link><Link href="/support">Order help →</Link><Link href="/returns">Returns & refunds →</Link></nav>
+        <CustomerOrdersWorkspace/>
       </section>
       <SiteFooter />
     </main>

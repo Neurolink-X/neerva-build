@@ -159,3 +159,21 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 /* Mobile: preserve the complete photo, its aspect ratio and pointer mapping. Do not squeeze it into 26svh. */
 .visualizer-app .paint-canvas-frame{position:relative;width:100%;height:auto;max-height:none;min-width:0}.visualizer-app .paint-canvas-frame canvas{width:100%;height:auto;max-height:none;display:block;object-fit:contain}.visualizer-app .paint-canvas-frame[aria-busy=true]{aspect-ratio:3/2}.visualizer-app .paint-photo-placeholder{position:absolute;inset:0;object-fit:contain;width:100%;height:100%}.visualizer-app .paint-retry{min-height:44px;padding:8px 14px;border:1px solid #a8bbac;color:#254738;background:#fff;border-radius:8px}
 @media(max-width:850px){.visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){position:static;top:auto}.visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) :is(canvas,.paint-canvas-frame){max-height:none;height:auto}.visualizer-app .paint-live-preview{width:100%;min-width:0}}
+
+/* Compact, uncropped preview while editing on a portrait handset. The same
+   canvas remains mounted; no scrollIntoView, duplicate rendering or zoom. */
+@media (max-width:850px) and (min-height:561px){
+ .visualizer-app .paint-live-workspace{display:block;overflow:visible}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){
+  position:sticky;top:0;z-index:4;overflow:visible;background:#fff;
+  border-bottom:1px solid #d6e2d7;padding:6px 0;
+ }
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-canvas-frame{
+  max-height:27svh;display:grid;place-items:center;overflow:hidden;aspect-ratio:auto;
+ }
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-canvas-frame canvas{
+  width:auto!important;height:auto!important;max-width:100%;max-height:27svh;object-fit:contain;margin:0 auto;
+ }
+ .visualizer-app .paint-live-preview[data-can-stick=true] .paint-preview-actions{margin:5px 0 0}
+ .visualizer-app .paint-live-tools :is(button,select,input){scroll-margin-top:calc(27svh + 112px)}
+}

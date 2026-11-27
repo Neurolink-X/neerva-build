@@ -9,9 +9,16 @@ import { createNeervaBrowserClient } from "@/modules/supabase/browser";
 
 const supabase = createNeervaBrowserClient();
 
-function friendlyAuthError(message: string) {
-  const normalized = message.toLowerCase();
-  if (/rate.limit|too many requests|only request this after|over_email_send_rate_limit/.test(normalized)) return "Too many email requests. Wait at least 60 seconds before requesting another email. Check your inbox and spam first.";
+function emailQuotaExceeded(error:unknown){
+ const detail=typeof error==="object"&&error!==null?error as {code?:string;message?:string}:{};
+ return detail.code==="over_email_send_rate_limit"||(detail.message??"").toLowerCase().includes("over_email_send_rate_limit");
+}
+function friendlyAuthError(error: unknown) {
+  const detail = typeof error === "object" && error !== null ? error as { code?: string; message?: string; status?: number } : {};
+  const normalized = (detail.message ?? "").toLowerCase();
+  if (detail.code === "over_email_send_rate_limit" || normalized.includes("over_email_send_rate_limit")) return "Our email service has reached its sending limit. Repeated requests will not reset the provider quota. Email requests on this device are paused for 15 minutes; delivery may still be unavailable after that. Check your inbox and spam for the latest link. If no link arrives, contact Neerva support or try later.";
+  if (detail.code === "email_address_not_authorized") return "Verification email could not be delivered at this time. Contact Neerva support for help.";
+  if (detail.status === 429 || /rate.limit|too many requests|only request this after/.test(normalized)) return "Too many requests. Please wait before retrying. Check your inbox and spam for an existing link.";
   if (/expired|otp_expired|invalid.*token/.test(normalized)) return "This email link or code is invalid or expired. Request a fresh one.";
   if (normalized.includes("privacy consent required")) return "Read the privacy notice and agree before creating an account.";
   if (normalized.includes("invalid login credentials")) return "Email or password is incorrect. Check both and try again.";
@@ -22,7 +29,7 @@ function friendlyAuthError(message: string) {
 }
 
 export function AccountAccess({next}:{next?:string}={}) {
-  const checkoutReturn=safeCheckoutReturn(next);const redirectPath=checkoutReturn?"/account?"+new URLSearchParams({next:checkoutReturn}):"/account";
+  const checkoutReturn=next==="/account/orders"?next:safeCheckoutReturn(next);const redirectPath=checkoutReturn?"/account/verify?"+new URLSearchParams({next:checkoutReturn}):"/account/verify";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [user, setUser] = useState<User | null>(null);
   const [roleData, setRoleData] = useState<{ userId: string; admin: boolean; dealer: boolean } | null>(null);
@@ -35,7 +42,8 @@ export function AccountAccess({next}:{next?:string}={}) {
   const [secondsLeft,setSecondsLeft]=useState(0);
   const submissionLock=useRef(false);
   useEffect(()=>{if(!cooldownUntil)return;const timer=window.setInterval(()=>setSecondsLeft(Math.max(0,Math.ceil((cooldownUntil-Date.now())/1000))),1000);return()=>window.clearInterval(timer)},[cooldownUntil]);
-  function startEmailCooldown(){setSecondsLeft(60);setCooldownUntil(Date.now()+60000)}
+  function startEmailCooldown(seconds=60){const until=Date.now()+seconds*1000;setSecondsLeft(seconds);setCooldownUntil(until);try{sessionStorage.setItem("neerva-email-retry-until",String(until))}catch{/* backend throttling remains authoritative */}}
+  useEffect(()=>{try{const until=Number(sessionStorage.getItem("neerva-email-retry-until"));if(Number.isFinite(until)&&until>Date.now()&&until-Date.now()<=900000){const timer=window.setTimeout(()=>{setCooldownUntil(until);setSecondsLeft(Math.ceil((until-Date.now())/1000))},0);return()=>window.clearTimeout(timer)}}catch{/* optional session persistence */}},[]);
   const [phone,setPhone]=useState(""),[otp,setOtp]=useState(""),[phoneChallengeSent,setPhoneChallengeSent]=useState(false);
   const phoneOtpEnabled=process.env.NEXT_PUBLIC_PHONE_OTP_ENABLED==="true";
   const [busy, setBusy] = useState(false);
@@ -86,7 +94,8 @@ export function AccountAccess({next}:{next?:string}={}) {
         setMessage({ kind: "success", text: data.session?.user.email_confirmed_at ? "Your verified account is ready." : "Check your email for verification. Private quotation requests require a verified email." });
       }
     } catch (error) {
-      setMessage({ kind: "error", text: friendlyAuthError(error instanceof Error ? error.message : "") });
+      if(mode==="signup"&&emailQuotaExceeded(error))startEmailCooldown(900);
+      setMessage({ kind: "error", text: friendlyAuthError(error) });
     } finally { submissionLock.current=false;setBusy(false); }
   }
 
@@ -111,7 +120,7 @@ export function AccountAccess({next}:{next?:string}={}) {
         if(error)throw error;
       }
       setMessage({kind:"success",text:"If this email is eligible, a link has been requested. Check your inbox and spam. Use the newest link."});
-    }catch(error){setMessage({kind:"error",text:friendlyAuthError(error instanceof Error?error.message:"")})}
+    }catch(error){if(emailQuotaExceeded(error))startEmailCooldown(900);setMessage({kind:"error",text:friendlyAuthError(error)})}
     finally{submissionLock.current=false;setBusy(false)}
   }
   async function updatePassword(event:FormEvent<HTMLFormElement>){
@@ -129,7 +138,7 @@ export function AccountAccess({next}:{next?:string}={}) {
       const {error:signOutError}=await supabase.auth.signOut({scope:"global"});
       if(signOutError)throw signOutError;
       setRecovery(false);setUser(null);setMode("signin");setMessage({kind:"success",text:"Password changed. Sign in with your new password."});
-    }catch(error){setMessage({kind:"error",text:friendlyAuthError(error instanceof Error?error.message:"")})}
+    }catch(error){setMessage({kind:"error",text:friendlyAuthError(error)})}
     finally{submissionLock.current=false;setBusy(false)}
   }
   async function beginPhoneOtp(event:FormEvent<HTMLFormElement>){
@@ -141,7 +150,7 @@ export function AccountAccess({next}:{next?:string}={}) {
       if(error)throw error;
       setPhoneChallengeSent(true);
       setMessage({kind:"success",text:"OTP requested from the configured SMS provider. Enter the received code to continue."});
-    }catch(error){setMessage({kind:"error",text:friendlyAuthError(error instanceof Error?error.message:"")})}
+    }catch(error){setMessage({kind:"error",text:friendlyAuthError(error)})}
     finally{setBusy(false)}
   }
   async function verifyPhoneOtp(event:FormEvent<HTMLFormElement>){
@@ -153,19 +162,19 @@ export function AccountAccess({next}:{next?:string}={}) {
       if(error)throw error;
       setMessage({kind:"success",text:"Phone verification succeeded. Your permissions still depend on approved roles."});
       setPhoneChallengeSent(false);setOtp("");
-    }catch(error){setMessage({kind:"error",text:friendlyAuthError(error instanceof Error?error.message:"")})}
+    }catch(error){setMessage({kind:"error",text:friendlyAuthError(error)})}
     finally{setBusy(false)}
   }
   return <div className="account-access-card">
     {!supabase ? <><span className="eyebrow">ACCOUNT SETUP</span><h2>Sign-in will open here.</h2><p>Customer and dealer accounts use NEERVA BUILD’s separate Supabase project. The account service is not configured yet, so no password field is shown and no credentials are collected.</p><div className="account-service-state"><span aria-hidden="true">○</span><span><strong>Waiting for backend setup</strong><small>Separate auth URL and public key are missing.</small></span></div></> : recovery && user ? <><h2>Set a new password.</h2><form className="account-auth-form" onSubmit={updatePassword}><label>New password<input name="newPassword" type="password" minLength={12} maxLength={128} required autoComplete="new-password"/></label><label>Confirm password<input name="confirmPassword" type="password" minLength={12} maxLength={128} required autoComplete="new-password"/></label><button className="button button-dark" disabled={busy}>Update password</button></form>{message&&<p role={message.kind==="error"?"alert":"status"} className={`account-feedback ${message.kind}`}>{message.text}</p>}</> : user ? <CustomerAccountHub key={user.id} user={user} admin={admin} dealer={dealer} checkoutReturn={checkoutReturn} onSignOut={async()=>{const {error}=await supabase.auth.signOut();if(error)throw error;}}/> : <>
       <div className="account-mode-switch"><button type="button" className={mode === "signin" ? "active" : ""} onClick={() => { setMode("signin"); setMessage(null); }}>Sign in</button><button type="button" className={mode === "signup" ? "active" : ""} onClick={() => { setMode("signup"); setMessage(null); }}>Create account</button></div>
       <h2>{mode === "signin" ? "Welcome back." : "Create your customer account."}</h2><p>{mode === "signin" ? "Manage your project and material requests." : "Review your material quotations and track orders from one account."}</p>
-      <form className="account-auth-form" onSubmit={submit}>{mode === "signup" && <label>Your name<input name="displayName" required minLength={2} maxLength={100} autoComplete="name" /></label>}<label>Email address<input name="email" type="email" required maxLength={254} autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={128} autoComplete={mode === "signin" ? "current-password" : "new-password"} /></label>{mode==="signup"&&<label className="neerva-account-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to the <Link href="/privacy">privacy notice</Link> for creating an account.</span></label>}<button className="button button-dark" disabled={busy||(mode==="signup"&&secondsLeft>0)}>{busy ? "Please wait…" : mode === "signin" ? "Sign in securely →" : secondsLeft>0 ? `Try again in ${secondsLeft}s` : "Create customer account →"}</button></form>
-      {message && <p className={`account-feedback ${message.kind}`} role={message.kind === "error" ? "alert" : "status"}>{message.text}</p>}
+      <form className="account-auth-form" onSubmit={submit}>{mode === "signup" && <label>Your name<input name="displayName" required minLength={2} maxLength={100} autoComplete="name" /></label>}<label>Email address<input name="email" type="email" required maxLength={254} autoComplete="email" /></label><label>Password<input name="password" type="password" required minLength={8} maxLength={128} autoComplete={mode === "signin" ? "current-password" : "new-password"} /></label>{mode==="signup"&&<label className="neerva-account-consent"><input type="checkbox" name="privacyAccepted" value="yes" required/> <span>I agree to the <Link href="/privacy">privacy notice</Link> for creating an account.</span></label>}<button className="button button-dark" disabled={busy||(mode==="signup"&&secondsLeft>0)}>{busy ? "Please wait…" : mode === "signin" ? "Sign in securely →" : secondsLeft>0 ? `Request cooldown: ${secondsLeft}s` : "Create customer account →"}</button></form>
+      {message && <div className={`account-feedback ${message.kind}`} role={message.kind === "error" ? "alert" : "status"}><p>{message.text}</p>{message.kind==="error"&&<Link href="/support">Contact Neerva support →</Link>}</div>}
       <form className="account-auth-form" onSubmit={sendMagicLink} style={{marginTop:23}}>
         <strong>Email verification and account recovery</strong><label>What do you need?<select value={emailAction} onChange={e=>{const value=e.target.value;if(value==="link"||value==="reset"||value==="resend")setEmailAction(value)}}><option value="link">Password-free sign-in</option><option value="resend">Resend verification email</option><option value="reset">Forgot password</option></select></label>
         <label>Your registered email<input type="email" value={magicEmail} onChange={e=>setMagicEmail(e.target.value)} required autoComplete="email" maxLength={254}/></label>
-        <button className="button button-outline" disabled={busy||secondsLeft>0}>{secondsLeft>0?`Resend available in ${secondsLeft}s`:emailAction==="reset"?"Send password reset link →":emailAction==="resend"?"Resend verification email →":"Send secure email link →"}</button>
+        <button className="button button-outline" disabled={busy||secondsLeft>0}>{secondsLeft>0?`Request cooldown: ${secondsLeft}s`:emailAction==="reset"?"Send password reset link →":emailAction==="resend"?"Resend verification email →":"Send secure email link →"}</button>
       </form>
       {phoneOtpEnabled?<form className="account-auth-form" onSubmit={phoneChallengeSent?verifyPhoneOtp:beginPhoneOtp} style={{marginTop:23}}>
         <strong>Phone OTP</strong>

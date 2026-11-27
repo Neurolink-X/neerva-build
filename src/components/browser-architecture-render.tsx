@@ -13,9 +13,15 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
   stop();setHasFrame(false);setProgress(0);
   const snapshot=capture();if(!snapshot||!snapshot.boxes.length){setPhase("error");setMessage("Open your 3D model first, then try again.");return}
   if(typeof Worker==="undefined"){setPhase("error");setMessage("This browser does not support background rendering. Use the interactive 3D preview.");return}
-  const longest=quality==="fine"?560:320,aspect=Math.max(.5,Math.min(2,snapshot.camera.aspect??1.5));
-  const width=aspect>=1?longest:Math.round(longest*aspect),height=aspect>=1?Math.round(longest/aspect):longest,samples=quality==="fine"?12:4;
+  const aspect=Math.max(.5,Math.min(2,snapshot.camera.aspect??1.5));
+  const device=navigator as Navigator&{deviceMemory?:number;connection?:{saveData?:boolean}};
+  const constrained=Boolean(device.connection?.saveData)||(device.deviceMemory!==undefined&&device.deviceMemory<=4)||window.innerWidth<768;
+  const capable=!constrained&&navigator.hardwareConcurrency>=8;
+  const requested=quality==="fine"?(capable?720:constrained?420:560):constrained?256:320;
+  const longest=Math.min(requested,Math.floor(Math.sqrt(419000*Math.max(aspect,1/aspect))));
+  const width=aspect>=1?longest:Math.round(longest*aspect),height=aspect>=1?Math.round(longest/aspect):longest,samples=quality==="fine"?(capable?16:constrained?8:12):4;
   const token=sequence.current;
+  let lastCompleted=0;
   const fail=(reason:string)=>{if(token!==sequence.current||!visible.current)return;stop();setPhase("error");setMessage(reason);};
   try{
    const instance=new Worker("/studio-render-v1.js",{type:"module"});worker.current=instance;
@@ -26,11 +32,12 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
    instance.onmessage=(event:MessageEvent<RenderFrame|{error:string}>)=>{
     if(token!==sequence.current||!visible.current)return;
     const frame=event.data;if("error" in frame){fail(frame.error);return;}
-    if(frame.width!==width||frame.height!==height||frame.samples!==samples||!Number.isInteger(frame.completed)||frame.completed<1||frame.completed>samples||!(frame.pixels instanceof Uint8ClampedArray)||frame.pixels.length!==width*height*4){fail("The renderer returned an invalid image.");return}
+    if(frame.width!==width||frame.height!==height||frame.samples!==samples||!Number.isInteger(frame.completed)||frame.completed<=lastCompleted||frame.completed>samples||!(frame.pixels instanceof Uint8ClampedArray)||frame.pixels.length!==width*height*4){fail("The renderer returned an invalid image.");return}
     const el=canvas.current,ctx=el?.getContext("2d");if(!el||!ctx){fail("Image preview is unavailable.");return}
-    el.width=width;el.height=height;ctx.putImageData(new ImageData(new Uint8ClampedArray(frame.pixels),width,height),0,0);
+    if(el.width!==width)el.width=width;if(el.height!==height)el.height=height;
+    ctx.putImageData(new ImageData(new Uint8ClampedArray(frame.pixels),width,height),0,0);lastCompleted=frame.completed;
     setHasFrame(true);setProgress(Math.round(frame.completed/samples*100));
-    if(frame.completed===samples){stop();setPhase("done");setMessage("Render ready. This is a concept visualization of the selected geometry.");}
+    if(frame.completed===samples){stop();setPhase("done");setMessage(`Render ready · ${width} × ${height} pixels · ${samples} samples. Concept visualization of the selected geometry.`);}
    };
    const job:RenderJob={...snapshot,width,height,samples};instance.postMessage(job);
   }catch{fail("Rendering is unavailable on this browser. The interactive 3D view remains available.");}
@@ -44,6 +51,6 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
   {phase==="working"&&<progress aria-label="Render progress" max={100} value={progress}/>}
   {message&&<p role="status">{message}</p>}
   <canvas ref={canvas} hidden={!hasFrame} aria-label="Ray-traced architectural concept image" style={{display:hasFrame?"block":"none",maxWidth:"100%",width:"100%",height:"auto",borderRadius:12}}/>
-  <p className="nbd-disclaimer">Uses bounded light bounces and simplified scene materials. Not a certified architectural drawing or a photographic-quality guarantee. Camera changes require a new render.</p>
+  <p className="nbd-disclaimer">Uses bounded light bounces and simplified scene materials. Not a certified architectural drawing or a photographic-quality guarantee. Camera changes require a new render. Higher detail adapts to device capacity; for presentation-grade photorealism, export the exact scene to a professional renderer.</p>
  </section>;
 }

@@ -1,10 +1,10 @@
-import {buildingWallCells} from "@/modules/studio/geometry";
+import {visibleWallCells} from "@/modules/studio/geometry";
 import type {StudioDesign} from "@/modules/studio/library";
 import type {PlanModel} from "@/modules/studio/plan-model";
 import {roadRect,roadPoint,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {siteOutline} from "@/modules/studio/site-shape";
 
-export function PlanAxonometric({plan,design,floor}:{plan:PlanModel;design:StudioDesign;floor?:number}){
+export function PlanAxonometric({plan,design,floor,cutaway=floor!==undefined}:{plan:PlanModel;design:StudioDesign;floor?:number;cutaway?:boolean}){
  const {widthFt:w,depthFt:d,roadSide}=plan.plot;
  const size=siteDimensions(w,d,roadSide);
  const height=plan.walls.heightFt;
@@ -14,11 +14,10 @@ export function PlanAxonometric({plan,design,floor}:{plan:PlanModel;design:Studi
   const points=[[r.x,r.y],[r.x+r.w,r.y],[r.x+r.w,r.y+r.d],[r.x,r.y+r.d]].map(([x,y])=>project(x,y,z)).join(" ");
   return {key:room.id,depth:r.x+r.y+r.w/2+r.d/2,level:room.floor,points,fill:room.kind==="bath"?"#bbd6dd":room.kind==="bedroom"?"#dccfbf":"#dfdfce",label:room.label};
  });
- const walls=buildingWallCells(design).filter(c=>floor===undefined||floor===c.floorIndex).map((c,i)=>{
+ const walls=visibleWallCells(design,floor,cutaway).map((c,i)=>{
   const endpoint=(v:number)=>roadPoint(c.axis==="x"?{x:c.planeFt,y:v}:{x:v,y:c.planeFt},w,d,roadSide);
   const a=endpoint(c.startFt),b=endpoint(c.endFt),base=(floor===undefined?c.floorIndex:0)*height;
-  const cut=floor===undefined?height:height*.46;
-  const low=base+Math.min(c.bottomFt,cut),top=base+Math.min(c.topFt,cut);
+  const low=base+c.bottomFt,top=base+c.topFt;
   return {key:"wall-"+i,depth:(a.x+b.x+a.y+b.y)/2,level:c.floorIndex,points:[project(a.x,a.y,low),project(b.x,b.y,low),project(b.x,b.y,top),project(a.x,a.y,top)].join(" "),fill:a.x===b.x?"#d0bda4":"#f4eada",label:"Wall"};
  });
  const top=(floor===undefined?plan.floors:1)*height;

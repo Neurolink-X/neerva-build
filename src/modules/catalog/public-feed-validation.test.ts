@@ -9,10 +9,10 @@ test("valid rates and promotions accept real positive integer paise",()=>{
  assert(validPublicRate(rate,now));assert(validPublicRate({...rate,until:null},now));assert(validPublicOffer(offer,now));
 });
 test("malformed rows cannot poison a price feed",()=>{
- for(const row of [null,[],{}, {...rate,paise:Infinity},{...rate,paise:1.2},{...rate,paise:"40000"},{...rate,sku:""},{...rate,unit:"invalid"},{...rate,min:0},{...rate,prefix:"abc"},{...rate,category:"aggregates"},{...rate,until:""}])assert.equal(validPublicRate(row,now),false);
+ for(const row of [null,[],{}, {...rate,paise:Infinity},{...rate,paise:1.2},{...rate,paise:"40000"},{...rate,sku:""},{...rate,sku:"NEERVA-REF-opc-53"},{...rate,unit:"invalid"},{...rate,min:0},{...rate,prefix:"abc"},{...rate,category:"aggregates"},{...rate,until:""}])assert.equal(validPublicRate(row,now),false);
 });
 test("expired and fabricated promotions are rejected",()=>{
- for(const row of [null,{...offer,endsAt:new Date(now).toISOString()},{...offer,endsAt:"invalid"},{...offer,offerPaise:40000},{...offer,offerPaise:1.5},{...offer,basePaise:Infinity},{...offer,title:""},{...offer,terms:null}])assert.equal(validPublicOffer(row,now),false);
+ for(const row of [null,{...offer,endsAt:new Date(now).toISOString()},{...offer,endsAt:"invalid"},{...offer,offerPaise:40000},{...offer,offerPaise:1.5},{...offer,basePaise:Infinity},{...offer,title:""},{...offer,sku:"NEERVA-REF-opc-53"},{...offer,terms:null}])assert.equal(validPublicOffer(row,now),false);
  assert.equal(validPublicRate(rate,Date.parse(future)),false);
 });
 test("ambiguous repeated pagination parameters are rejected",()=>{

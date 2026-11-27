@@ -2,6 +2,7 @@ import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type Room
  type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
 import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
 import {buildingWallCells} from "./geometry.ts";
+import {frontagePanels,frontageSignature} from "./frontage.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
@@ -60,6 +61,18 @@ function addWindow(p:Pick<PlanModel,"rooms"|"openings"|"plot"|"setbacks">){
   const width=Math.min(4,round(len-1));
   p.openings.push({id:"window-"+r.id+"-"+side,roomId:r.id,side,atFt:round((len-width)/2),
    widthFt:width,sillFt:3,heightFt:4,kind:"window"});
+ }
+ // Give real street-facing habitable walls useful window rhythm where clear
+ // of doors and other openings. No window is added through a closed room.
+ // These are the actual PlanModel openings, not decorative facade images.
+ const model=p as PlanModel;
+ for(const panel of frontagePanels({...model,floors:Math.max(1,...p.rooms.map(r=>r.floor+1))})){
+  const r=p.rooms.find(room=>room.id===panel.roomId)!;
+  if(!["bedroom","living","dining","lounge"].includes(r.kind)||panel.w<4.8)continue;
+  if(p.openings.some(o=>o.roomId===r.id&&o.side==="front"&&o.kind==="window"))continue;
+  const width=Math.min(4,round(panel.w-1)),atFt=round(panel.x-r.x+(panel.w-width)/2);
+  if(p.openings.some(o=>o.roomId===r.id&&o.side==="front"&&atFt<o.atFt+o.widthFt+.15&&atFt+width>o.atFt-.15))continue;
+  p.openings.push({id:"window-front-"+r.id,roomId:r.id,side:"front",atFt,widthFt:width,sillFt:3,heightFt:4,kind:"window"});
  }
 }
 export type SpatialProgramme="wash"|"family-gallery"|"rear-courtyard"|"rear-baranda";
@@ -368,7 +381,10 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
  const W=Math.min(36,aw),D=Math.min(85,ad),sb={...base,leftFt:base.leftFt+(aw-W)/2,rightFt:base.rightFt+(aw-W)/2,rearFt:base.rearFt+ad-D,verified:false};
  const plans:PlanModel[]=[],seen=new Set<string>(),meshes=new Set<string>();
  type Slot={floor:number;x:number;y:number;w:number;d:number;capacity:number;count:number;key:string};
- for(let recipe=0;recipe<576&&plans.length<limit;recipe++){
+ // A coprime stride visits every recipe once, sampling materially different
+ // stair, kitchen, bedroom and entry dimensions early instead of adjacent variants.
+ for(let iteration=0;iteration<576&&plans.length<limit;iteration++){
+  const recipe=(iteration*73)%576;
   const spine=4+recipe%2,left=round((W-spine)/2+[0,-2,2,-1,1,3][Math.floor(recipe/2)%6]),right=round(W-spine-left);
   if(left<9||right<9)continue;
   const mirror=Math.floor(recipe/12)%2===1,variant=mirror?"parking-right":"parking-left",stairDepth=9+Math.floor(recipe/24)%3,kitchenDepth=8+Math.floor(recipe/72)%2*2,entryDepth=4+Math.floor(recipe/144)%2,bedTarget=12+Math.floor(recipe/288)%2*3;
@@ -485,10 +501,11 @@ function prioritizeSpatialDiversity(plans:PlanModel[]):PlanModel[]{
  }).flat());
  const vectors=new Map(plans.map(p=>[p.id,features(p)]));
  const distance=(a:PlanModel,b:PlanModel)=>vectors.get(a.id)!.reduce((sum,x,i)=>sum+Math.abs(x-vectors.get(b.id)![i])*(i%4===0?2:1),0);
- const ordered=[plans[0]],remaining=plans.slice(1);
+ const signatures=new Map(plans.map(p=>[p.id,frontageSignature(p)]));
+ const ordered=[plans[0]],remaining=plans.slice(1),fronts=new Set([signatures.get(plans[0].id)!]);
  while(remaining.length){let best=0,bestScore=-1;
-  for(let i=0;i<remaining.length;i++){const score=Math.min(...ordered.map(p=>distance(p,remaining[i])));if(score>bestScore){best=i;bestScore=score}}
-  ordered.push(remaining.splice(best,1)[0]);
+  for(let i=0;i<remaining.length;i++){const score=Math.min(...ordered.map(p=>distance(p,remaining[i])))+(fronts.has(signatures.get(remaining[i].id)!)?0:4);if(score>bestScore){best=i;bestScore=score}}
+  const next=remaining.splice(best,1)[0];ordered.push(next);fronts.add(signatures.get(next.id)!);
  }
  return ordered;
 }
@@ -549,6 +566,14 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
  const ordered:PlanModel[]=[];
  for(let i=0;i<Math.max(left.length,right.length);i++){
   if(left[i])ordered.push(left[i]);if(right[i])ordered.push(right[i]);
+ }
+ // Larger 2–3 BHK plots also deserve actual central-spine architecture, not only mirrored narrow-house recipes.
+ if(brief.bedrooms>=2&&brief.floors>1){
+  for(const p of widePortfolio(brief,normalized)){
+   const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
+   if(!mesh||seen.has(signature)||seenMeshes.has(mesh)||validateRequestedProgramme(p,brief).length)continue;
+   seen.add(signature);seenMeshes.add(mesh);ordered.push(p);
+  }
  }
  return {plans:prioritizeSpatialDiversity(ordered).slice(0,normalized),
   blockers:ordered.length?[]:["No validated distinct spatial layout fits these dimensions, rooms, parking and setbacks."]};

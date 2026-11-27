@@ -1,5 +1,6 @@
 /** Customer-facing wording, independent of backend error strings and internal state names. */
 export function customerRequestError(status:number,kind:"order"|"quote"="order",code?:string){
+ if(code==="QUOTE_REQUIRED")return "A selected material requires a private quote. Review your cart or request a quotation.";
  if(code==="COUPON_UNAVAILABLE")return "This coupon is unavailable. Remove it to continue.";
  if(status===401||status===403)return "Please sign in with your verified account and try again.";
  if(status===400||status===422)return "Check your material, quantity and contact or delivery details.";

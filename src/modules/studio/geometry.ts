@@ -29,3 +29,10 @@ export function structuralFootprint(design:StudioDesign){
  const rooms=design.layout.rooms.filter(r=>r.floorIndex===0&&r.kind!=="open"&&r.kind!=="parking");
  return {minX:Math.min(...rooms.map(r=>r.xFt)),maxX:Math.max(...rooms.map(r=>r.xFt+r.wFt)),minZ:Math.min(...rooms.map(r=>r.yFt)),maxZ:Math.max(...rooms.map(r=>r.yFt+r.dFt))};
 }
+/** One view contract for WebGL and the accessible SVG fallback. Clipping never
+ * changes the underlying construction concept or its saved geometry digest. */
+export function visibleWallCells(design:StudioDesign,floor?:number,cutaway=false):WallCell[]{
+ const ceiling=cutaway?design.layout.wallHeightFt*.46:design.layout.wallHeightFt;
+ return buildingWallCells(design).filter(c=>(floor===undefined||c.floorIndex===floor)&&c.bottomFt<ceiling-.001)
+  .map(c=>({...c,topFt:Math.min(c.topFt,ceiling)}));
+}

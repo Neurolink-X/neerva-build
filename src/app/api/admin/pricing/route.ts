@@ -54,8 +54,14 @@ export async function POST(request:Request){
 export async function PATCH(request:Request){
  const auth=await requireAdmin(request);if(auth instanceof Response)return auth;
  const p=update.safeParse(await read(request));if(!p.success)return fail(400,"Invalid pricing update.");
- const {data:old,error:lookup}=await auth.client.from("pricing_rules").select("id,status,variant_id,unit,minimum_quantity,tenant_id,branch_id,visibility,valid_from,valid_to").eq("id",p.data.id).maybeSingle();
+ const {data:old,error:lookup}=await auth.client.from("pricing_rules").select("id,status,variant_id,unit,minimum_quantity,tenant_id,branch_id,visibility,valid_from,valid_to,amount_paise,version").eq("id",p.data.id).maybeSingle();
  if(lookup)return apiFailed();if(!old)return fail(404,"Pricing rule not found.");
+ const nextAmount=p.data.amountPaise??Number(old.amount_paise),nextEnd=p.data.validTo===undefined?old.valid_to:p.data.validTo;
+ const nextStatus=p.data.status??old.status;
+ if(nextEnd&&Date.parse(nextEnd)<=Date.parse(old.valid_from))return fail(400,"End must be after start.");
+ if(nextStatus==="published"&&old.visibility==="public"&&(!Number.isSafeInteger(nextAmount)||nextAmount<=0))return fail(409,"A public price must be positive.");
+ if(old.status==="published"&&(p.data.amountPaise!==undefined||p.data.validTo!==undefined))return fail(409,"Create a new reviewed pricing rule; published amounts and validity cannot be edited in place.");
+ if(p.data.status==="published"&&nextEnd&&Date.parse(nextEnd)<=Date.now())return fail(409,"Cannot publish an expired price.");
  if(p.data.status==="published"){
   if(!await validateVariant(auth,old.variant_id,old.unit,Number(old.minimum_quantity)))return fail(409,"Publish a valid parent product and variant before price.");
   if(old.tenant_id){
@@ -73,8 +79,8 @@ export async function PATCH(request:Request){
  if(p.data.amountPaise!==undefined)values.amount_paise=p.data.amountPaise;
  if(p.data.status!==undefined)values.status=p.data.status;
  if(p.data.validTo!==undefined)values.valid_to=p.data.validTo;
- try{const {data:saved,error}=await auth.client.from("pricing_rules").update(values).eq("id",p.data.id)
+ try{const {data:saved,error}=await auth.client.from("pricing_rules").update(values).eq("id",p.data.id).eq("version",old.version).eq("status",old.status)
  .select("id,amount_paise,unit,status,version,valid_from,valid_to").maybeSingle();
- if(error)return apiFailed();if(!saved)return fail(404,"Pricing rule not found.");
+ if(error)return apiFailed();if(!saved)return fail(409,"Pricing rule changed during review. Reload before retrying.");
  return apiData({rule:saved,stored:true,historyRecorded:true});}catch{return apiFailed()}
 }

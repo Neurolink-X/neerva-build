@@ -67,6 +67,41 @@ if(savedProjectId){
  const body=await detail.json();assert.equal(body.project.id,savedProjectId);assert.equal(body.project.plan.conceptOnly,true);
  assert.equal(body.project.plan.plot.widthFt,18);assert.equal(body.project.plan.floors,2);
 }
+// A feature intentionally disabled in this disposable environment must expose
+// explicit availability and still reject writes, not masquerade as an empty live store.
+const commercial=await fetch("http://127.0.0.1:3000/api/studio/commercial-projects",{headers:{Authorization:"Bearer "+customer},signal:AbortSignal.timeout(10000)});
+assert.equal(commercial.status,200);assert.match(commercial.headers.get("cache-control")??"",/private, no-store/);
+const availability=await commercial.json();
+assert.equal(availability.enabled,false);assert.deepEqual(availability.projects,[]);assert.equal(availability.reason,"storage_not_enabled");
+await check("/api/studio/commercial-projects","POST",customer,[503],"rollout_disabled");
+// A direct request for bulk aggregate must use the quotation path even if
+// the client is stale or calls the API directly.
+const quoteOnlyKey=randomUUID();
+const quoteOnly=await fetch("http://127.0.0.1:3000/api/direct-orders",{method:"POST",headers:{Authorization:"Bearer "+customer,"Content-Type":"application/json"},body:JSON.stringify({idempotencyKey:quoteOnlyKey,category:"aggregates",productSlug:"morang-coarse-sand",quantity:1,unit:"cubic_metre",contactName:"Isolated test",phone:"9876543210",city:"Kanpur",pincode:"208001",deliveryAddress:"Isolated test address only",notes:"",consent:true}),signal:AbortSignal.timeout(10000)});
+assert.equal(quoteOnly.status,422);assert.equal((await quoteOnly.json()).code,"QUOTE_REQUIRED");
+const rejected=await customerIdentity.client.from("direct_orders").select("id",{head:true,count:"exact"}).eq("idempotency_key",quoteOnlyKey);
+assert.ifError(rejected.error);assert.equal(rejected.count,0,"quote-only rejection must not create an order");
 for(const row of results)console.log(JSON.stringify(row));
 assert.deepEqual(results.filter(r=>!r.ok),[],"API connectivity or authorization failure");
 console.log(JSON.stringify({routes:manifest.length,methods:manifest.reduce((n,r)=>n+r.methods.length,0),checks:results.length,status:"passed"}));
+
+// Bounded concurrent read smoke on the disposable stack only. No production traffic or writes.
+const readPaths=["/api/catalog?limit=24","/api/catalog/prices?limit=250","/api/catalog/offers?limit=250","/api/direct-orders","/api/orders"];
+for(const concurrency of [4,8]){
+ const jobs=Array.from({length:concurrency*3},(_,i)=>readPaths[i%readPaths.length]);
+ const times=[];let next=0;
+ const started=performance.now();
+ await Promise.all(Array.from({length:concurrency},async()=>{
+  while(next<jobs.length){
+   const path=jobs[next++],privateRead=path==="/api/direct-orders"||path==="/api/orders",t=performance.now();
+   const r=await fetch("http://127.0.0.1:3000"+path,{signal:AbortSignal.timeout(15000),redirect:"error",headers:{Accept:"application/json",...(privateRead?{Authorization:"Bearer "+customer}:{})}});
+   assert.equal(r.status,200,"concurrent "+path);
+   assert.match(r.headers.get("content-type")??"",/application\/json/);
+   if(privateRead)assert.match(r.headers.get("cache-control")??"",/no-store/);
+   const body=await r.json();assert.ok(body&&typeof body==="object");
+   times.push(performance.now()-t);
+  }
+ }));
+ times.sort((a,b)=>a-b);
+ console.log(JSON.stringify({scope:"local disposable read-load smoke, not production capacity",concurrency,requests:times.length,wallMs:Math.round(performance.now()-started),p50Ms:Math.round(times[Math.ceil(times.length*.5)-1]),p95Ms:Math.round(times[Math.ceil(times.length*.95)-1]),maxMs:Math.round(times.at(-1))}));
+}

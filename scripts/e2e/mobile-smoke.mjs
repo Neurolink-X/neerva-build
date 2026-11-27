@@ -7,12 +7,68 @@ import assert from "node:assert/strict";
 import {assessPerformance} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
+const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
  const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
  try{
+  // Verify SSR output directly: adjacent text separators inside SVG titles can
+  // be parsed differently by the browser and cause a production hydration error.
+  const noJs=await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});
+  try{
+   const page=await noJs.newPage();
+   for(const [route,selector] of [["/design-studio/buildings",".purpose-studio svg title"],["/design-studio/fit",".nroad-diagram svg title"]]){
+    const response=await page.goto(base+route,{waitUntil:"domcontentloaded"});
+    assert.equal(response?.status(),200);
+    const titles=page.locator(selector);
+    assert.ok(await titles.count()>0,route+" plan geometry must be present in server HTML");
+    const malformed=await titles.evaluateAll(nodes=>nodes.filter(n=>n.childNodes.length!==1||n.firstChild?.nodeType!==3||!n.textContent?.trim()).map(n=>n.outerHTML.slice(0,300)));
+    assert.deepEqual(malformed,[],route+" SSR SVG titles must contain exactly one nonempty text node");
+   }
+  }finally{await noJs.close()}
+  // Exercise every commercial purpose, not merely HTTP route availability.
+  for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
+   const ctx=await browser.newContext({viewport});
+   try{
+    const page=await ctx.newPage(),errors=[];page.on("pageerror",e=>errors.push(e.message));
+    const response=await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});assert.equal(response?.status(),200);
+    const studio=page.locator(".purpose-studio");
+    for(const purpose of ["mall","school","restaurant","shops","rental"]){
+     await studio.getByLabel("Building purpose").selectOption(purpose);
+     await studio.getByRole("button",{name:/Load example inputs/}).click();
+     await studio.getByRole("button",{name:/Generate distinct concepts/}).click();
+     const plan=studio.getByRole("img",{name:/Purpose-specific zoning/});
+     await plan.waitFor({state:"visible"});
+     const planId=await plan.getAttribute("data-plan-id");
+     assert.ok(planId?.startsWith(purpose+"-"),purpose+" selected geometry");
+     const massing=studio.locator(".purpose-views svg").nth(1);
+     assert.equal(await massing.getAttribute("data-plan-id"),planId);
+     const choices=studio.getByRole("group",{name:"Choose zoning option"}).getByRole("button");
+     assert.ok(await choices.count()>0);
+     if(await choices.count()>1){await choices.nth(1).click();assert.notEqual(await plan.getAttribute("data-plan-id"),planId);assert.equal(await plan.getAttribute("data-plan-id"),await massing.getAttribute("data-plan-id"));}
+     const floors=studio.getByRole("group",{name:"Floor selection"}).getByRole("button");
+     if(await floors.count()>1){await floors.nth(1).click();assert.equal(await plan.getAttribute("data-floor"),"1");assert.equal(await massing.getAttribute("data-floor"),"1");}
+     assert.ok(await studio.evaluate(e=>e.scrollWidth<=e.clientWidth+2),purpose+" studio overflow");
+    }
+    const irregular=studio.locator("details").filter({has:page.getByText("Irregular plot feasibility",{exact:true})}).first();
+    await irregular.locator("summary").click();
+    await irregular.getByRole("button",{name:"L-shaped example"}).click();
+    await irregular.getByRole("button",{name:"Analyze boundary"}).click();
+    assert.ok(await irregular.getByRole("img",{name:"Measured polygon and candidate rectangular envelope"}).isVisible());
+    await irregular.getByRole("button",{name:"Use envelope dimensions in planner"}).click();
+    assert.ok(await studio.getByLabel("Frontage (ft)").inputValue());
+    // Scope to the quantity worksheet itself, rather than the similarly named engineering summary.
+    const summary=studio.getByText("Commercial building quantity worksheet",{exact:true});
+    await summary.click();
+    const panel=summary.locator("..");
+    assert.equal(await panel.locator("p").filter({hasText:/^Selected floor area:/}).count(),1);
+    assert.ok(await panel.locator("p").filter({hasText:/^Selected floor area:/}).isVisible());
+    const anonymous=await page.request.get(base+"/api/studio/commercial-projects");
+    assert.ok([401,503].includes(anonymous.status()),"anonymous commercial projects must not be disclosed");
+    assert.deepEqual(errors,[],"commercial studio hydration and browser errors at "+viewport.width+"px");
+   }finally{await ctx.close()}
+  }
   // Cold and repeat navigation on a constrained connection. Do not confuse
   // simulated local Chromium timings with field Web Vitals.
   for(const profile of [{name:"slow-3g",latency:400,download:400000/8,upload:200000/8},{name:"weak-4g",latency:150,download:1500000/8,upload:750000/8}]){
@@ -44,16 +100,29 @@ async function main(){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();await page.goto(base+"/",{waitUntil:"load"});
     const footer=page.locator("footer.unified-footer");
-    for(const lang of ["en","hi"]){
-     if(lang==="hi")await page.locator(".nbh-language").click();
-     await footer.locator(".unified-footer-app button").waitFor({state:"visible"});
+    const action=footer.locator(".unified-footer-app > .unified-footer-app-link");
+    async function verifyFooter(lang,variant){
+     if(await footer.getAttribute("lang")!==lang)await page.locator(".nbh-language").click();
+     await action.waitFor({state:"visible"});
+     assert.equal(await action.count(),1,"exactly one app action");
      assert.equal(await footer.getAttribute("lang"),lang,"footer language matches selected home language");
-     const metrics=await footer.evaluate(el=>{const frame=el.getBoundingClientRect(),button=el.querySelector(".unified-footer-app button"),copy=el.querySelector(".unified-footer-app-copy"),icon=button.querySelector("svg"),b=button.getBoundingClientRect(),c=copy.getBoundingClientRect();const fits=node=>{const r=node.getBoundingClientRect();return r.left>=frame.left-1&&r.right<=frame.right+1&&node.scrollWidth<=node.clientWidth+2};return {fits:[...el.querySelectorAll(".unified-footer-groups nav,.unified-footer-actions a,.unified-footer-legal a,.unified-footer-app-copy,.unified-footer-app button")].every(fits),iconFits:icon.getBoundingClientRect().width>=20,buttonHeight:b.height,overlap:Math.min(b.right,c.right)-Math.max(b.left,c.left)>1&&Math.min(b.bottom,c.bottom)-Math.max(b.top,c.top)>1,links:el.querySelectorAll(".unified-footer-groups a").length,overflow:el.scrollWidth>el.clientWidth+2,stacked:b.top>=c.bottom-1};});
-     assert.ok(metrics.fits&&metrics.iconFits&&!metrics.overlap&&!metrics.overflow&&metrics.buttonHeight>=43,`${v.w}px ${lang} footer fit: ${JSON.stringify(metrics)}`);
+     const metrics=await footer.evaluate(el=>{
+      const frame=el.getBoundingClientRect(),action=el.querySelector(".unified-footer-app > .unified-footer-app-link"),copy=el.querySelector(".unified-footer-app-copy"),icon=action.querySelector("svg"),b=action.getBoundingClientRect(),c=copy.getBoundingClientRect();
+      const fits=node=>{const r=node.getBoundingClientRect();return r.left>=frame.left-1&&r.right<=frame.right+1&&node.scrollWidth<=node.clientWidth+2};
+      return {tag:action.tagName,href:action.getAttribute("href"),fits:[...el.querySelectorAll(".unified-footer-groups nav,.unified-footer-actions a,.unified-footer-legal a,.unified-footer-app-copy,.unified-footer-app > .unified-footer-app-link")].every(fits),iconFits:action.tagName==="BUTTON"?!!icon&&icon.getBoundingClientRect().width>=20:true,actionHeight:b.height,overlap:Math.min(b.right,c.right)-Math.max(b.left,c.left)>1&&Math.min(b.bottom,c.bottom)-Math.max(b.top,c.top)>1,links:el.querySelectorAll(".unified-footer-groups a").length,overflow:el.scrollWidth>el.clientWidth+2,stacked:b.top>=c.bottom-1};
+     });
+     assert.ok(metrics.fits&&metrics.iconFits&&!metrics.overlap&&!metrics.overflow&&metrics.actionHeight>=43,`${v.w}px ${lang} ${variant} footer fit: ${JSON.stringify(metrics)}`);
      assert.equal(metrics.links,22,"all footer navigation links remain");
-     if(v.w<=340)assert.ok(metrics.stacked,"narrow screen app button stacks under copy");
-     await footer.screenshot({path:path.join("test-results/mobile",`${v.w}-${lang}-footer-responsive.png`),animations:"disabled"});
+     if(variant==="native")assert.equal(metrics.tag,"BUTTON","captured native event must expose direct installation");
+     else if(metrics.tag==="A")assert.equal(metrics.href,"/install","fallback opens setup guide");
+     else assert.equal(metrics.tag,"BUTTON","browser may already expose a real installation event");
+     if(v.w<=340)assert.ok(metrics.stacked,"narrow screen app action stacks under copy");
+     await footer.screenshot({path:path.join("test-results/mobile",`${v.w}-${lang}-${variant}-footer-responsive.png`),animations:"disabled"});
     }
+    for(const lang of ["en","hi"])await verifyFooter(lang,"default");
+    await page.evaluate(()=>{const event=new Event("beforeinstallprompt",{cancelable:true});Object.assign(event,{prompt:async()=>undefined,userChoice:Promise.resolve({outcome:"dismissed"})});window.dispatchEvent(event);});
+    await footer.locator(".unified-footer-app > button").waitFor({state:"visible"});
+    for(const lang of ["en","hi"])await verifyFooter(lang,"native");
    }finally{await ctx.close()}
   }
   // Paint catalogue stays readable and bounded on phones and desktop.
@@ -134,6 +203,8 @@ async function main(){
     const metrics={lcp:null,cls:0,sessionStart:0,previousShift:0,sessionScore:0};
     window.__neervaPerf=metrics;
     window.__neervaObservedVitals=[];
+    window.__neervaInteractionDurations={};
+    try{new PerformanceObserver(list=>{for(const e of list.getEntries())if(e.interactionId)window.__neervaInteractionDurations[e.interactionId]=Math.max(window.__neervaInteractionDurations[e.interactionId]??0,e.duration);}).observe({type:"event",buffered:true,durationThreshold:16});}catch{}
     window.addEventListener("neerva:web-vitals",event=>{if(Array.isArray(event.detail))window.__neervaObservedVitals=event.detail.filter(x=>["LCP","INP","CLS"].includes(x.name)&&Number.isFinite(x.value)&&x.value>=0);});
     try{new PerformanceObserver(list=>{for(const e of list.getEntries())metrics.lcp=e.startTime;}).observe({type:"largest-contentful-paint",buffered:true});}catch{}
     try{new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput){if(e.startTime-metrics.previousShift>1000||e.startTime-metrics.sessionStart>5000){metrics.sessionStart=e.startTime;metrics.sessionScore=0;}metrics.previousShift=e.startTime;metrics.sessionScore+=e.value;metrics.cls=Math.max(metrics.cls,metrics.sessionScore);}}).observe({type:"layout-shift",buffered:true});}catch{}
@@ -166,12 +237,18 @@ async function main(){
     });
     interactionReports.push({route,width:v.w,total:interaction.total,unnamed:interaction.unnamed,smallCount:interaction.small.length,small:interaction.small.slice(0,25),primaryTooShort:interaction.primaryTooShort});
     if(interaction.primaryTooShort.length)failures.push(v.w+"px "+route+": primary action height below 44px "+JSON.stringify(interaction.primaryTooShort));
-    if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer","/room-lab","/build-iq","/inspiration"].includes(route)){
+    if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer","/room-lab","/build-iq","/inspiration","/checkout","/account/orders","/design-studio/buildings","/design-studio/road-planner","/design-studio/portfolio","/quotes","/learn"].includes(route)){
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
      const timing=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],m=window.__neervaPerf;return {ttfbMs:n?Math.round(n.responseStart):null,loadMs:n?Math.round(n.loadEventEnd):null,lcpMs:m?.lcp==null?null:Math.round(m.lcp),cls:m?.cls??null};});
      const budget=assessPerformance(timing);
      performanceReports.push({route,width:v.w,...timing,budget,scope:"initial load observation, not field Web Vitals"});
      for(const issue of budget.failures)failures.push("Severe local performance regression "+route+": "+issue);
+     if(route==="/materials"||route==="/build-iq"){
+      const search=route==="/materials"?page.locator(".catalog-toolbar input[type=search]"):page.locator(".academy-discovery input[type=search]");
+      await search.click();await search.pressSequentially("cement",{delay:30});await search.press("Control+a");await search.press("Backspace");await page.waitForTimeout(300);
+      const interaction=await page.evaluate(()=>{const values=Object.values(window.__neervaInteractionDurations??{});return {count:values.length,maxInteractionMs:values.length?Math.max(...values):null}});
+      performanceReports.push({route,width:v.w,...interaction,scope:"observed Event Timing interactions; not field INP"});
+     }
     }
     if(v.w===390&&["/","/account","/quotes","/materials","/design-studio/fit"].includes(route)){
       try{
@@ -213,12 +290,17 @@ async function main(){
     assert.ok(preview&&preview.y+preview.height>0&&preview.y<v.h,"Live room preview remains visible during finish selection");
     await page.goto(base+"/build-iq",{waitUntil:"load"});
     const lab=page.locator(".visual-site-lab");
-    await lab.getByRole("slider",{name:/Construction stage/}).focus();
-    await lab.getByRole("slider",{name:/Construction stage/}).press("End");
-    assert.ok(await lab.getByRole("heading",{name:"Finishes and handover"}).isVisible());
-    await lab.getByRole("slider",{name:/Openings:/}).focus();
-    await lab.getByRole("slider",{name:/Openings:/}).press("End");
-    assert.match(await lab.locator(".build-results").innerText(),/20 sq ft/);
+    assert.equal(await lab.locator(".field-guide-list article").count(),8,"eight practical field cases are accessible");
+    assert.equal(await lab.locator("svg,canvas,video,iframe").count(),0,"field guide does not depend on decorative simulations");
+    const masonry=lab.locator("#field-masonry");
+    await masonry.getByText("Site checks and practical exercise",{exact:true}).click();
+    assert.match(await masonry.innerText(),/28 m²/);
+    const global=page.locator("#global-construction");
+    assert.equal(await global.locator(".global-methods article").count(),3);
+    assert.equal(await global.locator("img,iframe,video,canvas,svg").count(),0);
+    const source=global.locator("a[href^='https://']").first();
+    assert.equal(await source.getAttribute("rel"),"noopener noreferrer");
+    assert.equal(await source.getAttribute("referrerpolicy"),"no-referrer");
     const discovery=page.locator(".academy-discovery");
     await discovery.getByRole("searchbox").fill("zz-no-matching-lesson");
     assert.match(await discovery.innerText(),/0 lessons found/);
@@ -480,6 +562,13 @@ async function main(){
     const surfaces=await page.evaluate(()=>({root:getComputedStyle(document.documentElement).backgroundColor,body:getComputedStyle(document.body).backgroundColor,home:getComputedStyle(document.querySelector(".nbh")).backgroundColor}));
     assert.deepEqual(surfaces,{root:"rgb(245, 244, 239)",body:"rgb(245, 244, 239)",home:"rgb(245, 244, 239)"},"manifest and first page surfaces agree");
     assert.ok(appManifest.icons?.some(icon=>icon.purpose?.includes("maskable")),"PWA maskable icon");
+    for(const size of [192,512]){
+     const icon=appManifest.icons.find(i=>i.sizes===size+"x"+size&&i.purpose==="any");
+     assert.ok(icon,"PWA icon "+size+"px must be declared");
+     const response=await page.request.get(new URL(icon.src,base).href);
+     assert.equal(response.status(),200);assert.match(response.headers()["content-type"],/image\/png/);
+     const bytes=await response.body();assert.equal(bytes.subarray(1,4).toString(),"PNG");assert.equal(bytes.readUInt32BE(16),size);assert.equal(bytes.readUInt32BE(20),size);
+    }
     for(const asset of ["/icon","/apple-icon"]){
       const response=await page.request.get(base+asset);
       assert.equal(response.status(),200,asset+" PNG route");
@@ -545,9 +634,11 @@ async function main(){
     await page.locator(".unified-footer-install-feedback").filter({hasText:"Installation cancelled"}).waitFor();
     assert.equal(await page.evaluate(()=>window.__footerNativePrompts),1,"footer calls native install prompt exactly once");
     assert.equal(page.url(),beforeInstallUrl,"dismissed native install stays on current page");
-    await footerInstall.click();
-    await page.locator(".unified-footer-install-feedback").filter({hasText:"Direct installation is not available"}).waitFor();
-    assert.equal(page.url(),beforeInstallUrl,"unsupported install displays inline guide without redirect");
+    const fallback=page.locator(".unified-footer-app a.unified-footer-app-link[href='/install']");
+    await fallback.waitFor({state:"visible"});
+    assert.equal(await footerInstall.count(),0,"consumed prompt must not offer another native action");
+    assert.equal(page.url(),beforeInstallUrl,"dismissal leaves the user on the current page");
+    assert.equal(await fallback.innerText(),"Get Neerva app","unsupported browser offers setup guidance, not fake install");
     await page.evaluate(()=>{const event=new Event("beforeinstallprompt",{cancelable:true});Object.assign(event,{prompt:async()=>{window.__footerNativePrompts++;},userChoice:Promise.resolve({outcome:"accepted"})});window.dispatchEvent(event);});
     await footerInstall.click();
     await page.locator(".unified-footer-install-feedback").filter({hasText:"Installation accepted"}).waitFor();
@@ -740,7 +831,7 @@ async function main(){
     assert.equal(await fitDrawing.locator('svg g[data-room-kind="kitchen"]').count(),1,"kitchen geometry is required");
     const roomLabels=await fitBedrooms.locator('text[data-room-label="true"]').allTextContents();
     assert.deepEqual(roomLabels.sort(),["BEDROOM 1","BEDROOM 2"],"visible room labels must match their actual bedroom geometry");
-    assert.equal(await fitBedrooms.locator("title").count(),2,"each bedroom retains its independent descriptive tooltip");
+    assert.equal(await fitBedrooms.locator(":scope > title").count(),2,"each bedroom retains its independent descriptive tooltip");
     const cat=await page.goto(base+"/materials/steel",{waitUntil:"load"});
     assert.equal(cat?.status(),200,"steel category route");
     const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"load"});
@@ -827,7 +918,7 @@ async function main(){
   assert.equal(await page.getByLabel("Your quoted rate (₹/sq ft)").inputValue(),"","no assumed market rate");
   await page.getByText("Budget is optional.",{exact:false}).waitFor();
   await page.getByRole("button",{name:"Brick wall",exact:true}).click();
-    const academyCount=await page.locator(".academy-grid article").count();
+    const academyCount=await page.locator("#academy-lesson-list > article").count();
     assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
     await page.getByRole("searchbox",{name:"Search the construction handbook"}).fill("foundation");
     await page.getByRole("link",{name:"Soil, foundations & underground",exact:true}).click();
@@ -843,7 +934,8 @@ async function main(){
     await page.reload({waitUntil:"load"});
     await page.getByRole("button",{name:"Lesson explored ✓"}).waitFor();
     await page.getByRole("link",{name:"All lessons",exact:true}).click();
-    await page.getByText(`1 of ${academyCount} lessons explored`,{exact:true}).waitFor();
+    await page.locator(".academy-progress").getByText(`1 of ${academyCount} lessons explored`,{exact:true}).waitFor();
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("neerva-academy-v1")).completed.includes("spatial-thinking")),true,"the explored lesson persists on this device");
     await page.getByRole("searchbox",{name:"Search construction questions"}).fill("सरिया");
     assert.ok(await page.locator(".knowledge-answers details").count()>=2,"Hindi search returns site answers");
     await page.getByRole("button",{name:"हिंदी",exact:true}).click();
