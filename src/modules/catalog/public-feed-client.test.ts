@@ -27,3 +27,17 @@ test("catalog invalidation cancels superseded transport and permits a fresh requ
   assert.deepEqual(await loadPublicFeed("prices"),{prices:[{paise:200}]});assert.equal(calls,2);
  }finally{globalThis.fetch=original;invalidatePublicFeeds()}
 });
+
+test("price pages merge in price order; interrupted or cyclic pagination never publishes partial rates",async()=>{
+ const original=globalThis.fetch,first="00000000-0000-0000-0000-000000000001";let calls=0;
+ try{
+  invalidatePublicFeeds();
+  globalThis.fetch=async(input)=>{calls++;const after=new URL(String(input),"https://test.invalid").searchParams.get("after");return after?Response.json({prices:[{paise:100}],nextCursor:null}):Response.json({prices:[{paise:300}],nextCursor:first})};
+  assert.deepEqual(await loadPublicFeed("prices"),{prices:[{paise:100},{paise:300}]});assert.equal(calls,2);
+  invalidatePublicFeeds();globalThis.fetch=async(input)=>new URL(String(input),"https://test.invalid").searchParams.has("after")?new Response("",{status:503}):Response.json({prices:[{paise:300}],nextCursor:first});
+  await assert.rejects(loadPublicFeed("prices"),/unavailable/);
+  globalThis.fetch=async()=>Response.json({prices:[{paise:300}],nextCursor:first});
+  await assert.rejects(loadPublicFeed("prices"),/cursor/);
+  globalThis.fetch=async()=>Response.json({prices:[],nextCursor:null});assert.deepEqual(await loadPublicFeed("prices"),{prices:[]});
+ }finally{globalThis.fetch=original;invalidatePublicFeeds()}
+});
