@@ -106,6 +106,15 @@ async function main(){
    await options.first().click();
    assert.equal(await galleryPlan.getAttribute("data-plan-id"),await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"));
    assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await galleryPlan.getAttribute("data-plan-id"));
+   await studio.getByLabel("Building purpose").selectOption("rental");
+   await studio.getByRole("button",{name:/Load example inputs for Rental property/}).click();
+   await studio.getByRole("button",{name:/Generate distinct concepts/}).click();
+   await studio.getByRole("button",{name:"Rooms & shared facilities",exact:true}).click();
+   const apartment=studio.getByRole("img",{name:/Purpose-specific zoning/});await apartment.waitFor({state:"visible"});
+   assert.match(await apartment.getAttribute("data-plan-id"),/-internal-v1-[02]$/);
+   assert.ok(await apartment.locator("text").filter({hasText:"Lift reserve"}).count()>0);
+   assert.ok(await apartment.locator("text").filter({hasText:"Bedroom 1"}).count()>0);
+   assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await apartment.getAttribute("data-plan-id"));
    await page.goto(base+"/design-studio/road-planner",{waitUntil:"load"});
    const slot=page.locator(".nroad-3d-slot");await slot.scrollIntoViewIfNeeded();
    await slot.getByRole("button",{name:"Load interactive 3D",exact:true}).waitFor({state:"visible"});
