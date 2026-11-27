@@ -37,13 +37,27 @@ function coreRooms(z:BuildingZone,hall:BuildingZone,primary:boolean,multi:boolea
  }else out.push(add("stairs","Second stair reserve",lobby,z.w-lobby));
  return out;
 }
+function supportRooms(z:BuildingZone,hall:BuildingZone,purpose:BuildingConcept["brief"]["purpose"],variant:number):InternalSpace[]{
+ if(z.d<10||z.w<10)return [];
+ const labels:Record<BuildingConcept["brief"]["purpose"],[string,string]>={
+  restaurant:z.label.startsWith("Kitchen")?["Food preparation","Cooking reserve"]:["Dry storage","Dishwashing reserve"],
+  school:z.label.startsWith("Administration")?["Administration","Staff room"]:["Reading room","Learning resources"],
+  mall:z.label.startsWith("Anchor")?["Activity area","Support room"]:["Receiving","Storage"],
+  shops:["Stock room","Packing / service"],rental:["Meter / utility reserve","Maintenance store"]};
+ const right=Math.abs(z.x+z.w-hall.x)<EPS,access=variant===2?4:0,depth=z.d/2;
+ const add=(kind:string,label:string,x:number,y:number,w:number,d:number):InternalSpace=>({id:z.id+"-"+kind,parentId:z.id,floor:z.floor,kind,label,x:right?z.x+z.w-x-w:z.x+x,y:z.y+y,w,d});
+ const names=labels[purpose],out=[add("service-a",names[0],access,0,z.w-access,depth),add("service-b",names[1],access,depth,z.w-access,z.d-depth)];
+ if(access)out.push(add("lobby","Service passage",0,0,access,z.d));
+ return out;
+}
 export function commercialInternalSpaces(plan:BuildingConcept):InternalSpace[]{
- if(internalVariant(plan.id)===null)return [];
+ const variant=internalVariant(plan.id);if(variant===null)return [];
  const out:InternalSpace[]=rentalLayouts(plan).flatMap(u=>u.rooms.map(r=>({...r,parentId:u.unitId})));
  for(let floor=0;floor<plan.brief.floors;floor++){
   const hall=plan.zones.find(z=>z.floor===floor&&z.kind==="circulation");if(!hall)continue;
   const cores=plan.zones.filter(z=>z.floor===floor&&z.kind==="core").sort((a,b)=>a.x-b.x||a.y-b.y);
   cores.forEach((z,i)=>out.push(...coreRooms(z,hall,i===0,plan.brief.floors>1)));
+  for(const z of plan.zones.filter(z=>z.floor===floor&&z.kind==="support"))out.push(...supportRooms(z,hall,plan.brief.purpose,variant));
  }
  return out;
 }
@@ -59,7 +73,7 @@ export function commercialInternalOpenings(plan:BuildingConcept):InternalOpening
   if(entry)connect(entry,hall);
   if(entry&&passage)connect(passage,entry);
   for(const r of rooms.filter(r=>r!==entry&&r!==passage&&r.kind!=="shaft")){
-   const target=passage??entry;if(target)connect(r,target);
+   const target=passage??entry??hall;connect(r,target);
   }
   if(parent.kind!=="primary"||plan.brief.sideFt<3)continue;
   const outer=Math.abs(parent.x+parent.w-hall.x)<EPS?parent.x:parent.x+parent.w;
@@ -73,7 +87,7 @@ export function commercialInternalOpenings(plan:BuildingConcept):InternalOpening
 export function internalGeometryIssues(plan:BuildingConcept){
  if(internalVariant(plan.id)===null)return [];
  const spaces=commercialInternalSpaces(plan),doors=commercialInternalOpenings(plan),issues:string[]=[];
- for(const parent of plan.zones.filter(z=>(z.kind==="primary"&&plan.brief.purpose==="rental")||(z.kind==="core"&&plan.brief.floors>1))){
+ for(const parent of plan.zones.filter(z=>(z.kind==="primary"&&plan.brief.purpose==="rental")||(z.kind==="core"&&plan.brief.floors>1)||z.kind==="support")){
   const rooms=spaces.filter(r=>r.parentId===parent.id);
   if(!rooms.length){issues.push("Internal spaces do not fit");continue;}
   for(const [i,r] of rooms.entries()){
