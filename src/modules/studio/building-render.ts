@@ -75,7 +75,7 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
 export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:FinishScheme,fullHeight=false):RenderSnapshot{
  const {widthFt,depthFt}=plan.brief,boxes:RenderBox[]=[];
  const x=(v:number)=>(v-widthFt/2)*ft,z=(v:number)=>(v-depthFt/2)*ft;
- const add=(lo:Vec3,hi:Vec3,color:Vec3,rough=.82,opacity=1,finish?:FinishScheme["cladding"])=>{if(hi.every((v,i)=>v>lo[i]))boxes.push({lo,hi,color,rough,metal:0,opacity,finish});};
+ const add=(lo:Vec3,hi:Vec3,color:Vec3,rough=.82,opacity=1,finish?:FinishScheme["cladding"])=>{if(hi.every((v,i)=>Number.isFinite(v)&&Number.isFinite(lo[i])&&v>lo[i]))boxes.push({lo,hi,color,rough,metal:0,opacity,finish});};
  const elements=commercialElements(plan),cut=fullHeight?13:7;
  const rooms=finishSpaces({kind:"commercial",plan}).filter(r=>r.floor===floor);
  const selected=scheme.planId===plan.id?scheme:undefined;
@@ -90,6 +90,8 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
  for(const w of elements.walls.filter(w=>w.floor===floor&&w.bottom<cut)){
   const t=w.thickness/2,lo=w.bottom*ft,hi=Math.min(w.top,cut)*ft;
   const owners=wallFaceOwners(rooms,{axis:w.axis==="x"?"z":"x",floorIndex:floor,planeFt:w.plane,startFt:w.start,endFt:w.end});
+  // Unfinished walls need one solid box, not two coincident internal faces.
+  if(!owners.length){const tone=shadeRgb(selected?.exterior??"#ddd7c9");if(w.axis==="x")add([x(w.start),lo,z(w.plane-t)],[x(w.end),hi,z(w.plane+t)],tone);else add([x(w.plane-t),lo,z(w.start)],[x(w.plane+t),hi,z(w.end)],tone);continue;}
   // Two half-thickness faces share the original exact wall volume.
   for(const inward of [-1,1] as const){
    const owner=owners.find(o=>o.inward===inward),f=owner?selected?.rooms[owner.id]:undefined;
