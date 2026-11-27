@@ -60,6 +60,13 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
  function update<K extends keyof BuildingBrief>(key:K,value:BuildingBrief[K]){setDraft(d=>({...d,[key]:value}))}
  function selectPurpose(p:BuildingPurpose){setDraft(d=>({...d,purpose:p}))}
  function submit(e:FormEvent){e.preventDefault();if(issues.length)return;setBrief({...draft});setSelected(0);setFloor(0);setFull(false)}
+ function restore(snapshot:{plan:BuildingConcept;finishes:FinishScheme}){
+  const next=snapshot.plan.brief;
+  const index=generateBuildingConcepts(next).plans.findIndex(p=>p.id===snapshot.plan.id&&p.signature===snapshot.plan.signature);
+  if(index<0||snapshot.finishes.planId!==snapshot.plan.id)return false;
+  setDraft({...next});setBrief({...next});setSelected(index);setFloor(0);setFull(false);setAngle(0);
+  setFinishHistory(h=>rememberFinish(h,snapshot.plan.id,snapshot.finishes));return true;
+ }
  const changed=JSON.stringify(draft)!==JSON.stringify(brief);
  return <div className="purpose-studio">
   <header><span className="eyebrow">NEERVA BUILDING STUDIO · FEASIBILITY CONCEPTS</span><h1>Plan beyond your home.</h1><p>Choose a building purpose, enter exact site dimensions and compare up to 24 distinct zoning arrangements. Family homes use the dedicated residential planner.</p><Link className="button button-outline" href="/design-studio#start">Family home / BHK planner →</Link></header>
@@ -85,7 +92,7 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
     <div className="purpose-tabs" role="group" aria-label="Floor selection">{Array.from({length:brief.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>{setFloor(i);setFull(false)}}>{i===0?"Ground":"Floor "+i}</button>)}</div>
     <div className="purpose-views"><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor} scheme={scheme}/></section><section><h3>3D massing · same zones</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle} scheme={scheme}/></section></div>
     <CommercialFront plan={plan} scheme={scheme}/>
-    {cloudEnabled&&<CommercialProjectSave key={plan.id} plan={plan} scheme={scheme}/>}
+    {cloudEnabled&&<CommercialProjectSave key={plan.id} plan={plan} scheme={scheme} onRestore={restore}/>}
     <PlanFinishStudio key={plan.id+":"+floor} source={{kind:"commercial",plan}} floor={floor} scheme={scheme} onChange={next=>setFinishHistory(h=>rememberFinish(h,plan.id,next))}/>
     <details><summary>Plan legend</summary><p>Brown: proposed entry. Blue: proposed glazing. Furniture and floor partitions are illustrative.</p></details>
     <details><summary>Selected floor zone schedule</summary><div className="purpose-table"><table><thead><tr><th>Zone</th><th>Dimensions (ft)</th><th>Area (sq ft)</th></tr></thead><tbody>{plan.zones.filter(z=>z.floor===floor).map(z=><tr key={z.id}><td>{z.label}</td><td>{z.w.toFixed(1)} × {z.d.toFixed(1)}</td><td>{Math.round(z.w*z.d)}</td></tr>)}</tbody></table></div></details>
