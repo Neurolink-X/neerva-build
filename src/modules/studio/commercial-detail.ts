@@ -2,7 +2,7 @@ import {overlapArea,type Rect} from "./plan-model.ts";
 import {commercialInternalSpaces,commercialInternalOpenings} from "./commercial-internal.ts";
 import {rentalLayouts} from "./rental-layout.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
-export type CommercialFixture=Rect&{id:string;zoneId:string;floor:number;label:string;kind:"desk"|"table"|"display"|"counter"};
+export type CommercialFixture=Rect&{id:string;zoneId:string;floor:number;label:string;kind:"desk"|"table"|"display"|"counter"|"bed"|"sofa"};
 export type ConceptPortal={id:string;zoneId:string;floor:number;axis:"x"|"y";x:number;y:number;length:number;kind:"access"|"exterior-glazing";reviewRequired:true;connectsTo?:string};
 const EPS=1e-5;
 export function commercialPortals(plan:BuildingConcept):ConceptPortal[]{
@@ -34,7 +34,19 @@ export function commercialPortals(plan:BuildingConcept):ConceptPortal[]{
 }
  /** Indicative loose furniture, not seat capacity or compliant aisle design. */
 export function commercialFixtures(plan:BuildingConcept):CommercialFixture[]{
- if(plan.brief.purpose==="rental")return [];
+ if(plan.brief.purpose==="rental"){
+  const portals=commercialPortals(plan),out:CommercialFixture[]=[];
+  for(const r of commercialInternalSpaces(plan)){
+   const kind=r.kind==="bedroom"?"bed":r.kind==="living"?"sofa":r.kind==="kitchen"?"counter":null;
+   if(!kind)continue;
+   const w=kind==="bed"?5:kind==="sofa"?6:5,d=kind==="bed"?6.5:kind==="sofa"?2.5:2;
+   if(r.w<w+4||r.d<d+4)continue;
+   const blocked=portals.filter(p=>p.zoneId===r.id||p.connectsTo===r.id).map(portalClearance);
+   const candidates=[{x:r.x+2,y:r.y+2,w,d},{x:r.x+r.w-w-2,y:r.y+2,w,d},{x:r.x+2,y:r.y+r.d-d-2,w,d},{x:r.x+r.w-w-2,y:r.y+r.d-d-2,w,d}];
+   const fit=candidates.find(c=>blocked.every(b=>overlapArea(c,b)<EPS));if(fit)out.push({...fit,id:r.id+"-furniture",zoneId:r.id,floor:r.floor,kind,label:kind==="bed"?"Bed":kind==="sofa"?"Sofa":"Kitchen counter"});
+  }
+  return out;
+ }
  const result:CommercialFixture[]=[],portals=commercialPortals(plan);
  for(const z of plan.zones.filter(z=>z.kind==="primary")){
   const school=plan.brief.purpose==="school",restaurant=plan.brief.purpose==="restaurant";
@@ -54,11 +66,10 @@ export function portalClearance(p:ConceptPortal):Rect{
  return p.axis==="y"?{x:p.x-4,y:p.y-2,w:8,d:p.length+4}:{x:p.x-2,y:p.y-4,w:p.length+4,d:8};
 }
 export function commercialGeometryIssues(plan:BuildingConcept):string[]{
- const fixtures=commercialFixtures(plan),portals=commercialPortals(plan),issues:string[]=[];
- for(const f of fixtures){const z=plan.zones.find(z=>z.id===f.zoneId);if(!z||f.floor!==z.floor||Math.abs(overlapArea(f,z)-f.w*f.d)>EPS)issues.push("Fixture outside parent "+f.id);}
+ const fixtures=commercialFixtures(plan),portals=commercialPortals(plan),issues:string[]=[],spaces=[...plan.zones,...commercialInternalSpaces(plan)];
+ for(const f of fixtures){const z=spaces.find(z=>z.id===f.zoneId);if(!z||f.floor!==z.floor||Math.abs(overlapArea(f,z)-f.w*f.d)>EPS)issues.push("Fixture outside parent "+f.id);}
  const byZone=new Map<string,CommercialFixture[]>();for(const f of fixtures){const group=byZone.get(f.zoneId)??[];group.push(f);byZone.set(f.zoneId,group)}
  for(const group of byZone.values())for(let i=0;i<group.length;i++)for(let j=i+1;j<group.length;j++)if(overlapArea(group[i],group[j])>EPS)issues.push("Fixture overlap "+group[i].id);
- const spaces=[...plan.zones,...commercialInternalSpaces(plan)];
  for(const p of portals){const z=spaces.find(z=>z.id===p.zoneId);if(!z||p.floor!==z.floor||(p.axis==="y"?p.y<z.y-EPS||p.y+p.length>z.y+z.d+EPS||Math.min(Math.abs(p.x-z.x),Math.abs(p.x-z.x-z.w))>EPS:p.x<z.x-EPS||p.x+p.length>z.x+z.w+EPS||Math.min(Math.abs(p.y-z.y),Math.abs(p.y-z.y-z.d))>EPS))issues.push("Portal outside wall "+p.id);}
  return issues;
 }
