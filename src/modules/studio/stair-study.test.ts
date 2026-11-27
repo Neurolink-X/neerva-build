@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {straightStairStudy,residentialStairStudies,dogLegStairStudy,stairFloorPatches} from "./stair-study.ts";
+import {straightStairStudy,residentialStairStudies,dogLegStairStudy,stairFloorPatches,stackedStairClearance} from "./stair-study.ts";
 import {generateSpatialPortfolio,generateStairReadyPortfolio,portfolioForPlanId} from "./road-generator.ts";
 import {overlapArea,area,type Room,type Opening} from "./plan-model.ts";
 const lower:Room={id:"s0",label:"Stair",kind:"stairs",floor:0,x:2,y:4,w:5,d:24,minClearWidthFt:3.25};
@@ -47,4 +47,21 @@ test("actual wide G+1 house concepts offer checked dog-leg stair variants withou
  assert.ok(ready.plans.length,"wide house must offer real dog-leg geometry");
  for(const p of ready.plans){assert.equal(residentialStairStudies(p).unresolved.length,0);assert.equal(residentialStairStudies(p).studies[0].kind,"dog-leg");assert.equal(portfolioForPlanId(brief,p.id).plans.find(v=>v.id===p.id)?.id,p.id);}
  assert.deepEqual(generateSpatialPortfolio(brief,24),before);
+});
+
+test("three-storey stair stack checks both distinct intermediate landings and rejects reversed overlapping flights",()=>{
+ const brief={widthFt:40,depthFt:60,floors:3 as const,bedrooms:4,parking:true,roadSide:"N" as const,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
+ const ready=generateStairReadyPortfolio(brief,24);
+ assert.ok(ready.plans.length,"generous G+2 brief must produce checked stack options");
+ for(const plan of ready.plans){
+  const review=residentialStairStudies(plan);assert.equal(review.unresolved.length,0);assert.equal(review.studies.length,2);
+  const [a,b]=review.studies;
+  assert.ok(stackedStairClearance(a,b,plan.walls.heightFt));
+  const room=plan.rooms.find(r=>r.id===a.upperRoomId)!;
+  const patches=stairFloorPatches(room,review.studies);
+  assert.equal(patches.length,2);assert.equal(overlapArea(patches[0],patches[1]),0);
+  assert.equal(portfolioForPlanId(brief,plan.id).plans.some(p=>p.id===plan.id),true);
+  const bad={...b,landings:b.landings.map(l=>l.topFt===0?{...a.landings[a.landings.length-1],topFt:0}:l)};
+  assert.equal(stackedStairClearance(a,bad,plan.walls.heightFt),false);
+ }
 });
