@@ -151,12 +151,14 @@
     "src/app/dealer/layout.tsx",
     "src/app/admin/account-recovery/page.tsx",
     "src/components/platform-incident-monitor.tsx",
-    "supabase/migrations/20261124113117_neerva_operations_incident_recovery_and_dealer_roles.sql"
+    "supabase/migrations/20261124113117_neerva_operations_incident_recovery_and_dealer_roles.sql",
+    "src/modules/http/bounded-fetch.ts",
+    "src/modules/http/bounded-fetch.test.ts"
   ],
   "protectedGitBlobs": {
-    "src/app/api/orders/route.ts": "dcb500db92b45177810e168af7bd7e0d7caf8e23",
+    "src/app/api/orders/route.ts": "40b549fababc46f919ce6d6eeb82a81563806866",
     "src/modules/orders/backend.ts": "727869915623cbb664744b696e0637c9d9bd2488",
-    "src/modules/identity/server-auth.ts": "d249e64b5a7a2329097898ff716da075c4893a1c",
+    "src/modules/identity/server-auth.ts": "968ad62f34dd4d6bb432fe728823e9ae834039e8",
     "src/app/api/admin/catalog/route.ts": "c07bd3296217aafd6a97b2b79e6ad92d0cb8a6d0",
     "src/app/api/admin/pricing/route.ts": "d1d2618b90ff0507c92ade349be5abe712779974",
     "src/app/api/admin/rfqs/route.ts": "d74ea8907d49353a9c29f86b53cd75732c4efde1",
@@ -175,7 +177,7 @@
     "supabase/migrations/0004_design_studio_phase_a.sql": "e0275af4d1ed3156a00e7ce1e8eefc6b143d3a77",
     "src/app/api/admin/orders/route.ts": "707e1dcece529ddbae43aecf1da4152fddbcfa54",
     "src/app/api/dealer/orders/route.ts": "cf4c6d2b4b3db396a14d499fb15b8447f5ced08c",
-    "src/modules/orders/order-contract.ts": "0aa2956aab7ecf01f1ba05c9f9c341e7980d0a7b",
+    "src/modules/orders/order-contract.ts": "a8367f44fa3200af85bdf0b1f82c11887ca076c7",
     "supabase/migrations/0016_typescript_order_workflow.sql": "d27e7ef56e8f9060db855d432b3a6bf76b55bde5",
     "supabase/migrations/0017_order_contact_role_scope.sql": "5c2c4fbeaa0f71e3db1227aada41c8cc43f7378d",
     "supabase/migrations/0018_orders_offer_lookup_index.sql": "1de0750e0cbc18478e5d4f3262d26ee66e574ec1",
@@ -183,12 +185,13 @@
     "src/app/api/admin/dealers/route.ts": "cea7eddba4fe5655c5ba36019ece7e92203aa26a",
     "src/app/api/admin/users/route.ts": "7103b8ac1d22b15c37f1d6d5fb095974cfbf2bd9",
     "src/modules/marketplace/write-contract.ts": "a87e3ef54f9b190e80b7b577c713d411c84d3c27",
-    "src/app/api/catalog/route.ts": "555b277c7ff2c832ef8647c53bc0b9e52feea5cc",
+    "src/app/api/catalog/route.ts": "250f2bf5ed32ffd5f28d8234a27ef34efeba078b",
     "src/app/api/admin/audit/route.ts": "c06d6a90ee1a071876a6f08bc66c3b089720b43c",
     "src/app/api/admin/account-recovery/route.ts": "8eca1325c8b1f075e4afbe165f9a7aae30f1749d",
     "src/app/api/admin/dealer-members/route.ts": "3610fc86c8edf76ec64a1ebdcb59e0514ef26e5f",
     "src/app/api/admin/system-incidents/route.ts": "9806e2c7a0ff70a7e8d8ed369b3a21559e15266d",
-    "src/app/api/dealer/overview/route.ts": "27e60731cfd382ae6d17ab1d8fa144972b1822e4"
+    "src/app/api/dealer/overview/route.ts": "27e60731cfd382ae6d17ab1d8fa144972b1822e4",
+    "src/modules/http/bounded-fetch.ts": "94f70b374a2a046fa3c5536ba602318c0f527efe"
   },
   "reviewedProtectedChanges20261124": [
     {
@@ -274,5 +277,16 @@
   "reviewedCatalogRead20261127": {
     "scope": "Only anonymous published catalog queries and signed media; retain parent rows, cursor, RLS, fallback and no stock claims. One shared seven-second abort deadline. Authenticated isolated E2E passed on the reviewed blob.",
     "validation": "Run the existing release gate, contracts, unit tests and mobile regression on this commit. No bypass."
+  },
+  "reviewedBoundedTransport20261127": {
+    "paths": [
+      "src/app/api/orders/route.ts",
+      "src/modules/identity/server-auth.ts",
+      "src/modules/orders/order-contract.ts",
+      "src/app/api/catalog/route.ts",
+      "src/modules/http/bounded-fetch.ts"
+    ],
+    "scope": "Static review of bounded request transport, strict content type and streamed body cancellation. Existing user JWT, RLS, dealer/admin checks, order idempotency and immutable server-computed prices remain unchanged. Pin the new shared transport dependency so future edits cannot silently change protected APIs.",
+    "validation": "Release contract, transport cancellation tests, order parser regression, authenticated isolated E2E and mobile regression must pass before merge."
   }
 }

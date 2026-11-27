@@ -1076,6 +1076,14 @@ async function main(){
     await tileWidth.fill("600");
     assert.equal(await tileWidth.getAttribute("aria-invalid"),"false");
     assert.match(await page.locator(".quick-calculators > .build-lab-grid .build-results").innerText(),/29 tiles/);
+    await page.getByRole("button",{name:"Save as baseline",exact:true}).click();
+    await tileWidth.fill("300");
+    assert.match(await page.locator(".calc-compare").innerText(),/Session baseline: 29 tiles/);
+    await page.getByRole("button",{name:"Restore baseline inputs",exact:true}).click();
+    assert.equal(await tileWidth.inputValue(),"600");
+    await page.getByRole("button",{name:"View estimate report",exact:true}).click();
+    assert.match(await page.getByLabel("Estimate report (select and copy)").inputValue(),/calculation model v1/);
+    await page.getByRole("button",{name:"Close report",exact:true}).click();
     const academyCount=await page.locator("#academy-lesson-list > a").count();
     assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
     await page.getByRole("searchbox",{name:"Search the construction handbook"}).fill("foundation");
