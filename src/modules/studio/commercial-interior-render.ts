@@ -29,5 +29,5 @@ export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishSch
   const x=(item.x-r.x)*FT,z=(item.y-r.y)*FT;push([x,0,z],[x+item.w*FT,.76,z+item.d*FT],[.45,.32,.21],.65);
  }
  const origin:Vec3=[w*.18,1.6,d*.16],forward=normalize([w*.64,0,d*.68]),right=normalize(cross(forward,[0,1,0])),up=normalize(cross(right,forward));
- return {boxes,camera:{origin,forward,right,up,fov:65,aspect:1.5},evening};
+ return {boxes,camera:{origin,forward,right,up,fov:65,aspect:1.5},evening,lights:[{position:[w*.32,h-.2,d*.33],color:evening?[1,.78,.55]:[1,.94,.83],power:Math.min(100,w*d*.8)},{position:[w*.68,h-.2,d*.67],color:evening?[1,.78,.55]:[1,.94,.83],power:Math.min(100,w*d*.8)}]};
 }
