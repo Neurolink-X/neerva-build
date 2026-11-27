@@ -15,3 +15,27 @@ test("openable area ratio",()=>{assert.equal(quickEstimate("ventilation",[20,2])
 test("modular pitch count",()=>{assert.equal(quickEstimate("module-grid",[3600,600]),6);assert.equal(quickEstimate("module-grid",[3700,600]),6);assert.equal(quickEstimate("module-grid",[3600,0]),null)});
 
 test("durable resource and drainage calculations",()=>{assert.equal(quickEstimate("slope",[5,2]),100);assert.equal(quickEstimate("slope",[0,2]),null);assert.equal(quickEstimate("reuse",[1000,700]),70);assert.equal(quickEstimate("reuse",[100,101]),null);assert.equal(quickEstimate("energy-use",[100,8,30]),24);assert.equal(quickEstimate("energy-use",[100,25,30]),null)});
+
+import {calculatorSpecs,calculatorErrors,calculatorBreakdown,calculatorFormulas} from "./quick-calculators.ts";
+test("every calculator has explicit validation, a formula and finite example result",()=>{
+ for(const spec of calculatorSpecs){
+  const values=spec.fields.map(f=>f[1]);const result=quickEstimate(spec.id,values);
+  assert.ok(result!==null&&Number.isFinite(result),spec.id);
+  assert.ok(calculatorFormulas[spec.id].length>10);
+  assert.ok(calculatorErrors(spec.id,values).every(e=>!e));
+  for(let i=0;i<values.length;i++){
+   const bad=[...values];bad[i]=NaN;assert.ok(calculatorErrors(spec.id,bad)[i]);assert.equal(quickEstimate(spec.id,bad),null);
+  }
+  assert.ok(calculatorBreakdown(spec.id,values,result).every(r=>Number.isFinite(r.value)));
+ }
+});
+test("zero dimensions, fractional counts and invalid cross-field values are rejected",()=>{
+ assert.equal(quickEstimate("excavation",[0,5,3]),null);
+ assert.equal(quickEstimate("slab",[100,0]),null);
+ assert.equal(quickEstimate("tank",[2,1,0]),null);
+ assert.ok(calculatorErrors("paint",[100,1.5,10,5])[1]);
+ assert.ok(calculatorErrors("reuse",[100,101])[1]);
+ assert.equal(quickEstimate("rainwater",[100,0,80]),0);
+ assert.equal(quickEstimate("energy-use",[100,0,30]),0);
+ assert.deepEqual(calculatorBreakdown("budget",[1000,2000,10],2200000).map(r=>r.value),[2000000,200000]);
+});

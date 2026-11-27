@@ -23,8 +23,62 @@ export const calculatorSpecs=[
 ] as const;
 export type CalculatorId=typeof calculatorSpecs[number]["id"];
 export function quickEstimate(id:CalculatorId,v:readonly number[]):number|null{
-const spec=calculatorSpecs.find(s=>s.id===id);if(!spec||v.length!==spec.fields.length||v.some(n=>!Number.isFinite(n)||n<0||n>1e9))return null;
-if(spec.fields.some(([label],i)=>/allowance \(%\)/i.test(label)&&v[i]>100))return null;
+const spec=calculatorSpecs.find(s=>s.id===id);if(!spec||calculatorErrors(id,v).some(Boolean))return null;
 const [a,b,c,d]=v;let result:number;
 switch(id){case "excavation":result=a*b*c*0.028316846592;break;case "slab":result=a*.09290304*b/1000;break;case "plaster":result=a*.09290304*b/1000*(1+c/100);break;case "paint":if(c<=0||!Number.isInteger(b)||b<1)return null;result=a*.09290304*b/c*(1+d/100);break;case "tiles":if(b<=0||c<=0)return null;result=Math.ceil(a*.09290304/(b*c/1e6)*(1+d/100));break;case "tank":result=a*b*c*1000;break;case "roof":result=(a+b)*.09290304*(1+c/100);break;case "formwork":if(!Number.isInteger(c)||c<1)return null;result=a*b*c;break;case "floor":result=a*(b*(1+d/100)+c);break;case "units":result=a*.09290304;break;case "rainwater":if(c>100)return null;result=a*b*c/100;break;case "energy":if(b>24)return null;result=a*b*c*d/1000;break;case "budget":result=a*b*(1+c/100);break;case "lifecycle":if(!Number.isInteger(c)||c<1||c>100)return null;result=a+b*c;break;case "mortar":if(b<=0||c<=0)return null;result=a*b/(b+c);break;case "packs":if(b<=0)return null;result=Math.ceil(a*(1+c/100)/b);break;case "ventilation":if(a<=0)return null;result=b/a*100;break;case "module-grid":if(b<=0)return null;result=Math.floor(a/b);break;case "slope":if(a<=0||b>100)return null;result=a*b*10;break;case "reuse":if(a<=0||b>a)return null;result=b/a*100;break;case "energy-use":if(b>24)return null;result=a*b*c/1000;break;default:return null;}return Number.isFinite(result)?result:null;
+}
+
+type FieldRule={min?:number;max?:number;whole?:boolean;positive?:boolean};
+const positive={positive:true},percent={max:100},count={min:1,whole:true};
+const rules:Record<CalculatorId,readonly FieldRule[]>={
+ excavation:[positive,positive,positive],slab:[positive,positive],plaster:[positive,positive,percent],
+ paint:[positive,count,positive,percent],tiles:[positive,positive,positive,percent],tank:[positive,positive,positive],
+ roof:[positive,{},percent],formwork:[positive,positive,count],floor:[positive,{},{},percent],units:[{}],
+ rainwater:[positive,{},percent],energy:[{}, {max:24},{},{}],budget:[positive,{},percent],
+ lifecycle:[{},{},{min:1,max:100,whole:true}],mortar:[positive,positive,positive],packs:[{},positive,percent],
+ ventilation:[positive,{}],"module-grid":[positive,positive],slope:[positive,percent],reuse:[positive,{}],"energy-use":[{},{max:24},{}]
+};
+export function calculatorFieldRule(id:CalculatorId,index:number):FieldRule{return rules[id]?.[index]??{};}
+export function calculatorErrors(id:CalculatorId,values:readonly number[]):string[]{
+ const spec=calculatorSpecs.find(s=>s.id===id);
+ if(!spec||values.length!==spec.fields.length)return ["Input count does not match this calculator."];
+ return spec.fields.map(([label],i)=>{
+  const n=values[i],r=calculatorFieldRule(id,i);
+  if(!Number.isFinite(n))return "Enter a valid number.";
+  if(n<0||n>1e9)return "Enter a number between 0 and 1,000,000,000.";
+  if(r.positive&&n<=0)return "Must be greater than zero.";
+  if(r.min!==undefined&&n<r.min)return "Minimum: "+r.min+".";
+  if(r.max!==undefined&&n>r.max)return "Maximum: "+r.max+".";
+  if(r.whole&&!Number.isInteger(n))return "Enter a whole number.";
+  if(id==="reuse"&&i===1&&n>values[0])return "Cannot exceed total measured mass.";
+  return "";
+ });
+}
+export const calculatorFormulas:Record<CalculatorId,string>={
+ excavation:"Length × width × depth × 0.028316846592",slab:"Area × 0.09290304 × thickness ÷ 1,000",plaster:"Net area × thickness in metres × (1 + allowance/100), after area conversion",
+ paint:"Net area in m² × coats ÷ coverage × (1 + allowance/100)",tiles:"Round up (net area in m² ÷ tile area in m² × (1 + allowance/100))",tank:"Internal length × width × usable depth × 1,000",
+ roof:"(Roof + upstands) × 0.09290304 × (1 + allowance/100)",formwork:"Length × contact width × number of faces",floor:"Area × (material rate × (1 + allowance/100) + labour rate)",
+ units:"Square feet × 0.09290304",rainwater:"Catchment area × rainfall × collection efficiency/100",energy:"Power ÷ 1,000 × hours × days × tariff",budget:"Built-up area × rate × (1 + contingency/100)",
+ lifecycle:"Installed cost + annual cost × years",mortar:"Dry volume × cement parts ÷ total parts",packs:"Round up (required quantity × (1 + allowance/100) ÷ pack size)",
+ ventilation:"Openable window area ÷ floor area × 100","module-grid":"Round down (run ÷ component pitch)",slope:"Horizontal run × slope percentage × 10",reuse:"Recoverable mass ÷ total mass × 100","energy-use":"Power ÷ 1,000 × hours × days"
+};
+export function calculatorBreakdown(id:CalculatorId,v:readonly number[],result:number):{label:string;value:number;unit:string}[]{
+ const [a,b,c,d]=v;
+ switch(id){
+  case "units":return [{label:"Square feet",value:a,unit:"sq ft"},{label:"Square gaj",value:a/9,unit:"sq gaj"},{label:"Hectares",value:result/10000,unit:"ha"}];
+  case "tiles":return [{label:"Net area",value:a*.09290304,unit:"m²"},{label:"Nominal purchased tile area",value:result*b*c/1e6,unit:"m²"}];
+  case "paint":return [{label:"Before allowance",value:a*.09290304*b/c,unit:"L"}];
+  case "budget":return [{label:"Base estimate",value:a*b,unit:"₹"},{label:"Contingency",value:a*b*c/100,unit:"₹"}];
+  case "floor":return [{label:"Material with allowance",value:a*b*(1+d/100),unit:"₹"},{label:"Labour",value:a*c,unit:"₹"}];
+  case "energy":return [{label:"Energy for period",value:a*b*c/1000,unit:"kWh"}];
+  case "energy-use":return [{label:"Daily energy",value:a*b/1000,unit:"kWh"}];
+  case "lifecycle":return [{label:"Running and maintenance total",value:b*c,unit:"₹"}];
+  case "mortar":return [{label:"Sand volume",value:a*c/(b+c),unit:"L"}];
+  case "packs":return [{label:"Purchased quantity",value:result*b,unit:"units"},{label:"Surplus after allowance",value:Math.max(0,result*b-a*(1+c/100)),unit:"units"}];
+  case "module-grid":return [{label:"Remaining length",value:Math.max(0,a-result*b),unit:"mm"}];
+  case "rainwater":return [{label:"Before collection losses",value:a*b,unit:"L"}];
+  case "tank":return [{label:"Usable cubic metres",value:result/1000,unit:"m³"}];
+  case "reuse":return [{label:"Unrecovered mass",value:a-b,unit:"kg"}];
+  default:return [];
+ }
 }
