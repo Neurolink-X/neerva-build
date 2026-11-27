@@ -27,7 +27,7 @@ async function main(){
     assert.deepEqual(malformed,[],route+" SSR SVG titles must contain exactly one nonempty text node");
    }
   }finally{await noJs.close()}
-  // Exercise every commercial purpose, not merely HTTP route availability.
+  // Exercise every commercial purpose.
   for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
    const ctx=await browser.newContext({viewport});
    try{
@@ -102,7 +102,7 @@ async function main(){
     assert.ok(await irregular.getByRole("img",{name:"Measured polygon and candidate rectangular envelope"}).isVisible());
     await irregular.getByRole("button",{name:"Use envelope dimensions in planner"}).click();
     assert.ok(await studio.getByLabel("Frontage (ft)").inputValue());
-    // Scope to the quantity worksheet itself, rather than the similarly named engineering summary.
+    // Scope to the quantity worksheet.
     const summary=studio.getByText("Commercial building quantity worksheet",{exact:true});
     await summary.click();
     const panel=summary.locator("..");
@@ -190,7 +190,7 @@ async function main(){
     await page.locator(".nbh-journey.nbh-primary").click({timeout:60000});await page.waitForURL("**/materials",{timeout:120000});assert.equal(new URL(page.url()).pathname,"/materials","real navigation still works with prefetch disabled");
    }finally{await ctx.close()}
   }
-  // Focused extra screen sizes without repeating the full expensive suite.
+  // Additional viewport checks.
   for(const v of [{w:320,h:640},{w:1024,h:768},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();
@@ -202,7 +202,7 @@ async function main(){
     }
    }finally{await ctx.close()}
   }
-  // Focused footer geometry across phone, landscape, tablet and desktop sizes in both languages.
+  // Footer geometry across devices and languages.
   for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();await page.goto(base+"/",{waitUntil:"load"});
@@ -282,7 +282,7 @@ async function main(){
     performanceReports.push({profile:profile.name,viewerRequestToControlsMs:Date.now()-requested,scope:"local browser interaction, includes scroll and automation; not field INP"});
    }finally{await ctx.close()}
   }
-  // Focused facade gallery and full-aspect canvas checks across nine screen sizes.
+  // Facade gallery and aspect checks across nine sizes.
   for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
@@ -345,7 +345,7 @@ async function main(){
     if(!issues.title)failures.push(v.w+"px "+route+": missing document title");
     if(!issues.lang)failures.push(v.w+"px "+route+": missing document language");
     if(issues.h1<1)failures.push(v.w+"px "+route+": missing main heading");
-    // Record actual visible interactive targets without clicking destructive or authenticated actions.
+    // Inspect targets without destructive or authenticated actions.
     const interaction=await page.evaluate(()=>{
      const elements=[...document.querySelectorAll('a[href],button,summary,input[type="submit"],input[type="button"],[role="button"]')].filter(el=>{
       const rect=el.getBoundingClientRect(),style=getComputedStyle(el);return rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&!el.closest("[inert],[aria-hidden=true]");
