@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import {assessPerformance} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/materials","/basket","/quotes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
+const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -134,6 +134,8 @@ async function main(){
     const metrics={lcp:null,cls:0,sessionStart:0,previousShift:0,sessionScore:0};
     window.__neervaPerf=metrics;
     window.__neervaObservedVitals=[];
+    window.__neervaInteractionDurations={};
+    try{new PerformanceObserver(list=>{for(const e of list.getEntries())if(e.interactionId)window.__neervaInteractionDurations[e.interactionId]=Math.max(window.__neervaInteractionDurations[e.interactionId]??0,e.duration);}).observe({type:"event",buffered:true,durationThreshold:16});}catch{}
     window.addEventListener("neerva:web-vitals",event=>{if(Array.isArray(event.detail))window.__neervaObservedVitals=event.detail.filter(x=>["LCP","INP","CLS"].includes(x.name)&&Number.isFinite(x.value)&&x.value>=0);});
     try{new PerformanceObserver(list=>{for(const e of list.getEntries())metrics.lcp=e.startTime;}).observe({type:"largest-contentful-paint",buffered:true});}catch{}
     try{new PerformanceObserver(list=>{for(const e of list.getEntries())if(!e.hadRecentInput){if(e.startTime-metrics.previousShift>1000||e.startTime-metrics.sessionStart>5000){metrics.sessionStart=e.startTime;metrics.sessionScore=0;}metrics.previousShift=e.startTime;metrics.sessionScore+=e.value;metrics.cls=Math.max(metrics.cls,metrics.sessionScore);}}).observe({type:"layout-shift",buffered:true});}catch{}
@@ -166,12 +168,18 @@ async function main(){
     });
     interactionReports.push({route,width:v.w,total:interaction.total,unnamed:interaction.unnamed,smallCount:interaction.small.length,small:interaction.small.slice(0,25),primaryTooShort:interaction.primaryTooShort});
     if(interaction.primaryTooShort.length)failures.push(v.w+"px "+route+": primary action height below 44px "+JSON.stringify(interaction.primaryTooShort));
-    if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer","/room-lab","/build-iq","/inspiration"].includes(route)){
+    if(v.w===390&&["/","/materials","/design-studio","/design-studio/fit","/design-studio/visualizer","/room-lab","/build-iq","/inspiration","/checkout","/account/orders","/design-studio/buildings","/design-studio/road-planner","/design-studio/portfolio","/quotes","/learn"].includes(route)){
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
      const timing=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],m=window.__neervaPerf;return {ttfbMs:n?Math.round(n.responseStart):null,loadMs:n?Math.round(n.loadEventEnd):null,lcpMs:m?.lcp==null?null:Math.round(m.lcp),cls:m?.cls??null};});
      const budget=assessPerformance(timing);
      performanceReports.push({route,width:v.w,...timing,budget,scope:"initial load observation, not field Web Vitals"});
      for(const issue of budget.failures)failures.push("Severe local performance regression "+route+": "+issue);
+     if(route==="/materials"||route==="/build-iq"){
+      const search=route==="/materials"?page.locator(".catalog-toolbar input[type=search]"):page.locator(".academy-discovery input[type=search]");
+      await search.click();await search.pressSequentially("cement",{delay:30});await search.press("Control+a");await search.press("Backspace");await page.waitForTimeout(300);
+      const interaction=await page.evaluate(()=>{const values=Object.values(window.__neervaInteractionDurations??{});return {count:values.length,maxInteractionMs:values.length?Math.max(...values):null}});
+      performanceReports.push({route,width:v.w,...interaction,scope:"observed Event Timing interactions; not field INP"});
+     }
     }
     if(v.w===390&&["/","/account","/quotes","/materials","/design-studio/fit"].includes(route)){
       try{
