@@ -27,6 +27,7 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
    <text x={roadLabel.x} y={roadLabel.y} textAnchor="middle" fontSize="1.1" fontWeight="800" fill="#8b4a2e">ROAD · {side}</text>
    <g><path d={`M ${dim.w-1.5} 3.5 V 1.6 l -.7 .9 M ${dim.w-1.5} 1.6 l .7 .9`} fill="none" stroke="#284735" strokeWidth=".3"/>
     <text x={dim.w-1.5} y=".9" textAnchor="middle" fontSize="1" fontWeight="800">N</text></g>
+   {([["left",plan.setbacks.leftFt,plan.setbacks.leftFt/2,d/2],["right",plan.setbacks.rightFt,w-plan.setbacks.rightFt/2,d/2]] as const).filter(([,ft])=>ft>=2).map(([edge,ft,x,y])=>{const p=point(x,y);return <text key={edge} x={p.x} y={p.y} transform={`rotate(${side==="N"||side==="S"?-90:0} ${p.x} ${p.y})`} textAnchor="middle" fontSize=".85" fill="#526955">{ft.toFixed(1)} ft open strip</text>})}
    {rooms.map(r=>{const rect=roadRect(r,w,d,side),cx=rect.x+rect.w/2,cy=rect.y+rect.d/2,small=Math.min(rect.w,rect.d)<5,label=r.kind==="bedroom"?r.label:(shortLabels[r.kind]??r.label),font=Math.min(small?.65:1.07,rect.w/(Math.max(label.length,1)*.64),rect.d*.20);
     return <g key={r.id} data-room-id={r.id} data-room-kind={r.kind}>
      <title>{r.label}</title>
@@ -45,6 +46,7 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
    {floor===0&&[plan.gate,plan.pedestrianGate].map((g,i)=>{const [a,b]=gates(g);return <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke={i===0?"#a86643":"#23764d"} strokeWidth=".9"/>})}
   </svg>
   <div className="nroad-legend"><span>Road {side} · {plan.plot.siteShape&&plan.plot.siteShape.kind!=="rectangle"?"measured L-site outline, conservative no-build strip":"true compass orientation"}</span><span>{plan.parking?"Brown: doors & car gate":"Brown: doors"}</span><span>Blue: windows</span><span>Green: pedestrian gate</span></div>
+  <p className="nroad-small">Open margins are unbuilt concept space, not extra rooms or confirmed legal setbacks. Front {plan.setbacks.frontFt.toFixed(1)} ft · rear {plan.setbacks.rearFt.toFixed(1)} ft · left {plan.setbacks.leftFt.toFixed(1)} ft · right {plan.setbacks.rightFt.toFixed(1)} ft.</p>
   <details><summary>Room dimensions & opening list</summary><ul>{rooms.map(r=><li key={r.id}><strong>{r.label}</strong> — {r.w.toFixed(1)} × {r.d.toFixed(1)} ft · {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="door").length} doors / {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="window").length} windows</li>)}</ul></details>
   <p className="nroad-small">Concept only. Verify with a licensed architect/engineer and local authority approval. Stairs, turning and legal setbacks remain unchecked.</p>
  </section>;
