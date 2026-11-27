@@ -9,7 +9,7 @@ import {surfaceCanvas,StudioSurfaceSwatch} from "./studio-surface-swatch";
 import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide";
 import {artworkFrame} from "@/modules/studio/wall-design-layout";
 import {colourPairings} from "@/modules/studio/colour-families";
-import {facadeSamples as classicFacadeSamples,journeyFacadeSamples,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
+import {facadeSamples,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
 type Wall={mask?:PhotoMask;points:MaskCorner[];colour:string;accent:string;pattern:Pattern;opacity?:number};
 function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinted?:HTMLCanvasElement,patternSurface?:HTMLCanvasElement,accentTint?:HTMLCanvasElement){
@@ -62,8 +62,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
  }
  ctx.restore();
 }
-export function StudioPhotoPaint({colour,onColourChange,colourControls,premiumJourney=false}:{colour:string;onColourChange?:(colour:string)=>void;colourControls?:ReactNode;premiumJourney?:boolean}){
- const facadeSamples=premiumJourney?journeyFacadeSamples:classicFacadeSamples;
+export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:string;onColourChange?:(colour:string)=>void;colourControls?:ReactNode}){
  const [walls,setWalls]=useState<Wall[]>([]),[editing,setEditing]=useState<number|null>(null);
  const [pattern,setPattern]=useState<Pattern>("sunDisc"),[accent,setAccent]=useState("#c4925f");
  const [patternGroup,setPatternGroup]=useState<PatternGroup>("Signature");
@@ -237,7 +236,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,premiumJo
  }
  return <section className="nbd-photo" aria-label="Private wall colour preview">
   <div className="paint-source"><button type="button" aria-pressed={scene==="room"} onClick={openRoom}>Sample room</button><button type="button" aria-pressed={scene==="facade"} onClick={()=>openFacade()}>Sample house exterior</button><label>Use my home photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label></div>
-  {scene==="facade"&&<div className="paint-sample-gallery" data-journey={premiumJourney?"premium":"classic"} role="group" aria-label="Choose sample house">{facadeSamples.map(s=><button key={s.id} data-facade-sample={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={s.src} alt="" fill sizes={s.id==="family"?"(max-width:900px) 90vw, 440px":"(max-width:600px) 46vw, (max-width:900px) 42vw, 240px"} loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
+  {scene==="facade"&&<div className="paint-sample-gallery" data-journey="premium" role="group" aria-label="Choose sample house">{facadeSamples.map(s=><button key={s.id} data-facade-sample={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={s.src} alt="" fill sizes={s.id==="family"?"(max-width:900px) 90vw, 440px":"(max-width:600px) 46vw, (max-width:900px) 42vw, 240px"} loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
   {scene==="facade"&&<p className="paint-sample-feedback" role="status">{ready?"Previewing: ":message==="Loading photo…"?"Preparing: ":"Selected: "}<strong>{sample.label}</strong>{ready?" · Try a colour or wall design.":""}</p>}
   <div className="paint-mode" role="group" aria-label="Paint preview mode"><button type="button" aria-pressed={mode==="paint"} onClick={()=>chooseMode("paint")}>Plain paint</button><button type="button" aria-pressed={mode==="design"} onClick={()=>chooseMode("design")}>Paint + design</button></div>
   {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}</button>)}</div>}

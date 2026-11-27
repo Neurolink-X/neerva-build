@@ -7,15 +7,15 @@ import {facadeZones,facadeSamples,stylesForTarget,activePattern,shadedPixel,type
 import {validWallMask} from "./mask-editor.ts";
 const plain:PaintStyle={colour:"#b6c7a3",accent:"#c4925f",pattern:"plain",opacity:.78};
 test("all sample exterior paint sections have independent normalized masks",()=>{
- assert.equal(new Set(facadeZones.map(z=>z.id)).size,11);
+ assert.equal(new Set(facadeZones.map(z=>z.id)).size,8);
  for(const z of facadeZones){assert.ok(validWallMask(z.points),z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1,z.id);}
- assert.equal(facadeZones.find(z=>z.id==="right")?.mask.holes.length,3);
+ assert.equal(facadeZones.find(z=>z.id==="right")?.mask.holes.length,0);
 });
 test("plain paint is independent of stored pattern and selected base shade",()=>{
  assert.equal(activePattern("paint","diamonds"),"plain");
  assert.equal(activePattern("design","diamonds"),"diamonds");
  const full=stylesForTarget({},"all",plain);
- assert.equal(Object.keys(full).length,11);
+ assert.equal(Object.keys(full).length,8);
  const design=stylesForTarget(full,"right",{...plain,pattern:activePattern("design","diamonds")});
  assert.equal(design.right?.colour,plain.colour);
  assert.equal(design.right?.pattern,"diamonds");
@@ -44,10 +44,10 @@ test("full exterior covers previously omitted wall and trim regions in all local
  function inside(ring:number[][],x:number,y:number){let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [a,b]=ring[i],[c,d]=ring[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
  function painted(sample:typeof facadeSamples[number],x:number,y:number){return sample.zones.some(z=>inside(z.mask.outline,x,y)&&!z.mask.holes.some(h=>inside(h,x,y)));}
  const family=facadeSamples[0],modern=facadeSamples[1],villa=facadeSamples[2];
- assert.ok(painted(family,940/1536,330/512));assert.ok(painted(family,750/1536,122/512));assert.ok(painted(family,750/1536,316/512));assert.equal(painted(family,750/1536,160/512),false);assert.equal(painted(family,750/1536,350/512),false);assert.ok(painted(family,1175/1536,350/512));assert.equal(painted(family,1050/1536,360/512),false);assert.ok(painted(family,250/1536,420/512));assert.ok(painted(family,600/1536,335/512));
+ for(const [x,y] of [[350,60],[1045,110],[257,150],[565,160],[500,285],[565,350],[1042,365],[160,420]])assert.ok(painted(family,x/1200,y/600),"plaster "+x+","+y);
+ for(const [x,y] of [[980,190],[450,205],[880,180],[720,190],[750,440],[1100,170]])assert.equal(painted(family,x/1200,y/600),false,"protected "+x+","+y);
  assert.ok(painted(modern,575/880,414/738));assert.ok(painted(modern,270/880,490/738));
  assert.ok(painted(villa,790/880,320/584));assert.ok(painted(villa,640/880,300/584));
- assert.equal(painted(family,1050/1536,160/512),false);
  assert.equal(painted(modern,575/880,365/738),false);
  assert.equal(painted(villa,520/880,210/584),false);
  assert.equal(painted(villa,500/880,460/584),false);
@@ -61,14 +61,6 @@ test("compact family concept preserves glazing and paints four independent surfa
  assert.equal(edited.entry?.colour,"#293f36");
  assert.equal(edited.left?.colour,plain.colour);
  assert.equal(all.entry?.colour,plain.colour);
-});
-
-test("modern right wall return and balcony side pier are painted without crossing glazing or the tree",()=>{
- const right=facadeZones.find(z=>z.id==="right")!;
- function inside(r:number[][],x:number,y:number){let hit=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const [a,b]=r[i],[c,d]=r[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
- const painted=(x:number,y:number)=>inside(right.mask.outline,x/1536,y/512)&&!right.mask.holes.some(h=>inside(h,x/1536,y/512));
- for(const [x,y] of [[949,217],[963,106],[978,263],[1181,347],[1172,387]])assert.ok(painted(x,y),`wall ${x},${y}`);
- for(const [x,y] of [[1050,160],[1050,360],[1210,292],[1400,250],[920,220]])assert.equal(painted(x,y),false,`protected ${x},${y}`);
 });
 
 // The hash binds the paint coordinates to the exact reviewed local binary.
@@ -85,28 +77,10 @@ test("photorealistic 100 gaj asset has the reviewed dimensions and immutable byt
  for(const [x,y] of [[480,250],[570,380],[699,350],[965,365],[700,450],[950,470],[620,635],[555,745],[700,740],[950,720],[430,850],[275,865],[970,850],[1120,850],[100,200],[1300,420],[700,55],[700,640]])assert.equal(hits(x,y).length,0,"protected point "+x+","+y);
 });
 
-test("garden wall panels paint exposed plaster without painting protected plant and fixture regions",()=>{
- const garden=facadeZones.filter(z=>z.id==="garden-left"||z.id==="garden-right");
- assert.equal(garden.length,2);
- function inside(r:number[][],x:number,y:number){let hit=false;for(let i=0,j=r.length-1;i<r.length;j=i++){const [a,b]=r[i],[c,d]=r[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
- const paint=(x:number,y:number)=>garden.some(z=>inside(z.mask.outline,x/1536,y/512)&&!z.mask.holes.some(h=>inside(h,x/1536,y/512)));
- for(const [x,y] of [[400,442],[438,450],[550,440],[1020,443],[1115,440],[1160,442]])assert.ok(paint(x,y),`plaster ${x},${y}`);
- for(const [x,y] of [[340,470],[480,475],[423,450],[570,450],[980,478],[1075,465],[1132,450],[1240,470]])assert.equal(paint(x,y),false,`protected ${x},${y}`);
-});
-
 test("all preset design quadrilaterals cover their actual paint mask, including first house upper left wall",()=>{
  for(const sample of facadeSamples)for(const z of sample.zones){
   assert.equal(z.points.length,4,sample.id+" "+z.id);
   const xs=z.points.map(p=>p.x),ys=z.points.map(p=>p.y);
   for(const [x,y] of z.mask.outline)assert.ok(x>=Math.min(...xs)-1e-8&&x<=Math.max(...xs)+1e-8&&y>=Math.min(...ys)-1e-8&&y<=Math.max(...ys)+1e-8,sample.id+" "+z.id);
  }
- const left=facadeZones.find(z=>z.id==="left")!;
- assert.ok(Math.min(...left.points.map(p=>p.y))<=60/512);
- assert.ok(Math.max(...left.points.map(p=>p.x))>=420/1536);
-});
-
-test("first facade retains the reviewed foreground foliage exclusion",()=>{
- const left=facadeZones.find(z=>z.id==="left")!;
- assert.equal(left.mask.holes.length,2);
- assert.ok(left.mask.holes[1].some(([x,y])=>x===317/1536&&y===344/512));
 });

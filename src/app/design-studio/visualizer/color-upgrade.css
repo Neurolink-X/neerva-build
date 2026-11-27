@@ -214,8 +214,7 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
    Other houses retain their portrait-friendly framing. Original canvas and masks are unchanged. */
 .visualizer-app .paint-sample-gallery{grid-template-columns:repeat(3,minmax(0,1fr))}
 .visualizer-app .paint-sample-gallery button[data-facade-sample=family]{grid-column:1/-1}
-.visualizer-app .paint-sample-gallery button[data-facade-sample=family] .paint-sample-photo{aspect-ratio:2.2/1}
+.visualizer-app .paint-sample-gallery button[data-facade-sample=family] .paint-sample-photo{aspect-ratio:2/1}
 .visualizer-app .paint-sample-photo img{object-fit:cover;object-position:center}
 @media(max-width:900px){.visualizer-app .paint-sample-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.visualizer-app .paint-sample-gallery button:last-child{grid-column:1/-1}.visualizer-app .paint-sample-gallery button:last-child .paint-sample-photo{aspect-ratio:3/2}}
 
-.visualizer-app .paint-sample-gallery[data-journey=premium] button[data-facade-sample=family] .paint-sample-photo{aspect-ratio:2/1}

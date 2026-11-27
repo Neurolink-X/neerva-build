@@ -14,5 +14,3 @@ export function verifyHouseJourney(root=process.cwd()){
   });
  }catch{return false}
 }
-let checked:boolean|undefined;
-export function hasHouseJourney(){return checked??=verifyHouseJourney()}

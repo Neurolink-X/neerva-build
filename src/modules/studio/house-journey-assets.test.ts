@@ -5,14 +5,14 @@ import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {verifyHouseJourney} from "./house-journey-assets.ts";
 import {houseJourney} from "./house-journey.ts";
-import {journeyFacadeSamples} from "./facade-paint.ts";
+import {facadeSamples} from "./facade-paint.ts";
 import {validWallMask} from "./mask-editor.ts";
 test("missing pair never activates new masks or image paths",()=>{
  const root=mkdtempSync(join(tmpdir(),"neerva-journey-"));
  try{assert.equal(verifyHouseJourney(root),false)}finally{rmSync(root,{recursive:true,force:true})}
 });
 test("new facade masks stay normalized and pair fits the local asset budget",()=>{
- const s=journeyFacadeSamples[0];
+ const s=facadeSamples[0];
  assert.equal(s.src,houseJourney.finished.src);
  assert.ok(s.zones.length>=6);
  assert.equal(new Set(s.zones.map(z=>z.id)).size,s.zones.length);

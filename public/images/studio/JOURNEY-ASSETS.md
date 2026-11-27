@@ -1,9 +1,8 @@
-# Premium construction journey image pair
-The new local images are AI-generated illustrative stages, not project photography or a measured bill of materials.
-Place both reviewed WebP files in this directory, without changing their bytes:
-- journey-finished.webp (90,956 bytes; 1200×600)
-- journey-shell.webp (116,840 bytes; 1200×600)
+# Premium house image pair
+Both local WebP files are required at release. CI validates exact bytes, SHA-256 and dimensions. Legacy images and masks are retired; roll back the whole deployment if needed. No external image service or runtime fallback download.
 
-The server validates both SHA-256 digests and dimensions before using the new pair on the home comparison and new Colour Studio masks. Until both assets are present, the previous working image and mask pair remains selected. The asset test now rejects missing, incomplete or modified pairs in CI, including when both images are absent. The runtime fallback is retained for recovery only. No external downloads, API or paid service needed.
+- journey-finished.webp: 90,956 bytes
+- journey-shell.webp: 116,840 bytes
+- 1200 × 600 pixels each; matched horizontal comparison.
 
-Upload both files together to the PR branch in this directory, then run `npm test`. Do not overwrite the legacy assets or reuse their masks for this new home.
+AI-generated illustration, not actual project photography. Replacing the finished image requires reviewed paint masks and pixel-regression updates.

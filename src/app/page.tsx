@@ -1,5 +1,4 @@
 import {canonicalPublicOrigin} from "@/modules/seo/site-origin";
-import {hasHouseJourney} from "@/modules/studio/house-journey-assets";
 import type {Metadata} from "next";
 import {PremiumHome} from "@/components/premium-home";
 import {homeCategoryCartActions} from "@/components/home-featured-materials";
@@ -17,5 +16,5 @@ export default function HomePage(){
   {"@context":"https://schema.org","@type":"Organization",name:"NEERVA BUILD",url,areaServed:{"@type":"Place",name:"Kanpur, Uttar Pradesh, India"},description:"Construction material product discovery and quotation preparation; home-planning concepts secondary."},
   {"@context":"https://schema.org","@type":"WebSite",name:"NEERVA BUILD",url},
  ];
- return <><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(data).replace(/</g,"\\u003c")}}/><PremiumHome categoryCartActions={homeCategoryCartActions()} premiumJourney={hasHouseJourney()}/></>;
+ return <><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(data).replace(/</g,"\\u003c")}}/><PremiumHome categoryCartActions={homeCategoryCartActions()}/></>;
 }
