@@ -1,8 +1,10 @@
 import type {ProjectSource} from "./project-exchange.ts";
 import {rentalLayouts} from "./rental-layout.ts";
-import type {Rect} from "./plan-model.ts";
-export type RoomFinish={wall:string;floor:string;ceiling:string};
-export type FinishScheme={planId:string;exterior:string;accent:string;glass:string;rooms:Record<string,RoomFinish>};
+import type {Rect,Side} from "./plan-model.ts";
+export type FinishMaterial="plain"|"tile"|"marble"|"wood"|"panel"|"acp";
+export type FinishSurface="wall"|"floor"|"ceiling";
+export type RoomFinish={wall:string;floor:string;ceiling:string;wallSides?:Partial<Record<Side,string>>;materials?:Partial<Record<FinishSurface,FinishMaterial>>};
+export type FinishScheme={planId:string;exterior:string;accent:string;glass:string;cladding?:FinishMaterial;rooms:Record<string,RoomFinish>};
 export type FinishSpace=Rect&{id:string;label:string;floor:number;kind:string};
 const open=new Set(["parking","verandah","balcony","terrace","open"]);
 export const finishPresets={
@@ -24,10 +26,10 @@ export function defaultFinishScheme(source:ProjectSource):FinishScheme{
  const p=finishPresets[source.kind==="residential"?"home":source.plan.brief.purpose];
  return {planId:source.plan.id,exterior:source.kind==="residential"?source.plan.facade.main:p.exterior,accent:source.kind==="residential"?source.plan.facade.accent:p.accent,glass:p.glass,rooms:Object.fromEntries(finishSpaces(source).map(r=>[r.id,{wall:p.wall,floor:p.floor,ceiling:p.ceiling}]))};
 }
-export function applyRoomFinish(source:ProjectSource,scheme:FinishScheme,ids:readonly string[],surface:keyof RoomFinish,shade:string):FinishScheme{
+export function applyRoomFinish(source:ProjectSource,scheme:FinishScheme,ids:readonly string[],surface:FinishSurface,shade:string,side?:Side):FinishScheme{
  if(scheme.planId!==source.plan.id||!validShade(shade))return scheme;
  const allowed=new Set(finishSpaces(source).map(r=>r.id)),rooms={...scheme.rooms};
- for(const id of ids)if(allowed.has(id)&&rooms[id])rooms[id]={...rooms[id],[surface]:shade};
+ for(const id of ids)if(allowed.has(id)&&rooms[id])rooms[id]=surface==="wall"&&side?{...rooms[id],wallSides:{...rooms[id].wallSides,[side]:shade}}:{...rooms[id],[surface]:shade,...(surface==="wall"?{wallSides:undefined}:{})};
  return {...scheme,rooms};
 }
 export function finishEstimate(source:ProjectSource,ids:readonly string[],coverage:number,coats:number){
@@ -40,4 +42,26 @@ export function finishEstimate(source:ProjectSource,ids:readonly string[],covera
   net+=Math.max(0,wall-openings);
  }
  return {floorSqFt:floor,ceilingSqFt:floor,wallSqFt:net,paintLitres:net*.09290304*coats/coverage,grossWallSqFt:gross,openingsDeducted:source.kind==="residential",roomCount:rooms.length};
+}
+
+export const finishMaterials=["plain","tile","marble","wood","panel","acp"] as const;
+export function wallShade(f:RoomFinish|undefined,side:Side,fallback:string){return f?.wallSides?.[side]??f?.wall??fallback;}
+export function setRoomMaterial(source:ProjectSource,scheme:FinishScheme,ids:readonly string[],surface:FinishSurface,material:FinishMaterial):FinishScheme{
+ if(scheme.planId!==source.plan.id||!finishMaterials.includes(material))return scheme;
+ const allowed=new Set(finishSpaces(source).map(r=>r.id)),rooms={...scheme.rooms};
+ for(const id of ids)if(allowed.has(id)&&rooms[id])rooms[id]={...rooms[id],materials:{...rooms[id].materials,[surface]:material}};
+ return {...scheme,rooms};
+}
+/** A wall cell can have different finishes on its two faces. Coordinates are
+ * site-local, with the inward direction positive for front/left. */
+export function wallFaceOwners(rooms:readonly FinishSpace[],cell:{axis:"x"|"z";floorIndex:number;planeFt:number;startFt:number;endFt:number}){
+ const out:{id:string;side:Side;inward:1|-1}[]=[];
+ for(const r of rooms){
+  if(r.floor!==cell.floorIndex)continue;
+  const x=cell.axis==="x",a=x?r.y:r.x,b=a+(x?r.d:r.w),p=x?r.x:r.y,q=p+(x?r.w:r.d);
+  if(cell.startFt<a-.002||cell.endFt>b+.002)continue;
+  if(Math.abs(cell.planeFt-p)<.002)out.push({id:r.id,side:x?"left":"front",inward:1});
+  else if(Math.abs(cell.planeFt-q)<.002)out.push({id:r.id,side:x?"right":"rear",inward:-1});
+ }
+ return out;
 }
