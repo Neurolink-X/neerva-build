@@ -368,7 +368,10 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
  const W=Math.min(36,aw),D=Math.min(85,ad),sb={...base,leftFt:base.leftFt+(aw-W)/2,rightFt:base.rightFt+(aw-W)/2,rearFt:base.rearFt+ad-D,verified:false};
  const plans:PlanModel[]=[],seen=new Set<string>(),meshes=new Set<string>();
  type Slot={floor:number;x:number;y:number;w:number;d:number;capacity:number;count:number;key:string};
- for(let recipe=0;recipe<576&&plans.length<limit;recipe++){
+ // A coprime stride visits every recipe once, sampling materially different
+ // stair, kitchen, bedroom and entry dimensions early instead of adjacent variants.
+ for(let iteration=0;iteration<576&&plans.length<limit;iteration++){
+  const recipe=(iteration*73)%576;
   const spine=4+recipe%2,left=round((W-spine)/2+[0,-2,2,-1,1,3][Math.floor(recipe/2)%6]),right=round(W-spine-left);
   if(left<9||right<9)continue;
   const mirror=Math.floor(recipe/12)%2===1,variant=mirror?"parking-right":"parking-left",stairDepth=9+Math.floor(recipe/24)%3,kitchenDepth=8+Math.floor(recipe/72)%2*2,entryDepth=4+Math.floor(recipe/144)%2,bedTarget=12+Math.floor(recipe/288)%2*3;
