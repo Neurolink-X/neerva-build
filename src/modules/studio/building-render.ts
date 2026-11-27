@@ -1,5 +1,5 @@
 import type {RenderBox,RenderSnapshot,Vec3} from "../../../public/studio-render-v1";
-import {shadeRgb,type FinishScheme} from "./finish-model.ts";
+import {shadeRgb,finishSpaces,wallFaceOwners,wallShade,type FinishScheme} from "./finish-model.ts";
 import {finishRoughness} from "./commercial-interior-render.ts";
 import {commercialStairStudies,commercialInternalSpaces} from "./commercial-internal.ts";
 import {stairStepDepthFt} from "./stair-study.ts";
@@ -77,11 +77,27 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
  const x=(v:number)=>(v-widthFt/2)*ft,z=(v:number)=>(v-depthFt/2)*ft;
  const add=(lo:Vec3,hi:Vec3,color:Vec3,rough=.82,opacity=1)=>{if(hi.every((v,i)=>v>lo[i]))boxes.push({lo,hi,color,rough,metal:0,opacity});};
  const elements=commercialElements(plan),cut=fullHeight?13:7;
- for(const s of elements.slabs.filter(s=>s.floor===floor&&s.bottom===0))add([x(s.x),0,z(s.y)],[x(s.x+s.w),s.top*ft,z(s.y+s.d)],shadeRgb(scheme.rooms[s.id.replace(/-floor(?:-\d+)?$/,"")]?.floor??"#d5cabc"));
+ const rooms=finishSpaces({kind:"commercial",plan}).filter(r=>r.floor===floor);
+ const selected=scheme.planId===plan.id?scheme:undefined;
+ for(const s of elements.slabs.filter(s=>s.floor===floor&&s.bottom===0)){
+  add([x(s.x),0,z(s.y)],[x(s.x+s.w),s.top*ft,z(s.y+s.d)],shadeRgb("#d5cabc"));
+  // Apply finishes only over existing slab intersections, never fill stair or shaft voids.
+  for(const r of rooms){
+   const a=Math.max(r.x,s.x),b=Math.min(r.x+r.w,s.x+s.w),d=Math.max(r.y,s.y),e=Math.min(r.y+r.d,s.y+s.d);
+   if(b-a>1e-5&&e-d>1e-5)add([x(a),s.top*ft,z(d)],[x(b),s.top*ft+.003,z(e)],shadeRgb(selected?.rooms[r.id]?.floor??"#d5cabc"),finishRoughness(selected?.rooms[r.id]?.materials?.floor));
+  }
+ }
  for(const w of elements.walls.filter(w=>w.floor===floor&&w.bottom<cut)){
   const t=w.thickness/2,lo=w.bottom*ft,hi=Math.min(w.top,cut)*ft;
-  if(w.axis==="x")add([x(w.start),lo,z(w.plane-t)],[x(w.end),hi,z(w.plane+t)],shadeRgb(scheme.exterior));
-  else add([x(w.plane-t),lo,z(w.start)],[x(w.plane+t),hi,z(w.end)],shadeRgb(scheme.exterior));
+  const owners=wallFaceOwners(rooms,{axis:w.axis==="x"?"z":"x",floorIndex:floor,planeFt:w.plane,startFt:w.start,endFt:w.end});
+  // Two half-thickness faces share the original exact wall volume.
+  for(const inward of [-1,1] as const){
+   const owner=owners.find(o=>o.inward===inward),f=owner?selected?.rooms[owner.id]:undefined;
+   const tone=shadeRgb(owner?wallShade(f,owner.side,selected?.exterior??"#ddd7c9"):selected?.exterior??"#ddd7c9");
+   const a=w.plane+(inward===-1?-t:0),b=w.plane+(inward===-1?0:t);
+   if(w.axis==="x")add([x(w.start),lo,z(a)],[x(w.end),hi,z(b)],tone,finishRoughness(f?.materials?.wall));
+   else add([x(a),lo,z(w.start)],[x(b),hi,z(w.end)],tone,finishRoughness(f?.materials?.wall));
+  }
  }
  for(const p of elements.portals.filter(p=>p.floor===floor&&p.kind==="exterior-glazing")){
   const t=.04;
