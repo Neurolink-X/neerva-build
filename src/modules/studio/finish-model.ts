@@ -65,3 +65,10 @@ export function wallFaceOwners(rooms:readonly FinishSpace[],cell:{axis:"x"|"z";f
  }
  return out;
 }
+
+/** Bounded in-memory design history. The caller scopes keys to the exact brief
+ * and selected layout, so switching a design never transfers another finish. */
+export function rememberFinish(history:Record<string,FinishScheme>,key:string,scheme:FinishScheme){
+ const entries=Object.entries(history).filter(([id])=>id!==key);
+ return Object.fromEntries([...entries.slice(-23),[key,scheme]]);
+}
