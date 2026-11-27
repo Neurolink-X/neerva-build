@@ -37,6 +37,10 @@ export function recommendBuildingConcepts(brief:BuildingBrief,limit=24){
   group.sort((a,b)=>Number(b.detailed)-Number(a.detailed)||b.interiorRoomCount-a.interiorRoomCount||b.primaryAreaShare-a.primaryAreaShare||b.coreSeparationFt-a.coreSeparationFt||a.index-b.index);groups.push(group);
  }
  const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,options:BuildingRecommendation[]=[];
- for(let i=0;i<24&&options.length<max;i++)for(const group of groups){if(group[i]&&options.length<max)options.push(group[i]);}
+ // Prioritize validated detailed interiors; use zoning only to fill genuine gaps.
+ for(const detailed of [true,false]){
+  const eligible=groups.map(g=>g.filter(o=>o.detailed===detailed));
+  for(let i=0;i<24&&options.length<max;i++)for(const group of eligible){if(group[i]&&options.length<max)options.push(group[i]);}
+ }
  return {counts,distinct:seen.size,options,detailedCount:options.filter(o=>o.detailed).length};
 }
