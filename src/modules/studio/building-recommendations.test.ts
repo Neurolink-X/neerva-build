@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {buildingStarter,generateBuildingConcepts} from "./building-purpose.ts";
-import {recommendBuildingConcepts} from "./building-recommendations.ts";
+import {recommendBuildingConcepts,visibleInteriorSignature} from "./building-recommendations.ts";
 import {roadEnvelopeChoices,envelopeFits,parsePlot} from "./irregular-plot.ts";
 import {commercialSaveSchema,rebuildCommercialSnapshot} from "./commercial-save.ts";
 import {defaultFinishScheme} from "./finish-model.ts";
@@ -10,6 +10,9 @@ test("bounded summary shortlist regenerates the exact selected geometry",()=>{
   const brief=buildingStarter(purpose),r=recommendBuildingConcepts(brief);
   assert.ok(r.options.length>0&&r.options.length<=24);assert.equal(new Set(r.options.map(o=>o.id)).size,r.options.length);
   assert.deepEqual(r,recommendBuildingConcepts(brief));
+  const selected=r.options.map(o=>generateBuildingConcepts(brief,24,o.family).plans[o.index]);
+  assert.equal(new Set(selected.map(visibleInteriorSignature)).size,selected.length);
+  assert.equal(r.detailedCount,r.options.filter(o=>o.detailed).length);
   for(const o of r.options){assert.equal(generateBuildingConcepts(brief,24,o.family).plans[o.index].id,o.id);assert.ok(o.primaryAreaShare>0&&o.primaryAreaShare<1);}
  }
 });
