@@ -390,16 +390,15 @@ async function main(){
    assert.equal(new Set(await familyPhotos.evaluateAll(imgs=>imgs.map(img=>img.getAttribute("src")))).size,3,"No repeated family visual");
    const familyLinks=await page.locator('.nbh-family-card a[href^="/design-studio/portfolio?"]').evaluateAll(links=>links.map(a=>{const q=new URL(a.href).searchParams;return ["width","depth","bedrooms","floors"].map(k=>q.get(k)).join("x");}));
    assert.deepEqual(familyLinks,["15x30x1x1","18x50x3x2","20x40x2x1"],"Family home cards use supported plot and room briefs");
-   const budget=page.locator("#family-budget");
-   await budget.getByLabel("Total built-up area (sq ft)",{exact:true}).fill("800");
-   await budget.getByLabel("Agreed construction rate (₹/sq ft)",{exact:true}).fill("1500");
-   await budget.getByLabel("Other costs not included (₹)",{exact:true}).fill("100000");
-   await budget.getByLabel("Available construction budget (₹, optional)",{exact:true}).fill("1400000");
-   assert.match(await budget.innerText(),/14,30,000/);
-   assert.match(await budget.innerText(),/Budget shortfall/);
-   assert.ok(await budget.evaluate(el=>el.scrollWidth<=el.clientWidth+1),"budget panel fits viewport");
-   await budget.getByLabel("Agreed construction rate (₹/sq ft)",{exact:true}).fill("-1");
-   assert.equal(await budget.getByRole("button",{name:"Save budget to my project"}).count(),0);
+   const guide=page.locator("#family-guide");
+   assert.equal(await page.locator("#family-budget,input[type=number]").count(),0,"no duplicated calculator on family page");
+   assert.equal(await guide.locator(".family-editorial-body section").count(),4,"practical room and construction guidance");
+   assert.equal(await page.locator(".family-stage-timeline li").count(),4,"construction stages remain connected");
+   await guide.getByText("Protect essential spending",{exact:true}).click();
+   assert.equal(await guide.locator("details[open]").count(),1);
+   assert.ok(await guide.evaluate(el=>el.scrollWidth<=el.clientWidth+1),"family guide fits viewport");
+   assert.equal(await guide.locator('a[href="/my-project"]').count(),1,"reuse existing project workspace");
+
 
    await page.goto(base+"/",{waitUntil:"load"});
    const categoryCards=page.locator(".nbh-material-card");
