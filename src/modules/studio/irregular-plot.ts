@@ -45,20 +45,49 @@ export function envelopeFits(p:readonly PlotPoint[],r:PlotEnvelope){
 }
 /** Bounded sampled search, not a mathematically maximum rectangle. Every
  * accepted envelope is contained and starts on the measured road edge. */
-export function roadEnvelope(p:readonly PlotPoint[]):PlotEnvelope|null{
- if(validatePlot(p))return null;
+export function roadEnvelopeChoices(p:readonly PlotPoint[],limit=6):PlotEnvelope[]{
+ if(validatePlot(p))return [];
  const maxX=Math.max(...p.map(a=>a.x)),maxY=Math.max(...p.map(a=>a.y));
  const xs=[...new Set([...p.map(a=>a.x),...Array.from({length:21},(_,i)=>maxX*i/20)])].sort((a,b)=>a-b);
  const ys=[...new Set([...p.map(a=>a.y),...Array.from({length:21},(_,i)=>maxY*i/20)])].filter(y=>y>=30).sort((a,b)=>b-a);
- let best:PlotEnvelope|null=null;
+ const candidates:PlotEnvelope[]=[];
  for(let i=0;i<xs.length;i++)for(let j=i+1;j<xs.length;j++){
   const x=xs[i],w=xs[j]-x;if(w<20)continue;
   // Containment is monotonic for nested depths; binary search the candidates.
   let lo=0,hi=ys.length-1,depth=0;
   while(lo<=hi){const m=(lo+hi)>>1,d=ys[m];if(envelopeFits(p,{x,y:0,w,d})){depth=d;hi=m-1;}else lo=m+1;}
-  if(depth&&(!best||w*depth>best.w*best.d+EPS))best={x,y:0,w,d:depth};
+  if(depth)candidates.push({x,y:0,w,d:depth});
  }
- return best;
+ // Keep a bounded Pareto frontier: a wider but shallower fit can support a
+ // different programme than the maximum-area rectangle. Never retain meshes.
+ const ordered=candidates.sort((a,b)=>b.w-a.w||b.d-a.d||a.x-b.x),frontier:PlotEnvelope[]=[];
+ let deepest=0;
+ for(const r of ordered)if(r.d>deepest+EPS){frontier.push(r);deepest=r.d;}
+ const ranked=frontier.sort((a,b)=>b.w*b.d-a.w*a.d||a.x-b.x||b.w-a.w);
+ const max=Number.isFinite(limit)?Math.max(0,Math.min(8,Math.floor(limit))):6;
+ const chosen:PlotEnvelope[]=[];
+ for(const r of ranked){
+  // Prefer material differences in both available dimensions; avoid near duplicates.
+  if(chosen.some(a=>Math.abs(a.w-r.w)<Math.max(1,a.w*.08)&&Math.abs(a.d-r.d)<Math.max(1,a.d*.08)))continue;
+  if(chosen.length>=max)break;chosen.push(r);
+ }
+ return chosen;
+}
+export function roadEnvelope(p:readonly PlotPoint[]):PlotEnvelope|null{return roadEnvelopeChoices(p,1)[0]??null}
+export type PlotContext={points:PlotPoint[];offsetXFt:number};
+/** Context is measured data, not a prebuilt design. Local generator geometry
+ * is translated by the chosen road offset only when shown on the survey. */
+export function plotContextIssue(context:PlotContext,widthFt:number,depthFt:number):string|null{
+ const issue=validatePlot(context.points);if(issue)return issue;
+ if(!Number.isFinite(context.offsetXFt)||context.offsetXFt<0||!envelopeFits(context.points,{x:context.offsetXFt,y:0,w:widthFt,d:depthFt}))return "Planning envelope exceeds the measured plot. Select a contained fit or revise the survey.";
+ return null;
+}
+export function plotContextKey(context:PlotContext):string{
+ // Identity aid only, not a security digest. Exact coordinates are also bound
+ // into the signature and server-verified during save/restore.
+ const raw=JSON.stringify([context.offsetXFt,context.points.map(p=>[p.x,p.y])]);let hash=2166136261;
+ for(let i=0;i<raw.length;i++)hash=Math.imul(hash^raw.charCodeAt(i),16777619);
+ return (hash>>>0).toString(36);
 }
 export function parsePlot(text:string):PlotPoint[]|null{
  if(text.length>2048)return null;
