@@ -25,7 +25,7 @@ function friendlyAuthError(error: unknown) {
 }
 
 export function AccountAccess({next}:{next?:string}={}) {
-  const checkoutReturn=safeCheckoutReturn(next);const redirectPath=checkoutReturn?"/account/verify?"+new URLSearchParams({next:checkoutReturn}):"/account/verify";
+  const checkoutReturn=next==="/account/orders"?next:safeCheckoutReturn(next);const redirectPath=checkoutReturn?"/account/verify?"+new URLSearchParams({next:checkoutReturn}):"/account/verify";
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [user, setUser] = useState<User | null>(null);
   const [roleData, setRoleData] = useState<{ userId: string; admin: boolean; dealer: boolean } | null>(null);
