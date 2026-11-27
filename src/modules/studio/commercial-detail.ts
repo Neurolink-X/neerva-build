@@ -131,7 +131,7 @@ const frontageLanguage={
  rental:{style:"Quiet residential rhythm",materialMood:"Stone tones, slender frames and restrained glass",suitability:"Rental apartments and flats",finWidth:.35,finSpacing:5,finDepth:.5,canopyDepth:1.5}
 } as const;
 export function commercialFrontageLanguage(purpose:BuildingConcept["brief"]["purpose"]){return frontageLanguage[purpose];}
-export type FrontageDetail={id:string;kind:"fin"|"entry-hood";floor:number;x:number;y:number;widthFt:number;depthFt:number;bottomFt:number;topFt:number};
+export type FrontageDetail={id:string;kind:"fin"|"entry-hood"|"window-head"|"window-sill";floor:number;x:number;y:number;widthFt:number;depthFt:number;bottomFt:number;topFt:number};
 /** Shared elevation/render detail geometry in local, road-facing feet.
  * Place fins only on opaque frontage and entrance hoods above actual access openings.
  * Limit projections to the available front space; never create an opening or a floor. */
@@ -149,6 +149,16 @@ export function commercialFrontageDetails(plan:BuildingConcept):FrontageDetail[]
     if(openings.some(a=>x<a.x+a.length+.2&&x+style.finWidth>a.x-.2))continue;
     out.push({id:`fin-${i}-${n}`,kind:"fin",floor:p.floor,x,y:p.y,widthFt:style.finWidth,depthFt:depth,bottomFt:.8,topFt:12.5-profile.bandFt-.2});
    }
+  }
+  // Purpose-led detailing on the existing opaque strips above/below real glazing.
+  // Keep clear of the aperture and do not add any floor area or structural claim.
+  if(p.y>=.3)for(const a of openings.filter(a=>a.kind==="exterior-glazing"&&a.x>=p.x-EPS&&a.x+a.length<=p.x+p.w+EPS)){
+   const purpose=plan.brief.purpose;
+   const spread=purpose==="mall"?.45:purpose==="restaurant"?.35:.15;
+   const x=Math.max(p.x,a.x-spread),right=Math.min(p.x+p.w,a.x+a.length+spread);
+   const head=purpose==="mall"?{bottom:8.35,top:9.65,depth:1.6}:purpose==="restaurant"?{bottom:8.25,top:9.1,depth:1.15}:purpose==="school"?{bottom:8.3,top:8.65,depth:1.35}:purpose==="shops"?{bottom:8.25,top:8.85,depth:.85}:null;
+   if(head)out.push({id:`head-${i}-${a.id}`,kind:"window-head",floor:p.floor,x,y:p.y,widthFt:right-x,depthFt:Math.min(head.depth,p.y),bottomFt:head.bottom,topFt:head.top});
+   if(purpose!=="mall")out.push({id:`sill-${i}-${a.id}`,kind:"window-sill",floor:p.floor,x,y:p.y,widthFt:right-x,depthFt:Math.min(purpose==="rental"?.85:purpose==="restaurant"?.45:.35,p.y),bottomFt:purpose==="rental"?2.35:2.65,topFt:2.95});
   }
   if(p.floor!==0||p.y<1)continue;
   for(const a of openings.filter(a=>a.kind==="access"&&a.x>=p.x-EPS&&a.x+a.length<=p.x+p.w+EPS)){
