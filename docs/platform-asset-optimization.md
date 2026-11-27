@@ -1,0 +1,7 @@
+# Platform asset optimization policy
+- Use a single reviewed local source per image; Next.js responsive sizes and WebP/AVIF delivery remain enabled. Do not use a remote image URL as a replacement for a local product photo.
+- Target 120,000 bytes per stored image; prefer 40–80 KB for cards, and preserve critical detail for product labels or editable architecture. The CI audit records reviewed existing exceptions with no-growth limits. It also rejects duplicate public images and retired house references.
+- Target 150,000 bytes for other tracked files, with explicit existing exceptions. Keep lockfiles intact; split genuinely large runtime modules only after measuring route bundles. Test and documentation files are not browser JavaScript.
+- Run `node scripts/ops/prepare-image-optimizations.mjs` after installing locked dependencies to stage compression candidates in an isolated temporary directory. Review visual fidelity before publication; the tool never modifies tracked originals.
+- Content-addressed SKU images, provenance manifests and paint-mask assets must be updated atomically with hashes, references and visual tests. Do not blindly recompress or delete them.
+- Existing 16 MiB tracked-tree, 10 MiB public image and 4 MiB review-asset limits remain in place. Keep optimized responsive image requests lazy except for a genuine above-the-fold LCP image. Actual network transfer, JS bundle sizes and mobile Core Web Vitals require separate measurement.
