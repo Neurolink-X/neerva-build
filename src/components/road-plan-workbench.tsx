@@ -3,6 +3,7 @@ import {useEffect,useMemo,useRef,useState} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {SiteFooter} from "@/components/site-chrome";
+import {StudioProjectExchange} from "./studio-project-exchange";
 import {StudioPremiumTools} from "./studio-premium-tools";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
 import {planMetrics,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
@@ -187,7 +188,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
        <span><strong>{metrics.paintLitres} L</strong><small>Illustrative 2 coats, 10 m²/L</small></span></div>
       <p className="nroad-small">{metrics.note}</p>
       <Link href="/basket" className="nroad-quote">{str("Build my material list →","सामग्री सूची बनाएं →")}</Link>
-      <p className="nroad-small">Estimate is not automatically transferred into the quote. Dealer pricing and RFQ intake are currently disabled.</p></section>}
+      <p className="nroad-small">Review the quantities in Project data & material planning below before opening a quote draft.</p></section>}
+     <StudioProjectExchange key={plan.id} source={{kind:"residential",plan}}/>
      <section className="nroad-notes"><h2>{str("What still needs a professional?","क्या-क्या जाँचना बाकी है?")}</h2>
       <ul>{plan.notes.map(x=><li key={x}>{x}</li>)}</ul></section>
     </>}
