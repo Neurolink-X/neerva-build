@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildingStarter,generateBuildingConcepts} from "./building-purpose.ts";
+import {buildingStarter,generateBuildingConcepts,validateBuildingConcept,buildingPurposes} from "./building-purpose.ts";
 import {recommendBuildingConcepts,visibleInteriorSignature} from "./building-recommendations.ts";
 import {roadEnvelopeChoices,envelopeFits,parsePlot} from "./irregular-plot.ts";
 import {commercialSaveSchema,rebuildCommercialSnapshot} from "./commercial-save.ts";
@@ -28,4 +28,21 @@ test("L plot alternatives remain contained and preserve boundary identity throug
  const input=commercialSaveSchema.parse({idempotencyKey:"c71a9c10-4c52-4df4-85b7-04d0efbb181f",title:"Measured rental site",brief,planId:plan.id,signature:plan.signature,finishes:defaultFinishScheme({kind:"commercial",plan})});
  const rebuilt=rebuildCommercialSnapshot(input);assert.ok(rebuilt);assert.deepEqual(rebuilt.plan.brief.siteContext,brief.siteContext);
  assert.equal(rebuildCommercialSnapshot({...input,brief:{...brief,siteContext:{points,offsetXFt:70}}}),null);
+});
+
+test("commercial comparison matrix respects exact input, direction, parking and detailed geometry",()=>{
+ for(const purpose of buildingPurposes)for(const roadSide of ["N","E","S","W"] as const){
+  const brief={...buildingStarter(purpose),widthFt:180,depthFt:240,frontFt:40,rearFt:35,sideFt:10,floors:2,unitsPerFloor:4,parkingBays:4,roadSide,reserveLift:false};
+  const r=recommendBuildingConcepts(brief),cache=new Map<string,ReturnType<typeof generateBuildingConcepts>["plans"]>();
+  assert.ok(r.options.length>0&&r.options.length<=24);
+  const keys=new Set<string>();
+  for(const o of r.options){
+   const plans=cache.get(o.family)??generateBuildingConcepts(brief,24,o.family).plans;cache.set(o.family,plans);
+   const p=plans[o.index];assert.ok(p);assert.equal(p.id,o.id);assert.deepEqual(p.brief,brief);assert.deepEqual(validateBuildingConcept(p),[]);
+   const key=visibleInteriorSignature(p);assert.ok(!keys.has(key));keys.add(key);
+   assert.equal(p.zones.filter(z=>z.kind==="primary").length,brief.floors*brief.unitsPerFloor);
+   assert.equal(p.zones.filter(z=>z.kind==="parking").length,brief.parkingBays);
+  }
+  assert.equal(r.options.length,Math.min(24,r.distinct));
+ }
 });
