@@ -4,6 +4,7 @@ import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
 import {buildingWallCells} from "./geometry.ts";
 import {frontagePanels,frontageSignature} from "./frontage.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
+import {residentialStairStudies} from "./stair-study.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;
@@ -580,3 +581,36 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
 }
 
 
+
+/** Optional, versioned two-storey candidates: re-position reciprocal doors
+ * on the real stair bay and corridor, then verify both the programme and flight.
+ * Legacy portfolios and option indexes remain unchanged. */
+export function generateStairReadyPortfolio(b:PlanBrief,limit=24):PlanningResult{
+ const blockers=explainImpossible(b);if(blockers.length)return {plans:[],blockers};
+ if(b.floors!==2)return {plans:[],blockers:["The checked dog-leg family currently supports two levels only."]};
+ const max=Math.max(1,Math.min(24,Math.floor(limit))),plans:PlanModel[]=[],seen=new Set<string>();
+ for(const base of widePortfolio(b,24)){
+  for(const reverse of [false,true]){
+   const openings=base.openings.map(o=>({...o}));
+   let ok=true;
+   for(const floor of [0,1]){
+    const stair=base.rooms.find(r=>r.id==="wide-stair-"+floor),hall=base.rooms.find(r=>r.id==="wide-hall-"+floor);
+    if(!stair||!hall){ok=false;break}
+    const door=openings.find(o=>o.roomId===stair.id&&o.connectsTo===hall.id&&o.kind==="door"),paired=openings.find(o=>o.roomId===hall.id&&o.connectsTo===stair.id&&o.kind==="door");
+    if(!door||!paired||(door.side!=="left"&&door.side!=="right")){ok=false;break}
+    const start=(floor===0)!==reverse?.5:3.75;
+    door.atFt=start;paired.atFt=round(stair.y+start-hall.y);
+   }
+   if(!ok)continue;
+   const p:PlanModel={...base,id:base.id+"-stair-v1-"+(reverse?1:0),openings,stairs:{...base.stairs,note:"Dog-leg flight footprint and reciprocal doors checked; headroom, railing, structure and code require review."}};
+   if(validateRequestedProgramme(p,b).length||residentialStairStudies(p).studies[0]?.kind!=="dog-leg")continue;
+   const signature=planSignature(p);if(seen.has(signature))continue;
+   seen.add(signature);plans.push(p);
+   if(plans.length===max)return {plans,blockers:[]};
+  }
+ }
+ return {plans,blockers:plans.length?[]:["No dog-leg stair candidate fits the exact requested programme and door alignment. Try the standard concepts or review usable frontage with an architect."]};
+}
+export function portfolioForPlanId(b:PlanBrief,planId:string):PlanningResult{
+ return /-stair-v1-[01]$/.test(planId)?generateStairReadyPortfolio(b,24):generateSpatialPortfolio(b,24);
+}
