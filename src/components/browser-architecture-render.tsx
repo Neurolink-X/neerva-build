@@ -11,7 +11,8 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
  useEffect(()=>{const pause=()=>{if(document.hidden&&worker.current){stop();setPhase("cancelled");setMessage("Rendering stopped while this tab was hidden. You can restart when ready.");}};document.addEventListener("visibilitychange",pause);return()=>document.removeEventListener("visibilitychange",pause)},[]);
  function start(){
   stop();setHasFrame(false);setProgress(0);
-  const snapshot=capture();if(!snapshot||!snapshot.boxes.length){setPhase("error");setMessage("Open your 3D model first, then try again.");return}
+  let snapshot:RenderSnapshot|null=null;try{snapshot=capture()}catch{setPhase("error");setMessage("The selected geometry could not be prepared. Use its 2D plan or revise the inputs.");return;}if(!snapshot||!snapshot.boxes.length){setPhase("error");setMessage("Open your 3D model first, then try again.");return}
+  if(snapshot.boxes.length>2500){setPhase("error");setMessage("This building exceeds the device renderer scene budget. Use the lightweight matched concept preview. No geometry has been silently removed.");return;}
   if(typeof Worker==="undefined"){setPhase("error");setMessage("This browser does not support background rendering. Use the interactive 3D preview.");return}
   const aspect=Math.max(.5,Math.min(2,snapshot.camera.aspect??1.5));
   const device=navigator as Navigator&{deviceMemory?:number;connection?:{saveData?:boolean}};
