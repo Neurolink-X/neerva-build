@@ -1,3 +1,4 @@
+import {decorativeArt,luxuryLattice} from "./decorative-wall-art.ts";
 // Coordinates are fractions of the selected wall, clockwise from its top-left corner.
 type Point = [number, number];
 export type Motif = {points: Point[]; filled?: boolean; alpha?: number; weight?: number};
@@ -12,7 +13,7 @@ const grain=(count:number,seed:number):Motif[]=>Array.from({length:count},(_,i)=
 export const finishes = {
  plain: {name:"Plain paint", motifs:[] as Motif[]},
  bands: {name:"Pinstripes", motifs:repeat(12,i=>({...line([(i+.5)/12,0],[(i+.5)/12,1]),alpha:i%3===0?.62:.23,weight:i%3===0?1.3:.55}))},
- diamonds: {name:"Diamond lattice", motifs:repeat(13,i=>line([(i-6)/6,0],[i/6,1])).concat(repeat(13,i=>line([i/6,0],[(i-6)/6,1])))},
+ diamonds: {name:"Diamond lattice", motifs:luxuryLattice},
  grid: {name:"Square grid", motifs:[...repeat(5,i=>line([(i+1)/6,0],[(i+1)/6,1])),...repeat(3,i=>line([0,(i+1)/4],[1,(i+1)/4]))]},
  panels: {name:"Framed boxes", motifs:repeat(3,i=>box(.035+i/3,.12,.263,.76))},
  inset: {name:"Double panels", motifs:repeat(3,i=>box(.025+i/3,.1,.28,.8)).concat(repeat(3,i=>box(.045+i/3,.14,.24,.72)))},
@@ -43,8 +44,22 @@ export const finishes = {
  suede:{name:"Soft suede finish",motifs:grain(88,31)},
  microcement:{name:"Seamless microcement",motifs:grain(95,37)},
  reception:{name:"Reception feature wall",motifs:[{...box(.08,.10,.84,.80),alpha:.55,weight:1.6},...repeat(8,i=>({...line([.10+i*.033,.12],[.10+i*.033,.88]),alpha:.35,weight:1.4})),...repeat(8,i=>({...line([.66+i*.033,.12],[.66+i*.033,.88]),alpha:.35,weight:1.4}))]}
+ ,...decorativeArt
 } satisfies Record<string,{name:string;motifs:Motif[]}>;
 export type Pattern = keyof typeof finishes;
 export const patternKeys = Object.keys(finishes) as Pattern[];
-export const patternGroups={Signature:["marble","limewash","botanical","fluted","mural","brushed"],Textures:["travertine","linen","mineral","terracotta","stonewash","waterflow"],Classic:["bands","diamonds","grid","panels","inset","slimframes"],Modern:["facets","arch","split","diagonal","asymmetric","ribbed"],Architectural:["heritage","reception"],Artisan:["venetian","onyx","suede","microcement"]} as const satisfies Record<string,readonly Pattern[]>;
+// Old IDs remain valid for previously selected walls; weak filler designs are
+// excluded from the new curated chooser rather than breaking restored selections.
+export const retiredPatterns=["bands","grid","facets","diagonal","panels","travertine","mineral"] as const satisfies readonly Pattern[];
+export const patternGroups={
+ Signature:["sunDisc","orbit","layeredArches","abstractLeaves","marble","eclipse"],
+ Nature:["floralScroll","bamboo","botanical","forest","mountain","waterflow"],
+ Classic:["diamonds","inset","heritage","decoFan"],
+ Modern:["arch","split","asymmetric","mural","scallop"],
+ Textures:["limewash","linen","terracotta","brushed","stonewash"],
+ Artisan:["venetian","onyx","suede","microcement"],
+ Architectural:["fluted","ribbed","slimframes","reception"]
+} as const satisfies Record<string,readonly Pattern[]>;
 export type PatternGroup=keyof typeof patternGroups;
+export function groupForPattern(pattern:Pattern):PatternGroup{return (Object.keys(patternGroups) as PatternGroup[]).find(g=>(patternGroups[g] as readonly Pattern[]).includes(pattern))??"Signature";}
+export function isRetiredPattern(pattern:Pattern){return (retiredPatterns as readonly Pattern[]).includes(pattern);}
