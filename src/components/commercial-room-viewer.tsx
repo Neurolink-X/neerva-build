@@ -4,9 +4,10 @@ import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import type {RenderSnapshot,RenderFinish,RenderBox} from "../../public/studio-render-v1";
 type Viewer={update:(snapshot:RenderSnapshot)=>void;reset:()=>void};
-export default function CommercialRoomViewer({snapshot,exterior=false}:{snapshot:RenderSnapshot|null;exterior?:boolean}){
+export default function CommercialRoomViewer({snapshot,exterior=false,onUnavailable}:{snapshot:RenderSnapshot|null;exterior?:boolean;onUnavailable?:()=>void}){
  const host=useRef<HTMLDivElement>(null),viewer=useRef<Viewer|null>(null);
  const [unavailable,setUnavailable]=useState(false),[sceneIssue,setSceneIssue]=useState("");
+ useEffect(()=>{if(unavailable||sceneIssue)onUnavailable?.()},[unavailable,sceneIssue,onUnavailable]);
  useEffect(()=>{
   const target=host.current;if(!target)return;
   let renderer:THREE.WebGLRenderer|undefined,environment:THREE.WebGLRenderTarget|undefined,controls:OrbitControls|undefined,observer:ResizeObserver|undefined,frame=0,disposed=false;
