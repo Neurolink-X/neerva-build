@@ -2,6 +2,7 @@ import {canonicalPublicOrigin} from "@/modules/seo/site-origin";
 import {launchBrand} from "@/modules/pwa/launch-brand";
 import type { Metadata, Viewport } from "next";
 import {Suspense} from "react";
+import Script from "next/script";
 import {RealWebVitals} from "@/components/real-web-vitals";
 import {NavigationFeedback} from "@/components/navigation-feedback";
 import "./globals.css";
@@ -41,5 +42,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: launchBrand.theme, width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en-IN" style={{backgroundColor:launchBrand.background}}><body style={{backgroundColor:launchBrand.background}}><Suspense fallback={null}><NavigationFeedback/></Suspense>{children}<InstallExperience/><PlatformIncidentMonitor/><RealWebVitals/></body></html>;
+  return <html lang="en-IN" style={{backgroundColor:launchBrand.background}}><body style={{backgroundColor:launchBrand.background}}><Script src="/pwa-install-bootstrap.js" strategy="beforeInteractive"/><Suspense fallback={null}><NavigationFeedback/></Suspense>{children}<InstallExperience/><PlatformIncidentMonitor/><RealWebVitals/></body></html>;
 }
