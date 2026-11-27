@@ -18,3 +18,11 @@ test("shared material tiles are deterministic, opaque, bounded and preserve revi
  assert.equal(materialTextureBytes("tile","residential")[0],120);
  assert.equal(materialTextureBytes("tile","commercial")[0],158);
 });
+
+test("cached material templates never expose shared mutable texture memory",()=>{
+ const a=materialTextureBytes("tile","residential"),b=materialTextureBytes("tile","residential");
+ assert.notEqual(a.buffer,b.buffer);
+ a.fill(0);
+ assert.deepEqual(b,materialTextureBytes("tile","residential"));
+ assert.equal(b[3],255);
+});

@@ -3,7 +3,11 @@
 export type TexturedFinish="tile"|"marble"|"wood"|"panel"|"acp";
 export type TextureProfile="residential"|"commercial";
 export const MATERIAL_TILE_SIZE=128;
+const templates=new Map<string,Uint8Array>();
+/** Ten possible templates, at most 640 KiB per runtime. Return owned bytes so GPU consumers cannot mutate the cache. */
 export function materialTextureBytes(kind:TexturedFinish,profile:TextureProfile){
+ const key=profile+":"+kind,cached=templates.get(key);
+ if(cached)return cached.slice();
  const n=MATERIAL_TILE_SIZE,data=new Uint8Array(n*n*4);
  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
   let v:number;
@@ -16,5 +20,6 @@ export function materialTextureBytes(kind:TexturedFinish,profile:TextureProfile)
   }
   const i=(y*n+x)*4;data[i]=data[i+1]=data[i+2]=Math.max(0,Math.min(255,v));data[i+3]=255;
  }
- return data;
+ if(templates.size<10)templates.set(key,data);
+ return data.slice();
 }
