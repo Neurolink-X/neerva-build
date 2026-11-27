@@ -1,4 +1,5 @@
 "use client";
+import type {FinishScheme} from "@/modules/studio/finish-model";
 import {useMemo,useState} from "react";
 import {planFurniture} from "@/modules/studio/furniture";
 import type {Opening,PlanModel,Room} from "@/modules/studio/plan-model";
@@ -12,7 +13,7 @@ function ends(o:Opening,r:Room){
  if(o.side==="left")return [[r.x,r.y+o.atFt],[r.x,r.y+o.atFt+o.widthFt]];
  return [[r.x+r.w,r.y+o.atFt],[r.x+r.w,r.y+o.atFt+o.widthFt]];
 }
-export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number}){
+export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?:number;scheme?:FinishScheme}){
  const [showFurniture,setShowFurniture]=useState(true);
  const furniture=useMemo(()=>planFurniture(plan),[plan]);
  const {widthFt:w,depthFt:d,roadSide:side}=plan.plot,dim=siteDimensions(w,d,side);
@@ -38,7 +39,7 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
    {rooms.map(r=>{const rect=roadRect(r,w,d,side),cx=rect.x+rect.w/2,cy=rect.y+rect.d/2,small=Math.min(rect.w,rect.d)<5,label=r.kind==="bedroom"?r.label:(shortLabels[r.kind]??r.label),font=Math.min(small?.65:1.07,rect.w/(Math.max(label.length,1)*.64),rect.d*.20);
     return <g key={r.id} data-room-id={r.id} data-room-kind={r.kind}>
      <title>{r.label}</title>
-     <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={colors[r.kind]??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
+     <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={(scheme?.planId===plan.id?scheme.rooms[r.id]?.floor:undefined)??colors[r.kind]??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
      {showFurniture&&furniture.filter(p=>p.roomId===r.id).map(p=>{const b=roadRect(p,w,d,side);return <g key={p.id} data-furniture-id={p.id}><rect x={b.x} y={b.y} width={b.w} height={b.d} rx=".12" fill="#a38970" fillOpacity=".25" stroke="#806b58" strokeWidth=".09"/><title>{p.kind} · illustrative placement</title></g>})}
      <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font} data-room-label="true">{label.toUpperCase()}</text>
      <text x={cx} y={cy+(small?.6:.95)} textAnchor="middle" fill="#526955" fontSize={Math.min(small?.52:.84,rect.w*.1,rect.d*.18)}>{r.w.toFixed(1)} × {r.d.toFixed(1)} ft</text>
