@@ -94,7 +94,7 @@ const items=[
 ] as const;
 const popular=[["cement","/materials/cement"],["TMT","/materials/steel"],["bricks","/materials/bricks-blocks"],["pipes","/materials/plumbing"]] as const;
 
-export function PremiumHome({categoryCartActions}:{categoryCartActions?:Record<string,ReactNode>}={}){
+export function PremiumHome({categoryCartActions,premiumJourney=false}:{categoryCartActions?:Record<string,ReactNode>;premiumJourney?:boolean}={}){
  const cart=useShopCart();
  const [lang,setLang]=useState<Language>("en");
  const [query,setQuery]=useState(""),[recent,setRecent]=useState<string[]>([]);
@@ -147,7 +147,7 @@ export function PremiumHome({categoryCartActions}:{categoryCartActions?:Record<s
 
    </div>
    <div className="nbh-hero-visual">
-   <HomeShowcase hindi={lang==="hi"}/>
+   <HomeShowcase hindi={lang==="hi"} premiumJourney={premiumJourney}/>
    </div>
   </section>
   <section className="nbh-home-quote-wrap" aria-label={lang==="hi"?"सामग्री का कोटेशन":"Material quotation"}>    <form className="nbh-quick-quote" action="/quotes" method="get">
