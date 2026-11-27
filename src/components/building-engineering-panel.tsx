@@ -2,7 +2,8 @@
 import {useMemo,useState} from "react";
 import type {BuildingConcept} from "@/modules/studio/building-purpose";
 import {engineeringPreflight,jurisdictionSources,engineeringReferences,type Jurisdiction} from "@/modules/studio/building-engineering";
-import {buildingRenderSnapshot,type BuildingFinish} from "@/modules/studio/building-render";
+import type {FinishScheme} from "@/modules/studio/finish-model";
+import {buildingRenderSnapshot} from "@/modules/studio/building-render";
 import {roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {StudioProjectExchange} from "./studio-project-exchange";
 import {BuildingDemandWorksheet} from "./building-demand-worksheet";
@@ -20,9 +21,9 @@ function floorSvg(plan:BuildingConcept,floor:number){
  }).join("");
  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -16 '+(w+16)+' '+(d+32)+'"><rect x="-8" y="-16" width="'+(w+16)+'" height="'+(d+32)+'" fill="white"/><g font-family="Arial,sans-serif" fill="#273e32"><text x="'+w/2+'" y="-11" font-size="2.5" text-anchor="middle">NEERVA · CONCEPT ONLY · NOT FOR CONSTRUCTION</text><text x="'+w/2+'" y="-6" font-size="2" text-anchor="middle">Floor '+(floor+1)+' · road '+b.roadSide+' · north up</text><rect width="'+w+'" height="'+d+'" fill="#faf9f5" stroke="#273e32" stroke-width=".3"/><line x1="'+road.start.x+'" y1="'+road.start.y+'" x2="'+road.end.x+'" y2="'+road.end.y+'" stroke="#a56b45" stroke-width="1"/>'+zones+'<text x="'+w/2+'" y="'+(d+5)+'" font-size="2" text-anchor="middle">'+w+' × '+d+' ft · dimensions are concept zone extents</text><text x="'+w/2+'" y="'+(d+10)+'" font-size="2" text-anchor="middle">No structural, egress, MEP or municipal approval implied.</text></g></svg>';
 }
-export function BuildingEngineeringPanel({plan,floor}:{plan:BuildingConcept;floor:number}){
+export function BuildingEngineeringPanel({plan,floor,scheme}:{plan:BuildingConcept;floor:number;scheme:FinishScheme}){
  const review=useMemo(()=>engineeringPreflight(plan),[plan]),selected=review.floors.find(f=>f.floor===floor);
- const [city,setCity]=useState<Jurisdiction>("Other"),[finish,setFinish]=useState<BuildingFinish>("limestone"),[evening,setEvening]=useState(false),[view,setView]=useState<"front"|"rear">("front"),[scenario,setScenario]=useState(false);
+ const [city,setCity]=useState<Jurisdiction>("Other"),[evening,setEvening]=useState(false),[view,setView]=useState<"front"|"rear">("front"),[scenario,setScenario]=useState(false);
  const authority=jurisdictionSources[city];
  return <section className="purpose-engineering" aria-label="Building engineering preflight">
   <h2>Explore your design</h2>
@@ -35,8 +36,8 @@ export function BuildingEngineeringPanel({plan,floor}:{plan:BuildingConcept;floo
    <details><summary>City-specific authority and accessibility references</summary><label>Project city <select value={city} onChange={e=>setCity(e.target.value as Jurisdiction)}>{Object.keys(jurisdictionSources).map(c=><option key={c}>{c}</option>)}</select></label><p>{authority.authority} · {authority.state??"Jurisdiction not verified"}</p>{authority.url&&<a href={authority.url} target="_blank" rel="noreferrer">Official authority website →</a>}<p>Current plot-specific clauses and amendments must be reviewed before any compliance calculation. No automated bylaw pass is issued.</p><ul>{engineeringReferences.map(r=><li key={r.url}><a href={r.url} target="_blank" rel="noreferrer">{r.label}</a></li>)}</ul></details>
    <details><summary>Download concept drawings and review package</summary><p>Dimensioned zoning SVG for the selected floor, or the complete geometry and engineering review JSON. Neither is a signed construction drawing.</p><div className="purpose-tabs"><button type="button" onClick={()=>download("neerva-concept-floor-"+(floor+1)+".svg",floorSvg(plan,floor),"image/svg+xml")}>Download selected floor SVG</button><button type="button" onClick={()=>download("neerva-concept-review.json",JSON.stringify({notice:"CONCEPT ONLY — NOT FOR CONSTRUCTION",city,plan,review,authority,referenceSources:engineeringReferences},null,2),"application/json")}>Download full review JSON</button></div></details>
    </details>
-   <details><summary>Exterior image preview</summary><p>Create an image of your selected concept, including proposed openings and finishes. Engineering approval is required.</p><div className="purpose-tabs"><label>Finish <select value={finish} onChange={e=>setFinish(e.target.value as BuildingFinish)}><option value="limestone">Limestone tone</option><option value="concrete">Concrete tone</option><option value="terracotta">Terracotta tone</option></select></label><label>View <select value={view} onChange={e=>setView(e.target.value as typeof view)}><option value="front">Road side</option><option value="rear">Rear side</option></select></label><label><input type="checkbox" checked={evening} onChange={e=>setEvening(e.target.checked)}/> Evening light</label></div><BrowserArchitectureRender key={[plan.id,finish,evening,view].join(":")} capture={()=>buildingRenderSnapshot(plan,finish,evening,view)}/></details>
-   <StudioProjectExchange key={plan.id} source={{kind:"commercial",plan}}/>
+   <details><summary>Exterior image preview</summary><p>Create an image of your selected concept, including proposed openings and finishes. Engineering approval is required.</p><div className="purpose-tabs"><label>View <select value={view} onChange={e=>setView(e.target.value as typeof view)}><option value="front">Road side</option><option value="rear">Rear side</option></select></label><label><input type="checkbox" checked={evening} onChange={e=>setEvening(e.target.checked)}/> Evening light</label></div><BrowserArchitectureRender key={JSON.stringify([plan.id,scheme.exterior,scheme.accent,scheme.glass,evening,view])} capture={()=>buildingRenderSnapshot(plan,"limestone",evening,view,scheme)}/></details>
+   <StudioProjectExchange key={plan.id} source={{kind:"commercial",plan}} scheme={scheme}/>
   </>}
  </section>;
 }
