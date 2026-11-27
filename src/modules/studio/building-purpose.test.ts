@@ -54,3 +54,21 @@ test("purpose-led family preserves exact brief and materially changes programme 
   assert.equal(generateBuildingConcepts(b,1,"purpose-led").plans[0].signature,modern.plans[0].signature);
  }
 });
+
+test("single-loaded gallery creates real topology variation with same exact programme and legal-review boundary",()=>{
+ for(const purpose of buildingPurposes){
+  const b={...base,purpose,parkingBays:0};
+  const result=generateBuildingConcepts(b,24,"side-gallery");assert.ok(result.plans.length,purpose+" gallery");
+  assert.equal(new Set(result.plans.map(p=>p.signature)).size,result.plans.length);
+  assert.equal(generateBuildingConcepts(b,1,"side-gallery").plans[0].signature,result.plans[0].signature);
+  for(const plan of result.plans){
+   assert.equal(buildingLayoutFamily(plan.id),"side-gallery");
+   assert.deepEqual(plan.brief,b);assert.deepEqual(validateBuildingConcept(plan),[]);
+   for(let floor=0;floor<b.floors;floor++){
+    const zs=plan.zones.filter(z=>z.floor===floor),hall=zs.find(z=>z.kind==="circulation")!;
+    const functional=zs.filter(z=>!["circulation","parking","open"].includes(z.kind));
+    assert.ok(functional.every(z=>Math.abs(z.x+z.w-hall.x)<1e-6)||functional.every(z=>Math.abs(z.x-hall.x-hall.w)<1e-6));
+   }
+  }
+ }
+});
