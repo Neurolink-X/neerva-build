@@ -17,16 +17,17 @@ export function sharedOpening(a:Rect,b:Rect,width=3){
  }
  return null;
 }
-function coreRooms(z:BuildingZone,hall:BuildingZone,primary:boolean,multi:boolean):InternalSpace[]{
+function coreRooms(z:BuildingZone,hall:BuildingZone,primary:boolean,multi:boolean,includeLift:boolean):InternalSpace[]{
  if(!multi)return [];
  // Orient from the shared gallery toward the exterior. These are deliberately
  // reservations, not engineered stair flights, elevator products or egress approvals.
  const lobby=5,lift=7,stair=12;
- if(z.d<8||z.w<lobby+stair+(primary?lift:0))return [];
+ const withLift=primary&&includeLift;
+ if(z.d<8||z.w<lobby+stair+(withLift?lift:0))return [];
  const right=Math.abs(z.x+z.w-hall.x)<EPS;
  const add=(kind:string,label:string,offset:number,w:number):InternalSpace=>({id:z.id+"-"+kind,parentId:z.id,floor:z.floor,kind,label,x:right?z.x+z.w-offset-w:z.x+offset,y:z.y,w,d:z.d});
  const out=[add("lobby","Shared lobby",0,lobby)];
- if(primary){
+ if(withLift){
   // Split the strip adjoining the lobby into separate side-by-side entry bays
   // in depth, so both destinations have direct lobby access.
   const depth=z.d/2;if(depth<6||z.w-lobby<stair)return [];
@@ -35,7 +36,11 @@ function coreRooms(z:BuildingZone,hall:BuildingZone,primary:boolean,multi:boolea
   if(steps.d<6)return [];
   out.push(shaft,steps);
   if(z.w-lobby-lift>EPS){const service=add("shaft","Service reserve",lobby+lift,z.w-lobby-lift);service.d=depth;out.push(service);}
- }else out.push(add("stairs","Second stair reserve",lobby,z.w-lobby));
+ }else {
+  const service=primary&&z.w-lobby>=27?4:0;
+  out.push(add("stairs",primary?"Stair reserve":"Second stair reserve",lobby,z.w-lobby-service));
+  if(service)out.push(add("shaft","Service reserve",z.w-service,service));
+ }
  return out;
 }
 function supportRooms(z:BuildingZone,hall:BuildingZone,purpose:BuildingConcept["brief"]["purpose"],variant:number):InternalSpace[]{
@@ -57,7 +62,7 @@ export function commercialInternalSpaces(plan:BuildingConcept):InternalSpace[]{
  for(let floor=0;floor<plan.brief.floors;floor++){
   const hall=plan.zones.find(z=>z.floor===floor&&z.kind==="circulation");if(!hall)continue;
   const cores=plan.zones.filter(z=>z.floor===floor&&z.kind==="core").sort((a,b)=>a.x-b.x||a.y-b.y);
-  cores.forEach((z,i)=>out.push(...coreRooms(z,hall,i===0,plan.brief.floors>1)));
+  cores.forEach((z,i)=>out.push(...coreRooms(z,hall,i===0,plan.brief.floors>1,plan.brief.reserveLift!==false)));
   for(const z of plan.zones.filter(z=>z.floor===floor&&z.kind==="support"))out.push(...supportRooms(z,hall,plan.brief.purpose,variant));
  }
  return out;
@@ -92,6 +97,12 @@ export function commercialInternalOpenings(plan:BuildingConcept):InternalOpening
 export function internalGeometryIssues(plan:BuildingConcept){
  if(internalVariant(plan.id)===null)return [];
  const spaces=commercialInternalSpaces(plan),doors=commercialInternalOpenings(plan),issues:string[]=[];
+ for(let floor=0;floor<plan.brief.floors;floor++){
+  const here=spaces.filter(s=>s.floor===floor);
+  if(plan.brief.floors>1&&here.filter(s=>s.kind==="stairs").length!==2)issues.push("Stair reserves must be maintained on each level");
+  const expected=plan.brief.floors>1&&plan.brief.reserveLift!==false?1:0;
+  if(here.filter(s=>s.kind==="lift").length!==expected)issues.push("Lift preference not met");
+ }
  for(const parent of plan.zones.filter(z=>(z.kind==="primary"&&plan.brief.purpose==="rental")||(z.kind==="core"&&plan.brief.floors>1)||z.kind==="support")){
   const rooms=spaces.filter(r=>r.parentId===parent.id);
   if(!rooms.length){issues.push("Internal spaces do not fit");continue;}
