@@ -20,7 +20,7 @@ function Massing({plan,floor,angle}:{plan:BuildingConcept;floor:number|null;angl
  const rotate=(x:number,y:number)=>{const X=x-dim.w/2,Y=y-dim.d/2,t=angle*Math.PI/2;return [X*Math.cos(t)-Y*Math.sin(t),X*Math.sin(t)+Y*Math.cos(t)]};
  const project=(x:number,y:number,z:number)=>{const [X,Y]=rotate(x,y);return [(X-Y)*.86,(X+Y)*.44-z].join(",")};
  const faces=plan.zones.filter(z=>floor===null||z.floor===floor).flatMap(z=>{
-  const r=roadRect(z,b.widthFt,b.depthFt,b.roadSide),base=(floor===null?z.floor:0)*13,h=["parking","open"].includes(z.kind)?.25:floor===null?11:3.5;
+  const r=roadRect(z,b.widthFt,b.depthFt,b.roadSide),base=(floor===null?z.floor:0)*13,h=["parking","open"].includes(z.kind) ? .25 : floor===null?11:3.5;
   const corners=[[r.x,r.y],[r.x+r.w,r.y],[r.x+r.w,r.y+r.d],[r.x,r.y+r.d]];
   const depth=corners.reduce((sum,[x,y])=>{const [X,Y]=rotate(x,y);return sum+X+Y},0)/4;
   return [{id:z.id+"-top",depth,level:z.floor,points:corners.map(([x,y])=>project(x,y,base+h)).join(" "),fill:colors[z.kind],label:z.label},...corners.map(([x,y],i)=>{const [nx,ny]=corners[(i+1)%4];return {id:z.id+"-"+i,depth:depth-.001,level:z.floor,points:[project(x,y,base),project(nx,ny,base),project(nx,ny,base+h),project(x,y,base+h)].join(" "),fill:colors[z.kind],label:z.label}})];
@@ -42,7 +42,7 @@ export function BuildingPurposeStudio(){
   <header><span className="eyebrow">NEERVA BUILDING STUDIO · FEASIBILITY CONCEPTS</span><h1>Plan beyond your home.</h1><p>Choose a building purpose, enter exact site dimensions and compare up to 24 distinct zoning arrangements. Family homes use the dedicated residential planner.</p><Link className="button button-outline" href="/design-studio#start">Family home / BHK planner →</Link></header>
   <form onSubmit={submit} className="purpose-form">
    <label>Building purpose<select value={draft.purpose} onChange={e=>selectPurpose(e.target.value as BuildingPurpose)}>{buildingPurposes.map(p=><option key={p} value={p}>{purposeDetails[p].title}</option>)}</select></label>
-   {([["widthFt","Frontage (ft)",20,500],["depthFt","Depth (ft)",30,600],["floors","Total floors",1,6],["unitsPerFloor",info.unit+"s per floor",1,24],["parkingBays","Parking reservations",0,40],["frontFt","Front open depth (ft)",info.front,300],["rearFt","Rear open depth (ft)",info.back,300],["sideFt","Open margin each side (ft)",0,100]] as const).map(([key,label,min,max])=><label key={key}>{label}<input type="number" required min={min} max={max} step={["floors","unitsPerFloor","parkingBays"].includes(key)?1:"any"} value={draft[key]} onChange={e=>update(key,e.target.valueAsNumber)}/></label>)}
+   {([["widthFt","Frontage (ft)",20,500],["depthFt","Depth (ft)",30,600],["floors","Total floors",1,6],["unitsPerFloor",info.unit+"s per floor",1,24],["parkingBays","Parking reservations",0,40],["frontFt","Front open depth (ft)",info.front,300],["rearFt","Rear open depth (ft)",info.back,300],["sideFt","Open margin each side (ft)",0,100]] as const).map(([key,label,min,max])=><label key={key}>{label}<input type="number" required min={min} max={max} step={["floors","unitsPerFloor","parkingBays"].includes(key)?1:"any"} value={Number.isFinite(draft[key])?draft[key]:""} onChange={e=>update(key,e.target.valueAsNumber)}/></label>)}
    <label>Road direction<select value={draft.roadSide} onChange={e=>update("roadSide",e.target.value as BuildingBrief["roadSide"])}>{["N","E","S","W"].map(s=><option key={s}>{s}</option>)}</select></label>
    <button className="button button-dark" type="submit">Generate distinct concepts →</button>
   </form>
