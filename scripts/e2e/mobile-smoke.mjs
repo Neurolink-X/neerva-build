@@ -13,6 +13,35 @@ async function main(){
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
  const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
  try{
+  // Exercise every commercial purpose, not merely HTTP route availability.
+  for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
+   const ctx=await browser.newContext({viewport});
+   try{
+    const page=await ctx.newPage(),errors=[];page.on("pageerror",e=>errors.push(e.message));
+    const response=await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});assert.equal(response?.status(),200);
+    const studio=page.locator(".purpose-studio");
+    for(const purpose of ["mall","school","restaurant","shops","rental"]){
+     await studio.getByLabel("Building purpose").selectOption(purpose);
+     await studio.getByRole("button",{name:/Load example inputs/}).click();
+     await studio.getByRole("button",{name:/Generate distinct concepts/}).click();
+     const plan=studio.getByRole("img",{name:/Purpose-specific zoning/});
+     await plan.waitFor({state:"visible"});
+     const planId=await plan.getAttribute("data-plan-id");
+     assert.ok(planId?.startsWith(purpose+"-"),purpose+" selected geometry");
+     const massing=studio.locator(".purpose-views svg").nth(1);
+     assert.equal(await massing.getAttribute("data-plan-id"),planId);
+     const choices=studio.getByRole("group",{name:"Choose zoning option"}).getByRole("button");
+     assert.ok(await choices.count()>0);
+     if(await choices.count()>1){await choices.nth(1).click();assert.notEqual(await plan.getAttribute("data-plan-id"),planId);assert.equal(await plan.getAttribute("data-plan-id"),await massing.getAttribute("data-plan-id"));}
+     const floors=studio.getByRole("group",{name:"Floor selection"}).getByRole("button");
+     if(await floors.count()>1){await floors.nth(1).click();assert.equal(await plan.getAttribute("data-floor"),"1");assert.equal(await massing.getAttribute("data-floor"),"1");}
+     assert.ok(await studio.evaluate(e=>e.scrollWidth<=e.clientWidth+2),purpose+" studio overflow");
+    }
+    const anonymous=await page.request.get(base+"/api/studio/commercial-projects");
+    assert.ok([401,503].includes(anonymous.status()),"anonymous commercial projects must not be disclosed");
+    assert.deepEqual(errors,[]);
+   }finally{await ctx.close()}
+  }
   // Cold and repeat navigation on a constrained connection. Do not confuse
   // simulated local Chromium timings with field Web Vitals.
   for(const profile of [{name:"slow-3g",latency:400,download:400000/8,upload:200000/8},{name:"weak-4g",latency:150,download:1500000/8,upload:750000/8}]){
