@@ -93,6 +93,7 @@ const manifest={
  "/api/studio/payments":["GET","POST","DELETE"],
  "/api/studio/premium-report":["POST"],
  "/api/studio/projects":["GET","POST"],
+ "/api/studio/commercial-projects":["GET","POST"],
  "/api/studio/projects/[id]":["GET"],
  "/api/studio/support":["GET","POST"]
 };
@@ -113,7 +114,7 @@ test("every API route is accounted for by the role and method contract",()=>{
   }else if(route.startsWith("/api/dealer/")){
    assert.match(code,/requireDealer/,route+" must check approved dealer + tenant roles");
   }else if(route.startsWith("/api/customer/")||route==="/api/orders"||route==="/api/direct-orders"||route==="/api/rfqs"||
-   /^\/api\/studio\/(?:payments|projects|support|premium-report)(?:\/|$)/.test(route)){
+   /^\/api\/studio\/(?:payments|projects|commercial-projects|support|premium-report)(?:\/|$)/.test(route)){
    assert.match(code,/requireAuth/,route+" must authenticate the caller");
   }
  }
@@ -222,4 +223,9 @@ test("production UI never embeds obvious demo contacts or hardcoded contact dest
   if(suspicious.test(source))violations.push(relative(resolve("."),file));
  }
  assert.deepEqual(violations,[],"Remove demo contact details from production UI; use actual account data or the support form");
+});
+
+test("commercial project storage is authenticated, owner-scoped and disabled until rollout",()=>{
+ const code=readFileSync(api.get("/api/studio/commercial-projects"),"utf8");
+ assert.match(code,/requireAuth/);assert.match(code,/COMMERCIAL_PROJECT_STORAGE_ENABLED/);assert.match(code,/\.eq\("owner_id",auth\.userId\)/);assert.match(code,/owner_id:auth\.userId/);assert.match(code,/rebuildCommercialSnapshot/);
 });
