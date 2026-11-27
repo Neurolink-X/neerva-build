@@ -74,6 +74,13 @@ assert.equal(commercial.status,200);assert.match(commercial.headers.get("cache-c
 const availability=await commercial.json();
 assert.equal(availability.enabled,false);assert.deepEqual(availability.projects,[]);assert.equal(availability.reason,"storage_not_enabled");
 await check("/api/studio/commercial-projects","POST",customer,[503],"rollout_disabled");
+// A direct request for bulk aggregate must use the quotation path even if
+// the client is stale or calls the API directly.
+const quoteOnlyKey=randomUUID();
+const quoteOnly=await fetch("http://127.0.0.1:3000/api/direct-orders",{method:"POST",headers:{Authorization:"Bearer "+customer,"Content-Type":"application/json"},body:JSON.stringify({idempotencyKey:quoteOnlyKey,category:"aggregates",productSlug:"morang-coarse-sand",quantity:1,unit:"cubic_metre",contactName:"Isolated test",phone:"9876543210",city:"Kanpur",pincode:"208001",deliveryAddress:"Isolated test address only",notes:"",consent:true}),signal:AbortSignal.timeout(10000)});
+assert.equal(quoteOnly.status,422);assert.equal((await quoteOnly.json()).code,"QUOTE_REQUIRED");
+const rejected=await customerIdentity.client.from("direct_orders").select("id",{head:true,count:"exact"}).eq("idempotency_key",quoteOnlyKey);
+assert.ifError(rejected.error);assert.equal(rejected.count,0,"quote-only rejection must not create an order");
 for(const row of results)console.log(JSON.stringify(row));
 assert.deepEqual(results.filter(r=>!r.ok),[],"API connectivity or authorization failure");
 console.log(JSON.stringify({routes:manifest.length,methods:manifest.reduce((n,r)=>n+r.methods.length,0),checks:results.length,status:"passed"}));
