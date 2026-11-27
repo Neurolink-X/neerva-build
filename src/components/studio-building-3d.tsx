@@ -13,7 +13,7 @@ import {finishSpaces,wallFaceOwners,wallShade,type FinishScheme,type FinishMater
 import type {Side} from "@/modules/studio/plan-model";
 import type {PlanModel} from "@/modules/studio/plan-model";
 import {threeRoadRotation} from "@/modules/studio/plan-coordinate";
-import {residentialStairStudies} from "@/modules/studio/stair-study";
+import {residentialStairStudies,stairFloorPatches} from "@/modules/studio/stair-study";
 import {planFurniture} from "@/modules/studio/furniture";
 import {facadeAccents,frontageSignature} from "@/modules/studio/frontage";
 import {exposedRoofPatches} from "@/modules/studio/plan-surfaces";
@@ -108,7 +108,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    if(planModel){
     // Phase 1 bridge: do not place a giant slab above the open parking bay or rear terrace.
     for(const r of planModel.rooms.filter(r=>visible(r.floor)&&!["parking","verandah"].includes(r.kind))){
-     box(xCoord(r.x+r.w/2),r.floor*height,zCoord(r.y+r.d/2),r.w*FT,.14,r.d*FT,concrete,false);
+     for(const patch of stairFloorPatches(r,stairReview?.studies??[]))box(xCoord(patch.x+patch.w/2),r.floor*height,zCoord(patch.y+patch.d/2),patch.w*FT,.14,patch.d*FT,concrete,false);
     }
    }else for(let f=0;f<design.floors;f++)if(visible(f))box(cx,f*height,cz,W,.14,D,concrete,false);
    const instances=new THREE.InstancedMesh(shared,wall,wallCells.length),dummy=new THREE.Object3D();
@@ -147,7 +147,9 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    }
    const floorSurfaces={bath:material("#c7d5d6"),bedroom:material("#dbc7aa"),kitchen:material("#d7d9cf"),stairs:concrete};
    for(const r of design.layout.rooms){if(!visible(r.floorIndex)||r.kind==="open"||r.kind==="parking")continue;const surface=planModel?bindFinish(r.id,"floor","#c9b69d"):r.kind==="bath"||r.kind==="bedroom"||r.kind==="kitchen"||r.kind==="stairs"?floorSurfaces[r.kind]:floorMat;
-    box(xCoord(r.xFt+r.wFt/2),r.floorIndex*height+.09,zCoord(r.yFt+r.dFt/2),r.wFt*FT-.03,.025,r.dFt*FT-.03,surface,false);
+    const sourceRoom=planModel?.rooms.find(room=>room.id===r.id);
+    const patches=sourceRoom?stairFloorPatches(sourceRoom,stairReview?.studies??[]):[{x:r.xFt,y:r.yFt,w:r.wFt,d:r.dFt}];
+    for(const patch of patches)if(patch.w*FT>.03&&patch.d*FT>.03)box(xCoord(patch.x+patch.w/2),r.floorIndex*height+.09,zCoord(patch.y+patch.d/2),patch.w*FT-.03,.025,patch.d*FT-.03,surface,false);
     if(mode==="walkthrough"&&r.kind!=="stairs"&&planModel)box(xCoord(r.xFt+r.wFt/2),(r.floorIndex+1)*height-.08,zCoord(r.yFt+r.dFt/2),r.wFt*FT-.03,.02,r.dFt*FT-.03,bindFinish(r.id,"ceiling","#ffffff"),false);
    }
    if(planModel&&mode!=="exterior"){
@@ -172,7 +174,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    // A bay is not a staircase. Render only checked flights and landings.
    // Solid risers avoid the floating tread illusion; no invented flight in a narrow reserve.
    for(const stair of stairReview?.studies.filter(s=>visible(s.floor))??[]){
-    for(const step of stair.steps)box(xCoord(step.x+step.w/2),stair.floor*height+step.topFt*FT/2,zCoord(step.y+step.d/2),step.w*FT,step.topFt*FT,step.d*FT,concrete);
+    for(const step of stair.steps){const thickness=Math.min(step.topFt,stair.kind==="dog-leg"?.65:step.topFt)*FT;box(xCoord(step.x+step.w/2),stair.floor*height+step.topFt*FT-thickness/2,zCoord(step.y+step.d/2),step.w*FT,thickness,step.d*FT,concrete);}
     for(const landing of stair.landings.filter(l=>l.topFt>0))box(xCoord(landing.x+landing.w/2),stair.floor*height+landing.topFt*FT-.07,zCoord(landing.y+landing.d/2),landing.w*FT,.14,landing.d*FT,concrete);
    }
    for(const r of planModel?.rooms.filter(r=>r.kind==="balcony"&&visible(r.floor))??[]){
