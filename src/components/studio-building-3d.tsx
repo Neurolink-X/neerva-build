@@ -174,8 +174,8 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    // A bay is not a staircase. Render only checked flights and landings.
    // Solid risers avoid the floating tread illusion; no invented flight in a narrow reserve.
    for(const stair of stairReview?.studies.filter(s=>visible(s.floor))??[]){
-    for(const step of stair.steps){const thickness=Math.min(step.topFt,stair.kind==="dog-leg"?.65:step.topFt)*FT;box(xCoord(step.x+step.w/2),stair.floor*height+step.topFt*FT-thickness/2,zCoord(step.y+step.d/2),step.w*FT,thickness,step.d*FT,concrete);}
-    for(const landing of stair.landings.filter(l=>l.topFt>0))box(xCoord(landing.x+landing.w/2),stair.floor*height+landing.topFt*FT-.07,zCoord(landing.y+landing.d/2),landing.w*FT,.14,landing.d*FT,concrete);
+    for(const step of stair.steps){const thickness=step.topFt*FT;box(xCoord(step.x+step.w/2),stair.floor*height+step.topFt*FT-thickness/2,zCoord(step.y+step.d/2),step.w*FT,thickness,step.d*FT,concrete);}
+    for(const landing of stair.landings.filter(l=>l.topFt>0)){const thickness=landing.topFt<design.layout.wallHeightFt?landing.topFt*FT:.14;box(xCoord(landing.x+landing.w/2),stair.floor*height+landing.topFt*FT-thickness/2,zCoord(landing.y+landing.d/2),landing.w*FT,thickness,landing.d*FT,concrete);}
    }
    for(const r of planModel?.rooms.filter(r=>r.kind==="balcony"&&visible(r.floor))??[]){
     const center=xCoord(r.x+r.w/2),front=zCoord(r.y),y=r.floor*height;
