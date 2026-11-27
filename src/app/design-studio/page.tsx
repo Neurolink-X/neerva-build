@@ -19,6 +19,7 @@ export default function DesignStudioPage(){
    </div>
    <div className="nstudio-photo"><Image src={homeReferencePhotos[1].src} fill priority sizes="(max-width:820px) 100vw, 45vw" alt="Real photograph of a premium house, shown as visual inspiration rather than a generated design"/><span>Real residential photography · style inspiration only</span></div>
   </section>
+  <section className="nstudio-reality"><strong>Planning a commercial or rental building?</strong><p>Explore purpose-specific concept layouts for malls, schools, restaurants, shops and rental units without changing the residential BHK planner.</p><Link className="button button-dark" href="/design-studio/buildings">Open Building Studio →</Link></section>
   <section className="nstudio-start" id="start"><div><p className="eyebrow">START HERE · ABOUT ONE MINUTE</p><h2>Tell us your plot size.</h2><p>We&apos;ll use the same dimensions when drawing room layouts and viewing the matching 3D building. Your road and car gate should face the same side.</p></div><StudioStartForm/></section>
   <section className="nstudio-choices" aria-labelledby="nstudio-next"><p className="eyebrow">EXPLORE WITH CONFIDENCE</p><h2 id="nstudio-next">Choose what you want to do.</h2><p>Try basic design and colour samples free. Optional one-time upgrades unlock detailed personal planning reports. <Link href="/studio-pricing">Compare Studio plans →</Link></p>
    <div className="nstudio-choice-grid">
