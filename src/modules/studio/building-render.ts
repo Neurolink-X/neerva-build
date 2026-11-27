@@ -18,9 +18,10 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
  const push=(lo:Vec3,hi:Vec3,color:Vec3,rough=.8,material?:FinishScheme['cladding'])=>boxes.push({lo,hi,color,rough,metal:0,opacity:1,finish:material});
  const selected=scheme?.planId===plan.id?scheme:undefined;
  const wall:Vec3=selected?shadeRgb(selected.exterior):[...finishes[finish]];
- push([x(0)-8,-.4,z(0)-8],[x(widthFt)+8,-.23,z(depthFt)+8],[.24,.32,.21]);
+ const margin=Math.max(1.2,Math.min(3.2,Math.min(widthFt,depthFt)*ft*.08));
+ push([x(0)-margin,-.4,z(0)-margin-2],[x(widthFt)+margin,-.23,z(depthFt)+margin],[.24,.32,.21]);
  push([x(0),-.23,z(0)],[x(widthFt),0,z(depthFt)],[.40,.43,.38]);
- push([x(0)-6,-.22,z(0)-5],[x(widthFt)+6,-.02,z(0)],[.16,.18,.19]);
+ push([x(0)-margin,-.22,z(0)-margin-2],[x(widthFt)+margin,-.02,z(0)],[.16,.18,.19]);
  const elements=commercialElements(plan);
  for(const r of plan.zones.filter(z=>z.kind==="open"||z.kind==="parking"))push([x(r.x),0,z(r.y)],[x(r.x+r.w),.12*ft,z(r.y+r.d)],r.kind==="open"?[.30,.43,.24]:[.33,.35,.35]);
  for(const s of elements.slabs)push([x(s.x),(s.floor*13+s.bottom)*ft,z(s.y)],[x(s.x+s.w),(s.floor*13+s.top)*ft,z(s.y+s.d)],[.46,.48,.45]);
@@ -43,6 +44,9 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
   if(right-left<.6)continue;
   const band=profile.bandFt*ft;
   push([left,top-band,plane-.11],[right,top,plane-.03],accent,.65,selected?.cladding);
+  // Shallow, presentation-only trim, above existing 8 ft openings.
+  const trim=Math.min(.045,band*.18);
+  push([left,top-band,plane-.14],[right,top-band+trim,plane-.11],frame,.48);
  }
  for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
   // Frame stays strictly inside the aperture and leaves the existing opening intact.

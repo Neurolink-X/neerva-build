@@ -56,3 +56,13 @@ test("all five purpose facades use the shared band size and preserve the selecte
  }
  assert.equal(profiles.size,buildingPurposes.length);
 });
+
+test("commercial presentation site remains compact and all structural geometry stays inside the selected plot",()=>{
+ for(const purpose of buildingPurposes){
+  const plan=generateBuildingConcepts(buildingStarter(purpose),1).plans[0];assert.ok(plan);
+  const {widthFt,depthFt}=plan.brief,s=buildingRenderSnapshot(plan),ground=s.boxes[0],margin=Math.max(1.2,Math.min(3.2,Math.min(widthFt,depthFt)*.3048*.08));
+  assert.ok(Math.abs(ground.hi[0]-ground.lo[0]-(widthFt*.3048+2*margin))<1e-8);
+  assert.ok(Math.abs(ground.hi[2]-ground.lo[2]-(depthFt*.3048+2*margin+2))<1e-8);
+  assert.ok(s.boxes.every(b=>b.hi.every((v,i)=>Number.isFinite(v)&&v>b.lo[i])));
+ }
+});

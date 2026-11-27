@@ -48,11 +48,11 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
     if(preset==="front")dir.set(0,.08,-1).normalize();else if(preset==="rear")dir.set(0,.08,1).normalize();else if(preset==="top")dir.set(0,1,-.001).normalize();else if(dir.lengthSq()<.1)dir.set(1,.6,-1).normalize();
     const right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),dir).normalize(),up=new THREE.Vector3().crossVectors(dir,right).normalize();
     const tanY=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-    let fit=1;const radius=bounds.getSize(new THREE.Vector3()).length()/2;
+    let fit=1;
     for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]){
-     const p=new THREE.Vector3(x,y,z).sub(center);fit=Math.max(fit,p.dot(dir)+1.22*Math.max(Math.abs(p.dot(right))/(tanY*Math.max(.1,camera.aspect)),Math.abs(p.dot(up))/tanY));
+     const p=new THREE.Vector3(x,y,z).sub(center);fit=Math.max(fit,p.dot(dir)+1.12*Math.max(Math.abs(p.dot(right))/(tanY*Math.max(.1,camera.aspect)),Math.abs(p.dot(up))/tanY));
     }
-    if(preset==="fit"){const halfY=THREE.MathUtils.degToRad(camera.fov/2),halfX=Math.atan(Math.tan(halfY)*camera.aspect);fit=Math.max(fit,radius/Math.sin(Math.min(halfX,halfY))*1.06);}
+    // Fit the actual projected bounds, not an enclosing sphere: wide commercial sites otherwise shrink excessively on phones.
     controls.target.copy(center);controls.maxDistance=Math.max(fit*3,50);camera.far=Math.max(2000,fit*5);camera.position.copy(center).addScaledVector(dir,fit);camera.updateProjectionMatrix();
    }else controls.target.copy(camera.position).add(new THREE.Vector3(...c.forward).multiplyScalar(2));
    controls.update();schedule();
@@ -109,12 +109,12 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
     }
     for(const lamp of lamps)scene.remove(lamp);lamps.length=0;
     for(const source of (next.lights??[]).slice(0,4)){if(!source.position.every(Number.isFinite)||!source.color.every(Number.isFinite)||!Number.isFinite(source.power)||source.power<0)continue;const lamp=new THREE.PointLight(new THREE.Color().setRGB(...source.color,THREE.SRGBColorSpace),Math.min(source.power,100),0,2);lamp.position.fromArray(source.position);scene.add(lamp);lamps.push(lamp);}
-    scene.background=new THREE.Color(next.evening?0x8895a9:0xe1e8ec);ambient.intensity=next.evening?1.1:1.4;sun.intensity=next.evening?1.7:2.5;sun.color.set(next.evening?0xffc48b:0xfff3da);if(renderer)renderer.shadowMap.needsUpdate=true;schedule();
+    scene.background=new THREE.Color(next.evening?0x8895a9:0xe1e8ec);ambient.intensity=next.evening?.95:.95;sun.intensity=next.evening?1.7:2.15;sun.color.set(next.evening?0xffc48b:0xfff3da);if(renderer)renderer.shadowMap.needsUpdate=true;schedule();
    }};
    document.addEventListener("visibilitychange",schedule);
   }catch{queueMicrotask(()=>{if(!disposed)setUnavailable(true)})}
   return()=>{disposed=true;viewer.current=null;cancelAnimationFrame(frame);document.removeEventListener("visibilitychange",schedule);observer?.disconnect();controls?.dispose();clear();geometry.dispose();for(const t of cache.values())t.dispose();plaster?.dispose();environment?.dispose();renderer?.domElement.removeEventListener("webglcontextlost",contextLost);renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement);};
  },[exterior]);
  useEffect(()=>{if(snapshot)viewer.current?.update(snapshot)},[snapshot]);
- return <section aria-label={exterior?"Interactive commercial building":"Interactive commercial room"} data-room-viewer><div ref={host} hidden={unavailable||!snapshot||!!sceneIssue} style={{width:"100%",height:"clamp(240px,48vw,440px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{!snapshot||sceneIssue?<p role="status">{sceneIssue||"No valid scene is available for the selected input."}</p>:unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<div className="commercial-camera-controls" role="group" aria-label="Commercial camera views"><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>{exterior&&<><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("front")}>Street view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("rear")}>Rear view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("top")}>Top view</button></>}</div>}</section>;
+ return <section aria-label={exterior?"Interactive commercial building":"Interactive commercial room"} data-room-viewer><div ref={host} hidden={unavailable||!snapshot||!!sceneIssue} style={{width:"100%",height:"clamp(280px,57vw,480px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{!snapshot||sceneIssue?<p role="status">{sceneIssue||"No valid scene is available for the selected input."}</p>:unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<div className="commercial-camera-controls" role="group" aria-label="Commercial camera views"><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>{exterior&&<><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("front")}>Street view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("rear")}>Rear view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("top")}>Top view</button></>}</div>}</section>;
 }
