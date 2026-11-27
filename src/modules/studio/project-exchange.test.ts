@@ -17,7 +17,7 @@ test("residential and commercial share one versioned exchange without inventing 
   assert.ok(model.quantities.filter(q=>q.category!==null).every(q=>q.category==="paint"));
   if(source.kind==="commercial")assert.ok(model.quantities.every(q=>q.category===null));
  }
- const bad={kind:"commercial",plan:{...c,zones:[]}} as const;
+ const bad:ProjectSource={kind:"commercial",plan:{...c,zones:[]}};
  assert.deepEqual(conceptTakeoff(bad),[]);await assert.rejects(createProjectExchange(bad));
 });
 test("procurement handoff rejects mismatched unit, fractional pieces and missing specification",()=>{
