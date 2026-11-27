@@ -1,7 +1,7 @@
 "use client";
 import type {FinishScheme} from "@/modules/studio/finish-model";
 import {useMemo,useState} from "react";
-import {residentialStairStudies} from "@/modules/studio/stair-study";
+import {residentialStairStudies,stairFloorPatches} from "@/modules/studio/stair-study";
 import {planFurniture} from "@/modules/studio/furniture";
 import type {Opening,PlanModel,Room} from "@/modules/studio/plan-model";
 import {roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
@@ -42,6 +42,7 @@ export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?
     return <g key={r.id} data-room-id={r.id} data-room-kind={r.kind}>
      <title>{r.label}</title>
      <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={(scheme?.planId===plan.id?scheme.rooms[r.id]?.floor:undefined)??colors[r.kind]??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
+     {r.kind==="stairs"&&stairs.studies.some(s=>s.upperRoomId===r.id)&&<><rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill="#faf9f6" stroke="#826b50" strokeDasharray=".3 .2" strokeWidth=".12"/>{stairFloorPatches(r,stairs.studies).map((patch,i)=>{const b=roadRect(patch,w,d,side);return <rect key={i} x={b.x} y={b.y} width={b.w} height={b.d} fill="#a9c4ab" stroke="#516b52" strokeWidth=".12"><title>Landing at selected floor</title></rect>})}</>}
      {showFurniture&&furniture.filter(p=>p.roomId===r.id).map(p=>{const b=roadRect(p,w,d,side);return <g key={p.id} data-furniture-id={p.id}><rect x={b.x} y={b.y} width={b.w} height={b.d} rx=".12" fill="#a38970" fillOpacity=".25" stroke="#806b58" strokeWidth=".09"/><title>{`${p.kind} · illustrative placement`}</title></g>})}
      <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font} data-room-label="true">{label.toUpperCase()}</text>
      <text x={cx} y={cy+(small?.6:.95)} textAnchor="middle" fill="#526955" fontSize={Math.min(small?.52:.84,rect.w*.1,rect.d*.18)}>{r.w.toFixed(1)} × {r.d.toFixed(1)} ft</text>
@@ -62,6 +63,6 @@ export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?
   <div className="nroad-legend"><span>Road {side} · {plan.plot.siteShape&&plan.plot.siteShape.kind!=="rectangle"?"measured L-site outline, conservative no-build strip":"true compass orientation"}</span><span>{plan.parking?"Brown: doors & car gate":"Brown: doors"}</span><span>Blue: windows</span><span>Green: pedestrian gate</span></div>
   <p className="nroad-small">Open margins are unbuilt concept space, not extra rooms or confirmed legal setbacks. Front {plan.setbacks.frontFt.toFixed(1)} ft · rear {plan.setbacks.rearFt.toFixed(1)} ft · left {plan.setbacks.leftFt.toFixed(1)} ft · right {plan.setbacks.rightFt.toFixed(1)} ft.</p>
   <details><summary>Room dimensions & opening list</summary><ul>{rooms.map(r=><li key={r.id}><strong>{r.label}</strong> — {r.w.toFixed(1)} × {r.d.toFixed(1)} ft · {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="door").length} doors / {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="window").length} windows</li>)}</ul></details>
-  {rooms.some(r=>stairs.unresolved.includes(r.id))&&<p className="nroad-small" role="status"><strong>Stair reserve needs design:</strong> no usable straight flight and end landings established. Turning stair, headroom and access need architectural review.</p>}<p className="nroad-small">Furniture is indicative; missing items did not fit the clearance check. Concept only. Verify with a licensed architect/engineer and local authority approval. Stairs, turning and legal setbacks remain unchecked.</p>
+  {rooms.some(r=>stairs.unresolved.includes(r.id))&&<p className="nroad-small" role="status"><strong>Stair reserve needs design:</strong> No supported flight and aligned landings were established. Stair layout and headroom need architectural review.</p>}<p className="nroad-small">Furniture is indicative; missing items did not fit the clearance check. Concept only. Verify with a licensed architect/engineer and local authority approval. Stair structural sizing, railings and legal setbacks remain unverified.</p>
  </section>;
 }
