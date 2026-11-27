@@ -19,12 +19,13 @@ export function StudioSupportForm(){
   finally{if(identity.current===userId&&version===historyVersion.current)setLoading(false);}
  }
  useEffect(()=>{
-  const client=createNeervaBrowserClient();let active=true;
+  const client=createNeervaBrowserClient();let active=true,authEventObserved=false;
   if(!client){queueMicrotask(()=>{if(active){setAccountError("Account service is unavailable. Please try again later.");setReady(true)}});return()=>{active=false}}
-  function apply(id:string|null){if(!active)return;setReady(true);if(identity.current===id)return;identity.current=id;historyVersion.current++;setAccount(id);setTickets([]);setOrders([]);setOrdersUnavailable(false);setManualOrder(false);setNotice(null);setHistoryError("");setLoading(false);setMessage("");setOrderId("");requestKey.current=null;if(id)void load(id)}
-  const {data:listener}=client.auth.onAuthStateChange((_event,session)=>{if(active)queueMicrotask(()=>apply(session?.user.id??null))});
-  void client.auth.getSession().then(s=>{if(active&&s.error)setAccountError("Unable to verify your session. Sign in again.");apply(s.data.session?.user.id??null)}).catch(()=>{if(active)setAccountError("Unable to verify your session. Sign in again.");apply(null)});
-  return()=>{active=false;identity.current=null;historyVersion.current++;listener.subscription.unsubscribe()};
+  function invalidate(){historyVersion.current++;}
+  function apply(id:string|null){if(!active)return;setReady(true);if(identity.current===id)return;identity.current=id;invalidate();setAccount(id);setTickets([]);setOrders([]);setOrdersUnavailable(false);setManualOrder(false);setNotice(null);setHistoryError("");setLoading(false);setMessage("");setOrderId("");requestKey.current=null;if(id)void load(id)}
+  const {data:listener}=client.auth.onAuthStateChange((_event,session)=>{authEventObserved=true;if(active)queueMicrotask(()=>{setAccountError("");apply(session?.user.id??null)})});
+  void client.auth.getSession().then(s=>{if(!active||authEventObserved)return;if(s.error)setAccountError("Unable to verify your session. Sign in again.");apply(s.data.session?.user.id??null)}).catch(()=>{if(!active||authEventObserved)return;setAccountError("Unable to verify your session. Sign in again.");apply(null)});
+  return()=>{active=false;identity.current=null;invalidate();listener.subscription.unsubscribe()};
  },[]);
  useEffect(()=>{if(notice)feedback.current?.focus()},[notice]);
  async function submit(e:FormEvent<HTMLFormElement>){
