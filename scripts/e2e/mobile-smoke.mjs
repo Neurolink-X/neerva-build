@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import {assessPerformance} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
+const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/learn/property-guide","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -398,6 +398,12 @@ async function main(){
    assert.equal(await guide.locator("details[open]").count(),1);
    assert.ok(await guide.evaluate(el=>el.scrollWidth<=el.clientWidth+1),"family guide fits viewport");
    assert.equal(await guide.locator('a[href="/my-project"]').count(),1,"reuse existing project workspace");
+   await guide.locator('a[href="/learn/property-guide"]').click();
+   await page.locator(".property-guide").waitFor();
+   assert.equal(await page.locator(".property-checks input[type=checkbox]").count(),12);
+   assert.equal(await page.locator(".property-documents dt").count(),8);
+   for(const img of await page.locator(".property-chapter-intro img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());assert.ok(await img.evaluate(el=>el.naturalWidth>0&&el.getAttribute("src").startsWith("/images/knowledge/")));}
+   assert.ok(await page.locator(".property-guide").evaluate(el=>el.scrollWidth<=el.clientWidth+1),"property guide remains responsive");
 
 
    await page.goto(base+"/",{waitUntil:"load"});
@@ -991,7 +997,7 @@ async function main(){
   assert.equal(await page.getByLabel("Your quoted rate (₹/sq ft)").inputValue(),"","no assumed market rate");
   await page.getByText("Budget is optional.",{exact:false}).waitFor();
   await page.getByRole("button",{name:"Brick wall",exact:true}).click();
-    const academyCount=await page.locator("#academy-lesson-list > article").count();
+    const academyCount=await page.locator("#academy-lesson-list > a").count();
     assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
     await page.getByRole("searchbox",{name:"Search the construction handbook"}).fill("foundation");
     await page.getByRole("link",{name:"Soil, foundations & underground",exact:true}).click();
