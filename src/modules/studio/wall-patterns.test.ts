@@ -4,10 +4,12 @@ import {finishes,patternKeys,patternGroups,type Motif} from "./wall-patterns.ts"
 import {colourFamilies,colourPairings} from "./colour-families.ts";
 test("every non-plain design is in exactly one bounded collection",()=>{
  const keys=Object.values(patternGroups).flat();
- assert.equal(keys.length,19);
+ assert.equal(keys.length,26);
  assert.equal(new Set(keys).size,keys.length);
  assert.deepEqual([...keys].sort(),patternKeys.filter(k=>k!=="plain").sort());
  assert.ok(Object.values(patternGroups).every(g=>g.length<=6));
+ assert.ok(patternKeys.includes("waterflow"));assert.ok(patternKeys.includes("mural"),"existing bottom mural remains available");
+ assert.equal(new Set(keys.map(k=>JSON.stringify(finishes[k].motifs))).size,keys.length,"each design has distinct actual motifs");
  for(const key of keys)for(const m of finishes[key].motifs as Motif[]){
   assert.ok(m.points.length>=2&&m.points.every(p=>p.every(Number.isFinite)));
   assert.ok((m.alpha??1)>=0&&(m.alpha??1)<=1);

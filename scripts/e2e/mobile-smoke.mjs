@@ -192,7 +192,7 @@ async function main(){
   for(const v of [{w:320,h:640},{w:1024,h:768},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();
-    for(const route of ["/","/materials","/materials/bricks-blocks","/materials/bricks-blocks/red-clay-brick","/brands","/design-studio/visualizer","/build-iq","/checkout?cart=1"]){
+    for(const route of ["/","/materials","/materials/bricks-blocks","/materials/bricks-blocks/red-clay-brick","/brands","/design-studio","/design-studio/visualizer","/build-iq","/checkout?cart=1"]){
      const response=await page.goto(base+route,{waitUntil:"load",timeout:60000});assert.equal(response?.status(),200,route);
      const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth),broken:[...document.images].filter(i=>i.complete&&i.getBoundingClientRect().width>0&&!i.naturalWidth).map(i=>i.getAttribute("src"))}));
      if(result.scroll>result.width+2)failures.push(v.w+"px "+route+": responsive overflow "+(result.scroll-result.width)+"px");
@@ -292,7 +292,7 @@ async function main(){
     assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
     assert.ok(await gallery.evaluate(el=>{const active=el.querySelector("button[aria-pressed=true]"),other=el.querySelector("button[aria-pressed=false]");return active&&other&&getComputedStyle(active).borderColor!==getComputedStyle(other).borderColor}),"active house is visually distinguishable without a badge");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
-    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
+    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="contain";})};});
     assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
     await page.getByRole("button",{name:/100 gaj family home/}).click();
     assert.match(await page.locator(".paint-sample-feedback").innerText(),/100 gaj family home/);
@@ -898,6 +898,8 @@ async function main(){
     assert.equal(await page.locator(".nstudio-start-form").getByLabel("Bedrooms").locator("option").count(),6,"all supported BHK inputs are available on landing page");
     assert.equal(await page.locator(".nstudio-feature-copy a[href=\"/design-studio/visualizer\"]").count(),1,"colour studio is discoverable");
     assert.ok(await page.locator(".nstudio-landing").evaluate(el=>el.scrollWidth<=innerWidth+2),"studio landing must not overflow horizontally");
+    assert.ok(await page.locator(".nstudio-landing figure figcaption").evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).position==="static")),"image text belongs below the image");
+    await page.getByRole("button",{name:"150 gaj",exact:true}).click();assert.equal(await page.getByLabel("Plot width (feet)").inputValue(),"27");assert.equal(await page.getByLabel("Plot depth (feet)").inputValue(),"50");
     await page.locator(".nstudio-start-form input").nth(0).fill("18");
     await page.locator(".nstudio-start-form input").nth(1).fill("50");
     await page.getByRole("button",{name:/Create room layouts/}).click();
