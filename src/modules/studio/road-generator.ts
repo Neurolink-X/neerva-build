@@ -550,6 +550,14 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
  for(let i=0;i<Math.max(left.length,right.length);i++){
   if(left[i])ordered.push(left[i]);if(right[i])ordered.push(right[i]);
  }
+ // Larger 2–3 BHK plots also deserve actual central-spine architecture, not only mirrored narrow-house recipes.
+ if(brief.bedrooms>=2&&brief.floors>1){
+  for(const p of widePortfolio(brief,normalized)){
+   const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
+   if(!mesh||seen.has(signature)||seenMeshes.has(mesh)||validateRequestedProgramme(p,brief).length)continue;
+   seen.add(signature);seenMeshes.add(mesh);ordered.push(p);
+  }
+ }
  return {plans:prioritizeSpatialDiversity(ordered).slice(0,normalized),
   blockers:ordered.length?[]:["No validated distinct spatial layout fits these dimensions, rooms, parking and setbacks."]};
 }
