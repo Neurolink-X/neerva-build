@@ -1,6 +1,7 @@
 "use client";
 import {useMemo,useState} from "react";
 import Link from "next/link";
+import {CommercialMaterialWorksheet} from "./commercial-material-worksheet";
 import type {FinishScheme} from "@/modules/studio/finish-model";
 import {conceptTakeoff,createProjectExchange,reviewedQuoteHref,projectErrors,type ProjectSource} from "@/modules/studio/project-exchange";
 import {categoryUnits,categoryMaterialHints,defaultCategoryUnit,quantityPrecision,quantityUnitLabels,type MaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
@@ -18,6 +19,7 @@ export function StudioProjectExchange({source,scheme}:{source:ProjectSource;sche
  <p>Concrete, steel, masonry, electrical, plumbing and HVAC quantities require an engineered model and approved specifications; no automatic quantities are invented.</p>
  <button type="button" className="button button-outline" disabled={busy} onClick={()=>void exportModel()}>{busy?"Preparing…":"Export versioned spatial model (JSON)"}</button>{notice&&<p role="status">{notice}</p>}
  </details>
+ {source.kind==="commercial"&&<CommercialMaterialWorksheet key={source.plan.id} plan={source.plan}/>}
  <details><summary>Prepare a material quote</summary><p>Enter the material specification and quantity you need.</p>
  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(100%,180px),1fr))",gap:12,marginBlock:12}}>
  <label>Category <select value={category} onChange={e=>changeCategory(e.target.value as MaterialCategory)}>{categories.map(c=><option key={c} value={c}>{c}</option>)}</select></label>
