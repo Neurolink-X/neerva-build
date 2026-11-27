@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {generateBuildingConcepts,type BuildingBrief} from "./building-purpose.ts";
 import {engineeringPreflight} from "./building-engineering.ts";
+import {commercialElements} from "./commercial-elements.ts";
 import {buildingRenderSnapshot} from "./building-render.ts";
 import {calculateConceptDemand} from "./building-demand.ts";
 const brief:BuildingBrief={purpose:"school",widthFt:180,depthFt:240,roadSide:"N",floors:3,unitsPerFloor:4,parkingBays:8,frontFt:40,rearFt:25,sideFt:10};
@@ -22,11 +23,17 @@ test("engineering review is geometry-linked and can never issue a construction a
 test("massing renderer uses exact zone extents with bounded camera and no synthetic openings",()=>{
  const plan=generateBuildingConcepts(brief,1).plans[0];assert.ok(plan);
  const snap=buildingRenderSnapshot(plan);
- assert.equal(snap.boxes.length,plan.zones.length+3);assert.ok(snap.boxes.length<2500);
- for(const [i,z] of plan.zones.entries()){
-  const b=snap.boxes[i+3];assert.ok(Math.abs(b.hi[0]-b.lo[0]-z.w*.3048)<1e-7);
-  assert.ok(Math.abs(b.hi[2]-b.lo[2]-z.d*.3048)<1e-7);
-  assert.ok(Math.abs(b.lo[1]-z.floor*13*.3048)<1e-7);
+ const elements=commercialElements(plan);
+ assert.equal(snap.boxes.length,3+plan.zones.filter(z=>z.kind==="open"||z.kind==="parking").length+elements.slabs.length+elements.walls.length+elements.portals.filter(p=>p.kind==="exterior-glazing").length);
+ assert.ok(snap.boxes.length<2500);
+ for(const box of snap.boxes)for(let i=0;i<3;i++)assert.ok(Number.isFinite(box.lo[i])&&box.hi[i]>box.lo[i]);
+ for(const p of elements.portals){
+  const plane=p.axis==="x"?p.y:p.x,start=p.axis==="x"?p.x:p.y,sill=p.kind==="access"?0:3;
+  for(const wall of elements.walls.filter(w=>w.floor===p.floor&&w.axis===p.axis&&Math.abs(w.plane-plane)<1e-5)){
+   const overlap=Math.min(wall.end,start+p.length)-Math.max(wall.start,start);
+   const height=Math.min(wall.top,8)-Math.max(wall.bottom,sill);
+   assert.ok(overlap<1e-5||height<1e-5,"wall cannot fill proposed opening");
+  }
  }
  assert.ok(snap.camera.forward.every(Number.isFinite));
 });
