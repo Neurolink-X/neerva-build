@@ -11,6 +11,7 @@ import {PlanAxonometric} from "./plan-axonometric";
 import {DesignPlanArt} from "@/components/studio-design-gallery";
 import type {PlanModel} from "@/modules/studio/plan-model";
 import {threeRoadRotation} from "@/modules/studio/plan-coordinate";
+import {planFurniture} from "@/modules/studio/furniture";
 import {facadeAccents,frontageSignature} from "@/modules/studio/frontage";
 import {exposedRoofPatches} from "@/modules/studio/plan-surfaces";
 import {nonRoadBoundaryEdges} from "@/modules/studio/site-shape";
@@ -117,6 +118,15 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor}:{design
    const floorSurfaces={bath:material("#c7d5d6"),bedroom:material("#dbc7aa"),kitchen:material("#d7d9cf"),stairs:concrete};
    for(const r of design.layout.rooms){if(!visible(r.floorIndex)||r.kind==="open"||r.kind==="parking")continue;const surface=r.kind==="bath"||r.kind==="bedroom"||r.kind==="kitchen"||r.kind==="stairs"?floorSurfaces[r.kind]:floorMat;
     box(xCoord(r.xFt+r.wFt/2),r.floorIndex*height+.09,zCoord(r.yFt+r.dFt/2),r.wFt*FT-.03,.025,r.dFt*FT-.03,surface,false);
+   }
+   if(planModel&&mode!=="exterior"){
+    const timber=material("#a4896d"),upholstery=material("#c4c7ba"),linen=material("#eee9df"),worktop=material("#777d78");
+    for(const p of planFurniture(planModel).filter(p=>visible(p.floor))){
+     const x=xCoord(p.x+p.w/2),z=zCoord(p.y+p.d/2),base=p.floor*height+.11,h=p.heightFt*FT,w=p.w*FT,d=p.d*FT;
+     const capped=mode==="dollhouse"?Math.min(h,height*.46-.12):h;
+     box(x,base+capped/2,z,w,capped,d,p.kind==="bed"?linen:p.kind==="sofa"?upholstery:p.kind==="counter"?worktop:timber,false);
+     if(p.kind==="bed")box(x,base+capped+.05,z-d*.32,w*.8,.10,d*.22,upholstery,false);
+    }
    }
    for(const stair of design.layout.rooms.filter(r=>r.kind==="stairs"&&visible(r.floorIndex)&&r.floorIndex<design.floors-1)){for(let i=0;i<12;i++){
     const stepD=stair.dFt*FT/12;box(xCoord(stair.xFt+stair.wFt/2),stair.floorIndex*height+(i+1)*height/12,zCoord(stair.yFt+(i+.5)*stair.dFt/12),stair.wFt*FT*.7,.12,stepD*.95,concrete);
