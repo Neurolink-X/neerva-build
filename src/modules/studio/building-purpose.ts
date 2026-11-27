@@ -1,9 +1,10 @@
 import {overlapArea,area,type Rect,type RoadSide} from "./plan-model.ts";
+import {rentalLayouts} from "./rental-layout.ts";
 export const buildingPurposes=["mall","school","restaurant","shops","rental"] as const;
 export type BuildingPurpose=typeof buildingPurposes[number];
 type ZoneKind="primary"|"support"|"toilet"|"circulation"|"core"|"service"|"parking"|"open";
 export type BuildingZone=Rect&{id:string;label:string;kind:ZoneKind;floor:number};
-export type BuildingBrief={purpose:BuildingPurpose;widthFt:number;depthFt:number;roadSide:RoadSide;floors:number;unitsPerFloor:number;parkingBays:number;frontFt:number;rearFt:number;sideFt:number};
+export type BuildingBrief={purpose:BuildingPurpose;widthFt:number;depthFt:number;roadSide:RoadSide;floors:number;unitsPerFloor:number;parkingBays:number;frontFt:number;rearFt:number;sideFt:number;rentalBedrooms?:number};
 export type BuildingConcept={id:string;brief:BuildingBrief;zones:BuildingZone[];layout:string;signature:string;conceptOnly:true};
 const purpose={
  mall:{title:"Shopping mall",unit:"Retail unit",minW:12,minD:12,minArea:200,front:20,back:12,support:["Anchor retail / activity","Service & loading reserve"],checks:["Occupant load and exit capacity","Fire separation, smoke control and sprinklers","Accessible routes, lifts, loading, parking and traffic study"]},
@@ -22,15 +23,16 @@ export function buildingInputRequirements(b:BuildingBrief){
  const p=purpose[b.purpose];
  if(!p)return null;
  const count=Math.max(1,Math.ceil(b.unitsPerFloor/2)),front=Math.max(p.front,b.parkingBays>0?36:0);
- const usableWidth=2*Math.max(10,p.minW)+8;
- const usableDepth=Math.max(30,28+count*p.minD,(18+count*p.minD)/.85);
- return {front,rear:p.back,usableWidth,usableDepth,minWidthFt:Math.ceil(Math.max(20,usableWidth+2*b.sideFt,b.parkingBays>0?b.parkingBays*9+12+2*b.sideFt:0)),minDepthFt:Math.ceil(Math.max(30,usableDepth+Math.max(b.frontFt,front)+Math.max(b.rearFt,p.back))),unitAreaSqFt:p.minArea,unitWidthFt:p.minW,unitDepthFt:p.minD};
+ const rental=b.purpose==="rental",minUnitW=rental?22:p.minW,minUnitD=rental?Math.max(20,(b.rentalBedrooms??1)*10+8):p.minD;
+ const usableWidth=2*Math.max(10,minUnitW)+8;
+ const usableDepth=Math.max(30,28+count*minUnitD,(18+count*minUnitD)/.85);
+ return {front,rear:p.back,usableWidth,usableDepth,minWidthFt:Math.ceil(Math.max(20,usableWidth+2*b.sideFt,b.parkingBays>0?b.parkingBays*9+12+2*b.sideFt:0)),minDepthFt:Math.ceil(Math.max(30,usableDepth+Math.max(b.frontFt,front)+Math.max(b.rearFt,p.back))),unitAreaSqFt:p.minArea,unitWidthFt:minUnitW,unitDepthFt:minUnitD};
 }
 /** Explicit example inputs, not plot recommendations or approved design. */
 export function buildingStarter(purpose:BuildingPurpose):BuildingBrief{
  const dimensions={mall:[180,240,3,8,40,25,10],school:[150,200,2,4,40,35,10],restaurant:[80,120,1,2,10,12,5],shops:[80,100,1,4,10,10,5],rental:[90,130,2,2,10,10,5]} as const;
  const [widthFt,depthFt,floors,unitsPerFloor,frontFt,rearFt,sideFt]=dimensions[purpose];
- return {purpose,widthFt,depthFt,floors,unitsPerFloor,frontFt,rearFt,sideFt,roadSide:"N",parkingBays:0};
+ return {purpose,widthFt,depthFt,floors,unitsPerFloor,frontFt,rearFt,sideFt,roadSide:"N",parkingBays:0,...(purpose==="rental"?{rentalBedrooms:1}:{})};
 }
 export function validateBuildingBrief(b:BuildingBrief):string[]{
  const e:string[]=[];
@@ -38,6 +40,7 @@ export function validateBuildingBrief(b:BuildingBrief):string[]{
  if(![b.widthFt,b.depthFt,b.frontFt,b.rearFt,b.sideFt].every(finite)||b.widthFt<20||b.widthFt>500||b.depthFt<30||b.depthFt>600||Math.min(b.frontFt,b.rearFt,b.sideFt)<0)e.push("Enter supported plot dimensions (20–500 ft wide, 30–600 ft deep) and nonnegative margins.");
  if(!["N","E","S","W"].includes(b.roadSide))e.push("Choose a road direction.");
  if(!Number.isInteger(b.floors)||b.floors<1||b.floors>6||!Number.isInteger(b.unitsPerFloor)||b.unitsPerFloor<1||b.unitsPerFloor>24||!Number.isInteger(b.parkingBays)||b.parkingBays<0||b.parkingBays>40)e.push("Choose 1–6 floors, 1–24 primary zones per floor, and 0–40 parking reservations.");
+ if(b.purpose==="rental"&&(!Number.isInteger(b.rentalBedrooms??1)||(b.rentalBedrooms??1)<1||(b.rentalBedrooms??1)>3))e.push("Choose 1–3 bedrooms per rental unit.");
  const p=purpose[b.purpose];
  if(b.frontFt<p.front||b.rearFt<p.back)e.push("Allow at least "+p.front+" ft front and "+p.back+" ft rear open reservation for this concept family; legal requirements may be greater.");
  if(b.parkingBays>0&&(b.frontFt<36||b.parkingBays*9>b.widthFt-2*b.sideFt-12))e.push("Requested parking reserve does not fit: allow 36 ft front depth and 9 ft per reserved bay plus a 12 ft clear strip. Vehicle maneuvering still needs review.");
@@ -70,6 +73,7 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
   }
  }
  if(c.zones.filter(z=>z.kind==="parking").length!==b.parkingBays)e.push("Parking reservation count mismatch");
+ if(b.purpose==="rental"&&rentalLayouts(c).length!==b.floors*b.unitsPerFloor)e.push("Every rental envelope must fit the requested internal BHK programme.");
  return [...new Set(e)];
 }
 export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:BuildingConcept[];blockers:string[]}{
@@ -110,7 +114,7 @@ export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:Buildi
   if(b.rearFt>0)add(0,"open",b.purpose==="school"?"Open play / assembly reserve":"Rear open / service reserve",b.sideFt,b.depthFt-b.rearFt,W,b.rearFt);
   const signature=JSON.stringify(zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort());
   if(seen.has(signature))continue;
-  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,recipe].join("-"),brief:b,zones,signature,layout:(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft spine · "+(recipe%3===1?"front recess":recipe%3===2?"rear recess":"flush wings"),conceptOnly:true};
+  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-"),brief:b,zones,signature,layout:(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft spine · "+(recipe%3===1?"front recess":recipe%3===2?"rear recess":"flush wings"),conceptOnly:true};
   if(validateBuildingConcept(c).length)continue;
   seen.add(signature);out.push(c);
  }
