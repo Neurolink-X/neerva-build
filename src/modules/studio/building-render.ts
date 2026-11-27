@@ -1,6 +1,8 @@
 import type {RenderBox,RenderSnapshot,Vec3} from "../../../public/studio-render-v1";
 import {shadeRgb,type FinishScheme} from "./finish-model.ts";
 import {finishRoughness} from "./commercial-interior-render.ts";
+import {commercialStairStudies,commercialInternalSpaces} from "./commercial-internal.ts";
+import {stairStepDepthFt} from "./stair-study.ts";
 import {commercialFrontPanels} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
@@ -49,6 +51,19 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
   add(start,start+len,bottom,bottom+thick);add(start,start+len,top-thick,top);
   const count=Math.max(1,Math.ceil(len/1.35));
   for(let i=0;i<=count;i++){const a=Math.min(start+len-thick,Math.max(start,start+len*i/count-thick/2));add(a,a+thick,bottom+thick,top-thick);}
+ }
+ // Model only verified walking surfaces; no invented steps in unresolved bays.
+ for(const study of commercialStairStudies(plan).studies){
+  const level=study.floor*13;
+  for(const r of study.steps)push([x(r.x),(level+r.topFt-stairStepDepthFt(study,r.topFt))*ft,z(r.y)],[x(r.x+r.w),(level+r.topFt)*ft,z(r.y+r.d)],[.56,.54,.49]);
+  for(const r of study.landings.filter(l=>l.topFt>0))push([x(r.x),(level+r.topFt-.46)*ft,z(r.y)],[x(r.x+r.w),(level+r.topFt)*ft,z(r.y+r.d)],[.56,.54,.49]);
+ }
+ // Lift shaft stays unobstructed; represent closed landing doors at the
+ // actual lobby opening, not an invented elevator cabin or certified lift.
+ const liftIds=new Set(commercialInternalSpaces(plan).filter(r=>r.kind==="lift").map(r=>r.id));
+ for(const p of elements.portals.filter(p=>p.kind==="access"&&liftIds.has(p.zoneId)&&p.axis==="y")){
+  const low=(p.floor*13+.35)*ft,high=(p.floor*13+8)*ft,plane=x(p.x),start=z(p.y),end=z(p.y+p.length),mid=(start+end)/2;
+  for(const [a,b] of [[start,mid-.01],[mid+.01,end]])if(b>a)boxes.push({lo:[plane-.025,low,a],hi:[plane+.025,high,b],color:[.52,.56,.58],rough:.3,metal:.72,opacity:1});
  }
  const distance=Math.max(widthFt,depthFt,floors*13)*ft;
  const origin:Vec3=[distance*.85,distance*.7,(view==="front"?-1:1)*distance*1.45];
