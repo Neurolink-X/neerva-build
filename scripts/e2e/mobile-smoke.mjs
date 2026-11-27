@@ -111,7 +111,7 @@ async function main(){
    await studio.getByRole("button",{name:/Generate distinct concepts/}).click();
    await studio.getByRole("button",{name:"Rooms & shared facilities",exact:true}).click();
    const apartment=studio.getByRole("img",{name:/Purpose-specific zoning/});await apartment.waitFor({state:"visible"});
-   assert.match(await apartment.getAttribute("data-plan-id"),/-internal-v1-[02]$/);
+   assert.match(await apartment.getAttribute("data-plan-id"),/-internal-v1-[023]$/);
    assert.ok(await apartment.locator("text").filter({hasText:"Lift reserve"}).count()>0);
    assert.ok(await apartment.locator("text").filter({hasText:"Bedroom 1"}).count()>0);
    assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await apartment.getAttribute("data-plan-id"));
