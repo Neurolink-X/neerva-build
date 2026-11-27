@@ -183,7 +183,7 @@
     "src/app/api/admin/dealers/route.ts": "cea7eddba4fe5655c5ba36019ece7e92203aa26a",
     "src/app/api/admin/users/route.ts": "7103b8ac1d22b15c37f1d6d5fb095974cfbf2bd9",
     "src/modules/marketplace/write-contract.ts": "a87e3ef54f9b190e80b7b577c713d411c84d3c27",
-    "src/app/api/catalog/route.ts": "51cb5b1205250a53dc96a0e57e95d74fbd1390e2",
+    "src/app/api/catalog/route.ts": "555b277c7ff2c832ef8647c53bc0b9e52feea5cc",
     "src/app/api/admin/audit/route.ts": "c06d6a90ee1a071876a6f08bc66c3b089720b43c",
     "src/app/api/admin/account-recovery/route.ts": "8eca1325c8b1f075e4afbe165f9a7aae30f1749d",
     "src/app/api/admin/dealer-members/route.ts": "3610fc86c8edf76ec64a1ebdcb59e0514ef26e5f",
@@ -270,5 +270,9 @@
       "src/app/api/orders/route.ts"
     ],
     "scope": "Distinguish authentication outages from expired sessions; compare delivery address for idempotent accepted-offer retries. Static review; runtime tests required."
+  },
+  "reviewedCatalogRead20261127": {
+    "scope": "Only anonymous published catalog queries and signed media; retain parent rows, cursor, RLS, fallback and no stock claims. One shared seven-second abort deadline. Authenticated isolated E2E passed on the reviewed blob.",
+    "validation": "Run the existing release gate, contracts, unit tests and mobile regression on this commit. No bypass."
   }
 }
