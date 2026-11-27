@@ -891,6 +891,11 @@ async function main(){
     assert.doesNotMatch(copied,/contact mobile|phone number/i,"draft does not copy personal contact data");
     await page.goto(base+"/design-studio",{waitUntil:"load"});
     assert.equal(await page.locator(".nstudio-start-form").count(),1,"home studio must start with plot fields, not an unscaled static concept");
+    assert.equal(await page.locator(".nstudio-section-nav a").count(),5,"studio sections have direct navigation");
+    assert.equal(await page.locator(".nstudio-purpose-links a").count(),5,"commercial purposes are discoverable");
+    assert.equal(await page.locator(".nstudio-start-form").getByLabel("Bedrooms").locator("option").count(),6,"all supported BHK inputs are available on landing page");
+    assert.equal(await page.locator(".nstudio-feature-copy a[href=\"/design-studio/visualizer\"]").count(),1,"colour studio is discoverable");
+    assert.ok(await page.locator(".nstudio-landing").evaluate(el=>el.scrollWidth<=innerWidth+2),"studio landing must not overflow horizontally");
     await page.locator(".nstudio-start-form input").nth(0).fill("18");
     await page.locator(".nstudio-start-form input").nth(1).fill("50");
     await page.getByRole("button",{name:/Create room layouts/}).click();
