@@ -1,6 +1,7 @@
 "use client";
-import {useMemo,useState,type FormEvent} from "react";
+import {useMemo,useState,useSyncExternalStore,type FormEvent} from "react";
 import Link from "@/components/intent-link";
+import {preferLitePreview,type NetworkHint} from "@/modules/navigation/intent";
 import {IrregularPlotPlanner} from "./irregular-plot-planner";
 import {CommercialProjectSave} from "./commercial-project-save";
 import {PlanFinishStudio} from "./plan-finish-studio";
@@ -13,6 +14,10 @@ import {rentalLayouts} from "@/modules/studio/rental-layout";
 import {roadRect,roadPoint,siteDimensions,roadSegment} from "@/modules/studio/plan-coordinate";
 const colors:Record<BuildingZone["kind"],string>={primary:"#aac5d3",support:"#d3c2a4",toilet:"#c8b9d9",circulation:"#e8e6d7",core:"#bdc5bb",service:"#d9bfaa",parking:"#b6bdc3",open:"#c5d7ac"};
 const defaults=buildingStarter("shops");
+const network=()=> (navigator as Navigator&{connection?:NetworkHint&EventTarget}).connection;
+function subscribeNetwork(notify:()=>void){const connection=network();connection?.addEventListener?.("change",notify);window.addEventListener("online",notify);window.addEventListener("offline",notify);return()=>{connection?.removeEventListener?.("change",notify);window.removeEventListener("online",notify);window.removeEventListener("offline",notify)}}
+const liteSnapshot=()=>preferLitePreview(network(),navigator.onLine);
+const serverLiteSnapshot=()=>false;
 // SVG title must have one text child: SSR text separators can break hydration.
 function PlanDrawing({plan,floor,scheme,showFurniture}:{plan:BuildingConcept;floor:number;scheme:FinishScheme;showFurniture:boolean}){
  const b=plan.brief,{w,d}=siteDimensions(b.widthFt,b.depthFt,b.roadSide),road=roadSegment(b.widthFt,b.depthFt,b.roadSide);
@@ -64,7 +69,8 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
  const [draft,setDraft]=useState<BuildingBrief>(defaults),[brief,setBrief]=useState<BuildingBrief>(defaults),[selected,setSelected]=useState(0),[floor,setFloor]=useState(0),[full,setFull]=useState(false),[angle,setAngle]=useState(0);
  const [family,setFamily]=useState<BuildingLayoutFamily>("purpose-led");
  const result=useMemo(()=>generateBuildingConcepts(brief,24,family),[brief,family]),plan=result.plans[selected];
- const [showFurniture,setShowFurniture]=useState(false),[lite,setLite]=useState(false);
+ const [showFurniture,setShowFurniture]=useState(false),[liteChoice,setLiteChoice]=useState<boolean|null>(null);
+ const autoLite=useSyncExternalStore(subscribeNetwork,liteSnapshot,serverLiteSnapshot),lite=liteChoice??autoLite;
  const [finishHistory,setFinishHistory]=useState<Record<string,FinishScheme>>({});
  const scheme=useMemo(()=>plan?(finishHistory[plan.id]??defaultFinishScheme({kind:"commercial",plan})):null,[plan,finishHistory]);
  const info=purposeDetails[draft.purpose],active=purposeDetails[brief.purpose];
@@ -111,7 +117,7 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
    {result.blockers.map(s=><p role="alert" key={s}>{s}</p>)}
    {plan&&scheme&&<><div className="purpose-options" role="group" aria-label="Choose zoning option">{result.plans.map((p,i)=><button type="button" key={p.id} aria-pressed={selected===i} onClick={()=>setSelected(i)}><strong>Option {i+1}</strong><span>{p.layout}</span></button>)}</div>
     <div className="purpose-tabs" role="group" aria-label="Floor selection">{Array.from({length:brief.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>{setFloor(i);setFull(false)}}>{i===0?"Ground":"Floor "+i}</button>)}</div>
-    <div className="purpose-tabs" role="group" aria-label="Preview controls"><button type="button" aria-pressed={lite} onClick={()=>setLite(v=>!v)}>{lite?"Show 3D concept":"Lite view · 2D only"}</button><button type="button" aria-pressed={showFurniture} onClick={()=>setShowFurniture(v=>!v)}>{showFurniture?"Hide indicative furniture":"Show indicative furniture"}</button><button type="button" onClick={()=>openPreview("building-exterior")}>Exterior & image render</button><button type="button" onClick={()=>openPreview("building-interior")}>Interior preview</button></div><p className="purpose-warning">Viewing generated {active.title.toLowerCase()} · Option {selected+1}. Core zones are reserves, not designed stairs or lifts.</p><div className="purpose-views" style={lite?{gridTemplateColumns:"minmax(0,1fr)"}:undefined}><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor} scheme={scheme} showFurniture={showFurniture}/></section>{!lite&&<section><h3>3D concept · same plan</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle} scheme={scheme} showFurniture={showFurniture}/></section>}</div>
+    <div className="purpose-tabs" role="group" aria-label="Preview controls"><button type="button" aria-pressed={lite} onClick={()=>setLiteChoice(!lite)}>{lite?"Show 3D concept":"Lite view · 2D only"}</button><button type="button" aria-pressed={showFurniture} onClick={()=>setShowFurniture(v=>!v)}>{showFurniture?"Hide indicative furniture":"Show indicative furniture"}</button><button type="button" onClick={()=>openPreview("building-exterior")}>Exterior & image render</button><button type="button" onClick={()=>openPreview("building-interior")}>Interior preview</button></div>{autoLite&&lite&&<p role="status">Slow connection or data saver detected. The 2D preview is active; open 3D whenever you need it.</p>}<p className="purpose-warning">Viewing generated {active.title.toLowerCase()} · Option {selected+1}. Core zones are reserves, not designed stairs or lifts.</p><div className="purpose-views" style={lite?{gridTemplateColumns:"minmax(0,1fr)"}:undefined}><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor} scheme={scheme} showFurniture={showFurniture}/></section>{!lite&&<section><h3>3D concept · same plan</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle} scheme={scheme} showFurniture={showFurniture}/></section>}</div>
     <CommercialFront plan={plan} scheme={scheme}/>
     {cloudEnabled&&<CommercialProjectSave key={plan.id} plan={plan} scheme={scheme} onRestore={restore}/>}
     <PlanFinishStudio key={plan.id+":"+floor} source={{kind:"commercial",plan}} floor={floor} scheme={scheme} onChange={next=>setFinishHistory(h=>rememberFinish(h,plan.id,next))}/>
