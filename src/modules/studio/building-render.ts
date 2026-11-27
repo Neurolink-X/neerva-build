@@ -12,7 +12,7 @@ export type BuildingFinish=keyof typeof finishes;
 export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinish="limestone",evening=false,view:"front"|"rear"="front",scheme?:FinishScheme):RenderSnapshot{
  const {widthFt,depthFt,floors}=plan.brief,boxes:RenderBox[]=[];
  const x=(v:number)=>(v-widthFt/2)*ft,z=(v:number)=>(v-depthFt/2)*ft;
- const push=(lo:Vec3,hi:Vec3,color:Vec3,rough=.8)=>boxes.push({lo,hi,color,rough,metal:0,opacity:1});
+ const push=(lo:Vec3,hi:Vec3,color:Vec3,rough=.8,material?:FinishScheme['cladding'])=>boxes.push({lo,hi,color,rough,metal:0,opacity:1,finish:material});
  const selected=scheme?.planId===plan.id?scheme:undefined;
  const wall:Vec3=selected?shadeRgb(selected.exterior):[...finishes[finish]];
  push([x(0)-8,-.4,z(0)-8],[x(widthFt)+8,-.23,z(depthFt)+8],[.24,.32,.21]);
@@ -25,8 +25,8 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
   const low=(a.floor*13+a.bottom)*ft,high=(a.floor*13+a.top)*ft,t=a.thickness/2;
   const core=plan.zones.some(r=>r.floor===a.floor&&r.kind==="core"&&(a.axis==="x"?(Math.abs(r.y-a.plane)<1e-5||Math.abs(r.y+r.d-a.plane)<1e-5)&&a.start>=r.x-1e-5&&a.end<=r.x+r.w+1e-5:(Math.abs(r.x-a.plane)<1e-5||Math.abs(r.x+r.w-a.plane)<1e-5)&&a.start>=r.y-1e-5&&a.end<=r.y+r.d+1e-5));
   const tone=selected&&core?shadeRgb(selected.accent):wall;
-  if(a.axis==="x")push([x(a.start),low,z(a.plane-t)],[x(a.end),high,z(a.plane+t)],tone,finishRoughness(selected?.cladding));
-  else push([x(a.plane-t),low,z(a.start)],[x(a.plane+t),high,z(a.end)],tone);
+  if(a.axis==="x")push([x(a.start),low,z(a.plane-t)],[x(a.end),high,z(a.plane+t)],tone,finishRoughness(selected?.cladding),selected?.cladding);
+  else push([x(a.plane-t),low,z(a.start)],[x(a.plane+t),high,z(a.end)],tone,finishRoughness(selected?.cladding),selected?.cladding);
  }
  for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
   const low=(p.floor*13+3)*ft,high=(p.floor*13+8)*ft,t=.035;
