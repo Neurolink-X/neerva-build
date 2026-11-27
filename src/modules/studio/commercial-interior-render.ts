@@ -3,9 +3,7 @@ import {commercialFixtures,commercialPortals} from "./commercial-detail.ts";
 import {finishSpaces,shadeRgb,wallShade,type FinishScheme,type FinishMaterial} from "./finish-model.ts";
 import {wallBoxes,type Side} from "./plan-model.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
-const FT=.3048;
-const normalize=(v:Vec3):Vec3=>{const n=Math.hypot(...v)||1;return [v[0]/n,v[1]/n,v[2]/n]};
-const cross=(a:Vec3,b:Vec3):Vec3=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+import {FEET_TO_METRES as FT,normalize,cross} from "./core/geometry-primitives.ts";
 export function finishRoughness(m:FinishMaterial|undefined){return m==="marble"?.25:m==="tile"?.38:m==="acp"?.35:m==="wood"?.6:.83;}
 export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishScheme,roomId:string,evening=false):RenderSnapshot|null{
  if(scheme.planId!==plan.id)return null;

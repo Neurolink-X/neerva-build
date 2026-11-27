@@ -184,3 +184,30 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 .visualizer-app .paint-pattern-groups{display:flex;overflow-x:auto;gap:6px;padding:4px 0;scroll-snap-type:x proximity;overscroll-behavior-inline:contain}.visualizer-app .paint-pattern-groups button{flex:0 0 auto;min-height:44px;border:1px solid #c3d0c4;border-radius:8px;padding:6px 12px;color:#263d35;background:#fff;scroll-snap-align:start;font-size:13px}.visualizer-app .paint-pattern-groups button[aria-pressed=true]{background:#244735;color:#fff}.visualizer-app .paint-pattern-current{font-size:12px;color:#52665a;margin:6px 0}.visualizer-app .wall-pattern-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.visualizer-app .wall-pattern-options svg{display:block;width:100%;aspect-ratio:3/2;overflow:hidden;border-radius:5px}.visualizer-app .wall-pattern-options button{min-width:0;min-height:44px}.visualizer-app .wall-pattern-options button span{overflow-wrap:anywhere}@media(max-width:360px){.visualizer-app .wall-pattern-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 .paint-pairings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-block:8px}.paint-pairings button{display:grid;gap:6px;min-width:0;min-height:44px;padding:8px;background:#fff;color:#263d35;border:1px solid #c8d0c6;border-radius:8px;font-size:12px}.paint-pairings button[aria-pressed=true]{outline:2px solid #254e3d;outline-offset:1px}.paint-pairings button span{display:flex;height:25px;border-radius:4px;overflow:hidden}.paint-pairings i:first-child{flex:2}.paint-pairings i:last-child{flex:1}
+
+/* Whole facade previews, including wide first sample, must never crop paintable surfaces. */
+.visualizer-app .paint-sample-photo img{object-fit:contain;object-position:center}
+.visualizer-app .paint-sample-photo{background:#edf0e9}
+.visualizer-app .paint-live-tools,.visualizer-app .paint-live-preview,.visualizer-app .wall-pattern-options{min-width:0;max-width:100%}
+.visualizer-app .wall-pattern-options button{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px;height:100%;min-width:0;white-space:normal;text-align:left}
+.visualizer-app .wall-pattern-options svg{flex:none;height:auto}
+.visualizer-app .paint-pattern-groups{flex-wrap:wrap;overflow:visible}
+@media(max-width:600px){.visualizer-app .wall-pattern-options{grid-template-columns:repeat(2,minmax(0,1fr))}.visualizer-app .paint-pattern-groups button{flex:1 1 auto;white-space:normal}}
+
+/* Swatches show the actual procedural finish, with a restrained material-library presentation. */
+.visualizer-app .wall-pattern-options button{padding:6px;border:1px solid #c9d4c9;background:#fff;border-radius:9px}
+.visualizer-app .wall-pattern-options button[aria-pressed=true]{border-color:#35674e;box-shadow:inset 0 0 0 1px #35674e;background:#f4f7f1}
+.visualizer-app .wall-pattern-options svg{border:1px solid #0000000b;aspect-ratio:3/2;box-sizing:border-box}
+.visualizer-app .wall-pattern-options button span{font-size:12px;font-weight:650;line-height:1.35;padding:2px 3px 4px}
+
+.visualizer-app .paint-design-hint{margin:4px 0 8px;font-size:12px;line-height:1.5;color:#52665a}
+.visualizer-app .paint-pattern-groups{display:flex;flex-wrap:wrap;gap:6px;overflow:visible}
+.visualizer-app .paint-pattern-groups button{flex:1 1 auto;white-space:normal;min-width:0}
+.visualizer-app .wall-pattern-options button{overflow:hidden;min-width:0}
+.visualizer-app .wall-pattern-options svg{overflow:hidden;flex-shrink:0}
+@media(max-width:600px){.visualizer-app .wall-pattern-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.visualizer-app .paint-collection-intro{margin:12px 0 6px;min-width:0;color:#254738}.visualizer-app .paint-collection-intro strong{font-size:15px;line-height:1.4}.visualizer-app .paint-collection-intro p,.visualizer-app .paint-collection-tip{font-size:12px;line-height:1.55;color:#52665a;margin:4px 0 8px;overflow-wrap:anywhere}
+.visualizer-app .paint-collection-tip{padding:10px 12px;border-inline-start:2px solid #b8cbb9;background:#f5f8f4;border-radius:0 6px 6px 0}
+.visualizer-app .visualizer-topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;min-width:0}.visualizer-app .visualizer-topbar a{min-height:44px;display:inline-flex;align-items:center}.visualizer-app .visualizer-heading h1{overflow-wrap:anywhere;font-size:clamp(30px,4.2vw,50px);line-height:1.13}
+@media(max-width:600px){.visualizer-app .paint-pattern-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.visualizer-app .paint-pattern-groups button:last-child{grid-column:1/-1}.visualizer-app .wall-pattern-options{grid-template-columns:repeat(2,minmax(0,1fr))}}

@@ -1,9 +1,10 @@
+import {boundedFetch} from "@/modules/http/bounded-fetch";
 import {createClient,type SupabaseClient} from "@supabase/supabase-js";
 import {authFailureStatus} from "@/modules/identity/auth-failure";
 import {activeDealerTenantIds} from "@/modules/identity/dealer-tenant-access";
 /** Server-only, user-JWT authenticated access; RLS remains enforced. Never use service-role in these routes. */
 export type AuthResult={userId:string;client:SupabaseClient};
-const failure=(message:string,status:number)=>Response.json({error:message},{status,headers:{"Cache-Control":"private, no-store"}});
+const failure=(message:string,status:number)=>Response.json({error:message},{status,headers:{"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"}});
 export const unavailable=()=>failure("Neerva account/database service is not configured. No changes were saved.",503);
 export const notReady=()=>failure("This operation is not enabled until its protected database workflow has passed review.",503);
 export async function requireAuth(request:Request):Promise<AuthResult|Response>{
@@ -13,7 +14,7 @@ export async function requireAuth(request:Request):Promise<AuthResult|Response>{
  const match=/^Bearer ([A-Za-z0-9._~-]{40,12000})$/.exec(header);
  if(!match)return failure("Please sign in to continue.",401);
  try{
-   const client=createClient(url,key,{global:{headers:{Authorization:"Bearer "+match[1]}},auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false}});
+   const client=createClient(url,key,{global:{headers:{Authorization:"Bearer "+match[1]},fetch:boundedFetch(request.signal,12000)},auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false}});
    const {data,error}=await client.auth.getUser(match[1]);
    if(error){const status=authFailureStatus(error);return failure(status===401?"Your session is invalid or expired.":"Authentication service is temporarily unavailable. Please retry.",status);}
    if(!data.user)return failure("Your session is invalid or expired.",401);

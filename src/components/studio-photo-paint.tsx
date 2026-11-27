@@ -2,8 +2,12 @@
 import {useCallback,useEffect,useLayoutEffect,useRef,useState,type ChangeEvent,type PointerEvent as ReactPointerEvent,type ReactNode} from "react";
 import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type MaskCorner} from "@/modules/studio/mask-editor";
 import {encodedPhotoDimensions,photoDimensionsAllowed,maxPreviewSide} from "@/modules/studio/photo-budget";
-import {finishes,patternGroups,type PatternGroup,type Pattern,type Motif} from "@/modules/studio/wall-patterns";
+import {finishes,patternGroups,groupForPattern,isRetiredPattern,type PatternGroup,type Pattern,type Motif} from "@/modules/studio/wall-patterns";
 import NextImage from "next/image";
+import {isSurfaceProfile} from "@/modules/studio/surface-texture";
+import {surfaceCanvas,StudioSurfaceSwatch} from "./studio-surface-swatch";
+import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide";
+import {artworkFrame} from "@/modules/studio/wall-design-layout";
 import {colourPairings} from "@/modules/studio/colour-families";
 import {facadeSamples,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
@@ -28,21 +32,29 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
  if(wall.pattern!=="plain"){
   if(corners.length!==4){ctx.restore();return;}
   const [a,b,c,d]=corners;
-  const at=(u:number,v:number)=>({
+  const frame=artworkFrame(corners,isFeatureWall(wall.pattern));
+  const at=(x:number,y:number)=>{const u=frame.u+x*frame.w,v=frame.v+y*frame.h;return {
    x:(1-v)*(a.x+(b.x-a.x)*u)+v*(d.x+(c.x-d.x)*u),
    y:(1-v)*(a.y+(b.y-a.y)*u)+v*(d.y+(c.y-d.y)*u)
-  });
+  };};
   // Mask an accent tint with the motif: the design inherits the same photographic
   // highlights and shadows as the base paint. One reusable scratch canvas, only for patterns.
   const layer=patternSurface&&accentTint?patternSurface.getContext("2d"):null;
   if(layer&&patternSurface){if(patternSurface.width!==w)patternSurface.width=w;if(patternSurface.height!==h)patternSurface.height=h;layer.clearRect(0,0,w,h);}
   const brush=layer??ctx;brush.save();
   brush.globalCompositeOperation="source-over";brush.globalAlpha=wall.opacity??.78;
-  brush.strokeStyle=brush.fillStyle=wall.accent;const weight=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)*.006);brush.lineCap="round";brush.lineJoin="round";
-  for(const motif of finishes[wall.pattern].motifs as Motif[]){
+  brush.strokeStyle=brush.fillStyle=wall.accent;const weight=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)*frame.w*.006);brush.lineCap="round";brush.lineJoin="round";
+  // Organic finishes use a continuous material mask rather than stripes or flat line art.
+  const tile=layer&&isSurfaceProfile(wall.pattern)?surfaceCanvas(wall.pattern):null;
+  if(tile){
+   const left=Math.min(...corners.map(p=>p.x)),top=Math.min(...corners.map(p=>p.y)),right=Math.max(...corners.map(p=>p.x)),bottom=Math.max(...corners.map(p=>p.y));
+   brush.save();brush.beginPath();corners.forEach((p,i)=>i?brush.lineTo(p.x,p.y):brush.moveTo(p.x,p.y));brush.closePath();brush.clip();
+   brush.globalAlpha=wall.opacity??.78;brush.drawImage(tile,left,top,right-left,bottom-top);brush.restore();
+  }else{  for(const motif of finishes[wall.pattern].motifs as Motif[]){
    brush.globalAlpha=(wall.opacity??.78)*(motif.alpha??1);brush.lineWidth=weight*(motif.weight??1);brush.beginPath();
    motif.points.forEach(([u,v],i)=>{const p=at(u,v);if(i===0)brush.moveTo(p.x,p.y);else brush.lineTo(p.x,p.y)});
    if(motif.filled){brush.closePath();brush.fill()}else brush.stroke();
+  }
   }
   if(layer&&patternSurface&&accentTint){brush.globalCompositeOperation="source-in";brush.globalAlpha=1;brush.drawImage(accentTint,0,0,w,h);}
   brush.restore();
@@ -52,8 +64,8 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
 }
 export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:string;onColourChange?:(colour:string)=>void;colourControls?:ReactNode}){
  const [walls,setWalls]=useState<Wall[]>([]),[editing,setEditing]=useState<number|null>(null);
- const [pattern,setPattern]=useState<Pattern>("bands"),[accent,setAccent]=useState("#c4925f");
- const [patternGroup,setPatternGroup]=useState<PatternGroup>("Classic");
+ const [pattern,setPattern]=useState<Pattern>("sunDisc"),[accent,setAccent]=useState("#c4925f");
+ const [patternGroup,setPatternGroup]=useState<PatternGroup>("Signature");
  const [mode,setMode]=useState<"paint"|"design">("paint"),[opacity,setOpacity]=useState(.78);
  const [scene,setScene]=useState<"room"|"facade"|"custom">("room"),[target,setTarget]=useState<FacadeTarget>("all"),[facadeStyles,setFacadeStyles]=useState<FacadeStyles>({});
  const [sampleId,setSampleId]=useState<FacadeSampleId>("family");
@@ -180,7 +192,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   const saved=stylesForTarget(facadeStyles,target,currentStyle,facadeZones);
   setFacadeStyles(saved);setTarget(next);setShowOriginal(false);setCloseUp(false);
   const style=next==="all"?undefined:saved[next];
-  if(style){setAccent(style.accent);setOpacity(style.opacity);setMode(style.pattern==="plain"?"paint":"design");if(style.pattern!=="plain"){setPattern(style.pattern);setPatternGroup((Object.keys(patternGroups) as PatternGroup[]).find(g=>(patternGroups[g] as readonly Pattern[]).includes(style.pattern))??"Classic");}
+  if(style){setAccent(style.accent);setOpacity(style.opacity);setMode(style.pattern==="plain"?"paint":"design");if(style.pattern!=="plain"){setPattern(style.pattern);setPatternGroup(groupForPattern(style.pattern));}
    if(onColourChange){onColourChange(style.colour);setOverride(null)}else setOverride({source:colour,value:style.colour});}
  }
  function chooseMode(next:"paint"|"design"){
@@ -239,13 +251,13 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   {!ready&&message!=="Loading photo…"&&scene!=="custom"&&<button type="button" className="paint-retry" onClick={()=>scene==="room"?openRoom():openFacade()}>Retry photo</button>}
   {ready&&scene==="facade"&&sampleId==="compact-family"&&<p className="paint-reference-note">AI-generated architectural concept · full elevation shown. Not an approved construction drawing.</p>}
   {ready&&<div className="paint-actions paint-compact-actions paint-preview-actions" role="group" aria-label="Live preview actions"><button type="button" disabled={scene!=="facade"&&!valid&&!walls.length} aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?(scene==="facade"?"Show new paint":"Show new colour"):"View original"}</button><button type="button" className="paint-primary" disabled={patchMode||originalVisible||(scene!=="facade"&&!valid&&(points.length>0||!walls.length))} onClick={saveImage}>Save colour preview</button></div>}
-  </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><details className="paint-more"><summary>Curated colour combinations</summary><div className="paint-pairings">{colourPairings.map(pair=><button key={pair.id} type="button" aria-pressed={base===pair.base&&accent===pair.accent} onClick={()=>{if(onColourChange){onColourChange(pair.base);setOverride(null)}else setOverride({source:colour,value:pair.base});setAccent(pair.accent);setShowOriginal(false)}}><span aria-hidden="true"><i style={{background:pair.base}}/><i style={{background:pair.accent}}/></span>{pair.label}</button>)}</div><small>Digital base and pattern colours, not physical shade samples.</small></details><h3 className="paint-pattern-title">Wall design</h3><div className="paint-pattern-groups" role="group" aria-label="Design collections">{(Object.keys(patternGroups) as PatternGroup[]).map(group=><button type="button" key={group} aria-pressed={patternGroup===group} onClick={()=>setPatternGroup(group)}>{group}</button>)}</div><p className="paint-pattern-current">Applied: {finishes[pattern].name} · {patternGroups[patternGroup].length} designs in this collection</p><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
-   {patternGroups[patternGroup].map(key=><button type="button" key={key} aria-pressed={pattern===key} onClick={()=>{setPattern(key);setShowOriginal(false)}}>
-    <svg viewBox="0 0 150 100" aria-hidden="true" style={{background:base}}>
-     {(finishes[key].motifs as Motif[]).map((motif,i)=><polyline key={i} points={motif.points.map(([x,y])=>[x*150,y*100].join(",")).join(" ")} fill={motif.filled?accent:"none"} stroke={accent} opacity={motif.alpha??1} strokeWidth={1.2*(motif.weight??1)} strokeLinecap="round" strokeLinejoin="round"/>)}
-    </svg><span>{finishes[key].name}</span>
+  </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><details className="paint-more"><summary>Curated colour combinations</summary><div className="paint-pairings">{colourPairings.map(pair=><button key={pair.id} type="button" aria-pressed={base===pair.base&&accent===pair.accent} onClick={()=>{if(onColourChange){onColourChange(pair.base);setOverride(null)}else setOverride({source:colour,value:pair.base});setAccent(pair.accent);setShowOriginal(false)}}><span aria-hidden="true"><i style={{background:pair.base}}/><i style={{background:pair.accent}}/></span>{pair.label}</button>)}</div><small>Digital base and pattern colours, not physical shade samples.</small></details><h3 className="paint-pattern-title">Wall Design Collections</h3><p className="paint-design-hint">Choose a signature mural, stencil or decorative finish. Each design uses your selected wall and accent colours.</p><div className="paint-pattern-groups" role="group" aria-label="Design collections">{(Object.keys(patternGroups) as PatternGroup[]).map(group=><button type="button" key={group} aria-pressed={patternGroup===group} onClick={()=>setPatternGroup(group)}>{group}</button>)}</div><div className="paint-collection-intro"><strong>{collectionGuide[patternGroup].title}</strong><p>{collectionGuide[patternGroup].description}</p></div><p className="paint-pattern-current" role="status">Applied: {finishes[pattern].name}{isRetiredPattern(pattern)?" · previous design preserved":""}</p><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
+   {([...(patternGroups[patternGroup] as readonly Pattern[]),...(isRetiredPattern(pattern)&&patternGroup===groupForPattern(pattern)?[pattern]:[])]).map(key=><button type="button" key={key} aria-pressed={pattern===key} onClick={()=>{setPattern(key);setShowOriginal(false)}}>
+    {isSurfaceProfile(key)?<StudioSurfaceSwatch profile={key} base={base} accent={accent} intensity={opacity}/>:<svg viewBox="0 0 150 100" aria-hidden="true" style={{background:base}}>
+     {(finishes[key].motifs as Motif[]).map((motif,i)=><polyline key={i} points={motif.points.map(([x,y])=>[x*150,y*100].join(",")).join(" ")} fill={motif.filled?accent:"none"} stroke={motif.filled?"none":accent} opacity={(motif.alpha??1)*opacity} strokeWidth={.9*(motif.weight??1)} strokeLinecap="round" strokeLinejoin="round"/>)}
+    </svg>}<span>{finishes[key].name}</span>
    </button>)}
-  </div><label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
+  </div><p className="paint-collection-tip">{collectionGuide[patternGroup].tip}</p><label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
   </>}
 </div></div>
   {ready&&scene==="facade"&&<div className="paint-actions paint-compact-actions" role="group" aria-label="Exterior editing options"><details className="paint-more"><summary>More exterior options</summary><button type="button" onClick={()=>{if(target!=="all")chooseTarget("all");setMode("paint");setCloseUp(false);setHistory(emptyMaskHistory());setShowOriginal(false);setPatchMode(v=>!v)}}>{patchMode?"Cancel wall correction":"Correct a missed wall area"}</button>{patchMode&&<><p role="status">Tap four corners of the exposed wall clockwise. Avoid windows, doors and plants.</p><button type="button" disabled={!valid||extraPaintAreas.length>=8} onClick={()=>{setExtraPaintAreas(a=>[...a,points]);setHistory(emptyMaskHistory());setPatchMode(false)}}>Apply wall correction</button><button type="button" onClick={()=>setHistory(undoCorner)}>Undo corner</button></>}{extraPaintAreas.length>0&&<button type="button" onClick={()=>setExtraPaintAreas(a=>a.slice(0,-1))}>Undo last wall correction</button>}<button type="button" onClick={()=>{setFacadeStyles({});setTarget("all");setMode("paint");setCloseUp(false);setShowOriginal(false);setPatchMode(false);setExtraPaintAreas([]);setHistory(emptyMaskHistory())}}>Reset exterior sections</button></details></div>}
@@ -253,12 +265,12 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
       <button className="paint-quiet" type="button" disabled={!valid||originalVisible} onClick={()=>{
     const wall={points,colour:base,pattern:effectivePattern,accent,opacity,mask:currentMask};
     setWalls(current=>editing===null?[...current,wall]:current.map((w,i)=>i===editing?wall:w));
-    setHistory(emptyMaskHistory());setEditing(null);setMessage("Wall kept. Mark another wall or edit a saved wall below.");
+    setCloseUp(false);setHistory(emptyMaskHistory());setEditing(null);setMessage("Wall kept. Mark another wall or edit a saved wall below.");
    }}>Keep wall & select another</button>
 
    <details className="paint-more" open={!valid&&points.length>0?true:undefined}><summary>Wall selection tools</summary><div className="paint-edit-grid">
       {walls.map((wall,i)=><button type="button" key={i} aria-pressed={editing===i} onClick={()=>{
-    setEditing(i);setHistory({points:wall.points,redo:[]});setAccent(wall.accent);setMode(wall.pattern==="plain"?"paint":"design");if(wall.pattern!=="plain"){setPattern(wall.pattern);setPatternGroup((Object.keys(patternGroups) as PatternGroup[]).find(g=>(patternGroups[g] as readonly Pattern[]).includes(wall.pattern))??"Classic");}setOpacity(wall.opacity??.78);
+    setCloseUp(false);setEditing(i);setHistory({points:wall.points,redo:[]});setAccent(wall.accent);setMode(wall.pattern==="plain"?"paint":"design");if(wall.pattern!=="plain"){setPattern(wall.pattern);setPatternGroup(groupForPattern(wall.pattern));}setOpacity(wall.opacity??.78);
     if(onColourChange){onColourChange(wall.colour);setOverride(null)}else setOverride({source:colour,value:wall.colour});
     setShowOriginal(false);
    }}>Edit wall {i+1}</button>)}

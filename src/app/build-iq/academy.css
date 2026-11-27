@@ -34,3 +34,18 @@
 #practical-start .learning-photo{max-width:none!important;width:100%}#practical-start .learning-photo img{height:clamp(100px,16vw,150px)!important;object-fit:contain;background:#f5f1ea}#practical-start .learning-photo figcaption{color:#526459}
 
 .future-lab-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}.future-lab-preview .learning-photo{max-width:none!important}.future-lab-preview .learning-photo figcaption{color:#526459}@media(max-width:600px){.future-lab-preview{grid-template-columns:1fr}}
+
+/* Shared calculator UX: no animation or additional runtime dependency. */
+.build-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.build-lab-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.build-results{min-width:0;overflow-wrap:anywhere}
+.calc-field-error{font-weight:500;color:#a22427;line-height:1.35}
+.build-fields input[aria-invalid=true]{border-color:#a22427}
+.calc-wide{grid-column:1/-1}
+.calc-reset,.calculator-foot button{min-height:44px;padding:8px 12px;border:1px solid #a9bca9;border-radius:8px;background:white;color:#254738}
+.calc-breakdown{display:grid;gap:10px;margin:0}.calc-breakdown div{border-top:1px solid #ffffff45;padding-top:8px}.calc-breakdown dt{font-size:13px}.calc-breakdown dd{margin:0;font-weight:650;font-variant-numeric:tabular-nums}
+.quick-calculators select{width:100%;max-width:100%;min-height:44px;padding:9px;border:1px solid #a9bca9;border-radius:8px;background:white;color:#19372b}
+@media(max-width:680px){.build-lab-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:380px){.build-fields{grid-template-columns:minmax(0,1fr)}}
+
+.calc-scenario-actions{display:flex!important;flex-wrap:wrap;gap:8px}.calc-scenario-actions button,.calc-compare button,.calc-report button{min-height:44px;padding:8px 12px;border:1px solid #c4d6cb;border-radius:8px;background:#fff;color:#254738;text-align:left;font-weight:600}.calc-compare,.calc-report{border-top:1px solid #ffffff55;padding-top:12px}.calc-report label{display:grid;gap:8px}.calc-report textarea{width:100%;min-width:0;resize:vertical;background:white;color:#19372b;border-radius:8px;padding:10px;font:inherit;font-size:13px}

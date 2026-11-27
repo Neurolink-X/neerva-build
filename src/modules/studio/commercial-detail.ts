@@ -1,3 +1,4 @@
+import {elevationProfiles} from "./core/elevation-appearance.ts";
 import {overlapArea,type Rect} from "./plan-model.ts";
 import {commercialInternalSpaces,commercialInternalOpenings} from "./commercial-internal.ts";
 import {rentalLayouts} from "./rental-layout.ts";
@@ -51,16 +52,27 @@ export function commercialFixtures(plan:BuildingConcept):CommercialFixture[]{
  for(const z of plan.zones.filter(z=>z.kind==="primary")){
   const school=plan.brief.purpose==="school",restaurant=plan.brief.purpose==="restaurant";
   const kind=school?"desk":restaurant?"table":"display",label=school?"Desk group":restaurant?"Table group":"Display island";
-  const w=school?4:restaurant?3:4,d=school?2:restaurant?3:2;
-  const reserved:Rect[]=portals.filter(p=>p.zoneId===z.id).map(portalClearance);
+  const mall=plan.brief.purpose==="mall";
+  const w=school?4:restaurant?4.5:mall?6:4,d=school?2:restaurant?4.5:mall?3:2;
+  // Classroom rows, restaurant tables, retail displays and shop shelving have distinct spatial rhythms.
+  const pitchX=w+(school?4:restaurant?4.5:mall?6:4),pitchY=d+(school?3:restaurant?4.5:mall?6:4);
+  const reserved:Rect[]=portals.filter(p=>p.floor===z.floor&&(p.zoneId===z.id||p.connectsTo===z.id)).map(portalClearance);
   let n=0;
-  for(let y=z.y+5;y+d<=z.y+z.d-4&&n<48;y+=d+4)for(let x=z.x+5;x+w<=z.x+z.w-4&&n<48;x+=w+4){
+  for(let y=z.y+5;y+d<=z.y+z.d-4&&n<48;y+=pitchY)for(let x=z.x+5;x+w<=z.x+z.w-4&&n<48;x+=pitchX){
    const r={x,y,w,d};
    if(reserved.some(a=>overlapArea(a,r)>EPS))continue;
    result.push({...r,id:z.id+"-fixture-"+n++,zoneId:z.id,floor:z.floor,label,kind});
   }
  }
  return result;
+}
+/** Bounded, round-robin selection for the overview. All three overview renderers
+ * use the exact same subset; room-specific inspection keeps the complete set. */
+export function floorPreviewFixtures(plan:BuildingConcept,floor:number,limit=48){
+ const groups=new Map<string,CommercialFixture[]>();for(const f of commercialFixtures(plan)){if(f.floor!==floor)continue;const row=groups.get(f.zoneId)??[];row.push(f);groups.set(f.zoneId,row);}
+ const cap=Math.max(0,Math.min(48,Number.isFinite(limit)?Math.floor(limit):48)),out:CommercialFixture[]=[];
+ const rows=[...groups.values()];for(let i=0;i<48&&out.length<cap;i++)for(const row of rows){if(row[i]&&out.length<cap)out.push(row[i]);}
+ return out;
 }
 export function portalClearance(p:ConceptPortal):Rect{
  return p.axis==="y"?{x:p.x-4,y:p.y-2,w:8,d:p.length+4}:{x:p.x-2,y:p.y-4,w:p.length+4,d:8};
@@ -91,5 +103,42 @@ export function commercialFrontPanels(plan:BuildingConcept){
 /** Presentation-only facade profile; no invented openings or floor area. Feet.
  * Shared by the elevation and full-building render. */
 export function commercialFacadeProfile(purpose:BuildingConcept["brief"]["purpose"]){
- return ({shops:{bandFt:.8,frame:[.19,.23,.24]},mall:{bandFt:.9,frame:[.15,.19,.22]},restaurant:{bandFt:1.05,frame:[.32,.25,.20]},school:{bandFt:.53,frame:[.23,.29,.27]},rental:{bandFt:.65,frame:[.25,.26,.25]}} satisfies Record<BuildingConcept["brief"]["purpose"],{bandFt:number;frame:[number,number,number]}>)[purpose];
+ return elevationProfiles[purpose];
+}
+
+/** Original purpose-led facade language; presentation only, not structural specifications. */
+const frontageLanguage={
+ shops:{style:"Urban retail frame",materialMood:"Stone, dark metal and clear glazing",suitability:"Independent shops and high-street retail",finWidth:.45,finSpacing:5.5,finDepth:.65,canopyDepth:2.5},
+ mall:{style:"Layered retail podium",materialMood:"Metal fins, stone bands and reflective glass",suitability:"Multi-level retail and shopping centres",finWidth:.65,finSpacing:4,finDepth:1,canopyDepth:4},
+ restaurant:{style:"Warm hospitality entrance",materialMood:"Warm accents, bronze tones and glass",suitability:"Restaurants and cafés",finWidth:.4,finSpacing:3.5,finDepth:.7,canopyDepth:3},
+ school:{style:"Rhythmic institutional frontage",materialMood:"Muted masonry, metal frames and daylight glazing",suitability:"Schools and learning spaces",finWidth:.55,finSpacing:6,finDepth:.65,canopyDepth:2},
+ rental:{style:"Quiet residential rhythm",materialMood:"Stone tones, slender frames and restrained glass",suitability:"Rental apartments and flats",finWidth:.35,finSpacing:5,finDepth:.5,canopyDepth:1.5}
+} as const;
+export function commercialFrontageLanguage(purpose:BuildingConcept["brief"]["purpose"]){return frontageLanguage[purpose];}
+export type FrontageDetail={id:string;kind:"fin"|"entry-hood";floor:number;x:number;y:number;widthFt:number;depthFt:number;bottomFt:number;topFt:number};
+/** Shared elevation/render detail geometry in local, road-facing feet.
+ * Place fins only on opaque frontage and entrance hoods above actual access openings.
+ * Limit projections to the available front space; never create an opening or a floor. */
+export function commercialFrontageDetails(plan:BuildingConcept):FrontageDetail[]{
+ const style=commercialFrontageLanguage(plan.brief.purpose),profile=commercialFacadeProfile(plan.brief.purpose);
+ const portals=commercialPortals(plan),panels=commercialFrontPanels(plan),out:FrontageDetail[]=[];
+ for(const [i,p] of panels.entries()){
+  const openings=portals.filter(a=>a.floor===p.floor&&a.axis==="x"&&Math.abs(a.y-p.y)<EPS);
+  const depth=Math.min(style.finDepth,p.y);
+  if(depth>=.3&&p.w>=2.5){
+   const count=Math.min(12,Math.max(1,Math.floor(p.w/style.finSpacing)));
+   for(let n=0;n<count;n++){
+    const x=p.x+p.w*(n+.5)/count-style.finWidth/2;
+    if(x<p.x+.2||x+style.finWidth>p.x+p.w-.2)continue;
+    if(openings.some(a=>x<a.x+a.length+.2&&x+style.finWidth>a.x-.2))continue;
+    out.push({id:`fin-${i}-${n}`,kind:"fin",floor:p.floor,x,y:p.y,widthFt:style.finWidth,depthFt:depth,bottomFt:.8,topFt:12.5-profile.bandFt-.2});
+   }
+  }
+  if(p.floor!==0||p.y<1)continue;
+  for(const a of openings.filter(a=>a.kind==="access"&&a.x>=p.x-EPS&&a.x+a.length<=p.x+p.w+EPS)){
+   const x=Math.max(p.x,a.x-.5),right=Math.min(p.x+p.w,a.x+a.length+.5);
+   out.push({id:`hood-${a.id}`,kind:"entry-hood",floor:0,x,y:p.y,widthFt:right-x,depthFt:Math.min(style.canopyDepth,p.y),bottomFt:8.35,topFt:8.85});
+  }
+ }
+ return out;
 }

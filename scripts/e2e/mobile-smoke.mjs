@@ -64,6 +64,7 @@ async function main(){
         await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
         const info=await canvas.evaluate(el=>({width:el.width,height:el.height,boxes:Number(el.parentElement.dataset.sceneBoxes),tier:el.parentElement.dataset.renderTier}));
         assert.ok(info.width>0&&info.height>0&&info.boxes>0);
+        const viewer=studio.locator(".purpose-views [data-room-viewer]");assert.equal(await viewer.getAttribute("data-plan-id"),planId);assert.equal(await viewer.getAttribute("data-floor"),mode==="exterior"?"all":await plan.getAttribute("data-floor"));
         await canvas.screenshot({path:path.join("test-results/mobile",prefix+"-"+mode+".png"),animations:"disabled"});
         architectureReports.push({purpose,mode,renderer:"webgl",planId,elapsedMs:Date.now()-start,...info});
         return true;
@@ -74,6 +75,7 @@ async function main(){
        }
       };
       if(await capture("cutaway")){
+       if(purpose==="shops"){await studio.getByRole("button",{name:"Show space-use guidance",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Hide space-use guidance",exact:true}).click();}
        await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
        await capture("exterior");
        await studio.getByRole("button",{name:"Show selected floor",exact:true}).click();
@@ -192,7 +194,7 @@ async function main(){
   for(const v of [{w:320,h:640},{w:1024,h:768},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();
-    for(const route of ["/","/materials","/materials/bricks-blocks","/materials/bricks-blocks/red-clay-brick","/brands","/design-studio/visualizer","/build-iq","/checkout?cart=1"]){
+    for(const route of ["/","/materials","/materials/bricks-blocks","/materials/bricks-blocks/red-clay-brick","/brands","/design-studio","/design-studio/visualizer","/build-iq","/checkout?cart=1"]){
      const response=await page.goto(base+route,{waitUntil:"load",timeout:60000});assert.equal(response?.status(),200,route);
      const result=await page.evaluate(()=>({width:document.documentElement.clientWidth,scroll:Math.max(document.documentElement.scrollWidth,document.body.scrollWidth),broken:[...document.images].filter(i=>i.complete&&i.getBoundingClientRect().width>0&&!i.naturalWidth).map(i=>i.getAttribute("src"))}));
      if(result.scroll>result.width+2)failures.push(v.w+"px "+route+": responsive overflow "+(result.scroll-result.width)+"px");
@@ -292,7 +294,7 @@ async function main(){
     assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
     assert.ok(await gallery.evaluate(el=>{const active=el.querySelector("button[aria-pressed=true]"),other=el.querySelector("button[aria-pressed=false]");return active&&other&&getComputedStyle(active).borderColor!==getComputedStyle(other).borderColor}),"active house is visually distinguishable without a badge");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
-    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
+    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="contain";})};});
     assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
     await page.getByRole("button",{name:/100 gaj family home/}).click();
     assert.match(await page.locator(".paint-sample-feedback").innerText(),/100 gaj family home/);
@@ -305,6 +307,8 @@ async function main(){
      await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
      await pattern.click();
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
+     await pattern.locator("svg[data-surface-profile=marble] image").waitFor({state:"attached"});assert.match(await pattern.locator("svg image").getAttribute("href")??"",/^data:image\/png/,"preview uses the actual local material mask");
+     const intensity=page.getByLabel(/Design intensity/);await intensity.fill("0.45");assert.equal(await pattern.locator("svg rect[mask]").getAttribute("opacity"),"0.45","texture swatch intensity matches the wall control");await intensity.press("End");assert.equal(await intensity.inputValue(),"1","keyboard reaches maximum intensity");await intensity.press("ArrowLeft");assert.equal(await intensity.inputValue(),"0.95","keyboard follows the declared step");
      const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
      assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");
     }
@@ -898,6 +902,8 @@ async function main(){
     assert.equal(await page.locator(".nstudio-start-form").getByLabel("Bedrooms").locator("option").count(),6,"all supported BHK inputs are available on landing page");
     assert.equal(await page.locator(".nstudio-feature-copy a[href=\"/design-studio/visualizer\"]").count(),1,"colour studio is discoverable");
     assert.ok(await page.locator(".nstudio-landing").evaluate(el=>el.scrollWidth<=innerWidth+2),"studio landing must not overflow horizontally");
+    assert.ok(await page.locator(".nstudio-landing figure figcaption").evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).position==="static")),"image text belongs below the image");
+    await page.getByRole("button",{name:"150 gaj",exact:true}).click();assert.equal(await page.getByLabel("Plot width (feet)").inputValue(),"27");assert.equal(await page.getByLabel("Plot depth (feet)").inputValue(),"50");
     await page.locator(".nstudio-start-form input").nth(0).fill("18");
     await page.locator(".nstudio-start-form input").nth(1).fill("50");
     await page.getByRole("button",{name:/Create room layouts/}).click();
@@ -1057,6 +1063,28 @@ async function main(){
   assert.equal(await page.getByLabel("Your quoted rate (₹/sq ft)").inputValue(),"","no assumed market rate");
   await page.getByText("Budget is optional.",{exact:false}).waitFor();
   await page.getByRole("button",{name:"Brick wall",exact:true}).click();
+    await page.getByRole("button",{name:"Smart Plot & Design"}).click();
+    const converter=page.locator(".quick-calculators .calculator-page-card");
+    await converter.waitFor({state:"visible"});
+    await converter.getByRole("combobox",{name:"Unit",exact:true}).selectOption("m");
+    assert.ok(Math.abs(Number(await converter.getByLabel("Length",{exact:true}).inputValue())-6.096)<1e-8,"changing units preserves length");
+    assert.match(await converter.locator(".area-results").innerText(),/800/);
+    await page.getByRole("button",{name:"Smart Construction & Materials"}).click();
+    await page.getByLabel("What do you want to calculate?").selectOption("tiles");
+    const tileWidth=page.getByLabel("Tile width (mm)",{exact:true});
+    await tileWidth.fill("0");
+    assert.equal(await tileWidth.getAttribute("aria-invalid"),"true");
+    await tileWidth.fill("600");
+    assert.equal(await tileWidth.getAttribute("aria-invalid"),"false");
+    assert.match(await page.locator(".quick-calculators > .build-lab-grid .build-results").innerText(),/29 tiles/);
+    await page.getByRole("button",{name:"Save as baseline",exact:true}).click();
+    await tileWidth.fill("300");
+    assert.match(await page.locator(".calc-compare").innerText(),/Session baseline: 29 tiles/);
+    await page.getByRole("button",{name:"Restore baseline inputs",exact:true}).click();
+    assert.equal(await tileWidth.inputValue(),"600");
+    await page.getByRole("button",{name:"View estimate report",exact:true}).click();
+    assert.match(await page.getByLabel("Estimate report (select and copy)").inputValue(),/calculation model v1/);
+    await page.getByRole("button",{name:"Close report",exact:true}).click();
     const academyCount=await page.locator("#academy-lesson-list > a").count();
     assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
     await page.getByRole("searchbox",{name:"Search the construction handbook"}).fill("foundation");
@@ -1222,8 +1250,15 @@ async function main(){
  await mark(.06);
  const plainBeforePattern=await canvas.evaluate(c=>c.toDataURL());
  await page.getByRole("button",{name:"Paint + design",exact:true}).click();
- await page.getByRole("button",{name:"Pinstripes",exact:true}).click();
- assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),plainBeforePattern,"pattern must alter actual canvas pixels");
+ await page.getByRole("button",{name:"Signature",exact:true}).click();await page.getByRole("button",{name:"Luxury orbit rings",exact:true}).click();
+ const orbit=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(orbit,plainBeforePattern,"circular mural must alter actual canvas pixels");
+ await page.getByRole("button",{name:"Nature",exact:true}).click();await page.getByRole("button",{name:"Floral vine feature wall",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),orbit,"floral artwork differs from the circle mural");
+ let visibleDesigns=0;for(const group of ["Signature","Nature","Classic","Modern","Textures","Artisan","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,34,"curated collection must not contain retired filler designs");
+ await page.getByRole("button",{name:"Artisan",exact:true}).click();
+ const artisan=page.getByRole("button",{name:"Venetian polished plaster",exact:true});await artisan.click();
+ const venetian=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(venetian,plainBeforePattern,"continuous texture changes actual wall pixels");
+ await page.getByRole("button",{name:"Honed onyx veining",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),venetian,"two artisan materials produce different wall pixels");
+ await page.getByRole("button",{name:"Classic",exact:true}).click();await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
  const png=()=>canvas.evaluate(c=>c.toDataURL());

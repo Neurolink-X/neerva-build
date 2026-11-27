@@ -16,3 +16,12 @@ test("plot dimensions reject zero and negative values", () => {
   assert.throws(() => squareFeetFromDimensions(0, 20, "ft"), RangeError);
   assert.throws(() => squareFeetFromDimensions(20, -1, "ft"), RangeError);
 });
+
+import {convertLength} from "./units.ts";
+test("unit switching preserves plot area and rejects numeric overflow",()=>{
+ const a=convertLength(20,"ft","m"),b=convertLength(40,"ft","m");
+ assert.ok(Math.abs(squareFeetFromDimensions(a,b,"m")-800)<1e-8);
+ assert.ok(Math.abs(convertLength(a,"m","ft")-20)<1e-8);
+ assert.throws(()=>squareFeetFromDimensions(1e200,1e200,"ft"),RangeError);
+ assert.throws(()=>convertLength(Infinity,"ft","m"),RangeError);
+});

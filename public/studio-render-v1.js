@@ -48,20 +48,26 @@ function bvh(items){
  const ordered=[...items].sort((a,b)=>(a.lo[axis]+a.hi[axis])-(b.lo[axis]+b.hi[axis]));
  const mid=ordered.length>>1;return {...box,left:bvh(ordered.slice(0,mid)),right:bvh(ordered.slice(mid))};
 }
-function overlaps(o,d,node,limit){
+function entryDistance(o,d,node,limit){
  let near=0,far=limit;
  for(let k=0;k<3;k++){
-  if(Math.abs(d[k])<1e-10){if(o[k]<node.lo[k]||o[k]>node.hi[k])return false;continue}
+  if(Math.abs(d[k])<1e-10){if(o[k]<node.lo[k]||o[k]>node.hi[k])return Infinity;continue}
   const a=(node.lo[k]-o[k])/d[k],b=(node.hi[k]-o[k])/d[k];
-  near=Math.max(near,Math.min(a,b));far=Math.min(far,Math.max(a,b));if(near>far)return false;
+  near=Math.max(near,Math.min(a,b));far=Math.min(far,Math.max(a,b));if(near>far)return Infinity;
  }
- return far>EPS;
+ return far>EPS?near:Infinity;
 }
 function nearest(tree,o,d,limit=Infinity){
- let best=null;const stack=[tree];
- while(stack.length){const n=stack.pop();if(!overlaps(o,d,n,best?.t??limit))continue;
+ let best=null;const initial=entryDistance(o,d,tree,limit);if(!Number.isFinite(initial))return null;
+ const stack=[{node:tree,entry:initial}];
+ while(stack.length){const {node:n,entry}=stack.pop();if(entry>=(best?.t??limit))continue;
   if(n.items){for(const b of n.items){const h=intersectBox(o,d,b.lo,b.hi,best?.t??limit);if(h)best={...h,b}}}
-  else stack.push(n.left,n.right);
+  else{
+   const max=best?.t??limit,l=entryDistance(o,d,n.left,max),r=entryDistance(o,d,n.right,max);
+   // Visit nearer child first to tighten the hit limit early; ties keep the legacy right-first order.
+   if(l<r){if(Number.isFinite(r))stack.push({node:n.right,entry:r});if(Number.isFinite(l))stack.push({node:n.left,entry:l});}
+   else{if(Number.isFinite(l))stack.push({node:n.left,entry:l});if(Number.isFinite(r))stack.push({node:n.right,entry:r});}
+  }
  }
  return best;
 }
@@ -114,7 +120,7 @@ function shade(tree,origin,dir,rng,evening,lights){
 function toByte(x){const a=clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0,1);return Math.round(255*Math.pow(a,1/2.2))}
 export function renderScene(job,report){
  const {boxes,camera,width,height,samples,evening}=job;
- const lights=Array.isArray(job.lights)?job.lights.slice(0,4).filter(l=>l.position?.length===3&&l.color?.length===3&&[...l.position,...l.color,l.power].every(Number.isFinite)&&l.power>=0&&l.power<=100):[];
+ const lights=Array.isArray(job.lights)?job.lights.slice(0,4).filter(l=>l&&vec(l.position)&&unitColor(l.color)&&range(l.power,0,100)):[];
  if(!Array.isArray(boxes)||!boxes.length||boxes.length>2500||!Number.isInteger(width)||!Number.isInteger(height)||width<16||height<16||width>768||height>768||width*height>420000||!Number.isInteger(samples)||samples<1||samples>16)throw Error("Unsupported render size or scene complexity.");
  validateScene(boxes,camera);
  const tree=bvh(boxes),acc=new Float32Array(width*height*3),rng=random(7319);

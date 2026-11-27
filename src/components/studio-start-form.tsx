@@ -29,19 +29,22 @@ export function StudioStartForm(){
   router.push("/design-studio/portfolio?"+p.toString());
  }
  return <form className="nstudio-start-form" onSubmit={submit} aria-label="Start a plot-specific architectural concept">
-  <div className="nstudio-start-grid">
+  <div className="nstudio-form-presets" role="group" aria-label="Example plot dimensions">{[[15,30,50],[18,50,100],[27,50,150],[30,60,200]].map(([w,d,g])=><button key={g} type="button" aria-pressed={shape==="rectangle"&&Number(width)===w&&Number(depth)===d} onClick={()=>{setShape("rectangle");setWidth(String(w));setDepth(String(d));setGaj("");setError("")}}>{g} gaj</button>)}</div>
+  <p className="nstudio-area-note">Examples only. Choose a preset or enter your actual measurements. Presets do not change bedrooms, road or parking.</p>
+  <fieldset className="nstudio-form-group"><legend>01 · Site measurements</legend><div className="nstudio-start-grid">
    <label>Plot width (feet)<input inputMode="decimal" type="number" min="10" max="200" step="any" required value={width} onChange={e=>{setWidth(e.target.value);setError("")}}/></label>
    <label>Plot depth (feet)<input inputMode="decimal" type="number" min="15" max="250" step="any" required value={depth} onChange={e=>{setDepth(e.target.value);setError("")}}/></label>
    <label>Plot shape<select value={shape} onChange={e=>{setShape(e.target.value);setError("");}}><option value="rectangle">Rectangle / square</option><option value="rear-left-notch">L-shaped · rear-left missing corner</option><option value="rear-right-notch">L-shaped · rear-right missing corner</option></select></label>
    {shape!=="rectangle"&&<><label>Missing corner width (ft)<input type="number" min="1" step="any" required value={notchWidth} onChange={e=>setNotchWidth(e.target.value)}/></label><label>Missing corner depth (ft)<input type="number" min="1" step="any" required value={notchDepth} onChange={e=>setNotchDepth(e.target.value)}/></label></>}
-   <label>Plot area (gaj / sq yd, optional)<input type="number" inputMode="decimal" min="1" step="any" value={gaj} onChange={e=>{setGaj(e.target.value);setError("")}} placeholder="e.g. 120, 130, 140, 150"/></label>
-   <button type="button" className="nstudio-area-apply" disabled={shape!=="rectangle"} onClick={()=>applyGaj(gaj)}>Calculate depth from gaj</button>
+  </div></fieldset><details className="nstudio-advanced"><summary>Optional area-to-depth conversion</summary><div className="nstudio-start-grid"><label>Plot area (gaj / sq yd, optional)<input type="number" inputMode="decimal" min="1" step="any" value={gaj} onChange={e=>{setGaj(e.target.value);setError("")}} placeholder="e.g. 120, 130, 140, 150"/></label>
+   <button type="button" className="nstudio-area-apply" disabled={shape!=="rectangle"} onClick={()=>applyGaj(gaj)}>Apply depth from gaj</button></div><p className="nstudio-area-note">Only for rectangular sites with a measured width.</p></details>
+  <fieldset className="nstudio-form-group"><legend>02 · Your home requirements</legend><div className="nstudio-start-grid">
    <label>Road on which side?<select value={road} onChange={e=>setRoad(e.target.value)}><option value="N">North</option><option value="E">East</option><option value="S">South</option><option value="W">West</option></select></label>
    <label>Bedrooms<select value={bedrooms} onChange={e=>setBedrooms(e.target.value)}>{[1,2,3,4,5,6].map(x=><option key={x} value={x}>{x} BHK</option>)}</select></label>
    <label>Floors<select value={floors} onChange={e=>setFloors(e.target.value)}><option value="1">Ground</option><option value="2">Ground + first</option><option value="3">Ground + two floors</option></select></label>
    <label>Car parking<select value={parking} onChange={e=>setParking(e.target.value)}><option value="true">Needed</option><option value="false">No car parking</option></select></label>
-  </div>
-  <p className="nstudio-area-note">Current dimensions: {siteShape&&shapeErrors(Number(width),Number(depth),siteShape).length===0&&gajFromFeet(Number(width),Number(depth))!==null?Math.round(siteAreaSqFt(Number(width),Number(depth),siteShape)/9*100)/100:"—"} gaj (sq yd). Area alone cannot determine the width and depth; enter your actual road-facing frontage. 1 gaj = 9 sq ft.</p>
+  </div></fieldset>
+  <p className="nstudio-area-note" aria-live="polite">Current dimensions: {siteShape&&shapeErrors(Number(width),Number(depth),siteShape).length===0&&gajFromFeet(Number(width),Number(depth))!==null?Math.round(siteAreaSqFt(Number(width),Number(depth),siteShape)/9*100)/100:"—"} gaj (sq yd). Area alone cannot determine the width and depth; enter your actual road-facing frontage. 1 gaj = 9 sq ft.</p>
   {error&&<p role="alert" className="nstudio-error">{error}</p>}
   <button type="submit">Create room layouts for my plot →</button>
   <small>Draft concepts, not construction drawings. The system shows only layouts that pass its current geometry and circulation checks. Small or unusual plots may have no valid layouts.</small>

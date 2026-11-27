@@ -1,6 +1,6 @@
 // Read-only fixed-origin production smoke. No credentials, no mutations, no arbitrary targets.
 const origins=new Set(["https://neerva-build.vercel.app","https://neerva.in"]);
-const paths=["/","/materials","/build-iq","/design-studio","/design-studio/buildings","/design-studio/visualizer","/api/catalog?limit=1","/api/studio/config"];
+const paths=["/","/materials","/build-iq","/calculators","/design-studio","/design-studio/buildings","/design-studio/visualizer","/api/catalog?limit=1","/api/studio/config"];
 async function get(origin,path){
  let url=new URL(path,origin);
  for(let redirect=0;redirect<=2;redirect++){
@@ -20,8 +20,10 @@ async function get(origin,path){
 async function probe(origin,path){
  for(let attempt=0;attempt<2;attempt++){
   let response;
+  const started=performance.now();
   try{
    response=await get(origin,path);
+   const responseMs=Math.round(performance.now()-started);
    if(response.status!==200)throw Error("HTTP "+response.status);
    const content=response.headers.get("content-type")??"";
    if(path.startsWith("/api/")){
@@ -34,7 +36,7 @@ async function probe(origin,path){
     if(response.headers.get("x-content-type-options")!=="nosniff"||response.headers.get("x-frame-options")!=="DENY")throw Error("Security headers missing");
     await response.body?.cancel();
    }
-   return {origin,path,status:"ok"};
+   return {origin,path,status:"ok",responseMs,scope:"runner HTTP response including redirects; not browser Core Web Vitals"};
   }catch(error){
    if(response?.body&&!response.bodyUsed)await response.body.cancel().catch(()=>{});
    if(attempt===0){await new Promise(resolve=>setTimeout(resolve,1000));continue}

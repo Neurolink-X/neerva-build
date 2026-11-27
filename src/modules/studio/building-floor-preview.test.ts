@@ -66,3 +66,52 @@ test("commercial presentation site remains compact and all structural geometry s
   assert.ok(s.boxes.every(b=>b.hi.every((v,i)=>Number.isFinite(v)&&v>b.lo[i])));
  }
 });
+
+import {floorPreviewFixtures,portalClearance,commercialPortals} from "./commercial-detail.ts";
+import {commercialFixtureBoxes} from "./commercial-fixture-render.ts";
+import {overlapArea} from "./plan-model.ts";
+test("commercial furnished cutaways reuse exact selected-floor 2D footprints across five purposes and road directions",()=>{
+ for(const purpose of buildingPurposes)for(const roadSide of ["N","E","S","W"] as const){
+  const brief={...buildingStarter(purpose),roadSide},plan=generateBuildingConcepts(brief,1,"purpose-led").plans[0];assert.ok(plan);
+  const scheme=defaultFinishScheme({kind:"commercial",plan});
+  for(let floor=0;floor<brief.floors;floor++){
+   const fixtures=floorPreviewFixtures(plan,floor);assert.ok(fixtures.length<=48);
+   const plain=buildingFloorSnapshot(plan,floor,scheme),furnished=buildingFloorSnapshot(plan,floor,scheme,false,true);
+   assert.deepEqual(furnished.boxes.slice(0,plain.boxes.length),plain.boxes);
+   const expected=fixtures.flatMap(f=>commercialFixtureBoxes(f,brief.widthFt/2,brief.depthFt/2));
+   assert.deepEqual(furnished.boxes.slice(plain.boxes.length),expected);assert.ok(expected.length<=192);
+   for(const f of fixtures){
+    assert.equal(f.floor,floor);
+    for(const door of commercialPortals(plan).filter(p=>p.floor===floor&&(p.zoneId===f.zoneId||p.connectsTo===f.zoneId)))assert.ok(overlapArea(f,portalClearance(door))<1e-5);
+    for(const b of commercialFixtureBoxes(f,brief.widthFt/2,brief.depthFt/2)){
+     assert.ok(b.lo[0]>=(f.x-brief.widthFt/2)*.3048-1e-8&&b.hi[0]<=(f.x+f.w-brief.widthFt/2)*.3048+1e-8);
+     assert.ok(b.lo[2]>=(f.y-brief.depthFt/2)*.3048-1e-8&&b.hi[2]<=(f.y+f.d-brief.depthFt/2)*.3048+1e-8);
+    }
+   }
+  }
+ }
+});
+
+import {commercialFrontageDetails,commercialFrontageLanguage} from "./commercial-detail.ts";
+test("purpose-led facade features match the full model and preserve actual openings and front space",()=>{
+ const styles=new Set<string>();
+ for(const purpose of buildingPurposes)for(const roadSide of ["N","E","S","W"] as const){
+  const plan=generateBuildingConcepts({...buildingStarter(purpose),roadSide},1,"purpose-led").plans[0];assert.ok(plan);
+  styles.add(commercialFrontageLanguage(purpose).style);
+  const details=commercialFrontageDetails(plan),panels=commercialFrontPanels(plan),portals=commercialPortals(plan);
+  const model=buildingRenderSnapshot(plan);
+  assert.deepEqual(details,commercialFrontageDetails(plan));
+  assert.equal(new Set(details.map(d=>d.id)).size,details.length);
+  for(const d of details){
+   assert.ok(d.depthFt>0&&d.depthFt<=d.y&&d.widthFt>0&&d.topFt>d.bottomFt&&d.topFt<13);
+   assert.ok(panels.some(p=>p.floor===d.floor&&p.y===d.y&&d.x>=p.x-1e-7&&d.x+d.widthFt<=p.x+p.w+1e-7));
+   const openings=portals.filter(p=>p.axis==="x"&&p.floor===d.floor&&Math.abs(p.y-d.y)<1e-5);
+   if(d.kind==="fin")assert.ok(openings.every(p=>d.x+d.widthFt<=p.x||d.x>=p.x+p.length));
+   else assert.ok(d.bottomFt>8&&openings.some(p=>p.kind==="access"&&p.x>=d.x-1e-7&&p.x+p.length<=d.x+d.widthFt+1e-7));
+   const expectedLo=[(d.x-plan.brief.widthFt/2)*.3048,(d.floor*13+d.bottomFt)*.3048,(d.y-plan.brief.depthFt/2-d.depthFt)*.3048];
+   const expectedHi=[(d.x+d.widthFt-plan.brief.widthFt/2)*.3048,(d.floor*13+d.topFt)*.3048,(d.y-plan.brief.depthFt/2)*.3048];
+   assert.ok(model.boxes.some(b=>b.lo.every((v,i)=>Math.abs(v-expectedLo[i])<1e-7)&&b.hi.every((v,i)=>Math.abs(v-expectedHi[i])<1e-7)));
+  }
+ }
+ assert.equal(styles.size,buildingPurposes.length);
+});
