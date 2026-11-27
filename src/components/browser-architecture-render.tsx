@@ -7,7 +7,7 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
  const worker=useRef<Worker|null>(null),canvas=useRef<HTMLCanvasElement>(null),timer=useRef<number|null>(null),sequence=useRef(0),visible=useRef(true);
  const [phase,setPhase]=useState<Phase>("idle"),[quality,setQuality]=useState<"quick"|"fine">("quick"),[progress,setProgress]=useState(0),[message,setMessage]=useState(""),[hasFrame,setHasFrame]=useState(false);
  function stop(){sequence.current++;worker.current?.terminate();worker.current=null;if(timer.current!==null)window.clearTimeout(timer.current);timer.current=null;}
- useEffect(()=>{visible.current=true;return()=>{visible.current=false;sequence.current++;worker.current?.terminate();if(timer.current!==null)window.clearTimeout(timer.current)}},[]);
+ useEffect(()=>{visible.current=true;return()=>{visible.current=false;stop()}},[]);
  useEffect(()=>{const pause=()=>{if(document.hidden&&worker.current){stop();setPhase("cancelled");setMessage("Rendering stopped while this tab was hidden. You can restart when ready.");}};document.addEventListener("visibilitychange",pause);return()=>document.removeEventListener("visibilitychange",pause)},[]);
  function start(){
   stop();setHasFrame(false);setProgress(0);
