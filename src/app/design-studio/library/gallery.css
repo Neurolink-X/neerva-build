@@ -53,3 +53,5 @@
 .nbd-building .nbd-quality-options summary{cursor:pointer;min-height:44px;padding:12px 0;font-weight:650}
 .nbd-building .nbd-quality-options p{font-size:14px;line-height:1.55}
 .nbd-webgl{min-height:0;aspect-ratio:auto}.nbd-webgl canvas{max-width:100%;display:block}
+
+.nbd-commercial-links{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:8px 0}.nbd-commercial-links a{flex:0 0 auto;scroll-snap-align:start;min-height:44px;display:flex;align-items:center;border:1px solid #b6c6b9;border-radius:8px;padding:8px 12px;color:#244735;background:#fff;font-size:13px}.nbd-building :is(.nbd-render-options,.nbd-model-help) summary{cursor:pointer;padding:10px 0;min-height:44px;font-weight:650}
