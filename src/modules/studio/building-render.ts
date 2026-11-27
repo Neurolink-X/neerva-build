@@ -4,7 +4,7 @@ import {finishRoughness} from "./commercial-interior-render.ts";
 import {commercialStairStudies,commercialInternalSpaces} from "./commercial-internal.ts";
 import {stairStepDepthFt} from "./stair-study.ts";
 import {commercialFixtureBoxes} from "./commercial-fixture-render.ts";
-import {floorPreviewFixtures,commercialFrontPanels,commercialFacadeProfile} from "./commercial-detail.ts";
+import {floorPreviewFixtures,commercialFrontPanels,commercialFacadeProfile,commercialFrontageDetails} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
 import {glazingBayCount} from "./core/elevation-appearance.ts";
@@ -48,6 +48,10 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
   // Shallow, presentation-only trim, above existing 8 ft openings.
   const trim=Math.min(.045,band*.18);
   push([left,top-band,plane-profile.trimDepth],[right,top-band+trim,plane-profile.bandDepth],frame,.48);
+ }
+ for(const d of commercialFrontageDetails(plan)){
+  const plane=z(d.y),level=d.floor*13,colour=d.kind==="fin"?frame:accent;
+  push([x(d.x),(level+d.bottomFt)*ft,plane-d.depthFt*ft],[x(d.x+d.widthFt),(level+d.topFt)*ft,plane],colour,.48);
  }
  for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
   // Frame stays strictly inside the aperture and leaves the existing opening intact.

@@ -105,3 +105,40 @@ export function commercialFrontPanels(plan:BuildingConcept){
 export function commercialFacadeProfile(purpose:BuildingConcept["brief"]["purpose"]){
  return elevationProfiles[purpose];
 }
+
+/** Original purpose-led facade language; presentation only, not structural specifications. */
+const frontageLanguage={
+ shops:{style:"Urban retail frame",materialMood:"Stone, dark metal and clear glazing",suitability:"Independent shops and high-street retail",finWidth:.45,finSpacing:5.5,finDepth:.65,canopyDepth:2.5},
+ mall:{style:"Layered retail podium",materialMood:"Metal fins, stone bands and reflective glass",suitability:"Multi-level retail and shopping centres",finWidth:.65,finSpacing:4,finDepth:1,canopyDepth:4},
+ restaurant:{style:"Warm hospitality entrance",materialMood:"Warm accents, bronze tones and glass",suitability:"Restaurants and cafés",finWidth:.4,finSpacing:3.5,finDepth:.7,canopyDepth:3},
+ school:{style:"Rhythmic institutional frontage",materialMood:"Muted masonry, metal frames and daylight glazing",suitability:"Schools and learning spaces",finWidth:.55,finSpacing:6,finDepth:.65,canopyDepth:2},
+ rental:{style:"Quiet residential rhythm",materialMood:"Stone tones, slender frames and restrained glass",suitability:"Rental apartments and flats",finWidth:.35,finSpacing:5,finDepth:.5,canopyDepth:1.5}
+} as const;
+export function commercialFrontageLanguage(purpose:BuildingConcept["brief"]["purpose"]){return frontageLanguage[purpose];}
+export type FrontageDetail={id:string;kind:"fin"|"entry-hood";floor:number;x:number;y:number;widthFt:number;depthFt:number;bottomFt:number;topFt:number};
+/** Shared elevation/render detail geometry in local, road-facing feet.
+ * Place fins only on opaque frontage and entrance hoods above actual access openings.
+ * Limit projections to the available front space; never create an opening or a floor. */
+export function commercialFrontageDetails(plan:BuildingConcept):FrontageDetail[]{
+ const style=commercialFrontageLanguage(plan.brief.purpose),profile=commercialFacadeProfile(plan.brief.purpose);
+ const portals=commercialPortals(plan),panels=commercialFrontPanels(plan),out:FrontageDetail[]=[];
+ for(const [i,p] of panels.entries()){
+  const openings=portals.filter(a=>a.floor===p.floor&&a.axis==="x"&&Math.abs(a.y-p.y)<EPS);
+  const depth=Math.min(style.finDepth,p.y);
+  if(depth>=.3&&p.w>=2.5){
+   const count=Math.min(12,Math.max(1,Math.floor(p.w/style.finSpacing)));
+   for(let n=0;n<count;n++){
+    const x=p.x+p.w*(n+.5)/count-style.finWidth/2;
+    if(x<p.x+.2||x+style.finWidth>p.x+p.w-.2)continue;
+    if(openings.some(a=>x<a.x+a.length+.2&&x+style.finWidth>a.x-.2))continue;
+    out.push({id:`fin-${i}-${n}`,kind:"fin",floor:p.floor,x,y:p.y,widthFt:style.finWidth,depthFt:depth,bottomFt:.8,topFt:12.5-profile.bandFt-.2});
+   }
+  }
+  if(p.floor!==0||p.y<1)continue;
+  for(const a of openings.filter(a=>a.kind==="access"&&a.x>=p.x-EPS&&a.x+a.length<=p.x+p.w+EPS)){
+   const x=Math.max(p.x,a.x-.5),right=Math.min(p.x+p.w,a.x+a.length+.5);
+   out.push({id:`hood-${a.id}`,kind:"entry-hood",floor:0,x,y:p.y,widthFt:right-x,depthFt:Math.min(style.canopyDepth,p.y),bottomFt:8.35,topFt:8.85});
+  }
+ }
+ return out;
+}
