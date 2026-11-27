@@ -4,6 +4,8 @@ import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type Mask
 import {encodedPhotoDimensions,photoDimensionsAllowed,maxPreviewSide} from "@/modules/studio/photo-budget";
 import {finishes,patternGroups,type PatternGroup,type Pattern,type Motif} from "@/modules/studio/wall-patterns";
 import NextImage from "next/image";
+import {isSurfaceProfile} from "@/modules/studio/surface-texture";
+import {surfaceCanvas,StudioSurfaceSwatch} from "./studio-surface-swatch";
 import {colourPairings} from "@/modules/studio/colour-families";
 import {facadeSamples,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
@@ -39,10 +41,17 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
   const brush=layer??ctx;brush.save();
   brush.globalCompositeOperation="source-over";brush.globalAlpha=wall.opacity??.78;
   brush.strokeStyle=brush.fillStyle=wall.accent;const weight=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)*.006);brush.lineCap="round";brush.lineJoin="round";
-  for(const motif of finishes[wall.pattern].motifs as Motif[]){
+  // Organic finishes use a continuous material mask rather than stripes or flat line art.
+  const tile=layer&&isSurfaceProfile(wall.pattern)?surfaceCanvas(wall.pattern):null;
+  if(tile){
+   const left=Math.min(...corners.map(p=>p.x)),top=Math.min(...corners.map(p=>p.y)),right=Math.max(...corners.map(p=>p.x)),bottom=Math.max(...corners.map(p=>p.y));
+   brush.save();brush.beginPath();corners.forEach((p,i)=>i?brush.lineTo(p.x,p.y):brush.moveTo(p.x,p.y));brush.closePath();brush.clip();
+   brush.globalAlpha=wall.opacity??.78;brush.drawImage(tile,left,top,right-left,bottom-top);brush.restore();
+  }else{  for(const motif of finishes[wall.pattern].motifs as Motif[]){
    brush.globalAlpha=(wall.opacity??.78)*(motif.alpha??1);brush.lineWidth=weight*(motif.weight??1);brush.beginPath();
    motif.points.forEach(([u,v],i)=>{const p=at(u,v);if(i===0)brush.moveTo(p.x,p.y);else brush.lineTo(p.x,p.y)});
    if(motif.filled){brush.closePath();brush.fill()}else brush.stroke();
+  }
   }
   if(layer&&patternSurface&&accentTint){brush.globalCompositeOperation="source-in";brush.globalAlpha=1;brush.drawImage(accentTint,0,0,w,h);}
   brush.restore();
@@ -241,9 +250,9 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   {ready&&<div className="paint-actions paint-compact-actions paint-preview-actions" role="group" aria-label="Live preview actions"><button type="button" disabled={scene!=="facade"&&!valid&&!walls.length} aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?(scene==="facade"?"Show new paint":"Show new colour"):"View original"}</button><button type="button" className="paint-primary" disabled={patchMode||originalVisible||(scene!=="facade"&&!valid&&(points.length>0||!walls.length))} onClick={saveImage}>Save colour preview</button></div>}
   </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><details className="paint-more"><summary>Curated colour combinations</summary><div className="paint-pairings">{colourPairings.map(pair=><button key={pair.id} type="button" aria-pressed={base===pair.base&&accent===pair.accent} onClick={()=>{if(onColourChange){onColourChange(pair.base);setOverride(null)}else setOverride({source:colour,value:pair.base});setAccent(pair.accent);setShowOriginal(false)}}><span aria-hidden="true"><i style={{background:pair.base}}/><i style={{background:pair.accent}}/></span>{pair.label}</button>)}</div><small>Digital base and pattern colours, not physical shade samples.</small></details><h3 className="paint-pattern-title">Wall design</h3><div className="paint-pattern-groups" role="group" aria-label="Design collections">{(Object.keys(patternGroups) as PatternGroup[]).map(group=><button type="button" key={group} aria-pressed={patternGroup===group} onClick={()=>setPatternGroup(group)}>{group}</button>)}</div><p className="paint-pattern-current">Applied: {finishes[pattern].name} · {patternGroups[patternGroup].length} designs in this collection</p><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
    {patternGroups[patternGroup].map(key=><button type="button" key={key} aria-pressed={pattern===key} onClick={()=>{setPattern(key);setShowOriginal(false)}}>
-    <svg viewBox="0 0 150 100" aria-hidden="true" style={{background:base}}>
+    {isSurfaceProfile(key)?<StudioSurfaceSwatch profile={key} base={base} accent={accent}/>:<svg viewBox="0 0 150 100" aria-hidden="true" style={{background:base}}>
      {(finishes[key].motifs as Motif[]).map((motif,i)=><polyline key={i} points={motif.points.map(([x,y])=>[x*150,y*100].join(",")).join(" ")} fill={motif.filled?accent:"none"} stroke={accent} opacity={motif.alpha??1} strokeWidth={1.2*(motif.weight??1)} strokeLinecap="round" strokeLinejoin="round"/>)}
-    </svg><span>{finishes[key].name}</span>
+    </svg>}<span>{finishes[key].name}</span>
    </button>)}
   </div><label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
   </>}

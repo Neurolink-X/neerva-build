@@ -305,6 +305,7 @@ async function main(){
      await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
      await pattern.click();
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
+     await pattern.locator("svg[data-surface-profile=marble] image").waitFor({state:"attached"});assert.match(await pattern.locator("svg image").getAttribute("href")??"",/^data:image\/png/,"preview uses the actual local material mask");
      const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
      assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");
     }
@@ -1226,6 +1227,11 @@ async function main(){
  await page.getByRole("button",{name:"Paint + design",exact:true}).click();
  await page.getByRole("button",{name:"Pinstripes",exact:true}).click();
  assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),plainBeforePattern,"pattern must alter actual canvas pixels");
+ await page.getByRole("button",{name:"Artisan",exact:true}).click();
+ const artisan=page.getByRole("button",{name:"Venetian polished plaster",exact:true});await artisan.click();
+ const venetian=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(venetian,plainBeforePattern,"continuous texture changes actual wall pixels");
+ await page.getByRole("button",{name:"Honed onyx veining",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),venetian,"two artisan materials produce different wall pixels");
+ await page.getByRole("button",{name:"Classic",exact:true}).click();await page.getByRole("button",{name:"Pinstripes",exact:true}).click();
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
  const png=()=>canvas.evaluate(c=>c.toDataURL());

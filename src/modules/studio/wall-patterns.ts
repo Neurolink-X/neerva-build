@@ -38,9 +38,13 @@ export const finishes = {
  ribbed:{name:"Soft shadow grooves",motifs:repeat(16,i=>({...line([(i+.5)/16,.08],[(i+.5)/16,.92]),alpha:i%2?.18:.48,weight:i%2?.7:1.8}))},
  stonewash:{name:"Soft stone wash",motifs:[...repeat(24,i=>wave(.02+i*.041,.032,i*.89,.09,4.8)),...grain(60,11)]},
  heritage:{name:"Heritage border accent",motifs:[{...line([0,.13],[1,.13]),alpha:.7,weight:1.4},{...line([0,.87],[1,.87]),alpha:.7,weight:1.4},...repeat(10,i=>({...line([i/10,.13],[(i+.5)/10,.06],[(i+1)/10,.13]),alpha:.45,weight:.8}))]},
+ venetian:{name:"Venetian polished plaster",motifs:repeat(9,i=>wave(.08+i*.10,.03,i*.87,.18,4))},
+ onyx:{name:"Honed onyx veining",motifs:repeat(7,i=>wave(.12+i*.13,.12,i*.9,.24,1.7))},
+ suede:{name:"Soft suede finish",motifs:grain(88,31)},
+ microcement:{name:"Seamless microcement",motifs:grain(95,37)},
  reception:{name:"Reception feature wall",motifs:[{...box(.08,.10,.84,.80),alpha:.55,weight:1.6},...repeat(8,i=>({...line([.10+i*.033,.12],[.10+i*.033,.88]),alpha:.35,weight:1.4})),...repeat(8,i=>({...line([.66+i*.033,.12],[.66+i*.033,.88]),alpha:.35,weight:1.4}))]}
 } satisfies Record<string,{name:string;motifs:Motif[]}>;
 export type Pattern = keyof typeof finishes;
 export const patternKeys = Object.keys(finishes) as Pattern[];
-export const patternGroups={Signature:["marble","limewash","botanical","fluted","mural","brushed"],Textures:["travertine","linen","mineral","terracotta","stonewash","waterflow"],Classic:["bands","diamonds","grid","panels","inset","slimframes"],Modern:["facets","arch","split","diagonal","asymmetric","ribbed"],Architectural:["heritage","reception"]} as const satisfies Record<string,readonly Pattern[]>;
+export const patternGroups={Signature:["marble","limewash","botanical","fluted","mural","brushed"],Textures:["travertine","linen","mineral","terracotta","stonewash","waterflow"],Classic:["bands","diamonds","grid","panels","inset","slimframes"],Modern:["facets","arch","split","diagonal","asymmetric","ribbed"],Architectural:["heritage","reception"],Artisan:["venetian","onyx","suede","microcement"]} as const satisfies Record<string,readonly Pattern[]>;
 export type PatternGroup=keyof typeof patternGroups;

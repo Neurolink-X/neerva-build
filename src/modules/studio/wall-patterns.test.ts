@@ -4,7 +4,7 @@ import {finishes,patternKeys,patternGroups,type Motif} from "./wall-patterns.ts"
 import {colourFamilies,colourPairings} from "./colour-families.ts";
 test("every non-plain design is in exactly one bounded collection",()=>{
  const keys=Object.values(patternGroups).flat();
- assert.equal(keys.length,26);
+ assert.equal(keys.length,30);
  assert.equal(new Set(keys).size,keys.length);
  assert.deepEqual([...keys].sort(),patternKeys.filter(k=>k!=="plain").sort());
  assert.ok(Object.values(patternGroups).every(g=>g.length<=6));
