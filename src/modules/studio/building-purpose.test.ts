@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildingPurposes,purposeDetails,buildingInputRequirements,buildingStarter,validateBuildingBrief,generateBuildingConcepts,validateBuildingConcept,type BuildingBrief} from "./building-purpose.ts";
+import {buildingPurposes,buildingLayoutFamily,purposeDetails,buildingInputRequirements,buildingStarter,validateBuildingBrief,generateBuildingConcepts,validateBuildingConcept,type BuildingBrief} from "./building-purpose.ts";
 const base:BuildingBrief={purpose:"mall",widthFt:180,depthFt:240,roadSide:"N",floors:3,unitsPerFloor:4,parkingBays:8,frontFt:40,rearFt:25,sideFt:10};
 test("all supported purposes produce 24 unique feasible zoning concepts on a generous plot",()=>{
  for(const purpose of buildingPurposes)for(const roadSide of ["N","E","S","W"] as const){
@@ -34,5 +34,23 @@ test("each purpose has a feasible explicit starter and rejects insufficient usab
   const before=JSON.stringify(b);generateBuildingConcepts(b);assert.equal(JSON.stringify(b),before);
   const dense={...b,unitsPerFloor:24};assert.ok(buildingInputRequirements(dense)!.minDepthFt>=req.minDepthFt);
   assert.ok(validateBuildingBrief({...b,sideFt:b.widthFt/2}).length);
+ }
+});
+
+test("purpose-led family preserves exact brief and materially changes programme placement",()=>{
+ for(const purpose of buildingPurposes){
+  const b=buildingStarter(purpose),classic=generateBuildingConcepts(b,24),modern=generateBuildingConcepts(b,24,"purpose-led");
+  assert.ok(modern.plans.length,purpose+" purpose-led starter");
+  assert.equal(new Set(modern.plans.map(p=>p.signature)).size,modern.plans.length);
+  assert.notEqual(modern.plans[0].signature,classic.plans[0].signature);
+  assert.equal(buildingLayoutFamily(modern.plans[0].id),"purpose-led");
+  assert.equal(buildingLayoutFamily(classic.plans[0].id),"classic");
+  for(const p of modern.plans){
+   assert.deepEqual(p.brief,b);assert.deepEqual(validateBuildingConcept(p),[]);
+   if(purpose==="restaurant"||purpose==="shops")for(const f of Array.from({length:b.floors},(_,i)=>i)){
+    const primary=p.zones.filter(z=>z.floor===f&&z.kind==="primary");assert.ok(primary.some(z=>z.y<=b.frontFt+Math.min(8,(b.depthFt-b.frontFt-b.rearFt)*.06)+1e-6));
+   }
+  }
+  assert.equal(generateBuildingConcepts(b,1,"purpose-led").plans[0].signature,modern.plans[0].signature);
  }
 });
