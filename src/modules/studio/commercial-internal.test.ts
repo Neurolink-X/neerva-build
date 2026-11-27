@@ -68,3 +68,20 @@ test("detailed commercial stair footprints and shaft openings use the same gener
  }
  assert.ok(checked>0,"a spacious two-level building should support a secondary stair concept");
 });
+
+test("lift is explicitly optional; stairs remain on every level and project identity is distinct",()=>{
+ const b={...buildingStarter("rental"),widthFt:140,depthFt:200,floors:2,unitsPerFloor:2,rentalBedrooms:2};
+ for(const reserveLift of [false,true]){
+  const brief={...b,reserveLift},plans=generateBuildingConcepts(brief,24,"internal").plans;assert.ok(plans.length);
+  for(const p of plans.slice(0,3)){
+   const spaces=commercialInternalSpaces(p);assert.equal(spaces.filter(r=>r.kind==="lift").length,reserveLift?2:0);
+   assert.equal(spaces.filter(r=>r.kind==="stairs").length,4);
+   assert.ok(commercialStairStudies(p).studies.length>=1);
+   assert.deepEqual(internalGeometryIssues(p),[]);
+   const input=commercialSaveSchema.parse({idempotencyKey:"c71a9c10-4c52-4df4-85b7-04d0efbb181f",title:"Lift preference test",brief,planId:p.id,signature:p.signature,finishes:defaultFinishScheme({kind:"commercial",plan:p})});
+   assert.equal(rebuildCommercialSnapshot(input)?.plan.id,p.id);
+   assert.equal(rebuildCommercialSnapshot({...input,brief:{...brief,reserveLift:!reserveLift}}),null);
+  }
+ }
+ assert.equal(generateBuildingConcepts({...b,floors:1,reserveLift:true},24,"internal").plans.length,0);
+});
