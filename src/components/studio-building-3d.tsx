@@ -61,7 +61,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    const foundation=material("#cbc3b2"),concrete=material("#ddd5c3"),roofMat=material(design.elevation.surfaces.accent),gateMat=material(design.elevation.surfaces.gate,.48,.25),floorMat=material("#c9b69d"),railingMat=material(design.elevation.surfaces.railing,.3,.45);
    const wall=material(colourRef.current,.88);wallMat.current=wall;
    const finishBindings:{mat:THREE.MeshStandardMaterial;id:string;surface:FinishSurface;side?:Side;fallback:string}[]=[];
-   const textureCache=new Map<FinishMaterial,THREE.DataTexture>();
+   const textureCache=new Map<FinishMaterial,THREE.DataTexture>(),finishMaterialCache=new Map<string,THREE.MeshStandardMaterial>();
    function texture(kind:FinishMaterial){
     if(kind==="plain")return null;
     const cached=textureCache.get(kind);if(cached)return cached;
@@ -74,7 +74,8 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     const t=new THREE.DataTexture(bytes,n,n);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.needsUpdate=true;textures.push(t);textureCache.set(kind,t);return t;
    }
    function bindFinish(id:string,surface:FinishSurface,fallback:string,side?:Side){
-    const mat=material(fallback);finishBindings.push({mat,id,surface,side,fallback});return mat;
+    const key=[id,surface,side??""].join(":");const existing=finishMaterialCache.get(key);if(existing)return existing;
+    const mat=material(fallback);finishMaterialCache.set(key,mat);finishBindings.push({mat,id,surface,side,fallback});return mat;
    }
    // Local procedural plaster microtexture: no external asset, paid renderer or network request.
    if(quality==="detail"){
