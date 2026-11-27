@@ -69,7 +69,13 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
  const info=purposeDetails[draft.purpose],active=purposeDetails[brief.purpose];
  const requirements=buildingInputRequirements(draft),issues=validateBuildingBrief(draft);
  function update<K extends keyof BuildingBrief>(key:K,value:BuildingBrief[K]){setDraft(d=>({...d,[key]:value}))}
- function selectPurpose(p:BuildingPurpose){setDraft(d=>({...d,purpose:p}));setShowFurniture(false)}
+ function selectPurpose(p:BuildingPurpose){
+  const next={...draft,purpose:p};
+  setDraft(next);setShowFurniture(false);
+  // Keep exact measured inputs; never silently substitute a different plot.
+  // A compatible purpose switch is immediate; incompatible inputs have no old-purpose preview.
+  if(!validateBuildingBrief(next).length){setBrief(next);setSelected(0);setFloor(0);setFull(false);setAngle(0)}
+ }
  function submit(e:FormEvent){e.preventDefault();if(issues.length)return;setBrief({...draft});setSelected(0);setFloor(0);setFull(false);setAngle(0);setShowFurniture(false)}
  function restore(snapshot:{plan:BuildingConcept;finishes:FinishScheme}){
   const next=snapshot.plan.brief;
@@ -78,7 +84,8 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
   setDraft({...next});setBrief({...next});setSelected(index);setFloor(0);setFull(false);setAngle(0);
   setFinishHistory(h=>rememberFinish(h,snapshot.plan.id,snapshot.finishes));return true;
  }
- const changed=JSON.stringify(draft)!==JSON.stringify(brief);
+ const changed=JSON.stringify(draft)!==JSON.stringify(brief),pendingPurpose=draft.purpose!==brief.purpose;
+ function openPreview(id:string){const el=document.getElementById(id);if(el instanceof HTMLDetailsElement){el.open=true;el.scrollIntoView({block:"start",behavior:"auto"});el.querySelector("summary")?.focus({preventScroll:true})}}
  return <div className="purpose-studio">
   <header><span className="eyebrow">NEERVA BUILDING STUDIO · FEASIBILITY CONCEPTS</span><h1>Plan beyond your home.</h1><p>Choose a building purpose, enter exact site dimensions and compare up to 24 distinct zoning arrangements. Family homes use the dedicated residential planner.</p><Link className="button button-outline" href="/design-studio#start">Family home / BHK planner →</Link></header>
   <IrregularPlotPlanner onUse={(widthFt,depthFt)=>setDraft(d=>({...d,widthFt,depthFt}))}/>
@@ -96,13 +103,13 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
     <small>Commercial projects use purpose-specific units, not BHK. Rental units include concept room partitions for the requested 1–3 BHK; door, window, wall and statutory review remains required. Example inputs are applied only on request.</small>
    </div>
   </form>
-  {changed&&<p role="status">Inputs changed. Preview below is the previous generated request. Press Generate distinct concepts to apply your new inputs.</p>}
+  {changed&&<p role="status">{pendingPurpose?"The new building purpose needs compatible dimensions and programme. Adjust the inputs and generate; the previous purpose is not shown.":"Inputs changed. Preview below is the previous generated request. Press Generate distinct concepts to apply your new inputs."}</p>}
   <p className="purpose-warning">Concept minimums are internal planning assumptions, not legal setbacks, sanctioned occupancy or construction approval. Rectangular plots only. Parking bays are reservations, not a validated driveway or traffic plan.</p>
-  <section aria-live="polite" id="building-results"><h2>{active.title} · {result.plans.length} distinct zoning concepts</h2><p>{brief.widthFt} × {brief.depthFt} ft · {brief.floors} floor(s) · {brief.unitsPerFloor} primary zones per floor</p>
+  {!pendingPurpose&&<section aria-live="polite" id="building-results"><h2>{active.title} · {result.plans.length} distinct zoning concepts</h2><p>{brief.widthFt} × {brief.depthFt} ft · {brief.floors} floor(s) · {brief.unitsPerFloor} primary zones per floor</p>
    {result.blockers.map(s=><p role="alert" key={s}>{s}</p>)}
    {plan&&scheme&&<><div className="purpose-options" role="group" aria-label="Choose zoning option">{result.plans.map((p,i)=><button type="button" key={p.id} aria-pressed={selected===i} onClick={()=>setSelected(i)}><strong>Option {i+1}</strong><span>{p.layout}</span></button>)}</div>
     <div className="purpose-tabs" role="group" aria-label="Floor selection">{Array.from({length:brief.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>{setFloor(i);setFull(false)}}>{i===0?"Ground":"Floor "+i}</button>)}</div>
-    <div className="purpose-tabs" aria-label="Preview controls"><button type="button" aria-pressed={showFurniture} onClick={()=>setShowFurniture(v=>!v)}>{showFurniture?"Hide indicative furniture":"Show indicative furniture"}</button><a className="button button-outline" href="#building-exterior">Exterior & image render</a><a className="button button-outline" href="#building-interior">Interior preview</a></div><p className="purpose-warning">Viewing generated {active.title.toLowerCase()} · Option {selected+1}. Core zones are reserves, not designed stairs or lifts.</p><div className="purpose-views"><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor} scheme={scheme} showFurniture={showFurniture}/></section><section><h3>3D concept · same plan</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle} scheme={scheme} showFurniture={showFurniture}/></section></div>
+    <div className="purpose-tabs" aria-label="Preview controls"><button type="button" aria-pressed={showFurniture} onClick={()=>setShowFurniture(v=>!v)}>{showFurniture?"Hide indicative furniture":"Show indicative furniture"}</button><button type="button" onClick={()=>openPreview("building-exterior")}>Exterior & image render</button><button type="button" onClick={()=>openPreview("building-interior")}>Interior preview</button></div><p className="purpose-warning">Viewing generated {active.title.toLowerCase()} · Option {selected+1}. Core zones are reserves, not designed stairs or lifts.</p><div className="purpose-views"><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor} scheme={scheme} showFurniture={showFurniture}/></section><section><h3>3D concept · same plan</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle} scheme={scheme} showFurniture={showFurniture}/></section></div>
     <CommercialFront plan={plan} scheme={scheme}/>
     {cloudEnabled&&<CommercialProjectSave key={plan.id} plan={plan} scheme={scheme} onRestore={restore}/>}
     <PlanFinishStudio key={plan.id+":"+floor} source={{kind:"commercial",plan}} floor={floor} scheme={scheme} onChange={next=>setFinishHistory(h=>rememberFinish(h,plan.id,next))}/>
@@ -111,7 +118,7 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
     {brief.purpose==="rental"&&<details><summary>Rental room schedules · {brief.rentalBedrooms??1} BHK per unit</summary>{rentalLayouts(plan).filter(u=>u.floor===floor).map((u,i)=><div key={u.unitId}><h4>Unit {i+1}</h4><ul>{u.rooms.map(r=><li key={r.id}>{r.label} · {r.w.toFixed(1)} × {r.d.toFixed(1)} ft</li>)}</ul></div>)}<p>Indicative room extents only; doors, windows, wall thickness and independent utility connections need professional design.</p></details>}
     <BuildingEngineeringPanel plan={plan} floor={floor} scheme={scheme}/>
    </>}
-  </section>
-  <section className="purpose-warning"><strong>Concept only — professional approval required before construction.</strong><details><summary>What needs professional review?</summary><ul>{active.checks.map(c=><li key={c}>{c}</li>)}</ul><p>Structural, fire, accessibility, MEP and local approval remain unverified.</p></details><Link href="/support">Planning support →</Link></section>
+  </section>}
+  <section className="purpose-warning"><strong>Concept only — professional approval required before construction.</strong><details><summary>What needs professional review?</summary><ul>{info.checks.map(c=><li key={c}>{c}</li>)}</ul><p>Structural, fire, accessibility, MEP and local approval remain unverified.</p></details><Link href="/support">Planning support →</Link></section>
  </div>;
 }
