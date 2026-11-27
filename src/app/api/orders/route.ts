@@ -19,7 +19,7 @@ export async function GET(request:Request){
 }
 export async function POST(request:Request){
  const auth=await requireAuth(request);if(auth instanceof Response)return auth;
- if(!request.headers.get("content-type")?.toLowerCase().includes("application/json"))
+ if(request.headers.get("content-type")?.split(";")[0].trim().toLowerCase()!=="application/json")
   return failOrder(415,"JSON body required.");
  const input=acceptOfferInput.safeParse(await parseOrderJson(request,4096));
  if(!input.success)return failOrder(400,"Select an actual dealer offer, provide full delivery address and accept the price.");

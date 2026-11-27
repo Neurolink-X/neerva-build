@@ -112,3 +112,15 @@ test("streamed order JSON enforces byte limits even without Content-Length",asyn
  const valid=new Request("https://neerva.test/api/orders",{method:"POST",headers:{"content-type":"application/json; charset=utf-8"},body:JSON.stringify({x:"नमस्ते"})});
  assert.deepEqual(await parseOrderJson(valid),{x:"नमस्ते"});
 });
+
+test("partial order JSON is cancelled on request deadline and client disconnect",async()=>{
+ for(const disconnect of [false,true]){
+  const client=new AbortController(),deadline=new AbortController();
+  let cancelled=false;
+  const stream=new ReadableStream<Uint8Array>({start(controller){controller.enqueue(new TextEncoder().encode('{"x":'));},cancel(){cancelled=true;}});
+  const req=new Request("https://neerva.test/api/orders",{method:"POST",headers:{"content-type":"application/json"},body:stream,duplex:"half",signal:client.signal} as RequestInit);
+  const result=parseOrderJson(req,4096,deadline.signal);
+  (disconnect?client:deadline).abort();
+  assert.equal(await result,null);assert.equal(cancelled,true);assert.equal(stream.locked,false);
+ }
+});

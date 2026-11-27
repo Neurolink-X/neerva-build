@@ -1,3 +1,4 @@
+import {boundedFetch} from "@/modules/http/bounded-fetch";
 import {createClient} from "@supabase/supabase-js";
 import {NextResponse} from "next/server";
 import {catalogCategories} from "@/modules/catalog/catalog";
@@ -18,7 +19,7 @@ export async function GET(request:Request){
  try{
   // Bound the entire anonymous catalog read, including Storage signing, to one deadline.
   const deadline=AbortSignal.any([request.signal,AbortSignal.timeout(7000)]);
-  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.any([deadline,...(init?.signal?[init.signal]:[])])})}});
+  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:boundedFetch(deadline,7000)}});
   const categories=await db.from("categories").select("id,slug,name_en,name_hi,pricing_mode").eq("status","published").order("name_en").limit(100);
   if(categories.error)throw Error("Catalog taxonomy read unavailable");
   const categoryId=page.category?(categories.data??[]).find(c=>c.slug===page.category)?.id:null;
