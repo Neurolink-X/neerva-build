@@ -94,7 +94,7 @@ async function main(){
    assert.ok(!(await studio.locator(".purpose-views svg").first().getAttribute("data-plan-id")).endsWith("-purpose-v2"));
    // A small plot may not support side-gallery; provide a larger explicit brief.
    await studio.getByLabel("Frontage (ft)").fill("180");
-   await studio.getByLabel("Depth (ft)").fill("240");
+   await studio.getByLabel("Depth (ft)",{exact:true}).fill("240");
    await studio.getByRole("button",{name:/Generate distinct concepts/}).click();
    await studio.getByRole("button",{name:"Side gallery",exact:true}).click();
    const galleryPlan=studio.getByRole("img",{name:/Purpose-specific zoning/});
