@@ -1,6 +1,8 @@
+export const METRES_PER_FOOT = 0.3048;
+export const SQUARE_METRES_PER_SQUARE_FOOT = 0.09290304;
+export const CUBIC_METRES_PER_CUBIC_FOOT = 0.028316846592;
 const FEET_PER_METRE = 3.280839895013123;
-const SQUARE_FEET_PER_SQUARE_METRE = FEET_PER_METRE ** 2;
-const SQUARE_FEET_PER_SQUARE_GAJ = 9;
+export const SQUARE_FEET_PER_SQUARE_GAJ = 9;
 
 export function squareFeetFromDimensions(length: number, width: number, unit: "ft" | "m"): number {
   if (!Number.isFinite(length) || !Number.isFinite(width) || length <= 0 || width <= 0) {
@@ -17,14 +19,14 @@ export function convertSquareFeet(areaSqFt: number): { squareFeet: number; squar
   if (!Number.isFinite(areaSqFt) || areaSqFt < 0) throw new RangeError("Area must be a non-negative finite number");
   return {
     squareFeet: areaSqFt,
-    squareMetres: areaSqFt / SQUARE_FEET_PER_SQUARE_METRE,
+    squareMetres: areaSqFt * SQUARE_METRES_PER_SQUARE_FOOT,
     squareGaj: areaSqFt / SQUARE_FEET_PER_SQUARE_GAJ,
   };
 }
 
 export function linearFeetFromMillimetres(mm: number): number {
   if (!Number.isFinite(mm) || mm < 0) throw new RangeError("Length must be a non-negative finite number");
-  return mm / 304.8;
+  return mm / (METRES_PER_FOOT * 1000);
 }
 
 /** Unit switching preserves physical dimensions; input values stay in the chosen unit. */
