@@ -36,7 +36,8 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
     if(frame.width!==width||frame.height!==height||frame.samples!==samples||!Number.isInteger(frame.completed)||frame.completed<=lastCompleted||frame.completed>samples||!(frame.pixels instanceof Uint8ClampedArray)||frame.pixels.length!==width*height*4){fail("The renderer returned an invalid image.");return}
     const el=canvas.current,ctx=el?.getContext("2d");if(!el||!ctx){fail("Image preview is unavailable.");return}
     if(el.width!==width)el.width=width;if(el.height!==height)el.height=height;
-    ctx.putImageData(new ImageData(frame.pixels,width,height),0,0);lastCompleted=frame.completed;
+    const pixels=frame.pixels.buffer instanceof ArrayBuffer?new Uint8ClampedArray(frame.pixels.buffer,frame.pixels.byteOffset,frame.pixels.length):new Uint8ClampedArray(frame.pixels);
+    ctx.putImageData(new ImageData(pixels,width,height),0,0);lastCompleted=frame.completed;
     setHasFrame(true);setProgress(Math.round(frame.completed/samples*100));
     if(frame.completed===samples){stop();setPhase("done");setMessage(`Render ready · ${width} × ${height} pixels · ${samples} samples. Concept visualization of the selected geometry.`);}
    };
