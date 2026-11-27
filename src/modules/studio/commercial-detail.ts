@@ -1,5 +1,5 @@
 import {overlapArea,type Rect} from "./plan-model.ts";
-import type {BuildingConcept,BuildingZone} from "./building-purpose.ts";
+import type {BuildingConcept} from "./building-purpose.ts";
 export type CommercialFixture=Rect&{id:string;zoneId:string;floor:number;label:string;kind:"desk"|"table"|"display"|"counter"};
 export type ConceptPortal={id:string;zoneId:string;floor:number;axis:"x"|"y";x:number;y:number;length:number;kind:"access"|"exterior-glazing";reviewRequired:true};
 const EPS=1e-5;
@@ -38,7 +38,22 @@ export function commercialFixtures(plan:BuildingConcept):CommercialFixture[]{
 export function commercialGeometryIssues(plan:BuildingConcept):string[]{
  const fixtures=commercialFixtures(plan),portals=commercialPortals(plan),issues:string[]=[];
  for(const f of fixtures){const z=plan.zones.find(z=>z.id===f.zoneId);if(!z||f.floor!==z.floor||Math.abs(overlapArea(f,z)-f.w*f.d)>EPS)issues.push("Fixture outside parent "+f.id);}
- for(let i=0;i<fixtures.length;i++)for(let j=i+1;j<fixtures.length;j++)if(fixtures[i].floor===fixtures[j].floor&&overlapArea(fixtures[i],fixtures[j])>EPS)issues.push("Fixture overlap "+fixtures[i].id);
+ const byZone=new Map<string,CommercialFixture[]>();for(const f of fixtures){const group=byZone.get(f.zoneId)??[];group.push(f);byZone.set(f.zoneId,group)}
+ for(const group of byZone.values())for(let i=0;i<group.length;i++)for(let j=i+1;j<group.length;j++)if(overlapArea(group[i],group[j])>EPS)issues.push("Fixture overlap "+group[i].id);
  for(const p of portals){const z=plan.zones.find(z=>z.id===p.zoneId);if(!z||p.floor!==z.floor||p.y<z.y-EPS||p.y+p.length>z.y+z.d+EPS||Math.min(Math.abs(p.x-z.x),Math.abs(p.x-z.x-z.w))>EPS)issues.push("Portal outside wall "+p.id);}
  return issues;
+}
+
+/** Street-facing surfaces selected by nearest covered zone along each x interval. */
+export function commercialFrontPanels(plan:BuildingConcept){
+ const panels:{floor:number;zoneId:string;x:number;w:number;y:number;kind:string}[]=[];
+ for(let floor=0;floor<plan.brief.floors;floor++){
+  const zones=plan.zones.filter(z=>z.floor===floor&&!["open","parking"].includes(z.kind));
+  const cuts=[...new Set(zones.flatMap(z=>[z.x,z.x+z.w]))].sort((a,b)=>a-b);
+  for(let i=0;i<cuts.length-1;i++){
+   const x=cuts[i],w=cuts[i+1]-x;if(w<EPS)continue;
+   const z=zones.filter(z=>z.x<=x+EPS&&z.x+z.w>=x+w-EPS).sort((a,b)=>a.y-b.y)[0];if(z)panels.push({floor,zoneId:z.id,x,w,y:z.y,kind:z.kind});
+  }
+ }
+ return panels;
 }
