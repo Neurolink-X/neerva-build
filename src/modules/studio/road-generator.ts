@@ -2,6 +2,7 @@ import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type Room
  type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
 import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
 import {buildingWallCells} from "./geometry.ts";
+import {frontageSignature} from "./frontage.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
@@ -488,10 +489,11 @@ function prioritizeSpatialDiversity(plans:PlanModel[]):PlanModel[]{
  }).flat());
  const vectors=new Map(plans.map(p=>[p.id,features(p)]));
  const distance=(a:PlanModel,b:PlanModel)=>vectors.get(a.id)!.reduce((sum,x,i)=>sum+Math.abs(x-vectors.get(b.id)![i])*(i%4===0?2:1),0);
- const ordered=[plans[0]],remaining=plans.slice(1);
+ const signatures=new Map(plans.map(p=>[p.id,frontageSignature(p)]));
+ const ordered=[plans[0]],remaining=plans.slice(1),fronts=new Set([signatures.get(plans[0].id)!]);
  while(remaining.length){let best=0,bestScore=-1;
-  for(let i=0;i<remaining.length;i++){const score=Math.min(...ordered.map(p=>distance(p,remaining[i])));if(score>bestScore){best=i;bestScore=score}}
-  ordered.push(remaining.splice(best,1)[0]);
+  for(let i=0;i<remaining.length;i++){const score=Math.min(...ordered.map(p=>distance(p,remaining[i])))+(fronts.has(signatures.get(remaining[i].id)!)?0:4);if(score>bestScore){best=i;bestScore=score}}
+  const next=remaining.splice(best,1)[0];ordered.push(next);fronts.add(signatures.get(next.id)!);
  }
  return ordered;
 }
