@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {buildingStarter,buildingLayoutFamily,generateBuildingConcepts,validateBuildingConcept} from "./building-purpose.ts";
-import {commercialInternalSpaces,commercialInternalOpenings,internalGeometryIssues} from "./commercial-internal.ts";
+import {commercialInternalSpaces,commercialInternalOpenings,internalGeometryIssues,commercialStairStudies} from "./commercial-internal.ts";
+import {overlapArea} from "./plan-model.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import {commercialGeometryIssues} from "./commercial-detail.ts";
 import {rentalLayouts} from "./rental-layout.ts";
@@ -44,4 +45,26 @@ test("purpose-specific service rooms on commercial buildings use checked opening
   for(const p of result.plans.slice(0,3)){assert.deepEqual(validateBuildingConcept(p),[]);assert.deepEqual(commercialGeometryIssues(p),[]);
    const rooms=commercialInternalSpaces(p);assert.equal(rooms.filter(r=>r.kind==="service-a").length,brief.floors*2);assert.equal(rooms.filter(r=>r.kind==="lift").length,brief.floors);}
  }
+});
+
+test("detailed commercial stair footprints and shaft openings use the same generated geometry",()=>{
+ const brief={...buildingStarter("rental"),widthFt:140,depthFt:200,floors:2,unitsPerFloor:2,rentalBedrooms:2};
+ const plans=generateBuildingConcepts(brief,24,"internal").plans;assert.ok(plans.length);
+ assert.ok(plans.some(p=>p.id.endsWith("-internal-v1-3")),"exterior-side kitchen must be an actual distinct option");
+ let checked=0;
+ for(const plan of plans){
+  const rooms=commercialInternalSpaces(plan),review=commercialStairStudies(plan),elements=commercialElements(plan);
+  for(const shaft of rooms.filter(r=>r.floor>0&&["lift","shaft"].includes(r.kind))){
+   assert.ok(elements.slabs.filter(s=>s.floor===shaft.floor&&s.bottom===0).every(s=>overlapArea(s,shaft)<1e-5),"shaft must not be blocked by intermediate slab");
+  }
+  for(const flight of review.studies){
+   checked++;
+   const bay=rooms.find(r=>r.id===flight.roomId)!;assert.ok(bay);
+   assert.ok(flight.steps.length>0&&flight.landings.length===3);
+   assert.ok(flight.steps.every(r=>Math.abs(overlapArea(r,bay)-r.w*r.d)<1e-5));
+   assert.ok(commercialInternalOpenings(plan).some(p=>p.zoneId===flight.roomId&&p.id.endsWith("-departure")));
+   assert.ok(commercialInternalOpenings(plan).some(p=>p.zoneId===flight.upperRoomId&&p.id.endsWith("-arrival")));
+  }
+ }
+ assert.ok(checked>0,"a spacious two-level building should support a secondary stair concept");
 });
