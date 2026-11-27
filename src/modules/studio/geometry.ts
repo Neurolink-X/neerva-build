@@ -1,4 +1,5 @@
 import {type StudioDesign,wallPatches} from "./library.ts";
+export const CUTAWAY_WALL_RATIO=.64;
 export type WallCell={axis:"x"|"z";floorIndex:number;planeFt:number;startFt:number;endFt:number;bottomFt:number;topFt:number};
 type Rect={start:number;end:number;bottom:number;top:number};
 type Group={axis:"x"|"z";floorIndex:number;planeFt:number;patches:Rect[];holes:Rect[]};
@@ -32,7 +33,7 @@ export function structuralFootprint(design:StudioDesign){
 /** One view contract for WebGL and the accessible SVG fallback. Clipping never
  * changes the underlying construction concept or its saved geometry digest. */
 export function visibleWallCells(design:StudioDesign,floor?:number,cutaway=false):WallCell[]{
- const ceiling=cutaway?design.layout.wallHeightFt*.46:design.layout.wallHeightFt;
+ const ceiling=cutaway?design.layout.wallHeightFt*CUTAWAY_WALL_RATIO:design.layout.wallHeightFt;
  return buildingWallCells(design).filter(c=>(floor===undefined||c.floorIndex===floor)&&c.bottomFt<ceiling-.001)
   .map(c=>({...c,topFt:Math.min(c.topFt,ceiling)}));
 }
