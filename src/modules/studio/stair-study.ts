@@ -1,4 +1,4 @@
-import type {PlanModel,Rect,Room,Opening} from "./plan-model.ts";
+import {overlapArea,type PlanModel,type Rect,type Room,type Opening} from "./plan-model.ts";
 /** Conservative straight-flight study in feet, not a code/structural approval.
  * Never invent treads inside a reservation that cannot contain the flight and
  * landings, or whose actual door locations cannot reach the correct landings. */
@@ -58,14 +58,40 @@ export function stairFloorPatches(room:Room,studies:readonly StairStudy[]):Rect[
  const below=studies.find(s=>s.floor===room.floor-1&&s.upperRoomId===room.id);
  if(room.kind!=="stairs"||!below)return [room];
  const top=Math.max(...below.landings.map(l=>l.topFt));
- return below.landings.filter(l=>Math.abs(l.topFt-top)<EPS).map(({x,y,w,d})=>({x,y,w,d}));
+ const arrival=below.landings.filter(l=>Math.abs(l.topFt-top)<EPS);
+ const departure=studies.find(s=>s.roomId===room.id)?.landings.filter(l=>l.topFt===0)??[];
+ return [...arrival,...departure].map(({x,y,w,d})=>({x,y,w,d}));
+}
+/** Concept tread thickness, including the riser overlap. Not structural sizing. */
+export function stairStepDepthFt(study:StairStudy,topFt:number){return Math.min(topFt,study.riseFt+.18)}
+/** Check projected walking surfaces against the modeled underside of the next
+ * flight. A same-level landing touching its own continuation is not overhead. */
+export function stackedStairClearance(lower:StairStudy,upper:StairStudy,heightFt:number):boolean{
+ if(lower.upperRoomId!==upper.roomId||upper.floor!==lower.floor+1)return false;
+ const arrival=lower.landings.filter(l=>Math.abs(l.topFt-heightFt)<EPS),departure=upper.landings.filter(l=>l.topFt===0);
+ if(arrival.some(a=>departure.some(b=>overlapArea(a,b)>EPS)))return false;
+ // Intermediate floor requires both distinct access lanes. A slab under the
+ // departure must not cover a lower flight within the advisory headroom.
+ const overhead=[...upper.steps.map(s=>({...s,bottom:heightFt+s.topFt-stairStepDepthFt(upper,s.topFt)})),
+ ...upper.landings.map(s=>({...s,bottom:heightFt+s.topFt-.46})),
+ ...arrival.map(s=>({...s,bottom:heightFt-.46}))];
+ const walked=[...lower.steps,...lower.landings.filter(l=>l.topFt<heightFt-EPS)];
+ for(const a of walked)for(const b of overhead)if(overlapArea(a,b)>EPS&&b.bottom-a.topFt<6.8-EPS)return false;
+ return true;
 }
 export function residentialStairStudies(plan:PlanModel){
  const studies:StairStudy[]=[],unresolved:string[]=[];
  for(const lower of plan.rooms.filter(r=>r.kind==="stairs"&&r.floor<plan.floors-1)){
   const upper=plan.rooms.find(r=>r.kind==="stairs"&&r.floor===lower.floor+1&&Math.abs(r.x-lower.x)<EPS&&Math.abs(r.y-lower.y)<EPS);
   const study=upper?(straightStairStudy(lower,upper,plan.walls.heightFt,plan.openings)??dogLegStairStudy(lower,upper,plan.walls.heightFt,plan.openings)):null;
-  if(study&&plan.floors===2)studies.push(study);else unresolved.push(lower.id);
+  if(study)studies.push(study);else unresolved.push(lower.id);
+ }
+ if(plan.floors>2){
+  // Reject the entire stack if any level is absent or the intermediate
+  // floor cannot carry two distinct landings with clear modeled headroom.
+  const ordered=[...studies].sort((a,b)=>a.floor-b.floor);
+  if(unresolved.length||ordered.length!==plan.floors-1||ordered.slice(1).some((s,i)=>!stackedStairClearance(ordered[i],s,plan.walls.heightFt)))
+   return {studies:[],unresolved:plan.rooms.filter(r=>r.kind==="stairs"&&r.floor<plan.floors-1).map(r=>r.id)};
  }
  return {studies,unresolved};
 }
