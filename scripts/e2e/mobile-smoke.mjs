@@ -294,7 +294,7 @@ async function main(){
     assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
     assert.ok(await gallery.evaluate(el=>{const active=el.querySelector("button[aria-pressed=true]"),other=el.querySelector("button[aria-pressed=false]");return active&&other&&getComputedStyle(active).borderColor!==getComputedStyle(other).borderColor}),"active house is visually distinguishable without a badge");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
-    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="contain";})};});
+    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-2.2)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
     assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
     await page.getByRole("button",{name:/100 gaj family home/}).click();
     assert.match(await page.locator(".paint-sample-feedback").innerText(),/100 gaj family home/);
@@ -1493,8 +1493,8 @@ async function main(){
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
      assert.equal(await page.locator(".home-stage-comparison img").count(),2,"paired construction-stage renders");
      const comparisonGeometry=await page.locator(".nbh-compare-frame").evaluate(el=>{const r=el.getBoundingClientRect();return {ratio:r.width/r.height,fit:[...el.querySelectorAll("img")].map(img=>getComputedStyle(img).objectFit)}});
-     assert.ok(Math.abs(comparisonGeometry.ratio-3)<.08,"native 1536x512 comparison image ratio, no oversized crop");
-     assert.ok(comparisonGeometry.fit.every(f=>f==="contain"),"both comparison images must retain the complete house");
+     assert.ok(Math.abs(comparisonGeometry.ratio-2.2)<.08,"centered facade crop removes peripheral context");
+     assert.ok(comparisonGeometry.fit.every(f=>f==="cover"),"both comparison images must share the same centered crop");
      const cardRows=await categories.locator(".nbh-material-card").evaluateAll(cards=>cards.slice(0,2).map(card=>{const add=card.querySelector(".nb-shop-add"),product=card.querySelector(".nbh-category-cart-product"),options=card.querySelector(".nbh-material-options"),rect=add?.getBoundingClientRect();return {top:rect?.top,productBottom:product?.getBoundingClientRect().bottom,optionsBottom:options?.getBoundingClientRect().bottom,productTop:product?.getBoundingClientRect().top}}));
      if(cardRows.every(r=>r.top!=null)&&await page.evaluate(()=>CSS.supports("grid-template-rows","subgrid")&&innerWidth>350)){assert.ok(Math.abs(cardRows[0].top-cardRows[1].top)<3,"adjacent cart actions align");}
 
