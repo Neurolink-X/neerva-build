@@ -1,4 +1,5 @@
-import {overlapArea,type Rect} from "./plan-model.ts";
+import {dogLegStairStudy,stackedStairClearance,type StairStudy} from "./stair-study.ts";
+import {overlapArea,type Rect,type Room,type Opening} from "./plan-model.ts";
 import type {BuildingConcept,BuildingZone} from "./building-purpose.ts";
 import {internalVariant,rentalLayouts} from "./rental-layout.ts";
 const EPS=1e-5;
@@ -73,7 +74,11 @@ export function commercialInternalOpenings(plan:BuildingConcept):InternalOpening
   if(entry)connect(entry,hall);
   if(entry&&passage)connect(passage,entry);
   for(const r of rooms.filter(r=>r!==entry&&r!==passage&&r.kind!=="shaft")){
-   const target=passage??entry??hall;connect(r,target);
+   const target=passage??entry??hall;
+   if(r.kind==="stairs"&&entry&&stairDoorPair(r,entry,plan.brief.floors)){
+    const pair=stairDoorPair(r,entry,plan.brief.floors)!;
+    for(const p of pair)out.push(p);
+   }else connect(r,target);
   }
   if(parent.kind!=="primary"||plan.brief.sideFt<3)continue;
   const outer=Math.abs(parent.x+parent.w-hall.x)<EPS?parent.x:parent.x+parent.w;
@@ -101,4 +106,35 @@ export function internalGeometryIssues(plan:BuildingConcept){
  }
  for(const r of spaces.filter(r=>["lift","stairs","shaft"].includes(r.kind)&&r.floor>0))if(!spaces.some(a=>a.floor===r.floor-1&&a.kind===r.kind&&Math.abs(a.x-r.x)<EPS&&Math.abs(a.y-r.y)<EPS&&Math.abs(a.w-r.w)<EPS&&Math.abs(a.d-r.d)<EPS))issues.push("Vertical service alignment unresolved");
  return [...new Set(issues)];
+}
+
+/** Advisory dog-leg study: only the deeper stair bay can support both
+ * distinct lobby landings. Do not draw a flight in the smaller reserve. */
+const commercialStairDimensions={width:4,tread:11/12,landing:4};
+function stairDoorPair(r:InternalSpace,lobby:InternalSpace,floors:number):InternalOpening[]|null{
+ const side=Math.abs(r.x-lobby.x-lobby.w)<EPS?"left":Math.abs(r.x+r.w-lobby.x)<EPS?"right":null;
+ if(!side||r.d<8.75||r.w<18||Math.abs(r.y-lobby.y)>lobby.d)return null;
+ const x=side==="left"?r.x:r.x+r.w;
+ const start=.25+(r.d-8.75)/2;
+ const make=(offset:number,tag:string):InternalOpening=>({id:r.id+"-"+tag,zoneId:r.id,connectsTo:lobby.id,floor:r.floor,axis:"y",x,y:r.y+offset,length:4,kind:"access",reviewRequired:true});
+ const result:InternalOpening[]=[];
+ if(r.floor<floors-1)result.push(make(start,"departure"));
+ if(r.floor>0)result.push(make(start+4.25,"arrival"));
+ return result;
+}
+export function commercialStairStudies(plan:BuildingConcept){
+ const rooms=commercialInternalSpaces(plan),openings=commercialInternalOpenings(plan),studies:StairStudy[]=[],unresolved:string[]=[];
+ const asRoom=(s:InternalSpace):Room=>({id:s.id,kind:"stairs",label:s.label,floor:s.floor,x:s.x,y:s.y,w:s.w,d:s.d,minClearWidthFt:4});
+ for(const r of rooms.filter(r=>r.kind==="stairs"&&r.floor<plan.brief.floors-1)){
+  const upper=rooms.find(a=>a.kind==="stairs"&&a.floor===r.floor+1&&Math.abs(a.x-r.x)<EPS&&Math.abs(a.y-r.y)<EPS&&Math.abs(a.w-r.w)<EPS&&Math.abs(a.d-r.d)<EPS);
+  const doors:Opening[]=openings.filter(p=>p.kind==="access"&&((p.zoneId===r.id&&p.id.endsWith("-departure"))||(p.zoneId===upper?.id&&p.id.endsWith("-arrival")))).flatMap(p=>{
+   const a=rooms.find(s=>s.id===p.zoneId);if(!a)return [];
+   return [{id:p.id,roomId:a.id,kind:"door" as const,side:Math.abs(p.x-a.x)<EPS?"left" as const:"right" as const,atFt:p.y-a.y,widthFt:p.length,sillFt:0,heightFt:8,connectsTo:p.connectsTo}];
+  });
+  const study=upper?dogLegStairStudy(asRoom(r),asRoom(upper),13,doors,commercialStairDimensions):null;
+  if(study)studies.push(study);else unresolved.push(r.id);
+ }
+ const conflicts=new Set<string>();
+ for(const a of studies)for(const b of studies)if(b.roomId===a.upperRoomId&&!stackedStairClearance(a,b,13)){conflicts.add(a.roomId);conflicts.add(b.roomId);}
+ return {studies:studies.filter(s=>!conflicts.has(s.roomId)),unresolved:[...unresolved,...conflicts]};
 }
