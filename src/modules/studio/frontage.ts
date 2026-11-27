@@ -38,7 +38,8 @@ export function facadeAccents(plan:PlanModel,panels=frontagePanels(plan)):Facade
   const r=plan.rooms.find(r=>r.id===p.roomId)!;
   const top=Math.max(0,...openings.map(o=>o.sillFt+o.heightFt));
   const depth=Math.min(.12,Math.max(.035,p.y>plan.setbacks.frontFt+.15?.1:.035));
-  const z=p.y-plan.walls.externalFt/2;
+  const wallThickness=Math.abs(p.y-plan.setbacks.frontFt)<.02?plan.walls.externalFt:plan.walls.internalFt;
+  const z=p.y-wallThickness/2;
   const add=(x:number,w:number,bottom:number,h:number,kind:FacadeAccent["kind"])=>{
    if(w>.08&&h>.08)out.push({x,y:p.floor*height+bottom,z,w,h,d:depth,floor:p.floor,kind});
   };
@@ -61,5 +62,5 @@ export function facadeAccents(plan:PlanModel,panels=frontagePanels(plan)):Facade
 export function frontageSignature(plan:PlanModel):string{
  const round=(v:number)=>Math.round(v*20)/20;
  const panels=frontagePanels(plan);
- return JSON.stringify([panels.map(p=>[p.floor,p.kind,round(p.x),round(p.w),round(p.y)]),frontageOpenings(plan,panels).map(({o,r,a,w})=>[r.floor,o.kind,round(a),round(w),o.sillFt,o.heightFt]).sort(),plan.rooms.filter(r=>r.kind==="balcony").map(r=>[r.floor,round(r.x),round(r.y),round(r.w),round(r.d)]).sort(),[plan.gate.xFt,plan.gate.widthFt,plan.pedestrianGate.xFt,plan.pedestrianGate.widthFt]]);
+ return JSON.stringify([panels.map(p=>[p.floor,round(p.x),round(p.w),round(p.y)]),frontageOpenings(plan,panels).map(({o,r,a,w})=>[r.floor,o.kind,round(a),round(w),o.sillFt,o.heightFt]).sort(),plan.rooms.filter(r=>r.kind==="balcony").map(r=>[r.floor,round(r.x),round(r.y),round(r.w),round(r.d)]).sort(),[plan.gate.xFt,plan.gate.widthFt,plan.pedestrianGate.xFt,plan.pedestrianGate.widthFt]]);
 }
