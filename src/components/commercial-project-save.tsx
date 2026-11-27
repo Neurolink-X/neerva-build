@@ -12,9 +12,9 @@ export function CommercialProjectSave({plan,scheme}:{plan:BuildingConcept;scheme
   try{
    const {createNeervaBrowserClient}=await import("@/modules/supabase/browser");
    const client=createNeervaBrowserClient();if(!client){setNotice("Account service unavailable.");return;}
-   const {data}=await client.auth.getSession(),token=data.session?.access_token;
-   if(!token){setNotice("Sign in to save your design.");return;}
-   const key=JSON.stringify([data.session.user.id,fingerprint]);
+   const {data}=await client.auth.getSession(),session=data.session,token=session?.access_token;
+   if(!session||!token){setNotice("Sign in to save your design.");return;}
+   const key=JSON.stringify([session.user.id,fingerprint]);
    if(retry.current?.fingerprint!==key)retry.current={fingerprint:key,key:crypto.randomUUID()};
    const response=await fetch("/api/studio/commercial-projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:retry.current.key,title:plan.brief.purpose+" · "+plan.brief.widthFt+" × "+plan.brief.depthFt+" ft",brief:plan.brief,planId:plan.id,signature:plan.signature,finishes:scheme}),cache:"no-store",signal:AbortSignal.timeout(20000)});
    const result=await response.json() as {project?:{id?:string};error?:string};
