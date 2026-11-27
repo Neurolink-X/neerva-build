@@ -34,8 +34,10 @@ async function main(){
     const page=await ctx.newPage(),errors=[];page.on("pageerror",e=>errors.push(e.message));
     const response=await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});assert.equal(response?.status(),200);
     const studio=page.locator(".purpose-studio");
+    await studio.getByRole("button",{name:"Purpose-led layout",exact:true}).waitFor();
+    if(await studio.getByRole("button",{name:"Show 3D concept",exact:true}).count())await studio.getByRole("button",{name:"Show 3D concept",exact:true}).click();
     await studio.getByLabel("Building purpose").selectOption("school");
-    assert.equal(await studio.getByRole("img",{name:/Purpose-specific zoning/}).count(),0,"invalid new purpose must not display old shop geometry");
+    await studio.getByRole("img",{name:/Purpose-specific zoning/}).waitFor({state:"detached"});
     for(const purpose of ["mall","school","restaurant","shops","rental"]){
      await studio.getByLabel("Building purpose").selectOption(purpose);
      await studio.getByRole("button",{name:/Load example inputs/}).click();
@@ -78,6 +80,19 @@ async function main(){
     assert.equal(await page.locator("#practical-start article").count(),6,"practical site knowledge is prominent");
    }finally{await ctx.close()}
   }
+  const liteContext=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:"block"});
+  try{
+   await liteContext.addInitScript(()=>{const conn=new EventTarget();Object.assign(conn,{effectiveType:"3g",saveData:true,downlink:.5,rtt:400});Object.defineProperty(navigator,"connection",{value:conn,configurable:true});});
+   const page=await liteContext.newPage();await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});
+   const studio=page.locator(".purpose-studio");
+   await studio.getByRole("button",{name:"Show 3D concept",exact:true}).waitFor();
+   assert.equal(await studio.locator(".purpose-views svg").count(),1);
+   assert.equal(await studio.locator("canvas").count(),0,"automatic lite mode does not mount WebGL");
+   await studio.getByRole("button",{name:"Show 3D concept",exact:true}).click();
+   assert.equal(await studio.locator(".purpose-views svg").count(),2,"explicit user preference overrides lite hint");
+   await studio.getByRole("button",{name:"Classic access spine",exact:true}).click();
+   assert.ok(!(await studio.locator(".purpose-views svg").first().getAttribute("data-plan-id")).endsWith("-purpose-v2"));
+  }finally{await liteContext.close()}
   // Cold and repeat navigation on a constrained connection. Do not confuse
   // simulated local Chromium timings with field Web Vitals.
   for(const profile of [{name:"slow-3g",latency:400,download:400000/8,upload:200000/8},{name:"weak-4g",latency:150,download:1500000/8,upload:750000/8}]){
