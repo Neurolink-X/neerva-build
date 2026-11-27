@@ -28,7 +28,9 @@ export function validateBuildingBrief(b:BuildingBrief):string[]{
  return e;
 }
 export function validateBuildingConcept(c:BuildingConcept):string[]{
- const b=c.brief,p=purpose[b.purpose],e=validateBuildingBrief(b),ids=new Set<string>();
+ const b=c.brief,e=validateBuildingBrief(b),ids=new Set<string>();
+ if(e.length)return e;
+ const p=purpose[b.purpose];
  for(const z of c.zones){
   if(ids.has(z.id))e.push("Duplicate zone ID");ids.add(z.id);
   if(![z.x,z.y,z.w,z.d].every(finite)||z.w<=0||z.d<=0||z.x<-EPS||z.y<-EPS||z.x+z.w>b.widthFt+EPS||z.y+z.d>b.depthFt+EPS||!Number.isInteger(z.floor)||z.floor<0||z.floor>=b.floors)e.push("Zone outside plot: "+z.id);
@@ -50,7 +52,7 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
 export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:BuildingConcept[];blockers:string[]}{
  const blockers=validateBuildingBrief(b);if(blockers.length)return {plans:[],blockers};
  const p=purpose[b.purpose],W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
- const out:BuildingConcept[]=[],seen=new Set<string>(),max=Math.max(0,Math.min(24,Math.floor(limit)));
+ const out:BuildingConcept[]=[],seen=new Set<string>(),max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24;
  // Different circulation widths, asymmetric wings, unit allocation and service
  // locations. A fixed order makes the first preview independent of requested limit.
  for(let step=0;step<144&&out.length<max;step++){
@@ -80,7 +82,7 @@ export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:Buildi
   if(b.rearFt>0)add(0,"open",b.purpose==="school"?"Open play / assembly reserve":"Rear open / service reserve",b.sideFt,b.depthFt-b.rearFt,W,b.rearFt);
   const signature=JSON.stringify(zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort());
   if(seen.has(signature))continue;
-  const c:BuildingConcept={id:b.purpose+"-"+recipe,brief:b,zones,signature,layout:(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft concept spine",conceptOnly:true};
+  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,recipe].join("-"),brief:b,zones,signature,layout:(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft concept spine",conceptOnly:true};
   if(validateBuildingConcept(c).length)continue;
   seen.add(signature);out.push(c);
  }
