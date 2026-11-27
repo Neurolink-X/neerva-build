@@ -203,6 +203,11 @@ async function main(){
     else {await page.waitForTimeout(2200);assert.equal(await slot.getAttribute("data-warm-state"),"idle",profile.name+" must not warm");}
     assert.equal(await page.locator(".nbd-building").count(),0,profile.name+" must not mount offscreen");
     const requested=Date.now();await slot.scrollIntoViewIfNeeded();
+     if(profile.saveData||profile.downlink<1){
+      const action=slot.getByRole("button",{name:"Load interactive 3D",exact:true});await action.waitFor({state:"visible"});
+      assert.equal(await page.locator(".nbd-building").count(),0,profile.name+" scrolling must not mount WebGL");
+      await action.click();
+     }
     await page.getByRole("button",{name:"Selected floor cutaway",exact:true}).waitFor({timeout:30000});
     assert.equal(await page.locator(".nbd-building").getAttribute("data-plan-id"),await page.locator(".nroad-diagram").getAttribute("data-plan-id"));
     performanceReports.push({profile:profile.name,viewerRequestToControlsMs:Date.now()-requested,scope:"local browser interaction, includes scroll and automation; not field INP"});
