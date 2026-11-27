@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import {assessPerformance} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/learn/property-guide","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
+const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/learn/property-guide","/learn/future-homes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -1032,9 +1032,14 @@ async function main(){
     await page.getByText(/Supplier B is ₹500 lower/).waitFor();
     await page.getByLabel("Rejected or damaged units").fill("50");
     await page.getByText("Total accepted shortfall",{exact:true}).locator("..").getByText("100",{exact:true}).waitFor();
+    await page.goto(base+"/learn/future-homes",{waitUntil:"load"});
+    const future=page.locator(".future-architecture-item");
+    assert.equal(await future.count(),6,"six separate future architecture concepts");
+    for(const img of await future.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());assert.ok(await img.evaluate(el=>el.naturalWidth===600&&el.loading==="lazy"&&el.getAttribute("src").startsWith("/images/knowledge/future/")));}
+    assert.ok(await page.locator(".future-architecture").evaluate(el=>el.scrollWidth<=el.clientWidth+1),"future architecture fits the viewport");
     await page.goto(base+"/inspiration",{waitUntil:"load"});
     await page.getByRole("button",{name:"Interiors",exact:true}).click();
-    assert.equal(await page.locator(".inspiration-card").count(),3,"interior discovery filter");
+    assert.equal(await page.locator(".inspiration-card").count(),4,"interior discovery filter");
     await page.getByRole("button",{name:"Save An open and airy living room"}).click();
     await page.getByRole("button",{name:"Natural sage",exact:true}).click();
     await page.reload({waitUntil:"load"});
