@@ -1,10 +1,11 @@
 import {overlapArea,area,type Rect,type RoadSide} from "./plan-model.ts";
+import {plotContextIssue,plotContextKey,type PlotContext} from "./irregular-plot.ts";
 import {rentalLayouts} from "./rental-layout.ts";
 export const buildingPurposes=["mall","school","restaurant","shops","rental"] as const;
 export type BuildingPurpose=typeof buildingPurposes[number];
 type ZoneKind="primary"|"support"|"toilet"|"circulation"|"core"|"service"|"parking"|"open";
 export type BuildingZone=Rect&{id:string;label:string;kind:ZoneKind;floor:number};
-export type BuildingBrief={purpose:BuildingPurpose;widthFt:number;depthFt:number;roadSide:RoadSide;floors:number;unitsPerFloor:number;parkingBays:number;frontFt:number;rearFt:number;sideFt:number;rentalBedrooms?:number};
+export type BuildingBrief={purpose:BuildingPurpose;widthFt:number;depthFt:number;roadSide:RoadSide;floors:number;unitsPerFloor:number;parkingBays:number;frontFt:number;rearFt:number;sideFt:number;rentalBedrooms?:number;siteContext?:PlotContext};
 export type BuildingConcept={id:string;brief:BuildingBrief;zones:BuildingZone[];layout:string;signature:string;conceptOnly:true};
 const purpose={
  mall:{title:"Shopping mall",unit:"Retail unit",minW:12,minD:12,minArea:200,front:20,back:12,support:["Anchor retail / activity","Service & loading reserve"],checks:["Occupant load and exit capacity","Fire separation, smoke control and sprinklers","Accessible routes, lifts, loading, parking and traffic study"]},
@@ -44,6 +45,7 @@ export function validateBuildingBrief(b:BuildingBrief):string[]{
  const p=purpose[b.purpose];
  if(b.frontFt<p.front||b.rearFt<p.back)e.push("Allow at least "+p.front+" ft front and "+p.back+" ft rear open reservation for this concept family; legal requirements may be greater.");
  if(b.parkingBays>0&&(b.frontFt<36||b.parkingBays*9>b.widthFt-2*b.sideFt-12))e.push("Requested parking reserve does not fit: allow 36 ft front depth and 9 ft per reserved bay plus a 12 ft clear strip. Vehicle maneuvering still needs review.");
+ if(b.siteContext){const issue=plotContextIssue(b.siteContext,b.widthFt,b.depthFt);if(issue)e.push(issue);}
  if(!e.length){
   const req=buildingInputRequirements(b)!;
   const W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
@@ -63,9 +65,10 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
   if(z.kind!=="open"&&z.kind!=="parking"&&(z.x<b.sideFt-EPS||z.x+z.w>b.widthFt-b.sideFt+EPS||z.y<b.frontFt-EPS||z.y+z.d>b.depthFt-b.rearFt+EPS))e.push("Building zone outside selected margins: "+z.id);
   if(z.kind==="primary"&&(z.w<p.minW-EPS||z.d<p.minD-EPS||area(z)<p.minArea-EPS))e.push("Primary zone below concept size: "+z.id);
  }
- for(let i=0;i<c.zones.length;i++)for(let j=i+1;j<c.zones.length;j++)if(c.zones[i].floor===c.zones[j].floor&&overlapArea(c.zones[i],c.zones[j])>EPS)e.push("Overlapping zones");
+
  for(let f=0;f<b.floors;f++){
   const zs=c.zones.filter(z=>z.floor===f),hall=zs.find(z=>z.kind==="circulation");
+  for(let i=0;i<zs.length;i++)for(let j=i+1;j<zs.length;j++)if(overlapArea(zs[i],zs[j])>EPS)e.push("Overlapping zones");
   if(zs.filter(z=>z.kind==="primary").length!==b.unitsPerFloor||zs.filter(z=>z.kind==="core").length!==2||zs.filter(z=>z.kind==="toilet").length!==2||!hall)e.push("Incomplete floor programme: "+f);
   if(hall)for(const z of zs.filter(z=>!["open","parking","circulation"].includes(z.kind))){
    const edge=Math.min(z.y+z.d,hall.y+hall.d)-Math.max(z.y,hall.y);
@@ -75,6 +78,11 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
  if(c.zones.filter(z=>z.kind==="parking").length!==b.parkingBays)e.push("Parking reservation count mismatch");
  if(b.purpose==="rental"&&rentalLayouts(c).length!==b.floors*b.unitsPerFloor)e.push("Every rental envelope must fit the requested internal BHK programme.");
  return [...new Set(e)];
+}
+function siteIdentity(b:BuildingBrief){return b.siteContext?"-site-"+plotContextKey(b.siteContext):"";}
+function buildingSignature(b:BuildingBrief,zones:BuildingZone[]){
+ const geometry=zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort();
+ return b.siteContext?JSON.stringify([geometry,b.siteContext.offsetXFt,b.siteContext.points.map(p=>[p.x,p.y])]):JSON.stringify(geometry);
 }
 export type BuildingLayoutFamily="classic"|"purpose-led"|"side-gallery";
 export const buildingLayoutFamily=(id:string):BuildingLayoutFamily=>id.endsWith("-gallery-v1")?"side-gallery":id.endsWith("-purpose-v2")?"purpose-led":"classic";
@@ -123,9 +131,9 @@ export function generateBuildingConcepts(b:BuildingBrief,limit=24,family:Buildin
   }
   if(b.parkingBays){for(let i=0;i<b.parkingBays;i++)add(0,"parking","Reserved bay "+(i+1),b.sideFt+i*9,0,9,18);}
   if(b.rearFt>0)add(0,"open",b.purpose==="school"?"Open play / assembly reserve":"Rear open / service reserve",b.sideFt,b.depthFt-b.rearFt,W,b.rearFt);
-  const signature=JSON.stringify(zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort());
+  const signature=buildingSignature(b,zones);
   if(seen.has(signature))continue;
-  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-")+(family==="purpose-led"?"-purpose-v2":""),brief:b,zones,signature,layout:(family==="purpose-led"?({mall:"Anchor & retail",school:"Learning & administration",restaurant:"Dining front / services rear",shops:"Retail front / support rear",rental:"Entry core / private homes"}[b.purpose])+" · ":"")+(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft spine · "+(recipe%3===1?"front recess":recipe%3===2?"rear recess":"flush wings"),conceptOnly:true};
+  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-")+siteIdentity(b)+(family==="purpose-led"?"-purpose-v2":""),brief:b,zones,signature,layout:(family==="purpose-led"?({mall:"Anchor & retail",school:"Learning & administration",restaurant:"Dining front / services rear",shops:"Retail front / support rear",rental:"Entry core / private homes"}[b.purpose])+" · ":"")+(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft spine · "+(recipe%3===1?"front recess":recipe%3===2?"rear recess":"flush wings"),conceptOnly:true};
   if(validateBuildingConcept(c).length)continue;
   seen.add(signature);out.push(c);
  }
@@ -162,9 +170,9 @@ function sideGalleryConcepts(b:BuildingBrief,limit:number):{plans:BuildingConcep
   }
   for(let i=0;i<b.parkingBays;i++)add(0,"parking","Reserved bay "+(i+1),b.sideFt+i*9,0,9,18);
   if(b.rearFt>0)add(0,"open",b.purpose==="school"?"Open play / assembly reserve":"Rear open / service reserve",b.sideFt,b.depthFt-b.rearFt,W,b.rearFt);
-  const signature=JSON.stringify(zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort());
+  const signature=buildingSignature(b,zones);
   if(seen.has(signature))continue;
-  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-")+"-gallery-v1",brief:b,zones,signature,layout:(hallLeft?"Left":"Right")+" side gallery · "+hallWidth+" ft access · "+(variation===0?"equal units":"varied unit depths"),conceptOnly:true};
+  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-")+siteIdentity(b)+"-gallery-v1",brief:b,zones,signature,layout:(hallLeft?"Left":"Right")+" side gallery · "+hallWidth+" ft access · "+(variation===0?"equal units":"varied unit depths"),conceptOnly:true};
   if(validateBuildingConcept(c).length)continue;
   seen.add(signature);plans.push(c);
  }
