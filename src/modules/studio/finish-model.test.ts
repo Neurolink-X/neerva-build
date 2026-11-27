@@ -37,7 +37,7 @@ test("shared partition retains independent opposite-side finishes",()=>{
  const edited=applyRoomFinish(source,scheme,[id],"wall","#123456","left");
  assert.equal(wallShade(edited.rooms[id],"left","#ffffff"),"#123456");assert.equal(wallShade(edited.rooms[id],"right","#ffffff"),scheme.rooms[id].wall);
  const tiled=setRoomMaterial(source,edited,[id],"floor","marble");assert.equal(tiled.rooms[id].materials?.floor,"marble");
- const snap=commercialInteriorSnapshot(p,tiled,id);assert.ok(snap);assert.ok(snap.boxes.length>6);assert.ok(snap.boxes.every(b=>b.hi.every((n,i)=>n>b.lo[i])));
+ const snap=commercialInteriorSnapshot(p,tiled,id);assert.ok(snap);assert.ok(snap.boxes.length>6);assert.ok(snap.boxes.some(b=>b.finish==="marble"));assert.ok(snap.boxes.every(b=>b.hi.every((n,i)=>n>b.lo[i])));
  assert.ok(snap.boxes.some(b=>b.color.every((n,i)=>Math.abs(n-shadeRgb("#123456")[i])<1e-7)));
  assert.equal(commercialInteriorSnapshot(p,{...tiled,planId:"other"},id),null);
 });
