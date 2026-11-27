@@ -740,7 +740,7 @@ async function main(){
     assert.equal(await fitDrawing.locator('svg g[data-room-kind="kitchen"]').count(),1,"kitchen geometry is required");
     const roomLabels=await fitBedrooms.locator('text[data-room-label="true"]').allTextContents();
     assert.deepEqual(roomLabels.sort(),["BEDROOM 1","BEDROOM 2"],"visible room labels must match their actual bedroom geometry");
-    assert.equal(await fitBedrooms.locator("title").count(),2,"each bedroom retains its independent descriptive tooltip");
+    assert.equal(await fitBedrooms.locator(":scope > title").count(),2,"each bedroom retains its independent descriptive tooltip");
     const cat=await page.goto(base+"/materials/steel",{waitUntil:"load"});
     assert.equal(cat?.status(),200,"steel category route");
     const details=await page.goto(base+"/materials/steel/fe-500d-tmt-12mm",{waitUntil:"load"});
