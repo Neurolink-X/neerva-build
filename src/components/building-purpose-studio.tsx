@@ -2,10 +2,10 @@
 import {useMemo,useState,type FormEvent} from "react";
 import Link from "next/link";
 import {BuildingEngineeringPanel} from "./building-engineering-panel";
-import {buildingPurposes,purposeDetails,generateBuildingConcepts,type BuildingPurpose,type BuildingBrief,type BuildingConcept,type BuildingZone} from "@/modules/studio/building-purpose";
+import {buildingPurposes,purposeDetails,generateBuildingConcepts,buildingInputRequirements,buildingStarter,validateBuildingBrief,type BuildingPurpose,type BuildingBrief,type BuildingConcept,type BuildingZone} from "@/modules/studio/building-purpose";
 import {roadRect,siteDimensions,roadSegment} from "@/modules/studio/plan-coordinate";
 const colors:Record<BuildingZone["kind"],string>={primary:"#aac5d3",support:"#d3c2a4",toilet:"#c8b9d9",circulation:"#e8e6d7",core:"#bdc5bb",service:"#d9bfaa",parking:"#b6bdc3",open:"#c5d7ac"};
-const defaults:BuildingBrief={purpose:"shops",widthFt:80,depthFt:100,roadSide:"N",floors:1,unitsPerFloor:4,parkingBays:0,frontFt:10,rearFt:10,sideFt:5};
+const defaults=buildingStarter("shops");
 function PlanDrawing({plan,floor}:{plan:BuildingConcept;floor:number}){
  const b=plan.brief,{w,d}=siteDimensions(b.widthFt,b.depthFt,b.roadSide),road=roadSegment(b.widthFt,b.depthFt,b.roadSide);
  return <svg viewBox={[-8,-8,w+16,d+16].join(" ")} role="img" aria-label={"Purpose-specific zoning, floor "+(floor+1)} data-plan-id={plan.id} data-floor={floor}>
@@ -35,9 +35,10 @@ export function BuildingPurposeStudio(){
  const [draft,setDraft]=useState<BuildingBrief>(defaults),[brief,setBrief]=useState<BuildingBrief>(defaults),[selected,setSelected]=useState(0),[floor,setFloor]=useState(0),[full,setFull]=useState(false),[angle,setAngle]=useState(0);
  const result=useMemo(()=>generateBuildingConcepts(brief),[brief]),plan=result.plans[selected];
  const info=purposeDetails[draft.purpose],active=purposeDetails[brief.purpose];
+ const requirements=buildingInputRequirements(draft),issues=validateBuildingBrief(draft);
  function update<K extends keyof BuildingBrief>(key:K,value:BuildingBrief[K]){setDraft(d=>({...d,[key]:value}))}
- function selectPurpose(p:BuildingPurpose){setDraft(d=>({...d,purpose:p,frontFt:Math.max(d.frontFt,purposeDetails[p].front),rearFt:Math.max(d.rearFt,purposeDetails[p].back)}))}
- function submit(e:FormEvent){e.preventDefault();setBrief({...draft});setSelected(0);setFloor(0);setFull(false)}
+ function selectPurpose(p:BuildingPurpose){setDraft(d=>({...d,purpose:p}))}
+ function submit(e:FormEvent){e.preventDefault();if(issues.length)return;setBrief({...draft});setSelected(0);setFloor(0);setFull(false)}
  const changed=JSON.stringify(draft)!==JSON.stringify(brief);
  return <div className="purpose-studio">
   <header><span className="eyebrow">NEERVA BUILDING STUDIO · FEASIBILITY CONCEPTS</span><h1>Plan beyond your home.</h1><p>Choose a building purpose, enter exact site dimensions and compare up to 24 distinct zoning arrangements. Family homes use the dedicated residential planner.</p><Link className="button button-outline" href="/design-studio#start">Family home / BHK planner →</Link></header>
@@ -45,9 +46,16 @@ export function BuildingPurposeStudio(){
    <label>Building purpose<select value={draft.purpose} onChange={e=>selectPurpose(e.target.value as BuildingPurpose)}>{buildingPurposes.map(p=><option key={p} value={p}>{purposeDetails[p].title}</option>)}</select></label>
    {([["widthFt","Frontage (ft)",20,500],["depthFt","Depth (ft)",30,600],["floors","Total floors",1,6],["unitsPerFloor",info.unit+"s per floor",1,24],["parkingBays","Parking reservations",0,40],["frontFt","Front open depth (ft)",info.front,300],["rearFt","Rear open depth (ft)",info.back,300],["sideFt","Open margin each side (ft)",0,100]] as const).map(([key,label,min,max])=><label key={key}>{label}<input type="number" required min={min} max={max} step={["floors","unitsPerFloor","parkingBays"].includes(key)?1:"any"} value={Number.isFinite(draft[key])?draft[key]:""} onChange={e=>update(key,e.target.valueAsNumber)}/></label>)}
    <label>Road direction<select value={draft.roadSide} onChange={e=>update("roadSide",e.target.value as BuildingBrief["roadSide"])}>{["N","E","S","W"].map(s=><option key={s}>{s}</option>)}</select></label>
-   <button className="button button-dark" type="submit">Generate distinct concepts →</button>
+   <button className="button button-outline" type="button" onClick={()=>setDraft(buildingStarter(draft.purpose))}>Load example inputs for {info.title}</button>
+   <button className="button button-dark" type="submit" disabled={issues.length>0}>Generate distinct concepts →</button>
+   <div className="purpose-input-review" aria-live="polite">
+    <strong>Input feasibility · {info.title}</strong>
+    {requirements&&Number.isFinite(requirements.minWidthFt)&&Number.isFinite(requirements.minDepthFt)&&<p>Current request requires at least {requirements.minWidthFt} × {requirements.minDepthFt} ft plot under this generator, including entered margins. Each {info.unit.toLowerCase()} needs at least {requirements.unitAreaSqFt} sq ft and {requirements.unitWidthFt} × {requirements.unitDepthFt} ft clear zone extents. These are necessary lower bounds, not a guarantee that layouts fit.</p>}
+    {issues.length?<ul>{issues.map(s=><li key={s}>{s}</li>)}</ul>:<p>Basic inputs accepted. Generate to run the full geometry checks. Local approvals are still required.</p>}
+    <small>Commercial projects use purpose-specific units, not BHK. Rental units here are envelopes; internal BHK planning is a separate future step. Example inputs are applied only on request.</small>
+   </div>
   </form>
-  {changed&&<p role="status">Inputs changed. Generate again to replace the current concept.</p>}
+  {changed&&<p role="status">Inputs changed. Results below are for the last generated request, not the new inputs.</p>}
   <p className="purpose-warning">Concept minimums are internal planning assumptions, not legal setbacks, sanctioned occupancy or construction approval. Rectangular plots only. Parking bays are reservations, not a validated driveway or traffic plan.</p>
   <section aria-live="polite"><h2>{active.title} · {result.plans.length} distinct zoning concepts</h2><p>{brief.widthFt} × {brief.depthFt} ft · {brief.floors} floor(s) · {brief.unitsPerFloor} primary zones per floor</p>
    {result.blockers.map(s=><p role="alert" key={s}>{s}</p>)}
