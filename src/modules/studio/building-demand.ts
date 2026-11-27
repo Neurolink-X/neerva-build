@@ -4,5 +4,6 @@ export function calculateConceptDemand(input:DemandInputs){
  const areaM2=input.areaSqFt*.09290304;
  // Arithmetic only: no load combinations, demand diversity, HVAC heat load,
  // fixture sizing, pipe sizing or occupancy/fire limits are inferred.
- return {areaM2,unfactoredDeadKn:areaM2*input.deadKpa,unfactoredLiveKn:areaM2*input.liveKpa,assumedElectricalKw:areaM2*input.powerWPerM2/1000,assumedWaterLPerDay:input.people*input.waterLPerPersonDay,assumedOutdoorAirLps:input.people*input.ventLpsPerPerson};
+ const result={areaM2,unfactoredDeadKn:areaM2*input.deadKpa,unfactoredLiveKn:areaM2*input.liveKpa,assumedElectricalKw:areaM2*input.powerWPerM2/1000,assumedWaterLPerDay:input.people*input.waterLPerPersonDay,assumedOutdoorAirLps:input.people*input.ventLpsPerPerson};
+ return Object.values(result).every(n=>Number.isFinite(n)&&n<=Number.MAX_SAFE_INTEGER)?result:null;
 }

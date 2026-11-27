@@ -9,10 +9,10 @@ export function masonryTakeoff(lengthFt:number,heightFt:number,thicknessMm:numbe
  const units=volume/moduleVolume;
  return {netArea,volume,units:Math.ceil(units*(1+wastePercent/100)),netUnits:units};
 }
-export function concreteTakeoff(volumeM3:number,cementKgM3:number,sandKgM3:number,aggregateKgM3:number,waste:number){
- if(!valid(volumeM3,.01,10000)||!valid(cementKgM3,1,1000)||!valid(sandKgM3,1,3000)||!valid(aggregateKgM3,1,3000)||!valid(waste,0,30))return null;
+export function concreteTakeoff(volumeM3:number,cementKgM3:number,sandKgM3:number,aggregateKgM3:number,waste:number,bagKg=50){
+ if(!valid(bagKg,1,100)||!valid(volumeM3,.01,10000)||!valid(cementKgM3,1,1000)||!valid(sandKgM3,1,3000)||!valid(aggregateKgM3,1,3000)||!valid(waste,0,30))return null;
  const volume=volumeM3*(1+waste/100);
- return {volume,bags:Math.ceil(volume*cementKgM3/50),sandTonnes:volume*sandKgM3/1000,aggregateTonnes:volume*aggregateKgM3/1000};
+ return {volume,cementKg:volume*cementKgM3,bags:Math.ceil(volume*cementKgM3/bagKg),bagKg,sandTonnes:volume*sandKgM3/1000,aggregateTonnes:volume*aggregateKgM3/1000};
 }
 export function steelTakeoff(diameterMm:number,totalLengthM:number,waste:number){
  if(!valid(diameterMm,6,50)||!valid(totalLengthM,.01,1000000)||!valid(waste,0,30))return null;
@@ -22,4 +22,12 @@ export function steelTakeoff(diameterMm:number,totalLengthM:number,waste:number)
 export function areaBudget(areaSqFt:number,ratePerSqFt:number,allowance:number){
  if(!valid(areaSqFt,1,100000)||!valid(ratePerSqFt,1,100000)||!valid(allowance,0,50))return null;
  const subtotal=areaSqFt*ratePerSqFt;return {subtotal,total:subtotal*(1+allowance/100)};
+}
+
+export function steelScheduleTakeoff(rows:readonly {diameterMm:number;lengthM:number}[],waste:number){
+ if(!rows.length||rows.length>50)return null;
+ const details=rows.map(r=>steelTakeoff(r.diameterMm,r.lengthM,waste));
+ if(details.some(r=>r===null))return null;
+ const kg=details.reduce((sum,r)=>sum+(r?.kg??0),0);
+ return {kg,tonnes:kg/1000,totalLengthM:rows.reduce((sum,r)=>sum+r.lengthM,0)};
 }

@@ -47,7 +47,7 @@ export function RoadPlanDiagram({plan,floor=0}:{plan:PlanModel;floor?:number}){
   <p className="nroad-small">Road side is at the top in this local coordinate view, whichever compass direction you select. Diagram is not scaled for print or construction use.</p>
  </section>;
 }
-export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;accent:string}){
+export function RoadElevation({plan,main,accent,glass="#91b5bd"}:{plan:PlanModel;main:string;accent:string;glass?:string}){
  const id=useId().replace(/:/g,"");
  const {widthFt,roadSide}=plan.plot,storeyFt=plan.walls.heightFt;
  const scale=Math.min(600/widthFt,285/(plan.floors*storeyFt+plan.walls.parapetFt));
@@ -60,7 +60,7 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
  const gates=[plan.gate,plan.pedestrianGate].filter(g=>g.widthFt>0);
  return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel" data-plan-id={plan.id} data-frontage-signature={frontageSignature(plan)}>
   <svg viewBox="0 0 700 420" role="img" aria-label={`Road-side elevation for ${widthFt} ft frontage, ${plan.floors} levels`}>
-   <ElevationDefs id={id} wall={main} accent={accent} glass="#91b5bd"/>
+   <ElevationDefs id={id} wall={main} accent={accent} glass={glass}/>
 
    <rect width="700" height="420" fill={`url(#${id}sky)`}/>
    <rect y="355" width="700" height="65" fill={`url(#${id}ground)`}/>

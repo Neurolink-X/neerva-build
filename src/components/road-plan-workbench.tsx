@@ -188,7 +188,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
      <div className="nroad-exterior-workspace"><label>{str("Exterior finish style","बाहरी डिज़ाइन")}<select name="facadeKit" aria-label={str("Balcony front style","बालकनी का डिज़ाइन")} value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Minimal trim</option><option value="cladding-band">Broad cladding band</option><option value="stepped-band">Stepped facade band</option><option value="jali-screen">Vertical accents</option>{plan.rooms.some(r=>r.kind==="balcony")&&<option value="pergola">Pergola shade</option>}{kit==="cantilever"&&<option value="cantilever">Concept finish</option>}</select></label>
-     <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>
+     <RoadElevation plan={plan} main={shade.main} accent={shade.accent} glass={scheme?.glass}/>
      <div className="nroad-palette"><h2>{str("House colour mood","घर की रंग योजना")}</h2>
       <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>{setPalette(x.id);setSaveInfo("")}}>
        <i style={{background:x.main}}/><span>{hindi?x.hi:x.en}</span></button>)}</div>
