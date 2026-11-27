@@ -44,18 +44,19 @@ export const finishes = {
  suede:{name:"Soft suede finish",motifs:grain(88,31)},
  microcement:{name:"Seamless microcement",motifs:grain(95,37)},
  reception:{name:"Reception feature wall",motifs:[{...box(.08,.10,.84,.80),alpha:.55,weight:1.6},...repeat(8,i=>({...line([.10+i*.033,.12],[.10+i*.033,.88]),alpha:.35,weight:1.4})),...repeat(8,i=>({...line([.66+i*.033,.12],[.66+i*.033,.88]),alpha:.35,weight:1.4}))]}
- ,...decorativeArt
+ ,herringbone:{name:"Chevron herringbone",motifs:repeat(6,i=>({...line([0,i/6],[.25,(i+.5)/6],[.5,i/6],[.75,(i+.5)/6],[1,i/6]),alpha:.68,weight:1.5}))},...decorativeArt
 } satisfies Record<string,{name:string;motifs:Motif[]}>;
 export type Pattern = keyof typeof finishes;
 export const patternKeys = Object.keys(finishes) as Pattern[];
 // Old IDs remain valid for previously selected walls; weak filler designs are
 // excluded from the new curated chooser rather than breaking restored selections.
-export const retiredPatterns=["bands","grid","facets","diagonal","panels","travertine","mineral"] as const satisfies readonly Pattern[];
+export const retiredPatterns=["travertine","mineral"] as const satisfies readonly Pattern[];
 export const patternGroups={
  Signature:["sunDisc","orbit","layeredArches","abstractLeaves","marble","eclipse"],
  Nature:["floralScroll","bamboo","botanical","forest","mountain","waterflow"],
  Classic:["diamonds","inset","heritage","decoFan"],
  Modern:["arch","split","asymmetric","mural","scallop"],
+ Geometry:["facets","herringbone","grid","diagonal","panels","bands"],
  Textures:["limewash","linen","terracotta","brushed","stonewash"],
  Artisan:["venetian","onyx","suede","microcement"],
  Architectural:["fluted","ribbed","slimframes","reception"]
