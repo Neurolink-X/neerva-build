@@ -1,6 +1,7 @@
 import type {RenderBox,RenderSnapshot,Vec3} from "../../../public/studio-render-v1";
 import {shadeRgb,type FinishScheme} from "./finish-model.ts";
 import {finishRoughness} from "./commercial-interior-render.ts";
+import {commercialFrontPanels} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
 const ft=.3048;
@@ -31,6 +32,23 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
  for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
   const low=(p.floor*13+3)*ft,high=(p.floor*13+8)*ft,t=.035;
   boxes.push({lo:[x(p.x-(p.axis==="y"?t:0)),low,z(p.y-(p.axis==="x"?t:0))],hi:[x(p.x+(p.axis==="x"?p.length:t)),high,z(p.y+(p.axis==="y"?p.length:t))],color:selected?shadeRgb(selected.glass):[.36,.56,.65],opacity:.25,metal:0,rough:.15});
+ }
+ // Finish details follow actual facade intervals and existing window holes.
+ // No invented windows, cantilevers or additional floor area.
+ const accent:Vec3=selected?shadeRgb(selected.accent):[.25,.29,.28],frame:Vec3=[.16,.20,.21];
+ for(const p of commercialFrontPanels(plan)){
+  const top=(p.floor*13+12.5)*ft,plane=z(p.y),left=x(p.x),right=x(p.x+p.w);
+  if(right-left<.6)continue;
+  const band=plan.brief.purpose==="school"?.16:plan.brief.purpose==="restaurant"?.32:.24;
+  push([left,top-band,plane-.11],[right,top,plane-.03],accent,.65,selected?.cladding);
+ }
+ for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
+  // Frame stays strictly inside the aperture and leaves the existing opening intact.
+  const bottom=(p.floor*13+3)*ft,top=(p.floor*13+8)*ft,len=p.length*ft,thick=Math.min(.055,len*.06),start=p.axis==="x"?x(p.x):z(p.y),plane=p.axis==="x"?z(p.y):x(p.x);
+  const add=(a:number,b:number,low:number,high:number)=>{if(b<=a||high<=low)return;const lo:Vec3=p.axis==="x"?[a,low,plane-.045]:[plane-.045,low,a],hi:Vec3=p.axis==="x"?[b,high,plane+.045]:[plane+.045,high,b];push(lo,hi,frame,.35);};
+  add(start,start+len,bottom,bottom+thick);add(start,start+len,top-thick,top);
+  const count=Math.max(1,Math.ceil(len/1.35));
+  for(let i=0;i<=count;i++){const a=Math.min(start+len-thick,Math.max(start,start+len*i/count-thick/2));add(a,a+thick,bottom+thick,top-thick);}
  }
  const distance=Math.max(widthFt,depthFt,floors*13)*ft;
  const origin:Vec3=[distance*.85,distance*.7,(view==="front"?-1:1)*distance*1.45];
