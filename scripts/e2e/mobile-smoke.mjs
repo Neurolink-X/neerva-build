@@ -37,6 +37,16 @@ async function main(){
      if(await floors.count()>1){await floors.nth(1).click();assert.equal(await plan.getAttribute("data-floor"),"1");assert.equal(await massing.getAttribute("data-floor"),"1");}
      assert.ok(await studio.evaluate(e=>e.scrollWidth<=e.clientWidth+2),purpose+" studio overflow");
     }
+    const irregular=studio.locator("details").filter({has:page.getByText("Irregular plot feasibility",{exact:true})}).first();
+    await irregular.locator("summary").click();
+    await irregular.getByRole("button",{name:"L-shaped example"}).click();
+    await irregular.getByRole("button",{name:"Analyze boundary"}).click();
+    assert.ok(await irregular.getByRole("img",{name:"Measured polygon and candidate rectangular envelope"}).isVisible());
+    await irregular.getByRole("button",{name:"Use envelope dimensions in planner"}).click();
+    assert.ok(await studio.getByLabel("Frontage (ft)").inputValue());
+    const worksheet=studio.getByText("Commercial building quantity worksheet",{exact:true});
+    await worksheet.click();
+    assert.ok(await studio.getByText(/Selected floor area:/).isVisible());
     const anonymous=await page.request.get(base+"/api/studio/commercial-projects");
     assert.ok([401,503].includes(anonymous.status()),"anonymous commercial projects must not be disclosed");
     assert.deepEqual(errors,[]);
