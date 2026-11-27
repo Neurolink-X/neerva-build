@@ -67,7 +67,7 @@ test("rectangular roof subtraction preserves exact area without duplicate overla
 });
 
 test("portfolio limits are bounded and invalid numeric limits do not suppress a valid residential brief",()=>{
- const brief={...base,widthFt:15,depthFt:30,bedrooms:1,floors:1,parking:false};
+ const brief:PlanBrief={...base,widthFt:15,depthFt:30,bedrooms:1,floors:1,parking:false};
  const standard=generateSpatialPortfolio(brief,24);
  assert.ok(standard.plans.length>0);
  for(const limit of [NaN,Infinity,1000000])assert.deepEqual(generateSpatialPortfolio(brief,limit),standard);
