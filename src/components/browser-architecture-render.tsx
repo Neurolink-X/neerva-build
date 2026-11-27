@@ -46,12 +46,12 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
  function cancel(){stop();setPhase("cancelled");setMessage("Rendering cancelled. You can start again at any time.");}
  function save(){canvas.current?.toBlob(blob=>{if(!blob)return;const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="neerva-architecture-render.png";a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000)},"image/png")}
  return <section aria-label="Browser architectural rendering" style={{marginBlock:"16px",minWidth:0}}>
-  <h3>Realistic image render (beta)</h3><p>Create a ray-traced concept image of the current camera view. All processing stays on your device; no paid rendering service.</p>
+  <details className="nbd-quality-options"><summary>Generate a rendered image (beta)</summary><p>Render the selected geometry locally on your device.</p>
   <div className="nbd-buttons"><button type="button" aria-pressed={quality==="quick"} disabled={phase==="working"} onClick={()=>setQuality("quick")}>Quick render</button><button type="button" aria-pressed={quality==="fine"} disabled={phase==="working"} onClick={()=>setQuality("fine")}>Higher detail</button></div>
   <div className="nbd-buttons"><button type="button" onClick={start} disabled={phase==="working"}>Generate realistic image</button>{phase==="working"&&<button type="button" onClick={cancel}>Cancel render</button>}{phase==="done"&&<button type="button" onClick={save}>Save render (PNG)</button>}</div>
   {phase==="working"&&<progress aria-label="Render progress" max={100} value={progress}/>}
   {message&&<p role="status">{message}</p>}
   <canvas ref={canvas} hidden={!hasFrame} aria-label="Ray-traced architectural concept image" style={{display:hasFrame?"block":"none",maxWidth:"100%",width:"100%",height:"auto",borderRadius:12}}/>
-  <p className="nbd-disclaimer">Uses bounded light bounces and simplified scene materials. Not a certified architectural drawing or a photographic-quality guarantee. Camera changes require a new render. Higher detail adapts to device capacity; for presentation-grade photorealism, export the exact scene to a professional renderer.</p>
+  <p className="nbd-disclaimer">Concept image, not a photographic-quality guarantee. Camera changes require a new render.</p></details>
  </section>;
 }
