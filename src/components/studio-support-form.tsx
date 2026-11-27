@@ -23,7 +23,7 @@ export function StudioSupportForm(){
   if(!client){queueMicrotask(()=>{if(active){setAccountError("Account service is unavailable. Please try again later.");setReady(true)}});return()=>{active=false}}
   function invalidate(){historyVersion.current++;}
   function apply(id:string|null){if(!active)return;setReady(true);if(identity.current===id)return;identity.current=id;invalidate();setAccount(id);setTickets([]);setOrders([]);setOrdersUnavailable(false);setManualOrder(false);setNotice(null);setHistoryError("");setLoading(false);setMessage("");setOrderId("");requestKey.current=null;if(id)void load(id)}
-  const {data:listener}=client.auth.onAuthStateChange((_event,session)=>{authEventObserved=true;if(active)queueMicrotask(()=>{setAccountError("");apply(session?.user.id??null)})});
+  const {data:listener}=client.auth.onAuthStateChange((_event,session)=>{authEventObserved=true;if(active)queueMicrotask(()=>{if(!active)return;setAccountError("");apply(session?.user.id??null)})});
   void client.auth.getSession().then(s=>{if(!active||authEventObserved)return;if(s.error)setAccountError("Unable to verify your session. Sign in again.");apply(s.data.session?.user.id??null)}).catch(()=>{if(!active||authEventObserved)return;setAccountError("Unable to verify your session. Sign in again.");apply(null)});
   return()=>{active=false;identity.current=null;invalidate();listener.subscription.unsubscribe()};
  },[]);
