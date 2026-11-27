@@ -76,7 +76,9 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
  if(b.purpose==="rental"&&rentalLayouts(c).length!==b.floors*b.unitsPerFloor)e.push("Every rental envelope must fit the requested internal BHK programme.");
  return [...new Set(e)];
 }
-export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:BuildingConcept[];blockers:string[]}{
+export type BuildingLayoutFamily="classic"|"purpose-led";
+export const buildingLayoutFamily=(id:string):BuildingLayoutFamily=>id.endsWith("-purpose-v2")?"purpose-led":"classic";
+export function generateBuildingConcepts(b:BuildingBrief,limit=24,family:BuildingLayoutFamily="classic"):{plans:BuildingConcept[];blockers:string[]}{
  const blockers=validateBuildingBrief(b);if(blockers.length)return {plans:[],blockers};
  const p=purpose[b.purpose],W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
  const out:BuildingConcept[]=[],seen=new Set<string>(),max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24;
@@ -84,7 +86,7 @@ export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:Buildi
  // locations. A fixed order makes the first preview independent of requested limit.
  for(let step=0;step<144&&out.length<max;step++){
   const recipe=step*37%144,coreFront=recipe%2===0,swapServices=Math.floor(recipe/2)%2===1;
-  const corridor=[8,10,12][Math.floor(recipe/4)%3];
+  const corridor=(family==="purpose-led"&&b.purpose==="mall"?[12,14,16]:family==="purpose-led"&&b.purpose==="school"?[10,12,14]:[8,10,12])[Math.floor(recipe/4)%3];
   const ratio=[.5,.42,.58][Math.floor(recipe/12)%3];
   const leftUnits=Math.max(0,Math.min(b.unitsPerFloor,Math.floor(b.unitsPerFloor/2)+[-1,0,1,2][Math.floor(recipe/36)%4]));
   const rightUnits=b.unitsPerFloor-leftUnits, left=(W-corridor)*ratio,right=W-corridor-left;
@@ -99,14 +101,22 @@ export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:Buildi
     const recess=Math.min(8,D*.06),recessWing=recipe%3!==0&&bank===Math.floor(recipe/2)%2;
     const frontRecess=recessWing&&recipe%3===1?recess:0,rearRecess=recessWing&&recipe%3===2?recess:0;
     const wingDepth=D-frontRecess-rearRecess;
-    const coreDepth=10,toiletDepth=8,supportDepth=Math.max(10,wingDepth*.15),unitDepth=(wingDepth-coreDepth-toiletDepth-supportDepth)/Math.max(1,count);
+    const coreDepth=family==="purpose-led"&&b.floors>1?12:10,toiletDepth=8,supportShare=family==="purpose-led"&&b.purpose==="restaurant"?.23:family==="purpose-led"&&b.purpose==="school"?.18:.15,supportDepth=Math.max(10,wingDepth*supportShare),unitDepth=(wingDepth-coreDepth-toiletDepth-supportDepth)/Math.max(1,count);
     if(unitDepth<=0)continue;
     const primary=Array.from({length:count},(_,i)=>({kind:"primary" as const,label:p.unit+" "+(bank===0?i+1:leftUnits+i+1),d:unitDepth}));
     const support={kind:"support" as const,label:p.support[swapServices?1-bank:bank],d:supportDepth+(count===0?wingDepth-coreDepth-toiletDepth-supportDepth:0)};
     const core={kind:"core" as const,label:"Vertical access / exit core reserve "+(bank+1),d:coreDepth};
     const toilet={kind:"toilet" as const,label:"Toilet / accessible WC reserve "+(bank+1),d:toiletDepth};
     const front=(bank===0)===coreFront;
-    const segments=front?[core,...primary,support,toilet]:[support,toilet,...primary,core];
+    const classic=front?[core,...primary,support,toilet]:[support,toilet,...primary,core];
+    // Occupancy programme changes actual zone locations and sizes; this is
+    // deliberately still a common-spine topology, not a compliant fire plan.
+    const segments=family==="classic"?classic:
+     b.purpose==="restaurant"?(front?[...primary,toilet,core,support]:[...primary,core,toilet,support]):
+     b.purpose==="shops"?(front?[...primary,core,toilet,support]:[...primary,toilet,support,core]):
+     b.purpose==="school"?(front?[support,core,...primary,toilet]:[core,...primary,toilet,support]):
+     b.purpose==="mall"?(front?[support,...primary,toilet,core]:[...primary,core,support,toilet]):
+     front?[core,...primary,toilet,support]:[core,support,toilet,...primary];
     let y=b.frontFt+frontRecess;for(const s of segments){add(f,s.kind,s.label,x,y,w,s.d);y+=s.d;}
    }
   }
@@ -114,7 +124,7 @@ export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:Buildi
   if(b.rearFt>0)add(0,"open",b.purpose==="school"?"Open play / assembly reserve":"Rear open / service reserve",b.sideFt,b.depthFt-b.rearFt,W,b.rearFt);
   const signature=JSON.stringify(zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort());
   if(seen.has(signature))continue;
-  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-"),brief:b,zones,signature,layout:(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft spine · "+(recipe%3===1?"front recess":recipe%3===2?"rear recess":"flush wings"),conceptOnly:true};
+  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-")+(family==="purpose-led"?"-purpose-v2":""),brief:b,zones,signature,layout:(family==="purpose-led"?({mall:"Anchor & retail",school:"Learning & administration",restaurant:"Dining front / services rear",shops:"Retail front / support rear",rental:"Entry core / private homes"}[b.purpose])+" · ":"")+(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft spine · "+(recipe%3===1?"front recess":recipe%3===2?"rear recess":"flush wings"),conceptOnly:true};
   if(validateBuildingConcept(c).length)continue;
   seen.add(signature);out.push(c);
  }
