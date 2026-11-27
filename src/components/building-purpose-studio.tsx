@@ -6,7 +6,7 @@ import {CommercialProjectSave} from "./commercial-project-save";
 import {PlanFinishStudio} from "./plan-finish-studio";
 import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/studio/finish-model";
 import {BuildingEngineeringPanel} from "./building-engineering-panel";
-import {buildingPurposes,purposeDetails,generateBuildingConcepts,buildingInputRequirements,buildingStarter,validateBuildingBrief,type BuildingPurpose,type BuildingBrief,type BuildingConcept,type BuildingZone} from "@/modules/studio/building-purpose";
+import {buildingPurposes,purposeDetails,generateBuildingConcepts,buildingInputRequirements,buildingStarter,validateBuildingBrief,buildingLayoutFamily,type BuildingLayoutFamily,type BuildingPurpose,type BuildingBrief,type BuildingConcept,type BuildingZone} from "@/modules/studio/building-purpose";
 import {commercialElements} from "@/modules/studio/commercial-elements";
 import {commercialFixtures,commercialPortals,commercialFrontPanels} from "@/modules/studio/commercial-detail";
 import {rentalLayouts} from "@/modules/studio/rental-layout";
@@ -62,7 +62,8 @@ function CommercialFront({plan,scheme}:{plan:BuildingConcept;scheme:FinishScheme
 }
 export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolean}={}){
  const [draft,setDraft]=useState<BuildingBrief>(defaults),[brief,setBrief]=useState<BuildingBrief>(defaults),[selected,setSelected]=useState(0),[floor,setFloor]=useState(0),[full,setFull]=useState(false),[angle,setAngle]=useState(0);
- const result=useMemo(()=>generateBuildingConcepts(brief),[brief]),plan=result.plans[selected];
+ const [family,setFamily]=useState<BuildingLayoutFamily>("purpose-led");
+ const result=useMemo(()=>generateBuildingConcepts(brief,24,family),[brief,family]),plan=result.plans[selected];
  const [showFurniture,setShowFurniture]=useState(false),[lite,setLite]=useState(false);
  const [finishHistory,setFinishHistory]=useState<Record<string,FinishScheme>>({});
  const scheme=useMemo(()=>plan?(finishHistory[plan.id]??defaultFinishScheme({kind:"commercial",plan})):null,[plan,finishHistory]);
@@ -79,9 +80,10 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
  function submit(e:FormEvent){e.preventDefault();if(issues.length)return;setBrief({...draft});setSelected(0);setFloor(0);setFull(false);setAngle(0);setShowFurniture(false)}
  function restore(snapshot:{plan:BuildingConcept;finishes:FinishScheme}){
   const next=snapshot.plan.brief;
-  const index=generateBuildingConcepts(next).plans.findIndex(p=>p.id===snapshot.plan.id&&p.signature===snapshot.plan.signature);
+  const restoredFamily=buildingLayoutFamily(snapshot.plan.id);
+  const index=generateBuildingConcepts(next,24,restoredFamily).plans.findIndex(p=>p.id===snapshot.plan.id&&p.signature===snapshot.plan.signature);
   if(index<0||snapshot.finishes.planId!==snapshot.plan.id)return false;
-  setDraft({...next});setBrief({...next});setSelected(index);setFloor(0);setFull(false);setAngle(0);
+  setFamily(restoredFamily);setDraft({...next});setBrief({...next});setSelected(index);setFloor(0);setFull(false);setAngle(0);
   setFinishHistory(h=>rememberFinish(h,snapshot.plan.id,snapshot.finishes));return true;
  }
  const changed=JSON.stringify(draft)!==JSON.stringify(brief),pendingPurpose=draft.purpose!==brief.purpose;
@@ -105,7 +107,7 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
   </form>
   {changed&&<p role="status">{pendingPurpose?"The new building purpose needs compatible dimensions and programme. Adjust the inputs and generate; the previous purpose is not shown.":"Inputs changed. Preview below is the previous generated request. Press Generate distinct concepts to apply your new inputs."}</p>}
   <p className="purpose-warning">Concept minimums are internal planning assumptions, not legal setbacks, sanctioned occupancy or construction approval. Rectangular plots only. Parking bays are reservations, not a validated driveway or traffic plan.</p>
-  {!pendingPurpose&&<section aria-live="polite" id="building-results"><h2>{active.title} · {result.plans.length} distinct zoning concepts</h2><p>{brief.widthFt} × {brief.depthFt} ft · {brief.floors} floor(s) · {brief.unitsPerFloor} primary zones per floor</p>
+  {!pendingPurpose&&<section aria-live="polite" id="building-results"><div className="purpose-tabs" role="group" aria-label="Layout family"><button type="button" aria-pressed={family==="purpose-led"} onClick={()=>{setFamily("purpose-led");setSelected(0);setAngle(0)}}>Purpose-led layout</button><button type="button" aria-pressed={family==="classic"} onClick={()=>{setFamily("classic");setSelected(0);setAngle(0)}}>Classic access spine</button></div><h2>{active.title} · {result.plans.length} distinct zoning concepts</h2><p>{brief.widthFt} × {brief.depthFt} ft · {brief.floors} floor(s) · {brief.unitsPerFloor} primary zones per floor</p>
    {result.blockers.map(s=><p role="alert" key={s}>{s}</p>)}
    {plan&&scheme&&<><div className="purpose-options" role="group" aria-label="Choose zoning option">{result.plans.map((p,i)=><button type="button" key={p.id} aria-pressed={selected===i} onClick={()=>setSelected(i)}><strong>Option {i+1}</strong><span>{p.layout}</span></button>)}</div>
     <div className="purpose-tabs" role="group" aria-label="Floor selection">{Array.from({length:brief.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>{setFloor(i);setFull(false)}}>{i===0?"Ground":"Floor "+i}</button>)}</div>
