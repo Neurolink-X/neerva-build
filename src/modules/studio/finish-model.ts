@@ -1,4 +1,5 @@
 import type {ProjectSource} from "./project-exchange.ts";
+import {commercialInternalSpaces} from "./commercial-internal.ts";
 import {rentalLayouts} from "./rental-layout.ts";
 import type {Rect,Side} from "./plan-model.ts";
 export type FinishMaterial="plain"|"tile"|"marble"|"wood"|"panel"|"acp";
@@ -19,8 +20,13 @@ export const validShade=(s:string)=>/^#[0-9a-f]{6}$/i.test(s);
 export function shadeRgb(s:string):[number,number,number]{const hex=validShade(s)?s:"#dddddd";return [1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255) as [number,number,number];}
 export function finishSpaces(source:ProjectSource):FinishSpace[]{
  if(source.kind==="residential")return source.plan.rooms.filter(r=>!open.has(r.kind));
+ const spaces=commercialInternalSpaces(source.plan);
+ if(spaces.length){
+  const parents=new Set(spaces.map(s=>s.parentId));
+  return [...source.plan.zones.filter(z=>!open.has(z.kind)&&!parents.has(z.id)),...spaces.filter(s=>s.kind!=="shaft"&&s.kind!=="lift"&&s.kind!=="stairs").map(s=>({...s,label:(source.plan.zones.find(z=>z.id===s.parentId)?.label??"")+" · "+s.label}))];
+ }
  const units=rentalLayouts(source.plan),ids=new Set(units.map(u=>u.unitId));
- return [...source.plan.zones.filter(z=>!open.has(z.kind)&&!ids.has(z.id)),...units.flatMap(u=>u.rooms.map(r=>({...r,label:"Unit "+u.unitId+" · "+r.label})))];
+ return [...source.plan.zones.filter(z=>!open.has(z.kind)&&!ids.has(z.id)),...units.flatMap(u=>u.rooms.map(r=>({...r,label:(source.plan.zones.find(z=>z.id===u.unitId)?.label??"Rental unit")+" · "+r.label})))];
 }
 export function defaultFinishScheme(source:ProjectSource):FinishScheme{
  const p=finishPresets[source.kind==="residential"?"home":source.plan.brief.purpose];
