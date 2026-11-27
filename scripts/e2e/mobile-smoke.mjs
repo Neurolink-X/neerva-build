@@ -361,7 +361,9 @@ async function main(){
     assert.match(await masonry.innerText(),/28 m²/);
     const global=page.locator("#global-construction");
     assert.equal(await global.locator(".global-methods article").count(),3);
-    assert.equal(await global.locator("img,iframe,video,canvas,svg").count(),0);
+    assert.equal(await global.locator("iframe,video,canvas,svg").count(),0,"no heavy embedded media in construction guide");
+    const methodPhoto=global.locator("img");assert.equal(await methodPhoto.count(),1,"one relevant construction reference");
+    assert.equal(await methodPhoto.getAttribute("src"),"/images/knowledge/future/precast-construction.webp");assert.equal(await methodPhoto.getAttribute("loading"),"lazy");
     const source=global.locator("a[href^='https://']").first();
     assert.equal(await source.getAttribute("rel"),"noopener noreferrer");
     assert.equal(await source.getAttribute("referrerpolicy"),"no-referrer");
