@@ -2,7 +2,7 @@ import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type Room
  type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
 import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
 import {buildingWallCells} from "./geometry.ts";
-import {frontageSignature} from "./frontage.ts";
+import {frontagePanels,frontageSignature} from "./frontage.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
@@ -61,6 +61,18 @@ function addWindow(p:Pick<PlanModel,"rooms"|"openings"|"plot"|"setbacks">){
   const width=Math.min(4,round(len-1));
   p.openings.push({id:"window-"+r.id+"-"+side,roomId:r.id,side,atFt:round((len-width)/2),
    widthFt:width,sillFt:3,heightFt:4,kind:"window"});
+ }
+ // Give real street-facing habitable walls useful window rhythm where clear
+ // of doors and other openings. No window is added through a closed room.
+ // These are the actual PlanModel openings, not decorative facade images.
+ const model=p as PlanModel;
+ for(const panel of frontagePanels({...model,floors:Math.max(1,...p.rooms.map(r=>r.floor+1))})){
+  const r=p.rooms.find(room=>room.id===panel.roomId)!;
+  if(!["bedroom","living","dining","lounge"].includes(r.kind)||panel.w<4.8)continue;
+  if(p.openings.some(o=>o.roomId===r.id&&o.side==="front"&&o.kind==="window"))continue;
+  const width=Math.min(4,round(panel.w-1)),atFt=round(panel.x-r.x+(panel.w-width)/2);
+  if(p.openings.some(o=>o.roomId===r.id&&o.side==="front"&&atFt<o.atFt+o.widthFt+.15&&atFt+width>o.atFt-.15))continue;
+  p.openings.push({id:"window-front-"+r.id,roomId:r.id,side:"front",atFt,widthFt:width,sillFt:3,heightFt:4,kind:"window"});
  }
 }
 export type SpatialProgramme="wash"|"family-gallery"|"rear-courtyard"|"rear-baranda";
