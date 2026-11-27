@@ -1,0 +1,27 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {straightStairStudy,residentialStairStudies} from "./stair-study.ts";
+import {generateSpatialPortfolio} from "./road-generator.ts";
+import {overlapArea,area,type Room,type Opening} from "./plan-model.ts";
+const lower:Room={id:"s0",label:"Stair",kind:"stairs",floor:0,x:2,y:4,w:5,d:24,minClearWidthFt:3.25};
+const upper={...lower,id:"s1",floor:1};
+const doors:Opening[]=[{id:"a",roomId:"s0",side:"front",atFt:1,widthFt:3,sillFt:0,heightFt:7,kind:"door",connectsTo:"hall0"},{id:"b",roomId:"s1",side:"rear",atFt:1,widthFt:3,sillFt:0,heightFt:7,kind:"door",connectsTo:"hall1"}];
+test("straight flight connects measured lower and upper landings and stays inside the bay",()=>{
+ const study=straightStairStudy(lower,upper,9.5,doors);assert.ok(study);
+ assert.equal(study.steps.length,15);
+ assert.ok(study.riseFt<=7.5/12);
+ assert.equal(study.landings[1].topFt,9.5);
+ for(const r of [...study.steps,...study.landings])assert.ok(Math.abs(overlapArea(lower,r)-area(r))<1e-6);
+ for(let i=1;i<study.steps.length;i++)assert.ok(study.steps[i].topFt>study.steps[i-1].topFt);
+});
+test("reject tiny, shifted or inaccessible stair bays rather than invent floating treads",()=>{
+ assert.equal(straightStairStudy({...lower,d:10},{...upper,d:10},9.5,doors),null);
+ assert.equal(straightStairStudy(lower,{...upper,x:3},9.5,doors),null);
+ assert.equal(straightStairStudy(lower,upper,9.5,[doors[0]]),null);
+ assert.equal(straightStairStudy(lower,upper,9.5,[doors[0],{...doors[1],side:"right"}]),null);
+});
+test("generated home alternatives account for every lower-floor stair reserve",()=>{
+ const result=generateSpatialPortfolio({widthFt:40,depthFt:50,floors:2,bedrooms:3,parking:true,roadSide:"N",setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}},12);
+ assert.ok(result.plans.length);
+ for(const plan of result.plans){const review=residentialStairStudies(plan);assert.equal(review.unresolved.length+review.studies.length,plan.rooms.filter(r=>r.kind==="stairs"&&r.floor<plan.floors-1).length);}
+});
