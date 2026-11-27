@@ -66,7 +66,7 @@ assert.equal((await call(applicant,onboard,"POST",freshDraft)).data.applicationI
 const submitNew={action:"submit",applicationId:appId};
 assert.equal((await call(applicant,onboard,"POST",submitNew)).status,400,"Photo required");
 assert.equal((await call(b,onboard,"POST",submitNew)).status,403,"Foreign applicant denied");
-const privatePhoto=readFileSync("public/images/studio/finished.webp"),newPhotoPath=appId+"/"+randomUUID()+".webp";
+const privatePhoto=readFileSync("public/images/studio/journey-finished.webp"),newPhotoPath=appId+"/"+randomUUID()+".webp";
 assert.ifError((await applicant.client.storage.from("neerva-dealer-kyc").upload(newPhotoPath,privatePhoto,{contentType:"image/webp",upsert:false})).error);
 assert.ifError((await applicant.client.from("dealer_shop_photos").insert({application_id:appId,uploaded_by:applicant.id,storage_path:newPhotoPath,content_type:"image/webp",file_bytes:privatePhoto.length})).error);
 assert.equal((await call(applicant,onboard,"POST",submitNew)).status,200);
@@ -116,7 +116,7 @@ const draft=await a.client.from("dealer_applications").insert({id:application,te
 assert.ifError(draft.error);assert.equal(draft.data.status,"draft");
 assert.ifError((await a.client.from("dealer_service_pincodes").insert({application_id:application,pincode:"208001"})).error);
 assert.ifError((await a.client.from("dealer_categories").insert({application_id:application,category_id:category.id})).error);
-const photoBytes=readFileSync("public/images/studio/finished.webp"),photoPath=application+"/"+randomUUID()+".webp";
+const photoBytes=readFileSync("public/images/studio/journey-finished.webp"),photoPath=application+"/"+randomUUID()+".webp";
 assert.ifError((await a.client.storage.from("neerva-dealer-kyc").upload(photoPath,photoBytes,{contentType:"image/webp",upsert:false})).error);
 assert.ifError((await a.client.from("dealer_shop_photos").insert({application_id:application,uploaded_by:a.id,storage_path:photoPath,content_type:"image/webp",file_bytes:photoBytes.length})).error);
 const foreignKyc=await b.client.from("dealer_applications").select("id").eq("id",application);

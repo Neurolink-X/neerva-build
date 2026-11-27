@@ -87,7 +87,7 @@ for(const file of tracked.filter(f=>f.startsWith("public/images/")&&imageFile(f)
 }
 assert.equal(duplicateImages.length,0,"Duplicate public images: "+JSON.stringify(duplicateImages));
 const retired=["finished","shell"].map(name=>"/images/studio/"+name+".webp");
-for(const file of tracked.filter(f=>/^(src\/|public\/sw\.js$)/.test(f)&&/\.(?:ts|tsx|js|mjs|css|json)$/.test(f))){
+for(const file of tracked.filter(f=>/^(src\/|scripts\/e2e\/|public\/sw\.js$)/.test(f)&&/\.(?:ts|tsx|js|mjs|css|json)$/.test(f))){
  const content=fs.readFileSync(file,"utf8");
  for(const old of retired)assert.ok(!content.includes(old),"Retired image reference: "+file+" -> "+old);
 }

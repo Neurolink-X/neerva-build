@@ -474,3 +474,7 @@
 .nbh .nbh-stage-note{display:block;text-align:left}
 @media(max-width:340px){.nbh .nbh-stage-materials{grid-template-columns:1fr}}
 
+
+/* Native slider uses a local CSS variable; gallery React tree is not re-rendered for each drag. */
+.nbh .nbh-compare-frame .nbh-construction-layer{clip-path:inset(0 calc(100% - var(--reveal,50%)) 0 0)}
+.nbh .nbh-compare-frame>span{left:var(--reveal,50%);pointer-events:none}

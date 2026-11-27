@@ -4,7 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
-import {assessPerformance} from "./performance-budget.mjs";
+import {assessPerformance,resourceSummary} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
 const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/learn/property-guide","/learn/future-homes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
@@ -184,7 +184,7 @@ async function main(){
     const page=await ctx.newPage(),session=await ctx.newCDPSession(page);await session.send("Network.enable");await session.send("Network.emulateNetworkConditions",{offline:false,latency:profile.latency,downloadThroughput:profile.download,uploadThroughput:profile.upload,connectionType:"cellular3g"});
     let speculative=0;page.on("request",r=>{const h=r.headers();if(h["next-router-prefetch"]||h["purpose"]==="prefetch"||h["sec-purpose"]?.includes("prefetch"))speculative++;});
     for(const visit of ["cold","repeat"]){const started=Date.now();await page.goto(base+"/",{waitUntil:"domcontentloaded",timeout:120000});await page.locator(".nbh-journey.nbh-primary").waitFor({state:"visible",timeout:60000});const usefulMs=Date.now()-started;
-     await page.waitForLoadState("load",{timeout:120000});const resources=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],r=performance.getEntriesByType("resource");return {documentBytes:n?.transferSize??0,resourceBytes:r.reduce((sum,e)=>sum+e.transferSize,0),resourceCount:r.length};});
+     await page.waitForLoadState("load",{timeout:120000});const resources=await page.evaluate(resourceSummary);
      assert.ok(usefulMs<60000,profile.name+" useful homepage exceeded severe smoke ceiling");assert.equal(speculative,0,profile.name+" must not prefetch routes before interaction");performanceReports.push({profile:profile.name,visit,usefulMs,...resources,scope:"simulated constrained network; not production field latency"});
     }
     await page.locator(".nbh-journey.nbh-primary").click({timeout:60000});await page.waitForURL("**/materials",{timeout:120000});assert.equal(new URL(page.url()).pathname,"/materials","real navigation still works with prefetch disabled");
@@ -254,7 +254,7 @@ async function main(){
     const main=route.includes("/portfolio?")?".nroad-form":route==="/brands"?".br-filters":route==="/materials"?".catalog-toolbar":".tile-showroom";
     await page.locator(main).first().waitFor({state:"visible",timeout:90000});const usefulMs=Date.now()-started;
     await page.waitForLoadState("load",{timeout:120000});
-    const resources=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],r=performance.getEntriesByType("resource");return {documentBytes:n?.transferSize??0,resourceBytes:r.reduce((sum,e)=>sum+e.transferSize,0),resourceCount:r.length};});
+    const resources=await page.evaluate(resourceSummary);
     assert.ok(usefulMs<90000,route+" initial useful content exceeded severe test ceiling");
     if(route.includes("/portfolio?"))assert.equal(await page.locator(".nbd-building").count(),0,"slow link must not eagerly initialize 3D");
     performanceReports.push({route,profile:"weak-4g",usefulMs,prefetch,...resources,scope:"simulated local Chromium; not field Web Vitals"});
