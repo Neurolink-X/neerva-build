@@ -7,6 +7,8 @@ test("all supported purposes produce 24 unique feasible zoning concepts on a gen
   const brief={...base,purpose,roadSide},result=generateBuildingConcepts(brief);
   assert.equal(result.plans.length,24,purpose+" "+roadSide);
   assert.equal(new Set(result.plans.map(p=>p.signature)).size,24);
+  const frontProfiles=new Set(result.plans.map(p=>JSON.stringify(p.zones.filter(z=>z.floor===0&&z.kind!=="parking"&&z.kind!=="open"&&z.kind!=="circulation").reduce((m,z)=>{const key=String(z.x);m[key]=Math.min(m[key]??Infinity,z.y);return m},{} as Record<string,number>))));
+  assert.ok(frontProfiles.size>1,"different actual street-facing wing footprints required");
   assert.equal(generateBuildingConcepts(brief,1).plans[0]?.signature,result.plans[0].signature);
   for(const p of result.plans){
    assert.deepEqual(validateBuildingConcept(p),[]);
