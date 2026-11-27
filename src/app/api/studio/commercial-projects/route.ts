@@ -14,9 +14,9 @@ async function body(request:Request){
 }
 export async function GET(request:Request){
  const auth=await requireAuth(request);if(auth instanceof Response)return auth;
- if(process.env.COMMERCIAL_PROJECT_STORAGE_ENABLED!=="true")return notReady();
+ if(process.env.COMMERCIAL_PROJECT_STORAGE_ENABLED!=="true")return reply({enabled:false,projects:[],reason:"storage_not_enabled"});
  try{const {data,error}=await auth.client.from("studio_commercial_snapshots").select("id,title,purpose,created_at").eq("owner_id",auth.userId).order("created_at",{ascending:false}).limit(30);
- return error?reply({error:"Private designs unavailable."},503):reply({projects:data??[]});}catch{return reply({error:"Private designs unavailable."},503);}
+ return error?reply({error:"Private designs unavailable."},503):reply({enabled:true,projects:data??[]});}catch{return reply({error:"Private designs unavailable."},503);}
 }
 export async function POST(request:Request){
  const auth=await requireAuth(request);if(auth instanceof Response)return auth;
