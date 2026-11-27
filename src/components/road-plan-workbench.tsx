@@ -35,21 +35,6 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const threeSection=useRef<HTMLDivElement>(null);
  const [saving,setSaving]=useState(false),[saveInfo,setSaveInfo]=useState("");
  const saveLock=useRef(false),retryKey=useRef<{fingerprint:string;key:string}|null>(null);
- async function saveDraft(){
-  if(!draft||saveLock.current)return;
-  saveLock.current=true;setSaving(true);setSaveInfo("");
-  try{const {createNeervaBrowserClient}=await import("@/modules/supabase/browser");
-   const client=createNeervaBrowserClient();
-   if(!client){setSaveInfo("Account service is not configured. Your concept is not saved.");return;}
-   const session=await client.auth.getSession(),token=session.data.session?.access_token;
-   if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
-   const digest=await planGeometryDigest(draft),fingerprint=JSON.stringify([session.data.session?.user.id,brief,draft.id,digest,kit,shade.main,shade.accent,scheme]);
-   if(retryKey.current?.fingerprint!==fingerprint)retryKey.current={fingerprint,key:crypto.randomUUID()};
-   const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:retryKey.current.key,title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id,geometryDigest:digest,finishScheme:scheme??undefined,finish:{kit,main:shade.main,accent:shade.accent}}),cache:"no-store",signal:AbortSignal.timeout(20000)});
-   const body=await response.json() as {project?:{id?:string};error?:string};
-   setSaveInfo(response.ok&&body.project?.id?"Private concept saved. Not a construction-approved plan.":(body.error??"Project was not saved."));
-  }catch{setSaveInfo("Network issue. Your concept was not confirmed saved.");}finally{saveLock.current=false;setSaving(false)}
- }
  const result=useMemo(()=>generateSpatialPortfolio(brief,24),[brief]);
  const facadeGroups=useMemo(()=>{const groups=new Map<string,number>();return result.plans.map(p=>{const sig=frontageSignature(p);if(!groups.has(sig))groups.set(sig,groups.size+1);return groups.get(sig)!})},[result]);
  const activeOption=result.plans[chosen]?chosen:0;
@@ -90,6 +75,21 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  },[hasPlan,threeReady]);
  function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setBrief(v=>({...v,[key]:value}));setChosen(0);setFloor(0);setKit(null);setSaveInfo("")}
  function changeSetback(side:keyof PlanBrief["setbacks"],value:number){setBrief(v=>({...v,setbacks:{...v.setbacks,[side]:value}}));setChosen(0);setFloor(0);setKit(null)}
+ async function saveDraft(){
+  if(!draft||saveLock.current)return;
+  saveLock.current=true;setSaving(true);setSaveInfo("");
+  try{const {createNeervaBrowserClient}=await import("@/modules/supabase/browser");
+   const client=createNeervaBrowserClient();
+   if(!client){setSaveInfo("Account service is not configured. Your concept is not saved.");return;}
+   const session=await client.auth.getSession(),token=session.data.session?.access_token;
+   if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
+   const digest=await planGeometryDigest(draft),fingerprint=JSON.stringify([session.data.session?.user.id,brief,draft.id,digest,kit,shade.main,shade.accent,scheme]);
+   if(retryKey.current?.fingerprint!==fingerprint)retryKey.current={fingerprint,key:crypto.randomUUID()};
+   const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:retryKey.current.key,title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id,geometryDigest:digest,finishScheme:scheme??undefined,finish:{kit,main:shade.main,accent:shade.accent}}),cache:"no-store",signal:AbortSignal.timeout(20000)});
+   const body=await response.json() as {project?:{id?:string};error?:string};
+   setSaveInfo(response.ok&&body.project?.id?"Private concept saved. Not a construction-approved plan.":(body.error??"Project was not saved."));
+  }catch{setSaveInfo("Network issue. Your concept was not confirmed saved.");}finally{saveLock.current=false;setSaving(false)}
+ }
  const str=(en:string,hi:string)=>hindi?hi:en;
  return <main className="nroad">
   <nav className="nroad-nav" aria-label="House planner navigation"><Link href="/design-studio">← {str("Home Studio","होम स्टूडियो")}</Link>
