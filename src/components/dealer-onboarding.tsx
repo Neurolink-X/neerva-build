@@ -20,16 +20,17 @@ export function DealerOnboarding(){
   finally{if(identity.current===id&&seq===revision.current)setLoading(false)}
  }
  useEffect(()=>{
-  const client=createNeervaBrowserClient();let active=true;
+  const client=createNeervaBrowserClient();let active=true,authEventObserved=false;
   if(!client){queueMicrotask(()=>{if(active){setReady(true);setNotice({kind:"error",text:"Account service is unavailable."})}});return()=>{active=false}}
+  function invalidate(){revision.current++;}
   function apply(id:string|null,verified:boolean){
    if(!active)return;setReady(true);setAccount(id?{id,verified}:null);
-   if(identity.current===id)return;identity.current=id;revision.current++;setData(null);setDraft(empty);setFile(null);setLoading(false);setNotice(null);
+   if(identity.current===id)return;identity.current=id;invalidate();setData(null);setDraft(empty);setFile(null);setLoading(false);setNotice(null);
    if(id)void load(id,true);
   }
-  const {data:listener}=client.auth.onAuthStateChange((_event,s)=>queueMicrotask(()=>apply(s?.user.id??null,Boolean(s?.user.email_confirmed_at))));
-  void client.auth.getSession().then(({data:s})=>apply(s.session?.user.id??null,Boolean(s.session?.user.email_confirmed_at))).catch(()=>apply(null,false));
-  return()=>{active=false;identity.current=null;revision.current++;listener.subscription.unsubscribe()}
+  const {data:listener}=client.auth.onAuthStateChange((_event,s)=>{authEventObserved=true;queueMicrotask(()=>apply(s?.user.id??null,Boolean(s?.user.email_confirmed_at)))});
+  void client.auth.getSession().then(({data:s})=>{if(!authEventObserved)apply(s.session?.user.id??null,Boolean(s.session?.user.email_confirmed_at))}).catch(()=>{if(!authEventObserved)apply(null,false)});
+  return()=>{active=false;identity.current=null;invalidate();listener.subscription.unsubscribe()}
  },[]);
  useEffect(()=>{if(notice)feedback.current?.focus()},[notice]);
  async function run(action:"save"|"photo"|"submit"){
