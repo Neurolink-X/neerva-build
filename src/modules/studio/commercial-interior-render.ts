@@ -11,9 +11,9 @@ export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishSch
  if(scheme.planId!==plan.id)return null;
  const r=finishSpaces({kind:"commercial",plan}).find(z=>z.id===roomId),f=scheme.rooms[roomId];if(!r||!f||r.w<5||r.d<5)return null;
  const w=r.w*FT,d=r.d*FT,h=13*FT,boxes:RenderBox[]=[];
- const push=(lo:Vec3,hi:Vec3,color:Vec3,rough=.8,opacity=1)=>boxes.push({lo,hi,color,rough,metal:0,opacity});
- push([0,-.12,0],[w,0,d],shadeRgb(f.floor),finishRoughness(f.materials?.floor));
- push([0,h,0],[w,h+.12,d],shadeRgb(f.ceiling),finishRoughness(f.materials?.ceiling));
+ const push=(lo:Vec3,hi:Vec3,color:Vec3,rough=.8,opacity=1,finish?:FinishMaterial)=>boxes.push({lo,hi,color,rough,metal:0,opacity,finish});
+ push([0,-.12,0],[w,0,d],shadeRgb(f.floor),finishRoughness(f.materials?.floor),1,f.materials?.floor);
+ push([0,h,0],[w,h+.12,d],shadeRgb(f.ceiling),finishRoughness(f.materials?.ceiling),1,f.materials?.ceiling);
  const portals=commercialPortals(plan).filter(p=>p.zoneId===r.id);
  for(const side of ["front","rear","left","right"] as Side[]){
   const vertical:boolean=side==="left"||side==="right";
@@ -22,7 +22,7 @@ export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishSch
   const openings:{atFt:number;widthFt:number;sillFt:number;heightFt:number;kind:"access"|"exterior-glazing"}[]=portals.filter(p=>p.axis===(vertical?"y":"x")&&Math.abs((vertical?p.x:p.y)-plane)<1e-5).map(p=>({atFt:(vertical?p.y:p.x)-start,widthFt:p.length,sillFt:p.kind==="access"?0:3,heightFt:p.kind==="access"?8:5,kind:p.kind})).filter(p=>p.atFt>=-1e-6&&p.atFt+p.widthFt<=length+1e-6).sort((a,b)=>a.atFt-b.atFt);
   const accepted: {atFt:number;widthFt:number;sillFt:number;heightFt:number;kind:"access"|"exterior-glazing"}[]=[];for(const p of openings)if(!accepted.length||p.atFt>=accepted[accepted.length-1].atFt+accepted[accepted.length-1].widthFt-1e-6){const atFt=Math.max(0,p.atFt),widthFt=Math.min(p.widthFt,length-atFt);if(widthFt>1e-6)accepted.push({...p,atFt,widthFt});}
   const coords=(a:number,b:number,low:number,high:number,t:number):[Vec3,Vec3]=>vertical?[[side==="left"?-t:w,low*FT,a*FT],[side==="left"?0:w+t,high*FT,b*FT]]:[[a*FT,low*FT,side==="front"?-t:d],[b*FT,high*FT,side==="front"?0:d+t]];
-  for(const cell of wallBoxes(length,13,accepted)){const [lo,hi]=coords(cell.x0,cell.x1,cell.y0,cell.y1,.12);push(lo,hi,shadeRgb(wallShade(f,side,f.wall)),finishRoughness(f.materials?.wall));}
+  for(const cell of wallBoxes(length,13,accepted)){const [lo,hi]=coords(cell.x0,cell.x1,cell.y0,cell.y1,.12);push(lo,hi,shadeRgb(wallShade(f,side,f.wall)),finishRoughness(f.materials?.wall),1,f.materials?.wall);}
   for(const p of accepted.filter(p=>p.kind==="exterior-glazing")){const [lo,hi]=coords(p.atFt,p.atFt+p.widthFt,3,8,.03);push(lo,hi,shadeRgb(scheme.glass),.15,.3);}
  }
  for(const item of commercialFixtures(plan).filter(z=>z.zoneId===r.id)){
