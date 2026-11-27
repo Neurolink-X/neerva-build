@@ -66,7 +66,7 @@ export function materialVariation(finish,p,n){
  if(finish==="panel"||finish==="acp")return edge(a,finish==="acp"?1.2:.3)<.009||finish==="acp"&&edge(b,1.2)<.009?.55:.98;
  return 1;
 }
-function shade(tree,origin,dir,rng,evening){
+function shade(tree,origin,dir,rng,evening,lights){
  let result=[0,0,0],weight=[1,1,1],o=origin,d=dir;
  const light=norm(evening?[-.8,.28,-.6]:[-.65,.85,-.7]),sun=evening?[2.1,1.1,.55]:[2.4,2.25,1.95];
  for(let bounce=0;bounce<4;bounce++){
@@ -82,6 +82,7 @@ function shade(tree,origin,dir,rng,evening){
   const l=norm(add(light,mul(hemisphere(light,rng),.035))),cos=Math.max(0,dot(n,l));
   if(cos>0){const blocker=nearest(tree,add(p,mul(n,EPS*5)),l);const visibility=blocker?(blocker.b.opacity<.98?.5:0):1;
    result=add(result,mul(product(product(weight,albedo),sun),cos*visibility*(1-m.metal)*.6))}
+  if(bounce===0&&lights?.length){for(const lamp of lights){const delta=sub(lamp.position,p),distance=Math.hypot(...delta);if(distance<EPS)continue;const l=mul(delta,1/distance),cos=Math.max(0,dot(n,l));if(cos===0)continue;const shadow=nearest(tree,add(p,mul(n,EPS*5)),l,distance-EPS*8);if(!shadow||shadow.b.opacity<.98)result=add(result,mul(product(product(weight,albedo),lamp.color),cos*lamp.power/(1+distance*distance)*(shadow?.b.opacity<.98?.5:1)));}}
   const spec=clamp(.04+m.metal*.72+(1-m.rough)*.12,.04,.92);
   if(rng()<spec){d=norm(add(reflect(d,n),mul(hemisphere(n,rng),m.rough*m.rough*.65)));if(dot(d,n)<=0)d=hemisphere(n,rng);weight=product(weight,m.color.map(v=>m.metal?v:.85+.15*v));}
   else{d=hemisphere(n,rng);weight=product(weight,albedo);}
@@ -92,6 +93,7 @@ function shade(tree,origin,dir,rng,evening){
 function toByte(x){const a=clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0,1);return Math.round(255*Math.pow(a,1/2.2))}
 export function renderScene(job,report){
  const {boxes,camera,width,height,samples,evening}=job;
+ const lights=Array.isArray(job.lights)?job.lights.slice(0,4).filter(l=>l.position?.length===3&&l.color?.length===3&&[...l.position,...l.color,l.power].every(Number.isFinite)&&l.power>=0&&l.power<=100):[];
  if(!Array.isArray(boxes)||!boxes.length||boxes.length>2500||!Number.isInteger(width)||!Number.isInteger(height)||width<16||height<16||width>768||height>768||width*height>420000||!Number.isInteger(samples)||samples<1||samples>16)throw Error("Unsupported render size or scene complexity.");
  const tree=bvh(boxes),acc=new Float32Array(width*height*3),rng=random(7319);
  const scale=Math.tan(camera.fov*Math.PI/360),aspect=width/height;
@@ -99,7 +101,7 @@ export function renderScene(job,report){
   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
    const u=(2*(x+rng())/width-1)*scale*aspect,v=(1-2*(y+rng())/height)*scale;
    const ray=norm(add(add(camera.forward,mul(camera.right,u)),mul(camera.up,v)));
-   const rgb=shade(tree,camera.origin,ray,rng,evening),i=(y*width+x)*3;
+   const rgb=shade(tree,camera.origin,ray,rng,evening,lights),i=(y*width+x)*3;
    for(let k=0;k<3;k++)acc[i+k]+=rgb[k];
   }
   if(s===0||(s+1)%2===0||s===samples-1){
