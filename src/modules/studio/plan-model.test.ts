@@ -157,15 +157,21 @@ test("standard 18×50 and compact 15×30 no-parking ground 1 BHK share validated
 
 });
 
-test("standard no-parking 1 BHK offers six distinct validated room footprints",()=>{
+test("expanded no-parking 1 BHK offers ten validated footprints and preserves legacy alternatives",()=>{
  const {plans,blockers}=generateSpatialPortfolio(brief({parking:false}));
- assert.deepEqual(blockers,[]);assert.equal(plans.length,6);
- assert.equal(new Set(plans.map(planSignature)).size,6);
- assert.equal(new Set(plans.map(p=>p.id)).size,6);
- assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size,3);
- assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="bedroom")!.d)).size,3);
+ assert.deepEqual(blockers,[]);assert.equal(plans.length,10);
+ assert.equal(new Set(plans.map(planSignature)).size,plans.length);
+ assert.equal(new Set(plans.map(p=>p.id)).size,plans.length);
+ assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size,5);
+ assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="bedroom")!.d)).size,5);
+ for(const side of ["left","right"])for(const suffix of ["","-living","-bedroom"])assert.ok(plans.some(p=>p.id==="18x50-N-pedestrian-"+side+suffix),"legacy saved ID remains available");
  for(const p of plans)assert.deepEqual(validatePlan(p),[]);
- assert.equal(generateSpatialPortfolio(brief({parking:false,widthFt:15,depthFt:30})).plans.length,2);
+ for(const roadSide of ["N","E","S","W"] as const){
+  const small=generateSpatialPortfolio(brief({parking:false,widthFt:15,depthFt:30,roadSide})).plans;
+  assert.equal(small.length,6);assert.equal(new Set(small.map(planSignature)).size,6);
+  assert.equal(new Set(small.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size,3);
+  for(const p of small)assert.deepEqual(validatePlan(p),[]);
+ }
 });
 
 test("1 BHK is one bedroom total, not one bedroom per floor; preserve G+1/G+2 and parking",()=>{

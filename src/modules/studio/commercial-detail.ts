@@ -87,3 +87,9 @@ export function commercialFrontPanels(plan:BuildingConcept){
  }
  return panels;
 }
+
+/** Presentation-only facade profile; no invented openings or floor area. Feet.
+ * Shared by the elevation and full-building render. */
+export function commercialFacadeProfile(purpose:BuildingConcept["brief"]["purpose"]){
+ return ({shops:{bandFt:.8,frame:[.19,.23,.24]},mall:{bandFt:.9,frame:[.15,.19,.22]},restaurant:{bandFt:1.05,frame:[.32,.25,.20]},school:{bandFt:.53,frame:[.23,.29,.27]},rental:{bandFt:.65,frame:[.25,.26,.25]}} satisfies Record<BuildingConcept["brief"]["purpose"],{bandFt:number;frame:[number,number,number]}>)[purpose];
+}

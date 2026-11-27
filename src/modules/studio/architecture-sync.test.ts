@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {generateSpatialPortfolio,planSignature,validateRequestedProgramme} from "./road-generator.ts";
 import {type PlanBrief,planGeometryDigest,area,overlapArea} from "./plan-model.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
-import {buildingWallCells,visibleWallCells} from "./geometry.ts";
+import {buildingWallCells,visibleWallCells,CUTAWAY_WALL_RATIO} from "./geometry.ts";
 import {exposedRoofPatches,subtractRect} from "./plan-surfaces.ts";
 import {roadRect,roadPoint,threeRoadRotation} from "./plan-coordinate.ts";
 const base:PlanBrief={widthFt:40,depthFt:50,roadSide:"N",floors:2,bedrooms:3,parking:true,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
@@ -14,6 +14,7 @@ test("every generated wide and compact plan matches its BHK brief and both rende
    const result=generateSpatialPortfolio(brief,24);
    assert.ok(result.plans.length>0,result.blockers.join(" / "));
    assert.equal(new Set(result.plans.map(planSignature)).size,result.plans.length);
+   console.log("architecture-coverage "+JSON.stringify({kind:"residential",widthFt,depthFt,bedrooms,floors,roadSide,shown:result.plans.length}));
    assert.equal(new Set(result.plans.map(p=>p.id)).size,result.plans.length);
    const first=generateSpatialPortfolio(brief,1).plans[0];
    assert.ok(first);assert.equal(await planGeometryDigest(first),await planGeometryDigest(result.plans[0]),"fit preview must open the same first plan");
@@ -30,7 +31,7 @@ test("every generated wide and compact plan matches its BHK brief and both rende
     const mesh=buildingWallCells(d);
     for(let level=0;level<floors;level++){
      const cut=visibleWallCells(d,level,true);
-     assert.ok(cut.length);assert.ok(cut.every(c=>c.floorIndex===level&&c.topFt>c.bottomFt&&c.topFt<=p.walls.heightFt*.46+1e-6));
+     assert.ok(cut.length);assert.ok(cut.every(c=>c.floorIndex===level&&c.topFt>c.bottomFt&&c.topFt<=p.walls.heightFt*CUTAWAY_WALL_RATIO+1e-6));
      assert.deepEqual(visibleWallCells(d,level,false),mesh.filter(c=>c.floorIndex===level));
     }
     assert.deepEqual(visibleWallCells(d),mesh);
@@ -63,4 +64,12 @@ test("rectangular roof subtraction preserves exact area without duplicate overla
   assert.ok(Math.abs(overlapArea(patch,room)-area(patch))<1e-5);
   for(const above of plan.rooms.filter(r=>r.floor===patch.floor&&r.kind!=="parking"))assert.ok(overlapArea(patch,above)<1e-5);
  }
+});
+
+test("portfolio limits are bounded and invalid numeric limits do not suppress a valid residential brief",()=>{
+ const brief:PlanBrief={...base,widthFt:15,depthFt:30,bedrooms:1,floors:1,parking:false};
+ const standard=generateSpatialPortfolio(brief,24);
+ assert.ok(standard.plans.length>0);
+ for(const limit of [NaN,Infinity,1000000])assert.deepEqual(generateSpatialPortfolio(brief,limit),standard);
+ assert.equal(generateSpatialPortfolio(brief,0).plans.length,1);
 });

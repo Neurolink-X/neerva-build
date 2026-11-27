@@ -93,3 +93,20 @@ test("garden wall panels paint exposed plaster without painting protected plant 
  for(const [x,y] of [[400,442],[438,450],[550,440],[1020,443],[1115,440],[1160,442]])assert.ok(paint(x,y),`plaster ${x},${y}`);
  for(const [x,y] of [[340,470],[480,475],[423,450],[570,450],[980,478],[1075,465],[1132,450],[1240,470]])assert.equal(paint(x,y),false,`protected ${x},${y}`);
 });
+
+test("all preset design quadrilaterals cover their actual paint mask, including first house upper left wall",()=>{
+ for(const sample of facadeSamples)for(const z of sample.zones){
+  assert.equal(z.points.length,4,sample.id+" "+z.id);
+  const xs=z.points.map(p=>p.x),ys=z.points.map(p=>p.y);
+  for(const [x,y] of z.mask.outline)assert.ok(x>=Math.min(...xs)-1e-8&&x<=Math.max(...xs)+1e-8&&y>=Math.min(...ys)-1e-8&&y<=Math.max(...ys)+1e-8,sample.id+" "+z.id);
+ }
+ const left=facadeZones.find(z=>z.id==="left")!;
+ assert.ok(Math.min(...left.points.map(p=>p.y))<=60/512);
+ assert.ok(Math.max(...left.points.map(p=>p.x))>=420/1536);
+});
+
+test("first facade retains the reviewed foreground foliage exclusion",()=>{
+ const left=facadeZones.find(z=>z.id==="left")!;
+ assert.equal(left.mask.holes.length,2);
+ assert.ok(left.mask.holes[1].some(([x,y])=>x===317/1536&&y===344/512));
+});

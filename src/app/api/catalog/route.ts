@@ -16,11 +16,13 @@ export async function GET(request:Request){
  if(!url||!key)return NextResponse.json({categories:referenceCategories,products:[],nextCursor:null,source:"reference_only",stockVerified:false,
    note:"Live products are temporarily unavailable. You can browse reference categories; current stock and prices are not verified."},{headers:{"Cache-Control":"no-store","X-Neerva-Service-State":"degraded","X-Content-Type-Options":"nosniff"}});
  try{
-  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
+  // Bound the entire anonymous catalog read, including Storage signing, to one deadline.
+  const deadline=AbortSignal.any([request.signal,AbortSignal.timeout(7000)]);
+  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:(input,init)=>fetch(input,{...init,signal:AbortSignal.any([deadline,...(init?.signal?[init.signal]:[])])})}});
   const categories=await db.from("categories").select("id,slug,name_en,name_hi,pricing_mode").eq("status","published").order("name_en").limit(100);
   if(categories.error)throw Error("Catalog taxonomy read unavailable");
   const categoryId=page.category?(categories.data??[]).find(c=>c.slug===page.category)?.id:null;
-  let query=db.from("products").select("id,slug,name,description,attributes,category:categories(slug),brand:brands(name),variants:product_variants(id,sku,unit,attributes,status),media:catalog_product_media(id,storage_path,alt_text,published)").eq("status","published").order("slug",{ascending:true}).limit(page.limit+1);
+  let query=db.from("products").select("id,slug,name,description,attributes,category:categories(slug),brand:brands(name),variants:product_variants(id,sku,unit,attributes,status),media:catalog_product_media(id,storage_path,alt_text,published)").eq("status","published").eq("variants.status","published").eq("media.published",true).order("slug",{ascending:true}).limit(page.limit+1);
   if(categoryId)query=query.eq("category_id",categoryId);
   if(page.after)query=query.gt("slug",page.after);
   const result=page.category&&!categoryId?{data:[],error:null}:await query;

@@ -11,7 +11,7 @@ const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/desi
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
- const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
+ const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[],architectureReports=[];
  try{
   // Verify SSR output directly: adjacent text separators inside SVG titles can
   // be parsed differently by the browser and cause a production hydration error.
@@ -36,6 +36,7 @@ async function main(){
     const studio=page.locator(".purpose-studio");
     await studio.getByRole("button",{name:"Purpose-led layout",exact:true}).waitFor();
     if(await studio.getByRole("button",{name:"Show 3D concept",exact:true}).count())await studio.getByRole("button",{name:"Show 3D concept",exact:true}).click();
+    const lightweight=studio.getByRole("button",{name:"Lightweight 3D",exact:true});if(await lightweight.count())await lightweight.click();
     await studio.getByLabel("Building purpose").selectOption("school");
     await studio.getByRole("img",{name:/Purpose-specific zoning/}).waitFor({state:"detached"});
     for(const purpose of ["mall","school","restaurant","shops","rental"]){
@@ -49,6 +50,38 @@ async function main(){
      const massing=studio.locator(".purpose-views svg").nth(1);
      assert.equal(await massing.getAttribute("data-plan-id"),planId);
      assert.ok(await studio.locator(".purpose-views svg").nth(1).locator("polygon").count()>0,"3D view has actual geometry");
+     if(viewport.width===390){
+      const prefix="390-commercial-"+purpose,front=studio.locator(".purpose-front svg");
+      await plan.screenshot({path:path.join("test-results/mobile",prefix+"-2d.png"),animations:"disabled"});
+      await front.screenshot({path:path.join("test-results/mobile",prefix+"-elevation.png"),animations:"disabled"});
+      const capable=await page.evaluate(()=>{const gl=document.createElement("canvas").getContext("webgl2");if(!gl)return false;gl.getExtension("WEBGL_lose_context")?.loseContext();return true;});
+      await studio.getByRole("button",{name:"Interactive 3D",exact:true}).click();
+      const capture=async(mode)=>{
+       const canvas=studio.locator(".purpose-views [data-room-viewer] canvas"),start=Date.now();
+       try{
+        await canvas.waitFor({state:"visible",timeout:8000});
+        await page.waitForFunction(()=>Number(document.querySelector(".purpose-views [data-scene-boxes]")?.getAttribute("data-scene-boxes"))>0,{},{timeout:8000});
+        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+        const info=await canvas.evaluate(el=>({width:el.width,height:el.height,boxes:Number(el.parentElement.dataset.sceneBoxes),tier:el.parentElement.dataset.renderTier}));
+        assert.ok(info.width>0&&info.height>0&&info.boxes>0);
+        await canvas.screenshot({path:path.join("test-results/mobile",prefix+"-"+mode+".png"),animations:"disabled"});
+        architectureReports.push({purpose,mode,renderer:"webgl",planId,elapsedMs:Date.now()-start,...info});
+        return true;
+       }catch(error){
+        architectureReports.push({purpose,mode,renderer:"not-verified",planId,webgl2Available:capable,reason:String(error).slice(0,220)});
+        if(capable&&purpose==="shops"&&mode==="cutaway")failures.push("Commercial shops: capable browser did not produce a verifiable WebGL scene");
+        return false;
+       }
+      };
+      if(await capture("cutaway")){
+       await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
+       await capture("exterior");
+       await studio.getByRole("button",{name:"Show selected floor",exact:true}).click();
+      }
+      const lightweight=studio.getByRole("button",{name:"Lightweight 3D",exact:true});
+      if(await lightweight.count())await lightweight.click();
+      await massing.waitFor({state:"visible"});
+     }
      await studio.getByRole("button",{name:"Lite view · 2D only"}).click();
      assert.equal(await studio.locator(".purpose-views svg").count(),1,"lite mode preserves only the selected 2D plan");
      await studio.getByRole("button",{name:"Show 3D concept"}).click();
@@ -128,6 +161,19 @@ async function main(){
    await slot.getByRole("button",{name:"Load interactive 3D",exact:true}).click();
    await page.locator(".nbd-building").waitFor({state:"visible",timeout:30000});
   }finally{await liteContext.close()}
+  const lowDevice=await browser.newContext({viewport:{width:360,height:800},isMobile:true,hasTouch:true,deviceScaleFactor:2,serviceWorkers:"block"});
+  try{
+   await lowDevice.addInitScript(()=>{const conn=new EventTarget();Object.assign(conn,{effectiveType:"4g",saveData:false,downlink:10,rtt:60});Object.defineProperty(navigator,"connection",{value:conn,configurable:true});Object.defineProperty(navigator,"deviceMemory",{value:2,configurable:true});Object.defineProperty(navigator,"hardwareConcurrency",{value:2,configurable:true});});
+   const page=await lowDevice.newPage(),cdp=await lowDevice.newCDPSession(page);
+   await cdp.send("Emulation.setCPUThrottlingRate",{rate:4});
+   const start=Date.now();await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});
+   const studio=page.locator(".purpose-studio");
+   await studio.getByRole("button",{name:"Show 3D concept",exact:true}).waitFor();
+   assert.equal(await studio.locator(".purpose-views [data-room-viewer] canvas").count(),0,"low-memory device never auto-allocates a commercial GPU scene");
+   await studio.getByRole("button",{name:"Show 3D concept",exact:true}).click();
+   await studio.locator(".purpose-views svg").nth(1).waitFor({state:"visible"});
+   performanceReports.push({route:"/design-studio/buildings",profile:"2GB/2-core hints, 4x CPU slowdown",elapsedMs:Date.now()-start,scope:"simulated Chromium; not real Android"});
+  }finally{await lowDevice.close()}
   // Cold and repeat navigation on a constrained connection. Do not confuse
   // simulated local Chromium timings with field Web Vitals.
   for(const profile of [{name:"slow-3g",latency:400,download:400000/8,upload:200000/8},{name:"weak-4g",latency:150,download:1500000/8,upload:750000/8}]){
@@ -213,21 +259,23 @@ async function main(){
    }finally{await ctx.close()}
   }
   // Verify real chunk preparation without creating an offscreen WebGL viewer.
-  for(const profile of [{name:"capable-fast",downlink:12,rtt:60,saveData:false,memory:8,warm:true},{name:"controlled-1mbps",downlink:1,rtt:120,saveData:false,memory:4,warm:true},{name:"slow-500kbps",downlink:.5,rtt:120,saveData:false,memory:8,warm:false},{name:"data-saver",downlink:12,rtt:60,saveData:true,memory:8,warm:false},{name:"low-memory",downlink:12,rtt:60,saveData:false,memory:2,warm:false}]){
+  for(const profile of [{name:"capable-fast",downlink:12,rtt:60,saveData:false,memory:8,warm:true},{name:"controlled-1mbps",downlink:1,rtt:120,saveData:false,memory:4,warm:true},{name:"slow-500kbps",downlink:.5,rtt:120,saveData:false,memory:8,warm:false},{name:"data-saver",downlink:12,rtt:60,saveData:true,memory:8,warm:false},{name:"low-memory",downlink:12,rtt:60,saveData:false,memory:2,warm:false},{name:"low-cpu",downlink:12,rtt:60,saveData:false,memory:8,cores:2,warm:false}]){
    const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,serviceWorkers:"block"});
-   try{await ctx.addInitScript(p=>{const c=new EventTarget();Object.assign(c,{effectiveType:"4g",downlink:p.downlink,rtt:p.rtt,saveData:p.saveData});Object.defineProperty(navigator,"connection",{value:c,configurable:true});Object.defineProperty(navigator,"hardwareConcurrency",{value:8,configurable:true});Object.defineProperty(navigator,"deviceMemory",{value:p.memory,configurable:true});},profile);
+   try{await ctx.addInitScript(p=>{const c=new EventTarget();Object.assign(c,{effectiveType:"4g",downlink:p.downlink,rtt:p.rtt,saveData:p.saveData});Object.defineProperty(navigator,"connection",{value:c,configurable:true});Object.defineProperty(navigator,"hardwareConcurrency",{value:p.cores??8,configurable:true});Object.defineProperty(navigator,"deviceMemory",{value:p.memory,configurable:true});},profile);
     const page=await ctx.newPage();await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=2&road=N&bedrooms=3&parking=true",{waitUntil:"load"});
     const slot=page.locator(".nroad-3d-slot");await slot.waitFor({state:"attached"});
     if(profile.warm)await page.waitForFunction(()=>document.querySelector(".nroad-3d-slot")?.dataset.warmState==="ready",null,{timeout:20000});
     else {await page.waitForTimeout(2200);assert.equal(await slot.getAttribute("data-warm-state"),"idle",profile.name+" must not warm");}
     assert.equal(await page.locator(".nbd-building").count(),0,profile.name+" must not mount offscreen");
     const requested=Date.now();await slot.scrollIntoViewIfNeeded();
-     if(profile.saveData||profile.downlink<1){
+     const onDemand=profile.saveData||profile.downlink<1||profile.memory<=2||(profile.cores??8)<=2;
+     if(onDemand){
       const action=slot.getByRole("button",{name:"Load interactive 3D",exact:true});await action.waitFor({state:"visible"});
+      await page.waitForTimeout(500);
       assert.equal(await page.locator(".nbd-building").count(),0,profile.name+" scrolling must not mount WebGL");
       await action.click();
      }
-    await page.getByRole("button",{name:"Selected floor cutaway",exact:true}).waitFor({timeout:30000});
+    try{await page.getByRole("button",{name:"Selected floor cutaway",exact:true}).waitFor({timeout:30000});}catch(error){throw new Error(profile.name+" failed to open residential 3D after "+(onDemand?"explicit request":"scroll"),{cause:error});}
     assert.equal(await page.locator(".nbd-building").getAttribute("data-plan-id"),await page.locator(".nroad-diagram").getAttribute("data-plan-id"));
     performanceReports.push({profile:profile.name,viewerRequestToControlsMs:Date.now()-requested,scope:"local browser interaction, includes scroll and automation; not field INP"});
    }finally{await ctx.close()}
@@ -236,6 +284,8 @@ async function main(){
   for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
+    assert.equal(await page.getByRole("region",{name:"Commercial colour preview"}).count(),0,"no schematic commercial samples in photo studio");
+    assert.equal(await page.getByRole("link",{name:"Building Studio →",exact:true}).count(),1);
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
     assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
@@ -250,7 +300,8 @@ async function main(){
     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect(),p=c.parentElement.getBoundingClientRect();return Math.abs(r.width/r.height-c.width/c.height)<.025&&r.left>=p.left-1&&r.right<=p.right+1&&p.right<=innerWidth+1}),v.w+"px full facade fits its source aspect ratio");
     if(v.w<=430&&v.h>560){
      await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-     const pattern=page.locator(".wall-pattern-options button").first();
+     await page.getByRole("button",{name:"Signature",exact:true}).click();
+     const pattern=page.getByRole("button",{name:"Soft marble veining",exact:true});
      await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
      await pattern.click();
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
@@ -842,6 +893,11 @@ async function main(){
     assert.doesNotMatch(copied,/contact mobile|phone number/i,"draft does not copy personal contact data");
     await page.goto(base+"/design-studio",{waitUntil:"load"});
     assert.equal(await page.locator(".nstudio-start-form").count(),1,"home studio must start with plot fields, not an unscaled static concept");
+    assert.equal(await page.locator(".nstudio-section-nav a").count(),5,"studio sections have direct navigation");
+    assert.equal(await page.locator(".nstudio-purpose-links a").count(),5,"commercial purposes are discoverable");
+    assert.equal(await page.locator(".nstudio-start-form").getByLabel("Bedrooms").locator("option").count(),6,"all supported BHK inputs are available on landing page");
+    assert.equal(await page.locator(".nstudio-feature-copy a[href=\"/design-studio/visualizer\"]").count(),1,"colour studio is discoverable");
+    assert.ok(await page.locator(".nstudio-landing").evaluate(el=>el.scrollWidth<=innerWidth+2),"studio landing must not overflow horizontally");
     await page.locator(".nstudio-start-form input").nth(0).fill("18");
     await page.locator(".nstudio-start-form input").nth(1).fill("50");
     await page.getByRole("button",{name:/Create room layouts/}).click();
@@ -1114,7 +1170,7 @@ async function main(){
     assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
     // Test actual painted canvas pixels, not merely sample labels or changed image hashes.
     const visualCases=[
-      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[600,335],[250,420],[1200,100],[750,122],[750,316],[949,217],[963,106],[978,263],[1181,347],[1172,387]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350],[1210,292],[1050,360]]},
+      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[375,55],[370,250],[340,180],[600,335],[250,420],[1200,100],[750,122],[750,316],[949,217],[963,106],[978,263],[1181,347],[1172,387]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350],[1210,292],[1050,360]]},
       {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
       {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]},
       {id:"compact-family",label:/100 gaj family home/,w:1536,h:1024,paint:[[402,240],[800,145],[840,290],[790,285],[820,540],[460,730],[800,645],[370,850],[1244,850]],protect:[[480,250],[570,380],[699,350],[965,365],[700,450],[950,470],[620,635],[555,745],[700,740],[950,720],[430,850],[275,865],[970,850],[1120,850],[100,200],[1300,420],[700,55],[700,640]]}
@@ -1147,6 +1203,7 @@ async function main(){
     }
     fs.writeFileSync("test-results/mobile/facade-pixel-evidence.json",JSON.stringify({scope:"390px Chromium canvas sample points; elapsed includes browser automation and is not field INP",samples:evidence},null,2));
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    await page.getByRole("button",{name:"Classic",exact:true}).click();
     const patternButton=page.getByRole("button",{name:"Diamond lattice",exact:true});
     await patternButton.evaluate(el=>el.scrollIntoView({block:"end",behavior:"instant"}));
     await page.waitForFunction(()=>{const b=[...document.querySelectorAll(".wall-pattern-options button")].find(e=>e.textContent?.trim()==="Diamond lattice");if(!b)return false;const r=b.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;return y>0&&y<innerHeight&&b.contains(document.elementFromPoint(x,y));});
@@ -1163,8 +1220,10 @@ async function main(){
  await page.getByText("Wall selection tools",{exact:true}).click();
  await page.getByRole("button",{name:/Reset wall selection/}).click();
  await mark(.06);
+ const plainBeforePattern=await canvas.evaluate(c=>c.toDataURL());
  await page.getByRole("button",{name:"Paint + design",exact:true}).click();
  await page.getByRole("button",{name:"Pinstripes",exact:true}).click();
+ assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),plainBeforePattern,"pattern must alter actual canvas pixels");
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
  const png=()=>canvas.evaluate(c=>c.toDataURL());
@@ -1212,6 +1271,13 @@ async function main(){
     }
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"0","3D cutaway must start on the selected ground floor");
     assert.ok(Number(await plan3D.getAttribute("data-wall-cells"))>0,"3D selected floor must contain actual mesh walls");
+    await plan2D.screenshot({path:path.join("test-results/mobile","390-residential-2d.png"),animations:"disabled"});
+    const comparisonCanvas=plan3D.locator(".nbd-webgl canvas");
+    if(await comparisonCanvas.count()&&await comparisonCanvas.isVisible()){
+     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+     await comparisonCanvas.screenshot({path:path.join("test-results/mobile","390-residential-cutaway.png"),animations:"disabled"});
+     architectureReports.push({purpose:"residential",mode:"cutaway",renderer:"webgl",planId:sixthId,...await comparisonCanvas.evaluate(el=>({width:el.width,height:el.height}))});
+    }else architectureReports.push({purpose:"residential",mode:"cutaway",renderer:"not-verified",planId:sixthId});
     await page.locator(".nroad-variants button").first().click();
     await page.waitForFunction(previous=>{
       const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");
@@ -1224,6 +1290,8 @@ async function main(){
       return !!a&&!!b&&a.getAttribute("data-selected-floor")==="1"
         &&b.getAttribute("data-selected-floor")==="1"&&Number(b.getAttribute("data-wall-cells"))>0;
     });
+    await page.getByRole("button",{name:"Full-height floor",exact:true}).click();
+    assert.equal(await plan3D.getAttribute("data-selected-floor"),"1","full-height view preserves selected floor");
     await page.getByRole("button",{name:"Full exterior · all floors"}).click();
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"all","full exterior intentionally displays both floors");
     await page.getByRole("button",{name:"Selected floor cutaway"}).click();
@@ -1276,15 +1344,15 @@ async function main(){
     assert.match(await page.locator(".nroad-plan-summary").innerText(),/1\s*Bedrooms on this floor/);
     await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=1&bedrooms=1&road=N&parking=false",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
-    assert.equal(await page.locator(".nroad-variants button").count(),6,"standard plot has six geometry-distinct 1 BHK choices");
+    assert.equal(await page.locator(".nroad-variants button").count(),10,"standard plot has ten geometry-validated 1 BHK choices");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
-    assert.match(await page.locator(".nroad-selection-feedback").innerText(),/Layout 6 of 6 selected/);
+    assert.match(await page.locator(".nroad-selection-feedback").innerText(),/Layout 10 of 10 selected/);
     await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
     await page.waitForFunction(()=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")});
     await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=1&bedrooms=1&road=W&parking=false",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
-    assert.equal(await page.locator(".nroad-variants button").count(),2,"compact 1 BHK has two genuine kitchen orientations");
+    assert.equal(await page.locator(".nroad-variants button").count(),6,"compact 1 BHK has six validated room allocations and orientations");
     const compactFirstId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
@@ -1300,6 +1368,7 @@ async function main(){
     const liveCanvas=page.locator(".nbd-webgl canvas");
     if(await liveCanvas.count()){
      const renderPanel=page.getByRole("region",{name:"Browser architectural rendering"});
+     await renderPanel.locator("summary").click();
      await renderPanel.getByRole("button",{name:"Generate realistic image"}).click();
      await renderPanel.getByRole("button",{name:"Cancel render"}).click();
      await renderPanel.getByText(/Rendering cancelled/).waitFor();
@@ -1507,6 +1576,7 @@ async function main(){
   if(![200,503].includes(cityRules.status()))failures.push("City rules for Kanpur returned "+cityRules.status());
   await req.close();
  }finally{await browser.close()}
+ fs.writeFileSync("test-results/mobile/architecture-visual-evidence.json",JSON.stringify({scope:"Actual local browser screenshots and renderer availability; not a subjective realism rating or real-device result",samples:architectureReports},null,2));
  fs.writeFileSync("test-results/mobile/interaction-baseline.json",JSON.stringify({scope:"Visible controls on tested routes; inline text links may legitimately be smaller. Protected actions are not executed by this inventory.",samples:interactionReports},null,2));
  fs.writeFileSync("test-results/mobile/performance-baseline.json",JSON.stringify({scope:"390px local browser observations; no field INP claim or cross-run comparison",samples:performanceReports},null,2));
  fs.writeFileSync("test-results/mobile/accessibility-baseline.json",JSON.stringify({

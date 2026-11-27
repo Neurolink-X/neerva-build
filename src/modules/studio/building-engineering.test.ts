@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {generateBuildingConcepts,type BuildingBrief} from "./building-purpose.ts";
 import {engineeringPreflight} from "./building-engineering.ts";
-import {commercialFrontPanels} from "./commercial-detail.ts";
+import {commercialFrontPanels,commercialFacadeProfile} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import {buildingRenderSnapshot} from "./building-render.ts";
 import {calculateConceptDemand} from "./building-demand.ts";
@@ -29,9 +29,15 @@ test("massing renderer uses exact zone extents with bounded camera and no synthe
  const baseCount=3+plan.zones.filter(z=>z.kind==="open"||z.kind==="parking").length+elements.slabs.length+elements.walls.length+glazing.length;
  const panels=commercialFrontPanels(plan).filter(p=>p.w*ft>=.6);
  const frames=glazing.reduce((n,p)=>n+3+Math.max(1,Math.ceil(p.length*ft/1.35)),0);
- assert.equal(snap.boxes.length,baseCount+panels.length+frames);
+ assert.equal(snap.boxes.length,baseCount+panels.length*2+frames);
+ const profile=commercialFacadeProfile(plan.brief.purpose),trim=Math.min(.045,profile.bandFt*ft*.18);
+ panels.forEach((p,i)=>{
+  const [band,edge]=snap.boxes.slice(baseCount+i*2,baseCount+i*2+2),top=(p.floor*13+12.5)*ft;
+  for(const b of [band,edge]){assert.ok(Math.abs(b.lo[0]-(p.x-brief.widthFt/2)*ft)<1e-6);assert.ok(Math.abs(b.hi[0]-(p.x+p.w-brief.widthFt/2)*ft)<1e-6);assert.ok(b.lo[1]>(p.floor*13+8)*ft);}
+  assert.ok(Math.abs(band.hi[1]-top)<1e-6&&Math.abs(edge.hi[1]-edge.lo[1]-trim)<1e-6);
+ });
  // Every decorative frame must stay inside its real aperture, not obstruct an entry.
- const details=snap.boxes.slice(baseCount+panels.length);
+ const details=snap.boxes.slice(baseCount+panels.length*2);
  const eps=1e-6;
  for(const b of details)assert.ok(glazing.some(p=>{
   const vertical=p.axis==="y",axis=vertical?2:0,normal=vertical?0:2;

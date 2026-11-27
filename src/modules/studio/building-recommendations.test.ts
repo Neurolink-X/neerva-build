@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildingStarter,generateBuildingConcepts} from "./building-purpose.ts";
-import {recommendBuildingConcepts} from "./building-recommendations.ts";
+import {buildingStarter,generateBuildingConcepts,validateBuildingConcept,buildingPurposes} from "./building-purpose.ts";
+import {recommendBuildingConcepts,visibleInteriorSignature} from "./building-recommendations.ts";
 import {roadEnvelopeChoices,envelopeFits,parsePlot} from "./irregular-plot.ts";
 import {commercialSaveSchema,rebuildCommercialSnapshot} from "./commercial-save.ts";
 import {defaultFinishScheme} from "./finish-model.ts";
@@ -10,6 +10,9 @@ test("bounded summary shortlist regenerates the exact selected geometry",()=>{
   const brief=buildingStarter(purpose),r=recommendBuildingConcepts(brief);
   assert.ok(r.options.length>0&&r.options.length<=24);assert.equal(new Set(r.options.map(o=>o.id)).size,r.options.length);
   assert.deepEqual(r,recommendBuildingConcepts(brief));
+  const selected=r.options.map(o=>generateBuildingConcepts(brief,24,o.family).plans[o.index]);
+  assert.equal(new Set(selected.map(visibleInteriorSignature)).size,selected.length);
+  assert.equal(r.detailedCount,r.options.filter(o=>o.detailed).length);
   for(const o of r.options){assert.equal(generateBuildingConcepts(brief,24,o.family).plans[o.index].id,o.id);assert.ok(o.primaryAreaShare>0&&o.primaryAreaShare<1);}
  }
 });
@@ -25,4 +28,22 @@ test("L plot alternatives remain contained and preserve boundary identity throug
  const input=commercialSaveSchema.parse({idempotencyKey:"c71a9c10-4c52-4df4-85b7-04d0efbb181f",title:"Measured rental site",brief,planId:plan.id,signature:plan.signature,finishes:defaultFinishScheme({kind:"commercial",plan})});
  const rebuilt=rebuildCommercialSnapshot(input);assert.ok(rebuilt);assert.deepEqual(rebuilt.plan.brief.siteContext,brief.siteContext);
  assert.equal(rebuildCommercialSnapshot({...input,brief:{...brief,siteContext:{points,offsetXFt:70}}}),null);
+});
+
+test("commercial comparison matrix respects exact input, direction, parking and detailed geometry",()=>{
+ for(const purpose of buildingPurposes)for(const roadSide of ["N","E","S","W"] as const){
+  const brief={...buildingStarter(purpose),widthFt:180,depthFt:240,frontFt:40,rearFt:35,sideFt:10,floors:2,unitsPerFloor:4,parkingBays:4,roadSide,reserveLift:false};
+  const r=recommendBuildingConcepts(brief),cache=new Map<string,ReturnType<typeof generateBuildingConcepts>["plans"]>();
+  assert.ok(r.options.length>0&&r.options.length<=24);
+  const keys=new Set<string>();
+  for(const o of r.options){
+   const plans=cache.get(o.family)??generateBuildingConcepts(brief,24,o.family).plans;cache.set(o.family,plans);
+   const p=plans[o.index];assert.ok(p);assert.equal(p.id,o.id);assert.deepEqual(p.brief,brief);assert.deepEqual(validateBuildingConcept(p),[]);
+   const key=visibleInteriorSignature(p);assert.ok(!keys.has(key));keys.add(key);
+   assert.equal(p.zones.filter(z=>z.kind==="primary").length,brief.floors*brief.unitsPerFloor);
+   assert.equal(p.zones.filter(z=>z.kind==="parking").length,brief.parkingBays);
+  }
+  assert.equal(r.options.length,Math.min(24,r.distinct));
+  console.log("architecture-coverage "+JSON.stringify({kind:"commercial",purpose,roadSide,unique:r.distinct,shown:r.options.length,detailed:r.detailedCount}));
+ }
 });

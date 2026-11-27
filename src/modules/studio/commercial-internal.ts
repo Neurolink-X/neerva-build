@@ -57,8 +57,10 @@ function supportRooms(z:BuildingZone,hall:BuildingZone,purpose:BuildingConcept["
  return out;
 }
 export function commercialInternalSpaces(plan:BuildingConcept):InternalSpace[]{
- const variant=internalVariant(plan.id);if(variant===null)return [];
+ const variant=internalVariant(plan.id);
  const out:InternalSpace[]=rentalLayouts(plan).flatMap(u=>u.rooms.map(r=>({...r,parentId:u.unitId})));
+ // Legacy rental plans already show these partitions in 2D. Use the same rooms in 3D.
+ if(variant===null)return out;
  for(let floor=0;floor<plan.brief.floors;floor++){
   const hall=plan.zones.find(z=>z.floor===floor&&z.kind==="circulation");if(!hall)continue;
   const cores=plan.zones.filter(z=>z.floor===floor&&z.kind==="core").sort((a,b)=>a.x-b.x||a.y-b.y);

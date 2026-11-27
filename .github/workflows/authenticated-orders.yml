@@ -89,6 +89,13 @@ jobs:
             appendFileSync(process.env.GITHUB_ENV,"NEERVA_E2E_"+role+"_EMAIL="+email+"\nNEERVA_E2E_"+role+"_PASSWORD="+password+"\n");
           }
           JS
+      - name: Rehearse seven reviewed RLS policy optimizations
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$DB_URL" == *"127.0.0.1:54322/"* ]]
+          [[ "$NEERVA_E2E_DISPOSABLE" == "yes" ]]
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -f scripts/ops/reviewed-rls-initplan.sql
       - name: Verify disposable database backup tools
         run: node --experimental-strip-types scripts/ops/disposable-recovery-drill.mjs --preflight
       - run: npm run build
@@ -123,7 +130,8 @@ jobs:
           node scripts/ops/rehearse-stock-reservation.mjs
           node scripts/e2e/marketplace-reliability.mjs | tee test-results/authenticated/reliability.json
           node scripts/ops/benchmark-public.mjs http://127.0.0.1:3000 > test-results/authenticated/benchmark.json
-          node scripts/ops/rehearse-read-capacity.mjs > test-results/authenticated/capacity.json
+          node scripts/ops/rehearse-read-capacity.mjs | tee test-results/authenticated/capacity.json
+          node scripts/ops/benchmark-local-images.mjs | tee test-results/authenticated/image-delivery.json
           node --experimental-strip-types scripts/ops/disposable-recovery-drill.mjs > test-results/authenticated/recovery.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()

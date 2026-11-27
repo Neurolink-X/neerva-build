@@ -45,3 +45,13 @@
 .nbd-spatial-featured-note{padding:12px 14px;background:#eef5ed;border:1px solid #bfcfbf;border-radius:10px;font-size:13px;line-height:1.6}
 .nbd-spatial-featured-note a{font-weight:800;color:#24583b;text-decoration:underline}
 .nbd-spatial-card.nbd-featured{border-color:#5b9370;box-shadow:0 0 0 1px #5b9370 inset}
+
+/* Keep selected controls readable in every parent theme. */
+.nbd-building .nbd-buttons button,.nbd-building button[aria-pressed=false]{background:#fff;color:#263d35;border:1px solid #aabbb0;min-height:44px}
+.nbd-building .nbd-buttons button[aria-pressed=true],.nbd-building button[aria-pressed=true]{background:#244735;color:#fff;border-color:#244735}
+.nbd-building,.nbd-building [aria-label="Browser architectural rendering"]{color:#263d35;background:#f7f8f3}
+.nbd-building .nbd-quality-options summary{cursor:pointer;min-height:44px;padding:12px 0;font-weight:650}
+.nbd-building .nbd-quality-options p{font-size:14px;line-height:1.55}
+.nbd-webgl{min-height:0;aspect-ratio:auto}.nbd-webgl canvas{max-width:100%;display:block}
+
+.nbd-commercial-links{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:8px 0}.nbd-commercial-links a{flex:0 0 auto;scroll-snap-align:start;min-height:44px;display:flex;align-items:center;border:1px solid #b6c6b9;border-radius:8px;padding:8px 12px;color:#244735;background:#fff;font-size:13px}.nbd-building :is(.nbd-render-options,.nbd-model-help) summary{cursor:pointer;padding:10px 0;min-height:44px;font-weight:650}
