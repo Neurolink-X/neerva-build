@@ -13,6 +13,17 @@ async function main(){
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
  const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
  try{
+  // Verify SSR output directly: adjacent text separators inside SVG titles can
+  // be parsed differently by the browser and cause a production hydration error.
+  const noJs=await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});
+  try{
+   const page=await noJs.newPage(),response=await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});
+   assert.equal(response?.status(),200);
+   const titles=page.locator(".purpose-studio svg title");
+   assert.ok(await titles.count()>0,"commercial plan geometry must be present in server HTML");
+   const malformed=await titles.evaluateAll(nodes=>nodes.filter(n=>n.childNodes.length!==1||n.firstChild?.nodeType!==3||!n.textContent?.trim()).map(n=>n.outerHTML.slice(0,300)));
+   assert.deepEqual(malformed,[],"SSR SVG titles must contain exactly one nonempty text node");
+  }finally{await noJs.close()}
   // Exercise every commercial purpose, not merely HTTP route availability.
   for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
    const ctx=await browser.newContext({viewport});
@@ -52,7 +63,7 @@ async function main(){
     assert.ok(await panel.locator("p").filter({hasText:/^Selected floor area:/}).isVisible());
     const anonymous=await page.request.get(base+"/api/studio/commercial-projects");
     assert.ok([401,503].includes(anonymous.status()),"anonymous commercial projects must not be disclosed");
-    assert.deepEqual(errors,[]);
+    assert.deepEqual(errors,[],"commercial studio hydration and browser errors at "+viewport.width+"px");
    }finally{await ctx.close()}
   }
   // Cold and repeat navigation on a constrained connection. Do not confuse
