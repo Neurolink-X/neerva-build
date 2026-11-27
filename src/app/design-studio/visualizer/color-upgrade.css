@@ -105,7 +105,7 @@
 .visualizer-app .paint-sample-gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible;gap:8px;padding:0;align-items:stretch}
 .visualizer-app .paint-sample-gallery button{width:100%;min-width:0;padding:5px;border:2px solid #d5dfd4}
 .visualizer-app .paint-sample-gallery button[aria-pressed=true]{border-color:#254738}
-.visualizer-app .paint-sample-photo{aspect-ratio:4/3;width:100%;background:#edf0e9;overflow:hidden}
+.visualizer-app .paint-sample-photo{aspect-ratio:2.2/1;width:100%;background:#edf0e9;overflow:hidden}
 .visualizer-app .paint-sample-photo img{object-fit:cover;object-position:center}
 .visualizer-app .paint-sample-gallery small{display:block;line-height:1.35}
 .visualizer-app .paint-canvas-frame canvas{width:100%;height:auto;object-fit:contain}
@@ -186,7 +186,7 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 .paint-pairings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-block:8px}.paint-pairings button{display:grid;gap:6px;min-width:0;min-height:44px;padding:8px;background:#fff;color:#263d35;border:1px solid #c8d0c6;border-radius:8px;font-size:12px}.paint-pairings button[aria-pressed=true]{outline:2px solid #254e3d;outline-offset:1px}.paint-pairings button span{display:flex;height:25px;border-radius:4px;overflow:hidden}.paint-pairings i:first-child{flex:2}.paint-pairings i:last-child{flex:1}
 
 /* Whole facade previews, including wide first sample, must never crop paintable surfaces. */
-.visualizer-app .paint-sample-photo img{object-fit:contain;object-position:center}
+.visualizer-app .paint-sample-photo img{object-fit:cover;object-position:center}
 .visualizer-app .paint-sample-photo{background:#edf0e9}
 .visualizer-app .paint-live-tools,.visualizer-app .paint-live-preview,.visualizer-app .wall-pattern-options{min-width:0;max-width:100%}
 .visualizer-app .wall-pattern-options button{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px;height:100%;min-width:0;white-space:normal;text-align:left}
