@@ -63,14 +63,18 @@ function shade(tree,origin,dir,rng,evening){
   const hit=nearest(tree,o,d);
   if(!hit){const t=clamp(d[1]*.5+.5,0,1),sky=evening?[.12+.19*t,.17+.22*t,.28+.32*t]:[.36+.29*t,.48+.28*t,.64+.26*t];result=add(result,product(weight,sky));break}
   const p=add(o,mul(d,hit.t)),n=dot(d,hit.normal)<0?hit.normal:mul(hit.normal,-1),m=hit.b;
+  // Low-amplitude, world-anchored diffuse variation gives matte surfaces depth
+  // without texture downloads, additional rays or changes to scene geometry.
+  const texture=m.opacity>.98&&m.rough>.6&&m.metal<.15?1+.025*Math.sin(p[0]*67+p[1]*53+p[2]*79)*Math.cos(p[0]*31-p[2]*43):1;
+  const albedo=m.color.map(v=>clamp(v*texture,0,1));
   // Transparent panels allow transmission; this is a bounded approximation, not full spectral refraction.
   if(m.opacity<.98&&rng()>m.opacity){o=add(p,mul(d,EPS*5));weight=product(weight,m.color.map(v=>.8+.2*v));continue}
   const l=norm(add(light,mul(hemisphere(light,rng),.035))),cos=Math.max(0,dot(n,l));
   if(cos>0){const blocker=nearest(tree,add(p,mul(n,EPS*5)),l);const visibility=blocker?(blocker.b.opacity<.98?.5:0):1;
-   result=add(result,mul(product(product(weight,m.color),sun),cos*visibility*(1-m.metal)*.6))}
+   result=add(result,mul(product(product(weight,albedo),sun),cos*visibility*(1-m.metal)*.6))}
   const spec=clamp(.04+m.metal*.72+(1-m.rough)*.12,.04,.92);
   if(rng()<spec){d=norm(add(reflect(d,n),mul(hemisphere(n,rng),m.rough*m.rough*.65)));if(dot(d,n)<=0)d=hemisphere(n,rng);weight=product(weight,m.color.map(v=>m.metal?v:.85+.15*v));}
-  else{d=hemisphere(n,rng);weight=product(weight,m.color);}
+  else{d=hemisphere(n,rng);weight=product(weight,albedo);}
   o=add(p,mul(n,EPS*5));
  }
  return result;
