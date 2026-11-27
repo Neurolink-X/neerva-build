@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {generateSpatialPortfolio,planSignature,validateRequestedProgramme} from "./road-generator.ts";
 import {type PlanBrief,planGeometryDigest,area,overlapArea} from "./plan-model.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
-import {buildingWallCells,visibleWallCells} from "./geometry.ts";
+import {buildingWallCells,visibleWallCells,CUTAWAY_WALL_RATIO} from "./geometry.ts";
 import {exposedRoofPatches,subtractRect} from "./plan-surfaces.ts";
 import {roadRect,roadPoint,threeRoadRotation} from "./plan-coordinate.ts";
 const base:PlanBrief={widthFt:40,depthFt:50,roadSide:"N",floors:2,bedrooms:3,parking:true,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
@@ -30,7 +30,7 @@ test("every generated wide and compact plan matches its BHK brief and both rende
     const mesh=buildingWallCells(d);
     for(let level=0;level<floors;level++){
      const cut=visibleWallCells(d,level,true);
-     assert.ok(cut.length);assert.ok(cut.every(c=>c.floorIndex===level&&c.topFt>c.bottomFt&&c.topFt<=p.walls.heightFt*.46+1e-6));
+     assert.ok(cut.length);assert.ok(cut.every(c=>c.floorIndex===level&&c.topFt>c.bottomFt&&c.topFt<=p.walls.heightFt*CUTAWAY_WALL_RATIO+1e-6));
      assert.deepEqual(visibleWallCells(d,level,false),mesh.filter(c=>c.floorIndex===level));
     }
     assert.deepEqual(visibleWallCells(d),mesh);
