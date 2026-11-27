@@ -237,13 +237,8 @@ async function main(){
   for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
-    await page.getByRole("button",{name:"Commercial & rental",exact:true}).click();
-    const commercialColours=page.getByRole("region",{name:"Commercial colour preview"});await commercialColours.waitFor();
-    await commercialColours.getByLabel("Building sample").selectOption("restaurant");
-    assert.match(await commercialColours.locator("svg").getAttribute("data-plan-id"),/^restaurant-/);
-    await commercialColours.getByLabel("Main wall",{exact:true}).fill("#abcdef");
-    assert.ok(await commercialColours.locator('svg rect[fill="#abcdef"]').count()>0,"commercial shade applies to actual facade");
-    await page.getByRole("button",{name:"Home & room colours",exact:true}).click();
+    assert.equal(await page.getByRole("region",{name:"Commercial colour preview"}).count(),0,"no schematic commercial samples in photo studio");
+    assert.equal(await page.getByRole("link",{name:"Building Studio →",exact:true}).count(),1);
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
     assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
@@ -258,7 +253,8 @@ async function main(){
     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect(),p=c.parentElement.getBoundingClientRect();return Math.abs(r.width/r.height-c.width/c.height)<.025&&r.left>=p.left-1&&r.right<=p.right+1&&p.right<=innerWidth+1}),v.w+"px full facade fits its source aspect ratio");
     if(v.w<=430&&v.h>560){
      await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-     const pattern=page.locator(".wall-pattern-options button").first();
+     await page.getByRole("button",{name:"Signature",exact:true}).click();
+     const pattern=page.getByRole("button",{name:"Soft marble veining",exact:true});
      await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
      await pattern.click();
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
@@ -1155,6 +1151,7 @@ async function main(){
     }
     fs.writeFileSync("test-results/mobile/facade-pixel-evidence.json",JSON.stringify({scope:"390px Chromium canvas sample points; elapsed includes browser automation and is not field INP",samples:evidence},null,2));
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    await page.getByRole("button",{name:"Classic",exact:true}).click();
     const patternButton=page.getByRole("button",{name:"Diamond lattice",exact:true});
     await patternButton.evaluate(el=>el.scrollIntoView({block:"end",behavior:"instant"}));
     await page.waitForFunction(()=>{const b=[...document.querySelectorAll(".wall-pattern-options button")].find(e=>e.textContent?.trim()==="Diamond lattice");if(!b)return false;const r=b.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;return y>0&&y<innerHeight&&b.contains(document.elementFromPoint(x,y));});
