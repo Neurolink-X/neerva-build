@@ -1,6 +1,7 @@
 import {apiData,apiFailed,requireAdmin} from "@/modules/identity/server-auth";
 import {catalogCommand,catalogUpdate,errorFields} from "@/modules/marketplace/write-contract";
 import {defaultProductUnit,productUnits} from "@/modules/catalog/category-units";
+import {mediaReview} from "@/modules/catalog/media-reconciliation";
 import {demoProducts} from "@/modules/catalog/marketplace";
 export const dynamic="force-dynamic";
 export const runtime="nodejs";
@@ -18,9 +19,14 @@ export async function GET(request:Request){
  try{const [a,b,c]=await Promise.all([
   auth.client.from("categories").select("id,slug,name_en,name_hi,pricing_mode,status").order("name_en"),
   auth.client.from("brands").select("id,name,slug,authorized_source,status").order("name"),
-  auth.client.from("products").select("id,slug,name,description,attributes,status,category:categories(id,slug,name_en,name_hi,pricing_mode,status),brand:brands(id,name,slug,status,authorized_source),variants:product_variants(id,sku,unit,attributes,status)").order("created_at",{ascending:false}).order("id",{ascending:false}).range(offset,offset+100)
+  auth.client.from("products").select("id,slug,name,description,attributes,status,category:categories(id,slug,name_en,name_hi,pricing_mode,status),brand:brands(id,name,slug,status,authorized_source),variants:product_variants(id,sku,unit,attributes,status),media:catalog_product_media(id,published)").order("created_at",{ascending:false}).order("id",{ascending:false}).range(offset,offset+100)
  ]);if(a.error||b.error||c.error)return apiFailed();
- return apiData({categories:a.data??[],brands:b.data??[],products:(c.data??[]).slice(0,100),nextOffset:(c.data??[]).length>100?offset+100:null});}catch{return apiFailed();}
+ const products=(c.data??[]).slice(0,100).map(p=>{
+  const category=Array.isArray(p.category)?p.category[0]:p.category;
+  const {media,...product}=p;
+  return {...product,mediaReview:mediaReview({slug:p.slug,category:category?.slug??"",familyKey:typeof p.attributes?.family_key==="string"?p.attributes.family_key:null,publishedMediaCount:(media??[]).filter(m=>m.published===true).length})};
+ });
+ return apiData({categories:a.data??[],brands:b.data??[],products,nextOffset:(c.data??[]).length>100?offset+100:null});}catch{return apiFailed();}
 }
 async function importReferenceBatch(auth:Exclude<Awaited<ReturnType<typeof requireAdmin>>,Response>,offset:number){
  const size=50;
