@@ -11,7 +11,7 @@ const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/desi
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
- const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[];
+ const failures=[],accessibilityReports=[],performanceReports=[],interactionReports=[],architectureReports=[];
  try{
   // Verify SSR output directly: adjacent text separators inside SVG titles can
   // be parsed differently by the browser and cause a production hydration error.
@@ -50,6 +50,38 @@ async function main(){
      const massing=studio.locator(".purpose-views svg").nth(1);
      assert.equal(await massing.getAttribute("data-plan-id"),planId);
      assert.ok(await studio.locator(".purpose-views svg").nth(1).locator("polygon").count()>0,"3D view has actual geometry");
+     if(viewport.width===390){
+      const prefix="390-commercial-"+purpose,front=studio.locator(".purpose-front svg");
+      await plan.screenshot({path:path.join("test-results/mobile",prefix+"-2d.png"),animations:"disabled"});
+      await front.screenshot({path:path.join("test-results/mobile",prefix+"-elevation.png"),animations:"disabled"});
+      const capable=await page.evaluate(()=>{const gl=document.createElement("canvas").getContext("webgl2");if(!gl)return false;gl.getExtension("WEBGL_lose_context")?.loseContext();return true;});
+      await studio.getByRole("button",{name:"Interactive 3D",exact:true}).click();
+      const capture=async(mode)=>{
+       const canvas=studio.locator(".purpose-views [data-room-viewer] canvas"),start=Date.now();
+       try{
+        await canvas.waitFor({state:"visible",timeout:8000});
+        await page.waitForFunction(()=>Number(document.querySelector(".purpose-views [data-scene-boxes]")?.getAttribute("data-scene-boxes"))>0,{},{timeout:8000});
+        await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+        const info=await canvas.evaluate(el=>({width:el.width,height:el.height,boxes:Number(el.parentElement.dataset.sceneBoxes),tier:el.parentElement.dataset.renderTier}));
+        assert.ok(info.width>0&&info.height>0&&info.boxes>0);
+        await canvas.screenshot({path:path.join("test-results/mobile",prefix+"-"+mode+".png"),animations:"disabled"});
+        architectureReports.push({purpose,mode,renderer:"webgl",planId,elapsedMs:Date.now()-start,...info});
+        return true;
+       }catch(error){
+        architectureReports.push({purpose,mode,renderer:"not-verified",planId,webgl2Available:capable,reason:String(error).slice(0,220)});
+        if(capable&&purpose==="shops"&&mode==="cutaway")failures.push("Commercial shops: capable browser did not produce a verifiable WebGL scene");
+        return false;
+       }
+      };
+      if(await capture("cutaway")){
+       await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
+       await capture("exterior");
+       await studio.getByRole("button",{name:"Show selected floor",exact:true}).click();
+      }
+      const lightweight=studio.getByRole("button",{name:"Lightweight 3D",exact:true});
+      if(await lightweight.count())await lightweight.click();
+      await massing.waitFor({state:"visible"});
+     }
      await studio.getByRole("button",{name:"Lite view · 2D only"}).click();
      assert.equal(await studio.locator(".purpose-views svg").count(),1,"lite mode preserves only the selected 2D plan");
      await studio.getByRole("button",{name:"Show 3D concept"}).click();
@@ -129,6 +161,19 @@ async function main(){
    await slot.getByRole("button",{name:"Load interactive 3D",exact:true}).click();
    await page.locator(".nbd-building").waitFor({state:"visible",timeout:30000});
   }finally{await liteContext.close()}
+  const lowDevice=await browser.newContext({viewport:{width:360,height:800},isMobile:true,hasTouch:true,deviceScaleFactor:2,serviceWorkers:"block"});
+  try{
+   await lowDevice.addInitScript(()=>{const conn=new EventTarget();Object.assign(conn,{effectiveType:"4g",saveData:false,downlink:10,rtt:60});Object.defineProperty(navigator,"connection",{value:conn,configurable:true});Object.defineProperty(navigator,"deviceMemory",{value:2,configurable:true});Object.defineProperty(navigator,"hardwareConcurrency",{value:2,configurable:true});});
+   const page=await lowDevice.newPage(),cdp=await lowDevice.newCDPSession(page);
+   await cdp.send("Emulation.setCPUThrottlingRate",{rate:4});
+   const start=Date.now();await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});
+   const studio=page.locator(".purpose-studio");
+   await studio.getByRole("button",{name:"Show 3D concept",exact:true}).waitFor();
+   assert.equal(await studio.locator(".purpose-views [data-room-viewer] canvas").count(),0,"low-memory device never auto-allocates a commercial GPU scene");
+   await studio.getByRole("button",{name:"Show 3D concept",exact:true}).click();
+   await studio.locator(".purpose-views svg").nth(1).waitFor({state:"visible"});
+   performanceReports.push({route:"/design-studio/buildings",profile:"2GB/2-core hints, 4x CPU slowdown",elapsedMs:Date.now()-start,scope:"simulated Chromium; not real Android"});
+  }finally{await lowDevice.close()}
   // Cold and repeat navigation on a constrained connection. Do not confuse
   // simulated local Chromium timings with field Web Vitals.
   for(const profile of [{name:"slow-3g",latency:400,download:400000/8,upload:200000/8},{name:"weak-4g",latency:150,download:1500000/8,upload:750000/8}]){
@@ -1217,6 +1262,13 @@ async function main(){
     }
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"0","3D cutaway must start on the selected ground floor");
     assert.ok(Number(await plan3D.getAttribute("data-wall-cells"))>0,"3D selected floor must contain actual mesh walls");
+    await plan2D.screenshot({path:path.join("test-results/mobile","390-residential-2d.png"),animations:"disabled"});
+    const comparisonCanvas=plan3D.locator(".nbd-webgl canvas");
+    if(await comparisonCanvas.count()&&await comparisonCanvas.isVisible()){
+     await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+     await comparisonCanvas.screenshot({path:path.join("test-results/mobile","390-residential-cutaway.png"),animations:"disabled"});
+     architectureReports.push({purpose:"residential",mode:"cutaway",renderer:"webgl",planId:sixthId,...await comparisonCanvas.evaluate(el=>({width:el.width,height:el.height}))});
+    }else architectureReports.push({purpose:"residential",mode:"cutaway",renderer:"not-verified",planId:sixthId});
     await page.locator(".nroad-variants button").first().click();
     await page.waitForFunction(previous=>{
       const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");
@@ -1515,6 +1567,7 @@ async function main(){
   if(![200,503].includes(cityRules.status()))failures.push("City rules for Kanpur returned "+cityRules.status());
   await req.close();
  }finally{await browser.close()}
+ fs.writeFileSync("test-results/mobile/architecture-visual-evidence.json",JSON.stringify({scope:"Actual local browser screenshots and renderer availability; not a subjective realism rating or real-device result",samples:architectureReports},null,2));
  fs.writeFileSync("test-results/mobile/interaction-baseline.json",JSON.stringify({scope:"Visible controls on tested routes; inline text links may legitimately be smaller. Protected actions are not executed by this inventory.",samples:interactionReports},null,2));
  fs.writeFileSync("test-results/mobile/performance-baseline.json",JSON.stringify({scope:"390px local browser observations; no field INP claim or cross-run comparison",samples:performanceReports},null,2));
  fs.writeFileSync("test-results/mobile/accessibility-baseline.json",JSON.stringify({
