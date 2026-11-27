@@ -27,9 +27,9 @@ export function straightStairStudy(lower:Room,upper:Room,heightFt:number,doors:r
 }
 /** Two opposing flights with a full-width turning landing. A conservative
  * footprint and door alignment check, not a headroom or code certificate. */
-export function dogLegStairStudy(lower:Room,upper:Room,heightFt:number,doors:readonly Opening[]):StairStudy|null{
- if(lower.kind!=="stairs"||upper.kind!=="stairs"||upper.floor!==lower.floor+1||[lower.x-upper.x,lower.y-upper.y,lower.w-upper.w,lower.d-upper.d].some(n=>Math.abs(n)>EPS)||!Number.isFinite(heightFt)||heightFt<7||heightFt>14)return null;
- const count=Math.ceil(heightFt/(7.5/12)),first=Math.floor(count/2),second=count-first,riseFt=heightFt/count,treadFt=10/12,width=3,gap=.25,landing=3;
+export function dogLegStairStudy(lower:Room,upper:Room,heightFt:number,doors:readonly Opening[],dimensions={width:3,tread:10/12,landing:3}):StairStudy|null{
+ if(lower.kind!=="stairs"||upper.kind!=="stairs"||upper.floor!==lower.floor+1||[lower.x-upper.x,lower.y-upper.y,lower.w-upper.w,lower.d-upper.d].some(n=>Math.abs(n)>EPS)||!Number.isFinite(heightFt)||heightFt<7||heightFt>14||![dimensions.width,dimensions.tread,dimensions.landing].every(n=>Number.isFinite(n)&&n>0))return null;
+ const count=Math.ceil(heightFt/(7.5/12)),first=Math.floor(count/2),second=count-first,riseFt=heightFt/count,treadFt=dimensions.tread,width=dimensions.width,gap=.25,landing=dimensions.landing;
  const runA=(first-1)*treadFt,runB=(second-1)*treadFt,run=Math.max(runA,runB),crossSpan=width*2+gap;
  const validDoor=(o:Opening)=>o.kind==="door"&&!!o.connectsTo&&o.widthFt>=2.5;
  for(const axis of ["x","y"] as const)for(const reverse of [false,true])for(const swap of [false,true]){
