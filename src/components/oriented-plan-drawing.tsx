@@ -40,7 +40,7 @@ export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?
     return <g key={r.id} data-room-id={r.id} data-room-kind={r.kind}>
      <title>{r.label}</title>
      <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={(scheme?.planId===plan.id?scheme.rooms[r.id]?.floor:undefined)??colors[r.kind]??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
-     {showFurniture&&furniture.filter(p=>p.roomId===r.id).map(p=>{const b=roadRect(p,w,d,side);return <g key={p.id} data-furniture-id={p.id}><rect x={b.x} y={b.y} width={b.w} height={b.d} rx=".12" fill="#a38970" fillOpacity=".25" stroke="#806b58" strokeWidth=".09"/><title>{p.kind} · illustrative placement</title></g>})}
+     {showFurniture&&furniture.filter(p=>p.roomId===r.id).map(p=>{const b=roadRect(p,w,d,side);return <g key={p.id} data-furniture-id={p.id}><rect x={b.x} y={b.y} width={b.w} height={b.d} rx=".12" fill="#a38970" fillOpacity=".25" stroke="#806b58" strokeWidth=".09"/><title>{`${p.kind} · illustrative placement`}</title></g>})}
      <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font} data-room-label="true">{label.toUpperCase()}</text>
      <text x={cx} y={cy+(small?.6:.95)} textAnchor="middle" fill="#526955" fontSize={Math.min(small?.52:.84,rect.w*.1,rect.d*.18)}>{r.w.toFixed(1)} × {r.d.toFixed(1)} ft</text>
     </g>;
