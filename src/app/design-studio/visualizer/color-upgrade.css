@@ -226,3 +226,12 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
  .visualizer-app .paint-preview-status,.visualizer-app .paint-sample-feedback{font-size:12px;line-height:1.45;margin:6px 0}
  .visualizer-app .paint-collection-intro p,.visualizer-app .paint-collection-tip{font-size:12px;line-height:1.4}
 }
+
+/* The broad-wall family sample is first and uses its original aspect ratio. */
+.visualizer-app .paint-sample-gallery button[data-facade-sample=family]{grid-column:auto}
+.visualizer-app .paint-sample-gallery button[data-facade-sample=compact-family]{grid-column:1/-1}
+.visualizer-app .paint-sample-gallery button[data-facade-sample=compact-family] .paint-sample-photo{aspect-ratio:3/2}
+@media(max-width:900px){
+ .visualizer-app .paint-sample-gallery button:last-child{grid-column:auto}
+ .visualizer-app .paint-sample-gallery button[data-facade-sample=villa] .paint-sample-photo{aspect-ratio:4/3}
+}

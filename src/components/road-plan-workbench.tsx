@@ -184,7 +184,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
      <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. On slow connections or low-resource devices, open interactive 3D when needed.","2D नक्शा तैयार है। धीमे इंटरनेट पर जरूरत होने पर 3D व्यू खोलें।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
      <p className="nroad-small">Same floor and room geometry as 2D. Concept only; professional verification required.</p>
-     <details className="nroad-advanced"><summary>{str("Compare or shortlist layouts","नक्शों की तुलना करें")}</summary>
+     <details className="nroad-advanced nroad-shortlist-panel"><summary>{str("Compare or shortlist layouts","नक्शों की तुलना करें")}</summary>
      <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0){setChosen(i);setKit(null)}}}/>
      </details>
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
