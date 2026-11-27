@@ -72,12 +72,12 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
 }
 
 /** Selected floor preview: keep the actual opening-aware wall/slab model, not the roof or adjacent storeys. */
-export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:FinishScheme):RenderSnapshot{
+export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:FinishScheme,fullHeight=false):RenderSnapshot{
  const {widthFt,depthFt}=plan.brief,boxes:RenderBox[]=[];
  const x=(v:number)=>(v-widthFt/2)*ft,z=(v:number)=>(v-depthFt/2)*ft;
  const add=(lo:Vec3,hi:Vec3,color:Vec3,rough=.82,opacity=1)=>{if(hi.every((v,i)=>v>lo[i]))boxes.push({lo,hi,color,rough,metal:0,opacity});};
- const elements=commercialElements(plan),cut=7;
- for(const s of elements.slabs.filter(s=>s.floor===floor&&s.bottom===0))add([x(s.x),0,z(s.y)],[x(s.x+s.w),s.top*ft,z(s.y+s.d)],shadeRgb("#d5cabc"));
+ const elements=commercialElements(plan),cut=fullHeight?13:7;
+ for(const s of elements.slabs.filter(s=>s.floor===floor&&s.bottom===0))add([x(s.x),0,z(s.y)],[x(s.x+s.w),s.top*ft,z(s.y+s.d)],shadeRgb(scheme.rooms[s.id.replace(/-floor(?:-\d+)?$/,"")]?.floor??"#d5cabc"));
  for(const w of elements.walls.filter(w=>w.floor===floor&&w.bottom<cut)){
   const t=w.thickness/2,lo=w.bottom*ft,hi=Math.min(w.top,cut)*ft;
   if(w.axis==="x")add([x(w.start),lo,z(w.plane-t)],[x(w.end),hi,z(w.plane+t)],shadeRgb(scheme.exterior));
@@ -85,7 +85,7 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
  }
  for(const p of elements.portals.filter(p=>p.floor===floor&&p.kind==="exterior-glazing")){
   const t=.04;
-  add([x(p.x-(p.axis==="y"?t:0)),3*ft,z(p.y-(p.axis==="x"?t:0))],[x(p.x+(p.axis==="x"?p.length:t)),cut*ft,z(p.y+(p.axis==="y"?p.length:t))],shadeRgb(scheme.glass),.18,.45);
+  add([x(p.x-(p.axis==="y"?t:0)),3*ft,z(p.y-(p.axis==="x"?t:0))],[x(p.x+(p.axis==="x"?p.length:t)),Math.min(8,cut)*ft,z(p.y+(p.axis==="y"?p.length:t))],shadeRgb(scheme.glass),.18,.45);
  }
  for(const z0 of plan.zones.filter(r=>r.floor===floor&&["open","parking"].includes(r.kind)))add([x(z0.x),0,z(z0.y)],[x(z0.x+z0.w),.08,z(z0.y+z0.d)],shadeRgb(z0.kind==="open"?"#bdcdb1":"#b8bcb9"));
  for(const s of commercialStairStudies(plan).studies.filter(s=>s.floor===floor))for(const r of [...s.steps,...s.landings.filter(l=>l.topFt>0)]){
