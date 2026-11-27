@@ -4,12 +4,12 @@ import Link from "next/link";
 import {conceptTakeoff,createProjectExchange,reviewedQuoteHref,projectErrors,type ProjectSource} from "@/modules/studio/project-exchange";
 import {categoryUnits,categoryMaterialHints,defaultCategoryUnit,quantityPrecision,quantityUnitLabels,type MaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
 const categories=Object.keys(categoryMaterialHints) as MaterialCategory[];
-export function StudioProjectExchange({source}:{source:ProjectSource}){
+export function StudioProjectExchange({source,scheme}:{source:ProjectSource;scheme?:FinishScheme}){
  const rows=useMemo(()=>conceptTakeoff(source),[source]),errors=useMemo(()=>projectErrors(source),[source]);
  const [category,setCategory]=useState<MaterialCategory>("paint"),[unit,setUnit]=useState<MaterialQuantityUnit>("litre"),[amount,setAmount]=useState(""),[material,setMaterial]=useState(""),[reviewed,setReviewed]=useState(false),[notice,setNotice]=useState(""),[busy,setBusy]=useState(false);
  const href=reviewed?reviewedQuoteHref(category,unit,Number(amount),material):null;
  function changeCategory(c:MaterialCategory){setCategory(c);setUnit(defaultCategoryUnit(c));setReviewed(false);setAmount("");setMaterial("");}
- async function exportModel(){setBusy(true);setNotice("");try{const model=await createProjectExchange(source);const url=URL.createObjectURL(new Blob([JSON.stringify(model,null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download="neerva-spatial-concept-v1.json";a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);setNotice("Concept data exported. Not a certified IFC file.");}catch{setNotice("Model export failed. Review the selected concept and retry.");}finally{setBusy(false)}}
+ async function exportModel(){setBusy(true);setNotice("");try{const model=await createProjectExchange(source);const url=URL.createObjectURL(new Blob([JSON.stringify({...model,finishes:scheme?.planId===source.plan.id?scheme:undefined},null,2)],{type:"application/json"}));const a=document.createElement("a");a.href=url;a.download="neerva-spatial-concept-v1.json";a.click();window.setTimeout(()=>URL.revokeObjectURL(url),1000);setNotice("Concept data exported. Not a certified IFC file.");}catch{setNotice("Model export failed. Review the selected concept and retry.");}finally{setBusy(false)}}
  return <section className="purpose-engineering studio-project-exchange" aria-label="Project exchange and material planning" data-plan-id={source.plan.id}>
  <h2>Plan your materials</h2><p>Review estimated quantities before requesting a quote.</p>
  {errors.length?<p role="alert">Model validation failed; export and quote handoff disabled.</p>:<>
