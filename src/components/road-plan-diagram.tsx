@@ -1,5 +1,6 @@
 "use client";
 import {useId} from "react";
+import {ElevationDefs} from "./elevation-appearance";
 import {frontagePanels,frontageOpenings,facadeAccents,frontageSignature} from "@/modules/studio/frontage";
 import type {PlanModel,Room,Opening} from "@/modules/studio/plan-model";
 const labels:Record<string,string>={parking:"PARKING",verandah:"VERANDAH",living:"LIVING",dining:"DINING",kitchen:"KITCHEN",bedroom:"BEDROOM",bath:"BATH",stairs:"STAIRS",corridor:"PASSAGE",utility:"UTILITY",balcony:"BALCONY",lounge:"LOUNGE",terrace:"TERRACE"};
@@ -59,22 +60,18 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
  const gates=[plan.gate,plan.pedestrianGate].filter(g=>g.widthFt>0);
  return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel" data-plan-id={plan.id} data-frontage-signature={frontageSignature(plan)}>
   <svg viewBox="0 0 700 420" role="img" aria-label={`Road-side elevation for ${widthFt} ft frontage, ${plan.floors} levels`}>
-   <defs>
-    <linearGradient id={id+"sky"} x2="0" y2="1"><stop stopColor="#cbdedc"/><stop offset="1" stopColor="#f6f4e9"/></linearGradient>
-    <linearGradient id={id+"wall"} x2=".9" y2="1"><stop stopColor={main}/><stop offset=".65" stopColor={main}/><stop offset="1" stopColor={main}/></linearGradient>
-    <linearGradient id={id+"glass"} x2="1" y2="1"><stop stopColor="#bfdbde"/><stop offset=".55" stopColor="#73949e"/><stop offset="1" stopColor="#38555c"/></linearGradient>
-    <linearGradient id={id+"ground"} x2="0" y2="1"><stop stopColor="#d8d4c5"/><stop offset="1" stopColor="#8e9189"/></linearGradient>
-   </defs>
+   <ElevationDefs id={id} wall={main} accent={accent} glass="#91b5bd"/>
+
    <rect width="700" height="420" fill={`url(#${id}sky)`}/>
    <rect y="355" width="700" height="65" fill={`url(#${id}ground)`}/>
    <path d="M0 371H700" stroke="#f6f4eb" strokeWidth="2"/>
    <rect x={x(0)} y={355} width={widthFt*scale} height="8" fill="#676f67"/>
    {frontRooms.map(r=><g key={r.roomId+"-"+r.x}><rect x={x(r.x)} y={y((r.floor+1)*storeyFt)} width={r.w*scale} height={storeyFt*scale} fill={`url(#${id}wall)`}/><rect x={x(r.x)} y={y((r.floor+1)*storeyFt)} width={r.w*scale} height={storeyFt*scale} fill="#24382c" opacity={Math.min(.20,r.y/depth*.26)}/><path d={`M${x(r.x)} ${y((r.floor+1)*storeyFt)}v${storeyFt*scale}`} stroke="#27392e" opacity=".14" strokeWidth="1.2"/></g>)}
-   {frontRooms.filter(r=>r.floor===plan.floors-1).map(r=><g key={"parapet-"+r.roomId+"-"+r.x}><rect x={x(r.x)} y={y(plan.floors*storeyFt+plan.walls.parapetFt)} width={r.w*scale} height={plan.walls.parapetFt*scale} fill={accent}/><rect x={x(r.x)} y={y(plan.floors*storeyFt+plan.walls.parapetFt)} width={r.w*scale} height={Math.max(1,.18*scale)} fill="#43574b"/></g>)}
-   {accents.map((a,i)=><rect key={i} x={x(a.x)} y={y(a.y+a.h)} width={a.w*scale} height={a.h*scale} fill={accent} stroke="#453a31" strokeOpacity=".18" strokeWidth=".5"/>)}
+   {frontRooms.filter(r=>r.floor===plan.floors-1).map(r=><g key={"parapet-"+r.roomId+"-"+r.x}><rect x={x(r.x)} y={y(plan.floors*storeyFt+plan.walls.parapetFt)} width={r.w*scale} height={plan.walls.parapetFt*scale} fill={`url(#${id}accent)`}/><rect x={x(r.x)} y={y(plan.floors*storeyFt+plan.walls.parapetFt)} width={r.w*scale} height={Math.max(1,.18*scale)} fill="#43574b"/></g>)}
+   {accents.map((a,i)=><rect key={i} x={x(a.x)} y={y(a.y+a.h)} width={a.w*scale} height={a.h*scale} fill={`url(#${id}accent)`} stroke="#453a31" strokeOpacity=".18" strokeWidth=".5"/>)}
    {openings.map(({o,r,a,w:visibleWidth})=>{
     const w=visibleWidth*scale,h=o.heightFt*scale,left=x(a),top=y(r.floor*storeyFt+o.sillFt+o.heightFt),frame=Math.min(3,w*.08,h*.08);
-    return <g key={o.id+"-"+a} data-opening-id={o.id}><rect x={left} y={top} width={w} height={h} fill={o.kind==="window"?`url(#${id}glass)`:"#594a3e"} stroke="#38423c" strokeWidth={frame}/>{o.kind==="window"&&<><path d={`M${left+w/2} ${top}v${h}`} stroke="#e8eee8" strokeWidth={frame}/><path d={`M${left+frame} ${top+h*.15}l${w*.35} ${-h*.12}`} stroke="#fff" opacity=".35" strokeWidth="2"/></>}</g>;
+    return <g key={o.id+"-"+a} data-opening-id={o.id}><rect x={left} y={top} width={w} height={h} fill={o.kind==="window"?`url(#${id}glass)`:"#594a3e"} stroke="#38423c" strokeWidth={frame}/><rect x={left+frame/2} y={top+frame/2} width={Math.max(0,w-frame)} height={Math.max(0,frame*.7)} fill="#182c30" opacity=".42"/>{o.kind==="window"&&<><path d={`M${left+w/2} ${top}v${h}`} stroke="#e8eee8" strokeWidth={frame}/><path d={`M${left+frame} ${top+h*.15}l${w*.35} ${-h*.12}`} stroke="#fff" opacity=".35" strokeWidth="2"/></>}</g>;
    })}
    {plan.rooms.filter(r=>r.kind==="balcony").map(r=><g key={r.id}>
     <rect x={x(r.x)} y={y(r.floor*storeyFt+3)} width={r.w*scale} height={3*scale} fill={`url(#${id}glass)`} stroke="#526860"/>
@@ -84,9 +81,8 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
     {plan.facade.kit==="pergola"&&Array.from({length:6},(_,k)=><rect key={k} x={x(r.x+(k+.5)*r.w/6)} y={y((r.floor+1)*storeyFt)} width={.4*scale} height={.5*scale} fill={accent}/>)}
    </g>)}
    {gates.map(g=><g key={g.xFt}><rect x={x(g.xFt)} y={y(4)} width={g.widthFt*scale} height={4*scale} fill="#536359" stroke="#303f35"/>{Array.from({length:7},(_,k)=><line key={k} x1={x(g.xFt+g.widthFt*(k+.5)/7)} x2={x(g.xFt+g.widthFt*(k+.5)/7)} y1={y(3.8)} y2={y(.2)} stroke="#a7b2a6" strokeWidth="1.5"/>)}</g>)}
-   <rect x="0" y="384" width="700" height="36" fill="#f4f5ef"/>
-   <text x="350" y="407" fontSize="15" textAnchor="middle" fill="#314e3e">{widthFt} ft frontage · Road {roadSide} · Concept elevation</text>
+
   </svg>
-  <p className="nroad-small">Plan-derived architectural illustration. Actual openings and gate positions are retained; materials and lighting are illustrative, not a photoreal render.</p>
+  <p className="nroad-small">{widthFt} ft frontage · Road {roadSide} · {plan.floors} level(s). Plan-derived architectural illustration. Actual openings and gate positions are retained; materials and lighting are illustrative, not a photoreal render.</p>
  </section>;
 }

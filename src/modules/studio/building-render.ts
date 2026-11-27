@@ -7,6 +7,7 @@ import {commercialFixtureBoxes} from "./commercial-fixture-render.ts";
 import {floorPreviewFixtures,commercialFrontPanels,commercialFacadeProfile} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
+import {glazingBayCount} from "./core/elevation-appearance.ts";
 import {FEET_TO_METRES as ft,normalize,cross} from "./core/geometry-primitives.ts";
 const finishes={limestone:[.72,.67,.56],concrete:[.49,.52,.52],terracotta:[.58,.29,.18]} as const;
 export type BuildingFinish=keyof typeof finishes;
@@ -21,6 +22,7 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
  push([x(0)-margin,-.4,z(0)-margin-2],[x(widthFt)+margin,-.23,z(depthFt)+margin],[.24,.32,.21]);
  push([x(0),-.23,z(0)],[x(widthFt),0,z(depthFt)],[.40,.43,.38]);
  push([x(0)-margin,-.22,z(0)-margin-2],[x(widthFt)+margin,-.02,z(0)],[.16,.18,.19]);
+ const profile=commercialFacadeProfile(plan.brief.purpose);
  const elements=commercialElements(plan);
  for(const r of plan.zones.filter(z=>z.kind==="open"||z.kind==="parking"))push([x(r.x),0,z(r.y)],[x(r.x+r.w),.12*ft,z(r.y+r.d)],r.kind==="open"?[.30,.43,.24]:[.33,.35,.35]);
  for(const s of elements.slabs)push([x(s.x),(s.floor*13+s.bottom)*ft,z(s.y)],[x(s.x+s.w),(s.floor*13+s.top)*ft,z(s.y+s.d)],[.46,.48,.45]);
@@ -33,26 +35,26 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
  }
  for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
   const low=(p.floor*13+3)*ft,high=(p.floor*13+8)*ft,t=.035;
-  boxes.push({lo:[x(p.x-(p.axis==="y"?t:0)),low,z(p.y-(p.axis==="x"?t:0))],hi:[x(p.x+(p.axis==="x"?p.length:t)),high,z(p.y+(p.axis==="y"?p.length:t))],color:selected?shadeRgb(selected.glass):[.36,.56,.65],opacity:.25,metal:0,rough:.15});
+  boxes.push({lo:[x(p.x-(p.axis==="y"?t:0)),low,z(p.y-(p.axis==="x"?t:0))],hi:[x(p.x+(p.axis==="x"?p.length:t)),high,z(p.y+(p.axis==="y"?p.length:t))],color:selected?shadeRgb(selected.glass):[.36,.56,.65],opacity:profile.glassOpacity,metal:0,rough:profile.glassRoughness});
  }
  // Finish details follow actual facade intervals and existing window holes.
  // No invented windows, cantilevers or additional floor area.
- const profile=commercialFacadeProfile(plan.brief.purpose),accent:Vec3=selected?shadeRgb(selected.accent):[.25,.29,.28],frame:Vec3=profile.frame;
+ const accent:Vec3=selected?shadeRgb(selected.accent):[.25,.29,.28],frame:Vec3=profile.frame;
  for(const p of commercialFrontPanels(plan)){
   const top=(p.floor*13+12.5)*ft,plane=z(p.y),left=x(p.x),right=x(p.x+p.w);
   if(right-left<.6)continue;
   const band=profile.bandFt*ft;
-  push([left,top-band,plane-.11],[right,top,plane-.03],accent,.65,selected?.cladding);
+  push([left,top-band,plane-profile.bandDepth],[right,top,plane-.03],accent,.65,selected?.cladding);
   // Shallow, presentation-only trim, above existing 8 ft openings.
   const trim=Math.min(.045,band*.18);
-  push([left,top-band,plane-.14],[right,top-band+trim,plane-.11],frame,.48);
+  push([left,top-band,plane-profile.trimDepth],[right,top-band+trim,plane-profile.bandDepth],frame,.48);
  }
  for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
   // Frame stays strictly inside the aperture and leaves the existing opening intact.
   const bottom=(p.floor*13+3)*ft,top=(p.floor*13+8)*ft,len=p.length*ft,thick=Math.min(.055,len*.06),start=p.axis==="x"?x(p.x):z(p.y),plane=p.axis==="x"?z(p.y):x(p.x);
   const add=(a:number,b:number,low:number,high:number)=>{if(b<=a||high<=low)return;const lo:Vec3=p.axis==="x"?[a,low,plane-.045]:[plane-.045,low,a],hi:Vec3=p.axis==="x"?[b,high,plane+.045]:[plane+.045,high,b];push(lo,hi,frame,.35);};
   add(start,start+len,bottom,bottom+thick);add(start,start+len,top-thick,top);
-  const count=Math.max(1,Math.ceil(len/1.35));
+  const count=glazingBayCount(len);
   for(let i=0;i<=count;i++){const a=Math.min(start+len-thick,Math.max(start,start+len*i/count-thick/2));add(a,a+thick,bottom+thick,top-thick);}
  }
  // Model only verified walking surfaces; no invented steps in unresolved bays.
@@ -120,7 +122,7 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
   if(glass){
    frame(start+bar,end-bar,bottom,bottom+bar,frameTone);
    frame(start+bar,end-bar,bottom+bar,cut>=8?top-bar:top,shadeRgb(selected?.glass??"#9bbac7"),.18,.32);
-   const n=Math.max(1,Math.ceil((end-start)/1.35));
+   const n=glazingBayCount(end-start);
    for(let i=1;i<n;i++){const a=start+(end-start)*i/n;frame(a-bar/2,a+bar/2,bottom+bar,cut>=8?top-bar:top,frameTone);}
   }
  }
