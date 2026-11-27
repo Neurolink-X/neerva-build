@@ -1,10 +1,14 @@
 "use client";
 import Link from "@/components/intent-link";
 import {useSyncExternalStore} from "react";
+import {usePathname} from "next/navigation";
+import {catalogFeedScope} from "@/modules/catalog/feed-pagination";
 import {loadPublicFeed} from "@/modules/catalog/public-feed-client";
 import {subscribeCatalogPriceSignal} from "./catalog-price-signal";
 import {validPublicOffer,type PublicOffer as Offer} from "@/modules/catalog/public-feed-validation";
-const empty:Offer[]=[],listeners=new Set<()=>void>();
+const empty:Offer[]=[];
+function makeOfferStore(categoryScope?:string){
+const listeners=new Set<()=>void>();
 let offers:Offer[]=empty,active:Promise<void>|null=null,timer:ReturnType<typeof setInterval>|undefined,expiry:ReturnType<typeof setTimeout>|undefined,lastLoaded=0,lastAttempt=0,invalidated=false,stopSignal:(()=>void)|undefined;
 const notify=()=>{for(const listener of listeners)listener()};
 const valid=validPublicOffer;
@@ -25,7 +29,7 @@ function refresh(force=false){
  if(active||!listeners.size||document.visibilityState==="hidden"||navigator.onLine===false||(!invalidated&&Date.now()-lastAttempt<60000))return;
  invalidated=false;
  lastAttempt=Date.now();
- active=loadPublicFeed("offers").then(value=>{
+ active=loadPublicFeed("offers",categoryScope).then(value=>{
   if(invalidated)return;
   const body=value as {offers:unknown[]};
   lastLoaded=Date.now();
@@ -42,10 +46,16 @@ function subscribe(listener:()=>void){
  if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true));timer=setInterval(()=>refresh(),60000)}
  return ()=>{listeners.delete(listener);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;stopSignal?.();stopSignal=undefined;document.removeEventListener("visibilitychange",onVisible);}};
 }
+return {subscribe,get:()=>offers};
+}
+const offerStores=new Map<string,ReturnType<typeof makeOfferStore>>();
+function offerStore(scope?:string){const key=scope??"all";let store=offerStores.get(key);if(!store){store=makeOfferStore(scope);offerStores.set(key,store)}return store}
+const skipSubscribe=()=>()=>{};
 const money=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2});
 const date=new Intl.DateTimeFormat("en-IN",{dateStyle:"medium",timeStyle:"short",timeZone:"Asia/Kolkata"});
 export function CatalogOffer({category,slug,compact=false}:{category:string;slug:string;compact?:boolean}){
- const activeOffers=useSyncExternalStore(subscribe,()=>offers,()=>empty);
+ const path=usePathname(),store=offerStore(catalogFeedScope(path??""));
+ const activeOffers=useSyncExternalStore(category==="aggregates"?skipSubscribe:store.subscribe,()=>category==="aggregates"?empty:store.get(),()=>empty);
  const offer=activeOffers.find(o=>o.category===category&&o.slug===slug);
  if(!offer)return null;
  return <aside className={"catalog-offer"+(compact?" compact":"")} aria-label="Verified time-limited published offer">

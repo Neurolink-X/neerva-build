@@ -3,11 +3,12 @@
 import {FEED_MAX_PAGES,FEED_PAGE_SIZE,feedCursor} from "./feed-pagination.ts";
 type Feed="prices"|"offers";
 type Entry={revision:number;at:number;data?:unknown;pending?:Promise<unknown>;controller?:AbortController};
-const entries=new Map<Feed,Entry>();
+const entries=new Map<string,Entry>();
 let revision=0;
 export function invalidatePublicFeeds(){revision++;for(const entry of entries.values())entry.controller?.abort();entries.clear();}
-export function loadPublicFeed(kind:Feed):Promise<unknown>{
- const now=Date.now(),existing=entries.get(kind);
+export function loadPublicFeed(kind:Feed,category?:string):Promise<unknown>{
+ const key=kind+":"+(category??"all");
+ const now=Date.now(),existing=entries.get(key);
  if(existing?.revision===revision){
   if(existing.pending)return existing.pending;
   if(existing.data!==undefined&&now-existing.at<10000)return Promise.resolve(existing.data);
@@ -15,11 +16,11 @@ export function loadPublicFeed(kind:Feed):Promise<unknown>{
  const controller=new AbortController();
  const deadline=setTimeout(()=>controller.abort(),10000);
  const entry:Entry={revision,at:0,controller};
- entries.set(kind,entry);
+ entries.set(key,entry);
  entry.pending=(async()=>{
   const rows:unknown[]=[],seen=new Set<string>();let cursor:string|null=null;
   for(let page=0;page<FEED_MAX_PAGES;page++){
-   const params=new URLSearchParams({limit:String(FEED_PAGE_SIZE)});if(cursor)params.set("after",cursor);
+   const params=new URLSearchParams({limit:String(FEED_PAGE_SIZE)});if(cursor)params.set("after",cursor);if(category)params.set("category",category);
    const r=await fetch("/api/catalog/"+kind+"?"+params,{cache:"no-store",signal:controller.signal});
    if(!r.ok)throw Error("Public "+kind+" unavailable");
    const value=await r.json();
@@ -35,6 +36,6 @@ export function loadPublicFeed(kind:Feed):Promise<unknown>{
    seen.add(nextCursor);cursor=nextCursor;
   }
   throw Error("Public feed exceeds safe page budget");
- })().catch(error=>{if(entries.get(kind)===entry)entries.delete(kind);throw entry.revision!==revision?Error("Public feed was revised"):error}).finally(()=>{clearTimeout(deadline);entry.pending=undefined;entry.controller=undefined});
+ })().catch(error=>{if(entries.get(key)===entry)entries.delete(key);throw entry.revision!==revision?Error("Public feed was revised"):error}).finally(()=>{clearTimeout(deadline);entry.pending=undefined;entry.controller=undefined});
  return entry.pending;
 }

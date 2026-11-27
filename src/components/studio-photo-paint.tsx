@@ -1,7 +1,7 @@
 "use client";
 import {useCallback,useEffect,useLayoutEffect,useRef,useState,type ChangeEvent,type PointerEvent as ReactPointerEvent,type ReactNode} from "react";
 import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type MaskCorner} from "@/modules/studio/mask-editor";
-import {encodedPhotoDimensions,photoDimensionsAllowed,maxPreviewSide} from "@/modules/studio/photo-budget";
+import {encodedPhotoDimensions,photoDimensionsAllowed,paintPreviewDimensions} from "@/modules/studio/photo-budget";
 import {finishes,patternGroups,groupForPattern,isRetiredPattern,type PatternGroup,type Pattern,type Motif} from "@/modules/studio/wall-patterns";
 import NextImage from "next/image";
 import {isSurfaceProfile} from "@/modules/studio/surface-texture";
@@ -166,8 +166,9 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    if(generation.current!==ticket){release();return;}
    const el=canvas.current;if(!el){release();setMessage("Preview not ready. Please retry the sample.");return;}
    if(!photoDimensionsAllowed(img.naturalWidth,img.naturalHeight)){release();setMessage("Photo dimensions are too large. Resize the image before trying again.");return;}
-   const scale=Math.min(1,maxPreviewSide/Math.max(img.naturalWidth,img.naturalHeight));
-   const source=document.createElement("canvas");source.width=Math.max(1,Math.round(img.naturalWidth*scale));source.height=Math.max(1,Math.round(img.naturalHeight*scale));
+   const nav=navigator as Navigator&{deviceMemory?:number;connection?:{saveData?:boolean}};
+   const size=paintPreviewDimensions(img.naturalWidth,img.naturalHeight,{memory:nav.deviceMemory,cores:nav.hardwareConcurrency,saveData:nav.connection?.saveData});
+   const source=document.createElement("canvas");source.width=size.width;source.height=size.height;
    const context=source.getContext("2d");if(!context){release();setMessage("Photo preview unavailable on this device.");return;}
    try{context.drawImage(img,0,0,source.width,source.height);}catch{release();setMessage("Could not prepare this photo. Try a smaller image.");return;}
    el.width=source.width;el.height=source.height;image.current=source;release();setReady(true);

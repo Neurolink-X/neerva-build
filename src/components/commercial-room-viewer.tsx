@@ -39,7 +39,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,cutaway=fa
    if(!current||!controls)return;
    cameraPreset=preset;
    const c=current.camera;camera.position.fromArray(c.origin);camera.fov=c.fov;camera.updateProjectionMatrix();
-   if(exterior){
+   if(exterior||cutaway){
     const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),dir=camera.position.clone().sub(center).normalize();
     if(preset==="front")dir.set(0,.08,-1).normalize();else if(preset==="rear")dir.set(0,.08,1).normalize();else if(preset==="top")dir.set(0,1,-.001).normalize();else if(cutaway)dir.set(.78,1.35,-1).normalize();else if(dir.lengthSq()<.1)dir.set(1,.6,-1).normalize();
     const corners:THREE.Vector3[]=[];for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z])corners.push(new THREE.Vector3(x,y,z).sub(center));
@@ -54,15 +54,17 @@ export default function CommercialRoomViewer({snapshot,exterior=false,cutaway=fa
    configureStudioRenderer(renderer,{constrained,pixelRatio:detailed?1.75:1.25,shadows,exposure:1});
    sun.castShadow=shadows;sun.shadow.mapSize.set(detailed?1024:512,detailed?1024:512);sun.shadow.bias=-.0003;sun.shadow.normalBias=.025;
    // Small procedural studio environment: no external HDR downloads.
+   if(!constrained){
    const envScene=new THREE.Scene();envScene.background=new THREE.Color(0x888f99);
    const panelGeo=new THREE.PlaneGeometry(8,6),panelMaterials=[new THREE.MeshBasicMaterial({color:0xe5efff,side:THREE.DoubleSide}),new THREE.MeshBasicMaterial({color:0xffe0b6,side:THREE.DoubleSide})];
    const a=new THREE.Mesh(panelGeo,panelMaterials[0]);a.position.set(-5,4,0);a.lookAt(0,0,0);envScene.add(a);
    const b=new THREE.Mesh(panelGeo,panelMaterials[1]);b.position.set(5,3,2);b.lookAt(0,0,0);envScene.add(b);
-   const pmrem=new THREE.PMREMGenerator(renderer);try{environment=pmrem.fromScene(envScene,.12);scene.environment=environment.texture;}finally{pmrem.dispose();panelGeo.dispose();panelMaterials.forEach(m=>m.dispose());}
+   const pmrem=new THREE.PMREMGenerator(renderer);try{environment=pmrem.fromScene(envScene,.12);scene.environment=environment.texture;}finally{pmrem.dispose();panelGeo.dispose();panelMaterials.forEach(m=>m.dispose());}}
    renderer.domElement.addEventListener("webglcontextlost",contextLost);
    renderer.domElement.style.width="100%";renderer.domElement.style.height="100%";renderer.domElement.style.touchAction="none";target.appendChild(renderer.domElement);
    controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=false;controls.enablePan=!exterior;controls.minDistance=.3;controls.maxDistance=50;controls.addEventListener("change",schedule);
-   const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(exterior&&current)reset(cameraPreset);schedule()};
+   let previousWidth=0,previousHeight=0;
+   const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);if(w===previousWidth&&h===previousHeight)return;previousWidth=w;previousHeight=h;renderer.setSize(w,h,false);const aspectChanged=Math.abs(camera.aspect-w/h)>.015;camera.aspect=w/h;camera.updateProjectionMatrix();if(aspectChanged&&(exterior||cutaway)&&current)reset(cameraPreset);schedule()};
    observer=new ResizeObserver(resize);observer.observe(target);resize();
    viewer.current={reset,update(next){
     if(!next.boxes.length||next.boxes.length>(constrained?1200:2500)||next.boxes.some(b=>b.hi.some((v,i)=>!Number.isFinite(v)||!Number.isFinite(b.lo[i])||v<=b.lo[i])||b.color.some(v=>!Number.isFinite(v)||v<0||v>1)||[b.rough,b.metal,b.opacity].some(v=>!Number.isFinite(v)||v<0||v>1))){

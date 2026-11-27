@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {encodedPhotoDimensions,photoDimensionsAllowed} from "./photo-budget.ts";
+import {encodedPhotoDimensions,photoDimensionsAllowed,paintPreviewDimensions} from "./photo-budget.ts";
 test("compressed file size cannot bypass decoded pixel and side budgets",()=>{
  assert.ok(photoDimensionsAllowed(4000,3000));assert.equal(photoDimensionsAllowed(8000,8000),false);
  for(const v of [0,-1,NaN,Infinity,1.5,9000])assert.equal(photoDimensionsAllowed(v,100),false);
@@ -14,4 +14,13 @@ test("bounded header reader handles PNG, JPEG and WebP and fails closed on trunc
  assert.deepEqual(encodedPhotoDimensions(webp),{width:100,height:50});webp[20]=2;assert.equal(encodedPhotoDimensions(webp),null);
  for(let i=0;i<png.length;i++)assert.equal(encodedPhotoDimensions(png.slice(0,i)),null);
  assert.equal(encodedPhotoDimensions(jpg.slice(0,9)),null);
+});
+
+test("paint working surfaces adapt to low-memory devices without enlarging or changing aspect",()=>{
+ assert.deepEqual(paintPreviewDimensions(1200,600),{width:1200,height:600});
+ const lite=paintPreviewDimensions(4000,3000,{memory:2});
+ assert.ok(lite.width*lite.height<=480000&&Math.max(lite.width,lite.height)<=896);
+ assert.ok(Math.abs(lite.width/lite.height-4/3)<.01);
+ assert.deepEqual(paintPreviewDimensions(420,280,{saveData:true}),{width:420,height:280});
+ assert.throws(()=>paintPreviewDimensions(8000,8000));
 });
