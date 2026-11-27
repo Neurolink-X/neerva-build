@@ -7,9 +7,9 @@ import {createNeervaBrowserClient} from "@/modules/supabase/browser";
 import {categoryUnits,defaultCategoryUnit,categoryMaterialHints,materialUnitLabel,quantityPrecision,validMaterialQuantity,isAllowedCategoryUnit,isMaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
 
 const supabase=createNeervaBrowserClient();
-const intakeEnabled=process.env.NEXT_PUBLIC_RFQ_INTAKE_ENABLED==="true";
+
 type Message={kind:"success"|"error";text:string;reference?:string;details?:string[]};
-export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defaultMaterial="",defaultPincode="",defaultQuantity="",defaultUnit=""}:{defaultCity:string;defaultCategory?:string;defaultMaterial?:string;defaultPincode?:string;defaultQuantity?:string;defaultUnit?:string}){
+export function QuoteRequestForm({defaultCity,defaultCategory="aggregates",defaultMaterial="",defaultPincode="",defaultQuantity="",defaultUnit="",intakeEnabled=false}:{intakeEnabled?:boolean;defaultCity:string;defaultCategory?:string;defaultMaterial?:string;defaultPincode?:string;defaultQuantity?:string;defaultUnit?:string}){
  const requestKeys=useRef(new Map<string,string>()),submissionLock=useRef(false);
  const [verified,setVerified]=useState(false),[ready,setReady]=useState(false),[busy,setBusy]=useState(false);
  const [message,setMessage]=useState<Message|null>(null);
