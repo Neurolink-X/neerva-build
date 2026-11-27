@@ -1,12 +1,12 @@
 import type {RenderBox,RenderSnapshot,Vec3} from "../../../public/studio-render-v1";
+import {commercialElements} from "./commercial-elements.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
 const ft=.3048;
 const normalize=(v:Vec3):Vec3=>{const n=Math.hypot(...v)||1;return [v[0]/n,v[1]/n,v[2]/n]};
 const cross=(a:Vec3,b:Vec3):Vec3=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 const finishes={limestone:[.72,.67,.56],concrete:[.49,.52,.52],terracotta:[.58,.29,.18]} as const;
 export type BuildingFinish=keyof typeof finishes;
-/** Render the exact site-local volumetric geometry. Exterior openings, cladding
- * engineering and stairs are deliberately absent until actual designs exist. */
+/** Render concept walls, openings and slabs from the shared element model. */
 export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinish="limestone",evening=false,view:"front"|"rear"="front"):RenderSnapshot{
  const {widthFt,depthFt,floors}=plan.brief,boxes:RenderBox[]=[];
  const x=(v:number)=>(v-widthFt/2)*ft,z=(v:number)=>(v-depthFt/2)*ft;
@@ -15,10 +15,17 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
  push([x(0)-8,-.4,z(0)-8],[x(widthFt)+8,-.23,z(depthFt)+8],[.24,.32,.21]);
  push([x(0),-.23,z(0)],[x(widthFt),0,z(depthFt)],[.40,.43,.38]);
  push([x(0)-6,-.22,z(0)-5],[x(widthFt)+6,-.02,z(0)],[.16,.18,.19]);
- for(const r of plan.zones){
-  const open=r.kind==="open"||r.kind==="parking",base=r.floor*13*ft,top=base+(open?.12:13)*ft;
-  const c:Vec3=r.kind==="open"?[.30,.43,.24]:r.kind==="parking"?[.33,.35,.35]:r.kind==="core"?[.46,.48,.45]:wall;
-  push([x(r.x),base,z(r.y)],[x(r.x+r.w),top,z(r.y+r.d)],c);
+ const elements=commercialElements(plan);
+ for(const r of plan.zones.filter(z=>z.kind==="open"||z.kind==="parking"))push([x(r.x),0,z(r.y)],[x(r.x+r.w),.12*ft,z(r.y+r.d)],r.kind==="open"?[.30,.43,.24]:[.33,.35,.35]);
+ for(const s of elements.slabs)push([x(s.x),(s.floor*13+s.bottom)*ft,z(s.y)],[x(s.x+s.w),(s.floor*13+s.top)*ft,z(s.y+s.d)],[.46,.48,.45]);
+ for(const a of elements.walls){
+  const low=(a.floor*13+a.bottom)*ft,high=(a.floor*13+a.top)*ft,t=a.thickness/2;
+  if(a.axis==="x")push([x(a.start),low,z(a.plane-t)],[x(a.end),high,z(a.plane+t)],wall);
+  else push([x(a.plane-t),low,z(a.start)],[x(a.plane+t),high,z(a.end)],wall);
+ }
+ for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
+  const low=(p.floor*13+3)*ft,high=(p.floor*13+8)*ft,t=.035;
+  boxes.push({lo:[x(p.x-(p.axis==="y"?t:0)),low,z(p.y-(p.axis==="x"?t:0))],hi:[x(p.x+(p.axis==="x"?p.length:t)),high,z(p.y+(p.axis==="y"?p.length:t))],color:[.36,.56,.65],opacity:.25,metal:0,rough:.15});
  }
  const distance=Math.max(widthFt,depthFt,floors*13)*ft;
  const origin:Vec3=[distance*.85,distance*.7,(view==="front"?-1:1)*distance*1.45];
