@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {straightStairStudy,residentialStairStudies} from "./stair-study.ts";
+import {straightStairStudy,residentialStairStudies,dogLegStairStudy,stairFloorPatches} from "./stair-study.ts";
 import {generateSpatialPortfolio} from "./road-generator.ts";
 import {overlapArea,area,type Room,type Opening} from "./plan-model.ts";
 const lower:Room={id:"s0",label:"Stair",kind:"stairs",floor:0,x:2,y:4,w:5,d:24,minClearWidthFt:3.25};
@@ -24,4 +24,19 @@ test("generated home alternatives account for every lower-floor stair reserve",(
  const result=generateSpatialPortfolio({widthFt:40,depthFt:50,floors:2,bedrooms:3,parking:true,roadSide:"N",setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}},12);
  assert.ok(result.plans.length);
  for(const plan of result.plans){const review=residentialStairStudies(plan);assert.equal(review.unresolved.length+review.studies.length,plan.rooms.filter(r=>r.kind==="stairs"&&r.floor<plan.floors-1).length);}
+});
+
+test("dog-leg flight uses distinct aligned entry and exit doors with a real turn platform",()=>{
+ const a={...lower,w:8,d:14},b={...upper,w:8,d:14};
+ const ds=[{...doors[0],atFt:.5},{...doors[1],side:"front" as const,atFt:3.75}];
+ const study=dogLegStairStudy(a,b,9.5,ds);assert.ok(study);assert.equal(study.kind,"dog-leg");
+ assert.equal(study.steps.length,14);assert.equal(study.landings.length,3);
+ assert.equal(study.landings[2].topFt,9.5);
+ const all=[...study.steps,...study.landings];
+ for(const r of all)assert.ok(Math.abs(overlapArea(a,r)-area(r))<1e-6);
+ for(let i=0;i<all.length;i++)for(let j=i+1;j<all.length;j++)assert.ok(overlapArea(all[i],all[j])<1e-6);
+ assert.equal(stairFloorPatches(b,[study]).length,1);
+ assert.ok(area(stairFloorPatches(b,[study])[0])<area(b));
+ assert.equal(dogLegStairStudy({...a,w:5},{...b,w:5},9.5,ds),null);
+ assert.equal(dogLegStairStudy(a,b,9.5,[ds[0],{...ds[1],atFt:.5}]),null);
 });
