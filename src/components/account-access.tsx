@@ -9,10 +9,14 @@ import { createNeervaBrowserClient } from "@/modules/supabase/browser";
 
 const supabase = createNeervaBrowserClient();
 
+function emailQuotaExceeded(error:unknown){
+ const detail=typeof error==="object"&&error!==null?error as {code?:string;message?:string}:{};
+ return detail.code==="over_email_send_rate_limit"||(detail.message??"").toLowerCase().includes("over_email_send_rate_limit");
+}
 function friendlyAuthError(error: unknown) {
   const detail = typeof error === "object" && error !== null ? error as { code?: string; message?: string; status?: number } : {};
   const normalized = (detail.message ?? "").toLowerCase();
-  if (detail.code === "over_email_send_rate_limit" || normalized.includes("over_email_send_rate_limit")) return "Our email service has reached its sending limit. Another attempt after 60 seconds may still fail. Check your inbox and spam for the latest link. If no link arrives, contact Neerva support or try later.";
+  if (detail.code === "over_email_send_rate_limit" || normalized.includes("over_email_send_rate_limit")) return "Our email service has reached its sending limit. Repeated requests will not reset the provider quota. Email requests on this device are paused for 15 minutes; delivery may still be unavailable after that. Check your inbox and spam for the latest link. If no link arrives, contact Neerva support or try later.";
   if (detail.code === "email_address_not_authorized") return "Verification email could not be delivered at this time. Contact Neerva support for help.";
   if (detail.status === 429 || /rate.limit|too many requests|only request this after/.test(normalized)) return "Too many requests. Please wait before retrying. Check your inbox and spam for an existing link.";
   if (/expired|otp_expired|invalid.*token/.test(normalized)) return "This email link or code is invalid or expired. Request a fresh one.";
@@ -38,7 +42,8 @@ export function AccountAccess({next}:{next?:string}={}) {
   const [secondsLeft,setSecondsLeft]=useState(0);
   const submissionLock=useRef(false);
   useEffect(()=>{if(!cooldownUntil)return;const timer=window.setInterval(()=>setSecondsLeft(Math.max(0,Math.ceil((cooldownUntil-Date.now())/1000))),1000);return()=>window.clearInterval(timer)},[cooldownUntil]);
-  function startEmailCooldown(){setSecondsLeft(60);setCooldownUntil(Date.now()+60000)}
+  function startEmailCooldown(seconds=60){const until=Date.now()+seconds*1000;setSecondsLeft(seconds);setCooldownUntil(until);try{sessionStorage.setItem("neerva-email-retry-until",String(until))}catch{/* backend throttling remains authoritative */}}
+  useEffect(()=>{try{const until=Number(sessionStorage.getItem("neerva-email-retry-until"));if(Number.isFinite(until)&&until>Date.now()&&until-Date.now()<=900000){const timer=window.setTimeout(()=>{setCooldownUntil(until);setSecondsLeft(Math.ceil((until-Date.now())/1000))},0);return()=>window.clearTimeout(timer)}}catch{/* optional session persistence */}},[]);
   const [phone,setPhone]=useState(""),[otp,setOtp]=useState(""),[phoneChallengeSent,setPhoneChallengeSent]=useState(false);
   const phoneOtpEnabled=process.env.NEXT_PUBLIC_PHONE_OTP_ENABLED==="true";
   const [busy, setBusy] = useState(false);
@@ -89,6 +94,7 @@ export function AccountAccess({next}:{next?:string}={}) {
         setMessage({ kind: "success", text: data.session?.user.email_confirmed_at ? "Your verified account is ready." : "Check your email for verification. Private quotation requests require a verified email." });
       }
     } catch (error) {
+      if(mode==="signup"&&emailQuotaExceeded(error))startEmailCooldown(900);
       setMessage({ kind: "error", text: friendlyAuthError(error) });
     } finally { submissionLock.current=false;setBusy(false); }
   }
@@ -114,7 +120,7 @@ export function AccountAccess({next}:{next?:string}={}) {
         if(error)throw error;
       }
       setMessage({kind:"success",text:"If this email is eligible, a link has been requested. Check your inbox and spam. Use the newest link."});
-    }catch(error){setMessage({kind:"error",text:friendlyAuthError(error)})}
+    }catch(error){if(emailQuotaExceeded(error))startEmailCooldown(900);setMessage({kind:"error",text:friendlyAuthError(error)})}
     finally{submissionLock.current=false;setBusy(false)}
   }
   async function updatePassword(event:FormEvent<HTMLFormElement>){
