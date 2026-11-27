@@ -2,9 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {finishes,patternKeys,patternGroups,retiredPatterns,groupForPattern,isRetiredPattern,type Motif} from "./wall-patterns.ts";
 import {colourFamilies,colourPairings} from "./colour-families.ts";
-test("curated wall library exposes exactly 40 designs and preserves retired IDs",()=>{
+test("curated wall library exposes exactly 43 designs and preserves retired IDs",()=>{
  const keys=Object.values(patternGroups).flat();
- assert.equal(keys.length,40);
+ assert.equal(keys.length,43);
  assert.equal(new Set(keys).size,keys.length);
  assert.deepEqual([...keys,...retiredPatterns].sort(),patternKeys.filter(k=>k!=="plain").sort());
  assert.ok(retiredPatterns.every(k=>isRetiredPattern(k)&&groupForPattern(k)==="Signature"));

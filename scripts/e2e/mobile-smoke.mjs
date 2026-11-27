@@ -27,7 +27,7 @@ async function main(){
     assert.deepEqual(malformed,[],route+" SSR SVG titles must contain exactly one nonempty text node");
    }
   }finally{await noJs.close()}
-  // Exercise every commercial purpose, not merely HTTP route availability.
+  // Exercise every commercial purpose.
   for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
    const ctx=await browser.newContext({viewport});
    try{
@@ -75,7 +75,7 @@ async function main(){
        }
       };
       if(await capture("cutaway")){
-       if(purpose==="shops"){await studio.getByRole("button",{name:"Hide space-use guidance",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Show space-use guidance",exact:true}).click();}
+       if(purpose==="shops"){const tools=studio.locator(".purpose-view-tools");if(await tools.getAttribute("open")===null)await tools.locator("summary").click();await studio.getByRole("button",{name:"Hide space-use guidance",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Show space-use guidance",exact:true}).click();}
        await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
        await capture("exterior");
        await studio.getByRole("button",{name:"Show selected floor",exact:true}).click();
@@ -102,7 +102,7 @@ async function main(){
     assert.ok(await irregular.getByRole("img",{name:"Measured polygon and candidate rectangular envelope"}).isVisible());
     await irregular.getByRole("button",{name:"Use envelope dimensions in planner"}).click();
     assert.ok(await studio.getByLabel("Frontage (ft)").inputValue());
-    // Scope to the quantity worksheet itself, rather than the similarly named engineering summary.
+    // Scope to the quantity worksheet.
     const summary=studio.getByText("Commercial building quantity worksheet",{exact:true});
     await summary.click();
     const panel=summary.locator("..");
@@ -190,7 +190,7 @@ async function main(){
     await page.locator(".nbh-journey.nbh-primary").click({timeout:60000});await page.waitForURL("**/materials",{timeout:120000});assert.equal(new URL(page.url()).pathname,"/materials","real navigation still works with prefetch disabled");
    }finally{await ctx.close()}
   }
-  // Focused extra screen sizes without repeating the full expensive suite.
+  // Additional viewport checks.
   for(const v of [{w:320,h:640},{w:1024,h:768},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();
@@ -202,7 +202,7 @@ async function main(){
     }
    }finally{await ctx.close()}
   }
-  // Focused footer geometry across phone, landscape, tablet and desktop sizes in both languages.
+  // Footer geometry across devices and languages.
   for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();await page.goto(base+"/",{waitUntil:"load"});
@@ -282,7 +282,7 @@ async function main(){
     performanceReports.push({profile:profile.name,viewerRequestToControlsMs:Date.now()-requested,scope:"local browser interaction, includes scroll and automation; not field INP"});
    }finally{await ctx.close()}
   }
-  // Focused facade gallery and full-aspect canvas checks across nine screen sizes.
+  // Facade gallery and aspect checks across nine sizes.
   for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
@@ -291,10 +291,12 @@ async function main(){
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
     assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
+     assert.equal(await gallery.locator("button").first().getAttribute("data-facade-sample"),"compact-family","broad-wall sample is the first facade");
+     assert.equal(await gallery.locator("button").first().getAttribute("aria-pressed"),"true","first facade is selected by default");
     assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
     assert.ok(await gallery.evaluate(el=>{const active=el.querySelector("button[aria-pressed=true]"),other=el.querySelector("button[aria-pressed=false]");return active&&other&&getComputedStyle(active).borderColor!==getComputedStyle(other).borderColor}),"active house is visually distinguishable without a badge");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
-    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-(b.dataset.facadeSample==="family"?2:b.dataset.facadeSample==="compact-family"&&innerWidth<=900?1.5:4/3))<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
+    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-(b.dataset.facadeSample==="family"?2:b.dataset.facadeSample==="compact-family"?1.5:4/3))<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
     assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:3),v.w+"px facade gallery: "+JSON.stringify(geometry));
     await page.getByRole("button",{name:/100 gaj family home/}).click();
     assert.match(await page.locator(".paint-sample-feedback").innerText(),/100 gaj family home/);
@@ -343,7 +345,7 @@ async function main(){
     if(!issues.title)failures.push(v.w+"px "+route+": missing document title");
     if(!issues.lang)failures.push(v.w+"px "+route+": missing document language");
     if(issues.h1<1)failures.push(v.w+"px "+route+": missing main heading");
-    // Record actual visible interactive targets without clicking destructive or authenticated actions.
+    // Inspect targets without destructive or authenticated actions.
     const interaction=await page.evaluate(()=>{
      const elements=[...document.querySelectorAll('a[href],button,summary,input[type="submit"],input[type="button"],[role="button"]')].filter(el=>{
       const rect=el.getBoundingClientRect(),style=getComputedStyle(el);return rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&!el.closest("[inert],[aria-hidden=true]");
@@ -1255,7 +1257,7 @@ async function main(){
  await page.getByRole("button",{name:"Signature",exact:true}).click();await page.getByRole("button",{name:"Luxury orbit rings",exact:true}).click();
  const orbit=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(orbit,plainBeforePattern,"circular mural must alter actual canvas pixels");
  await page.getByRole("button",{name:"Nature",exact:true}).click();await page.getByRole("button",{name:"Floral vine feature wall",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),orbit,"floral artwork differs from the circle mural");
- let visibleDesigns=0;for(const group of ["Signature","Nature","Classic","Modern","Textures","Artisan","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,34,"curated collection must not contain retired filler designs");
+ let visibleDesigns=0;for(const group of ["Signature","Nature","Classic","Modern","Textures","Artisan","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,37,"curated collection must not contain retired filler designs");
  await page.getByRole("button",{name:"Artisan",exact:true}).click();
  const artisan=page.getByRole("button",{name:"Venetian polished plaster",exact:true});await artisan.click();
  const venetian=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(venetian,plainBeforePattern,"continuous texture changes actual wall pixels");
@@ -1333,6 +1335,7 @@ async function main(){
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"all","full exterior intentionally displays both floors");
     await page.getByRole("button",{name:"Selected floor cutaway"}).click();
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"1","return to cutaway follows the same 2D floor");
+    await page.locator("details.nroad-shortlist-panel > summary").click();
     await page.getByRole("button",{name:"Save selected layout locally",exact:true}).click();
     await page.locator(".nroad-variants button").nth(5).click();
     await page.getByRole("button",{name:"Save selected layout locally",exact:true}).click();

@@ -218,3 +218,20 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 .visualizer-app .paint-sample-photo img{object-fit:cover;object-position:center}
 @media(max-width:900px){.visualizer-app .paint-sample-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.visualizer-app .paint-sample-gallery button:last-child{grid-column:1/-1}.visualizer-app .paint-sample-gallery button:last-child .paint-sample-photo{aspect-ratio:3/2}}
 
+
+/* One compact, swipeable row for secondary controls; the selected preview remains in view. */
+@media(max-width:850px){
+ .visualizer-app .paint-pattern-groups,.visualizer-app .paint-targets{display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;overscroll-behavior-inline:contain;gap:6px;padding:3px 2px 7px;max-width:100%;min-width:0}
+ .visualizer-app .paint-pattern-groups button,.visualizer-app .paint-targets button{flex:0 0 auto;white-space:nowrap;font-size:12px;min-height:44px;padding:6px 10px;scroll-snap-align:start}
+ .visualizer-app .paint-preview-status,.visualizer-app .paint-sample-feedback{font-size:12px;line-height:1.45;margin:6px 0}
+ .visualizer-app .paint-collection-intro p,.visualizer-app .paint-collection-tip{font-size:12px;line-height:1.4}
+}
+
+/* The broad-wall family sample is first and uses its original aspect ratio. */
+.visualizer-app .paint-sample-gallery button[data-facade-sample=family]{grid-column:auto}
+.visualizer-app .paint-sample-gallery button[data-facade-sample=compact-family]{grid-column:1/-1}
+.visualizer-app .paint-sample-gallery button[data-facade-sample=compact-family] .paint-sample-photo{aspect-ratio:3/2}
+@media(max-width:900px){
+ .visualizer-app .paint-sample-gallery button:last-child{grid-column:auto}
+ .visualizer-app .paint-sample-gallery button[data-facade-sample=villa] .paint-sample-photo{aspect-ratio:4/3}
+}

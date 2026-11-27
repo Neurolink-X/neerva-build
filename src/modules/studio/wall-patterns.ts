@@ -44,7 +44,9 @@ export const finishes = {
  suede:{name:"Soft suede finish",motifs:grain(88,31)},
  microcement:{name:"Seamless microcement",motifs:grain(95,37)},
  reception:{name:"Reception feature wall",motifs:[{...box(.08,.10,.84,.80),alpha:.55,weight:1.6},...repeat(8,i=>({...line([.10+i*.033,.12],[.10+i*.033,.88]),alpha:.35,weight:1.4})),...repeat(8,i=>({...line([.66+i*.033,.12],[.66+i*.033,.88]),alpha:.35,weight:1.4}))]}
- ,herringbone:{name:"Chevron herringbone",motifs:repeat(6,i=>({...line([0,i/6],[.25,(i+.5)/6],[.5,i/6],[.75,(i+.5)/6],[1,i/6]),alpha:.68,weight:1.5}))},...decorativeArt
+ ,herringbone:{name:"Chevron herringbone",motifs:repeat(6,i=>({...line([0,i/6],[.25,(i+.5)/6],[.5,i/6],[.75,(i+.5)/6],[1,i/6]),alpha:.68,weight:1.5}))},artDecoSunburst:{name:"Art deco sunburst",motifs:repeat(15,i=>({...line([.5,.8],[.5+.46*Math.cos(Math.PI+i*Math.PI/14),.8+.64*Math.sin(Math.PI+i*Math.PI/14)]),alpha:.55,weight:1.3}))},
+  steppedColourBlock:{name:"Stepped colour block",motifs:[{filled:true,alpha:.74,points:[[0,1],[0,.45],[.32,.45],[.32,.62],[.65,.62],[.65,.8],[1,.8],[1,1]] as Point[]}]},
+  softConcrete:{name:"Fine concrete patina",motifs:[...grain(64,43),...repeat(14,i=>wave(.04+i*.07,.018,i*.91,.10,3))]},...decorativeArt
 } satisfies Record<string,{name:string;motifs:Motif[]}>;
 export type Pattern = keyof typeof finishes;
 export const patternKeys = Object.keys(finishes) as Pattern[];
@@ -54,11 +56,11 @@ export const retiredPatterns=["travertine","mineral"] as const satisfies readonl
 export const patternGroups={
  Signature:["sunDisc","orbit","layeredArches","abstractLeaves","marble","eclipse"],
  Nature:["floralScroll","bamboo","botanical","forest","mountain","waterflow"],
- Classic:["diamonds","inset","heritage","decoFan"],
- Modern:["arch","split","asymmetric","mural","scallop"],
+ Classic:["diamonds","inset","heritage","decoFan","artDecoSunburst"],
+ Modern:["arch","split","asymmetric","mural","scallop","steppedColourBlock"],
  Geometry:["facets","herringbone","grid","diagonal","panels","bands"],
  Textures:["limewash","linen","terracotta","brushed","stonewash"],
- Artisan:["venetian","onyx","suede","microcement"],
+ Artisan:["venetian","onyx","suede","microcement","softConcrete"],
  Architectural:["fluted","ribbed","slimframes","reception"]
 } as const satisfies Record<string,readonly Pattern[]>;
 export type PatternGroup=keyof typeof patternGroups;
