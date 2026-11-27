@@ -832,7 +832,7 @@ async function main(){
   assert.equal(await page.getByLabel("Your quoted rate (₹/sq ft)").inputValue(),"","no assumed market rate");
   await page.getByText("Budget is optional.",{exact:false}).waitFor();
   await page.getByRole("button",{name:"Brick wall",exact:true}).click();
-    const academyCount=await page.locator(".academy-grid article").count();
+    const academyCount=await page.locator("#academy-lesson-list > article").count();
     assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
     await page.getByRole("searchbox",{name:"Search the construction handbook"}).fill("foundation");
     await page.getByRole("link",{name:"Soil, foundations & underground",exact:true}).click();
@@ -848,7 +848,8 @@ async function main(){
     await page.reload({waitUntil:"load"});
     await page.getByRole("button",{name:"Lesson explored ✓"}).waitFor();
     await page.getByRole("link",{name:"All lessons",exact:true}).click();
-    await page.getByText(`1 of ${academyCount} lessons explored`,{exact:true}).waitFor();
+    await page.locator(".academy-progress").getByText(`1 of ${academyCount} lessons explored`,{exact:true}).waitFor();
+    assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("neerva-academy-v1")).completed.includes("spatial-thinking")),true,"the explored lesson persists on this device");
     await page.getByRole("searchbox",{name:"Search construction questions"}).fill("सरिया");
     assert.ok(await page.locator(".knowledge-answers details").count()>=2,"Hindi search returns site answers");
     await page.getByRole("button",{name:"हिंदी",exact:true}).click();
