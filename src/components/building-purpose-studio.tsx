@@ -1,6 +1,6 @@
 "use client";
 import {useMemo,useState,type FormEvent} from "react";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import {IrregularPlotPlanner} from "./irregular-plot-planner";
 import {CommercialProjectSave} from "./commercial-project-save";
 import {PlanFinishStudio} from "./plan-finish-studio";
@@ -63,7 +63,7 @@ function CommercialFront({plan,scheme}:{plan:BuildingConcept;scheme:FinishScheme
 export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolean}={}){
  const [draft,setDraft]=useState<BuildingBrief>(defaults),[brief,setBrief]=useState<BuildingBrief>(defaults),[selected,setSelected]=useState(0),[floor,setFloor]=useState(0),[full,setFull]=useState(false),[angle,setAngle]=useState(0);
  const result=useMemo(()=>generateBuildingConcepts(brief),[brief]),plan=result.plans[selected];
- const [showFurniture,setShowFurniture]=useState(false);
+ const [showFurniture,setShowFurniture]=useState(false),[lite,setLite]=useState(false);
  const [finishHistory,setFinishHistory]=useState<Record<string,FinishScheme>>({});
  const scheme=useMemo(()=>plan?(finishHistory[plan.id]??defaultFinishScheme({kind:"commercial",plan})):null,[plan,finishHistory]);
  const info=purposeDetails[draft.purpose],active=purposeDetails[brief.purpose];
@@ -109,7 +109,7 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
    {result.blockers.map(s=><p role="alert" key={s}>{s}</p>)}
    {plan&&scheme&&<><div className="purpose-options" role="group" aria-label="Choose zoning option">{result.plans.map((p,i)=><button type="button" key={p.id} aria-pressed={selected===i} onClick={()=>setSelected(i)}><strong>Option {i+1}</strong><span>{p.layout}</span></button>)}</div>
     <div className="purpose-tabs" role="group" aria-label="Floor selection">{Array.from({length:brief.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>{setFloor(i);setFull(false)}}>{i===0?"Ground":"Floor "+i}</button>)}</div>
-    <div className="purpose-tabs" aria-label="Preview controls"><button type="button" aria-pressed={showFurniture} onClick={()=>setShowFurniture(v=>!v)}>{showFurniture?"Hide indicative furniture":"Show indicative furniture"}</button><button type="button" onClick={()=>openPreview("building-exterior")}>Exterior & image render</button><button type="button" onClick={()=>openPreview("building-interior")}>Interior preview</button></div><p className="purpose-warning">Viewing generated {active.title.toLowerCase()} · Option {selected+1}. Core zones are reserves, not designed stairs or lifts.</p><div className="purpose-views"><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor} scheme={scheme} showFurniture={showFurniture}/></section><section><h3>3D concept · same plan</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle} scheme={scheme} showFurniture={showFurniture}/></section></div>
+    <div className="purpose-tabs" role="group" aria-label="Preview controls"><button type="button" aria-pressed={lite} onClick={()=>setLite(v=>!v)}>{lite?"Show 3D concept":"Lite view · 2D only"}</button><button type="button" aria-pressed={showFurniture} onClick={()=>setShowFurniture(v=>!v)}>{showFurniture?"Hide indicative furniture":"Show indicative furniture"}</button><button type="button" onClick={()=>openPreview("building-exterior")}>Exterior & image render</button><button type="button" onClick={()=>openPreview("building-interior")}>Interior preview</button></div><p className="purpose-warning">Viewing generated {active.title.toLowerCase()} · Option {selected+1}. Core zones are reserves, not designed stairs or lifts.</p><div className="purpose-views" style={lite?{gridTemplateColumns:"minmax(0,1fr)"}:undefined}><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor} scheme={scheme} showFurniture={showFurniture}/></section>{!lite&&<section><h3>3D concept · same plan</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle} scheme={scheme} showFurniture={showFurniture}/></section>}</div>
     <CommercialFront plan={plan} scheme={scheme}/>
     {cloudEnabled&&<CommercialProjectSave key={plan.id} plan={plan} scheme={scheme} onRestore={restore}/>}
     <PlanFinishStudio key={plan.id+":"+floor} source={{kind:"commercial",plan}} floor={floor} scheme={scheme} onChange={next=>setFinishHistory(h=>rememberFinish(h,plan.id,next))}/>
