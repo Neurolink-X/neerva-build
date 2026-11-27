@@ -18,3 +18,15 @@
 .purpose-table{overflow:auto}.purpose-table table{width:100%;border-collapse:collapse}.purpose-table th,.purpose-table td{padding:10px;text-align:left;border-bottom:1px solid #d7dfd3}
 @media(max-width:720px){.purpose-views{grid-template-columns:1fr}.purpose-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.purpose-studio *{animation:none!important;transition:none!important}}
+
+.purpose-engineering{margin-top:24px;padding:clamp(12px,3vw,24px);border:1px solid #d7dfd3;border-radius:14px;background:white;min-width:0}
+.purpose-engineering details{margin:10px 0;border:1px solid #d7dfd3;border-radius:10px;padding:12px;min-width:0}
+.purpose-engineering summary{cursor:pointer;font-weight:700;padding:6px 0;min-height:36px}
+.purpose-engineering select{max-width:100%;min-height:44px;border:1px solid #b9c9b7;background:white;color:#263d35;border-radius:8px;padding:6px}
+.purpose-metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:8px}
+.purpose-metrics div{padding:12px;border:1px solid #d7dfd3;border-radius:8px;display:grid;gap:6px}
+.purpose-metrics span{font-size:12px}
+.purpose-engineering canvas{object-fit:contain}
+.purpose-engineering .nbd-buttons{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.purpose-engineering .nbd-buttons button{border:1px solid #b9c9b7;border-radius:8px;background:white;color:#263d35;padding:8px 12px;min-height:44px}
+.purpose-engineering .nbd-buttons button[aria-pressed=true]{background:#244735;color:white}
