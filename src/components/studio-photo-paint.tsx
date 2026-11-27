@@ -7,7 +7,7 @@ import NextImage from "next/image";
 import {facadeSamples,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
 type Wall={mask?:PhotoMask;points:MaskCorner[];colour:string;accent:string;pattern:Pattern;opacity?:number};
-function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinted?:HTMLCanvasElement){
+function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinted?:HTMLCanvasElement,patternSurface?:HTMLCanvasElement,accentTint?:HTMLCanvasElement){
  const corners=wall.points.map(p=>({x:p.x*w,y:p.y*h}));
  ctx.save();
  if(wall.mask){
@@ -31,13 +31,21 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
    x:(1-v)*(a.x+(b.x-a.x)*u)+v*(d.x+(c.x-d.x)*u),
    y:(1-v)*(a.y+(b.y-a.y)*u)+v*(d.y+(c.y-d.y)*u)
   });
-  ctx.globalCompositeOperation="source-over";ctx.globalAlpha=wall.opacity??.78;
-  ctx.strokeStyle=ctx.fillStyle=wall.accent;const weight=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)*.006);ctx.lineCap="round";ctx.lineJoin="round";
+  // Mask an accent tint with the motif: the design inherits the same photographic
+  // highlights and shadows as the base paint. One reusable scratch canvas, only for patterns.
+  const layer=patternSurface&&accentTint?patternSurface.getContext("2d"):null;
+  if(layer&&patternSurface){if(patternSurface.width!==w)patternSurface.width=w;if(patternSurface.height!==h)patternSurface.height=h;layer.clearRect(0,0,w,h);}
+  const brush=layer??ctx;brush.save();
+  brush.globalCompositeOperation="source-over";brush.globalAlpha=wall.opacity??.78;
+  brush.strokeStyle=brush.fillStyle=wall.accent;const weight=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)*.006);brush.lineCap="round";brush.lineJoin="round";
   for(const motif of finishes[wall.pattern].motifs as Motif[]){
-   ctx.globalAlpha=(wall.opacity??.78)*(motif.alpha??1);ctx.lineWidth=weight*(motif.weight??1);ctx.beginPath();
-   motif.points.forEach(([u,v],i)=>{const p=at(u,v);if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y)});
-   if(motif.filled){ctx.closePath();ctx.fill()}else ctx.stroke();
+   brush.globalAlpha=(wall.opacity??.78)*(motif.alpha??1);brush.lineWidth=weight*(motif.weight??1);brush.beginPath();
+   motif.points.forEach(([u,v],i)=>{const p=at(u,v);if(i===0)brush.moveTo(p.x,p.y);else brush.lineTo(p.x,p.y)});
+   if(motif.filled){brush.closePath();brush.fill()}else brush.stroke();
   }
+  if(layer&&patternSurface&&accentTint){brush.globalCompositeOperation="source-in";brush.globalAlpha=1;brush.drawImage(accentTint,0,0,w,h);}
+  brush.restore();
+  if(layer&&patternSurface){ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;ctx.drawImage(patternSurface,0,0,w,h);}
  }
  ctx.restore();
 }
@@ -51,12 +59,13 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  const sample=facadeSamples.find(s=>s.id===sampleId)??facadeSamples[0];
  const facadeZones=sample.zones;
  const [originalKey,setOriginalKey]=useState("");
+ const [wholeShade,setWholeShade]=useState(colour);
 
  const [override,setOverride]=useState<{source:string;value:string}|null>(null);
  const base=override?.source===colour?override.value:colour;
  const canvas=useRef<HTMLCanvasElement>(null),image=useRef<HTMLCanvasElement|null>(null),url=useRef<string|null>(null),pending=useRef<HTMLImageElement|null>(null),generation=useRef(0);
  const photoTimer=useRef<number|null>(null);
- const tintCache=useRef(new Map<string,HTMLCanvasElement>());
+ const tintCache=useRef(new Map<string,HTMLCanvasElement>()),patternScratch=useRef<HTMLCanvasElement|null>(null);
  const sourceLuma=useRef<Uint8Array|null>(null),tintPixels=useRef<ImageData|null>(null);
  const [history,setHistory]=useState(emptyMaskHistory),[ready,setReady]=useState(false);
  const [closeUp,setCloseUp]=useState(false);
@@ -95,19 +104,25 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    for(let i=0,j=0;j<luma.length;i+=4,j++){const values=lookup[luma[j]];data[i]=values[0];data[i+1]=values[1];data[i+2]=values[2];data[i+3]=255;}
    t.putImageData(pixels,0,0);shades.set(hex,surface);return surface;
   }
+  function paintWall(wall:Wall){
+   const tinted=tint(wall.colour);
+   if(wall.pattern==="plain"){drawWall(ctx!,wall,w,h,tinted);return;}
+   const accentTint=tint(wall.accent);patternScratch.current??=document.createElement("canvas");
+   drawWall(ctx!,wall,w,h,tinted,patternScratch.current,accentTint);
+  }
   if(!originalVisible){
    if(scene==="facade"){
     const styles=stylesForTarget(facadeStyles,target,{colour:base,accent,pattern:effectivePattern,opacity},facadeZones);
     // Group by base shade, so a single whole-exterior selection renders one tint.
     const colours=new Set(facadeZones.map(z=>styles[z.id]?.colour).filter((s):s is string=>!!s));
-    for(const colour of colours){const tinted=tint(colour);for(const zone of facadeZones){const style=styles[zone.id];if(style?.colour===colour)drawWall(ctx,{...style,points:zone.points,mask:zone.mask},w,h,tinted)}}
+    for(const colour of colours)for(const zone of facadeZones){const style=styles[zone.id];if(style?.colour===colour)paintWall({...style,points:zone.points,mask:zone.mask});}
     // Explicit user-marked additions use the whole-exterior shade, not an automatic colour flood.
-    const whole=target==="all"?base:facadeStyles[facadeZones[0].id]?.colour??base;
+    const whole=target==="all"?base:wholeShade;
     for(const area of extraPaintAreas)drawWall(ctx,{points:area,colour:whole,accent:whole,pattern:"plain"},w,h,tint(whole));
     if(patchMode&&valid)drawWall(ctx,{points,colour:base,accent:base,pattern:"plain"},w,h,tint(base));
    }else{
-    walls.forEach((wall,index)=>{if(index!==editing)drawWall(ctx,wall,w,h,tint(wall.colour))});
-    if(valid)drawWall(ctx,{points,colour:base,accent,pattern:effectivePattern,opacity,mask:currentMask},w,h,tint(base));
+    walls.forEach((wall,index)=>{if(index!==editing)paintWall(wall)});
+    if(valid)paintWall({points,colour:base,accent,pattern:effectivePattern,opacity,mask:currentMask});
    }
   }
   if((scene!=="facade"||patchMode)&&!originalVisible&&points.length>0&&!valid){
@@ -121,11 +136,11 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
     ctx.fillText(String(i+1),p.x*w+9,p.y*h-8);ctx.fillStyle="#ffe16a";
    }ctx.restore();
   }
- },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas]);
+ },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas,wholeShade]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask)=>{
   const ticket=++generation.current;
   if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}
-  for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;tintPixels.current=null;
+  for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;tintPixels.current=null;if(patternScratch.current){patternScratch.current.width=0;patternScratch.current.height=0;patternScratch.current=null;}
   if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}
   if(image.current){image.current.width=0;image.current.height=0;}
   setCloseUp(false);setPatchMode(false);setExtraPaintAreas([]);setPreset(corners&&mask?{points:corners,mask}:null);
@@ -155,10 +170,11 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  function openFacade(id:FacadeSampleId=sampleId){
   if(scene==="facade"&&ready&&id===sampleId)return;
   const next=facadeSamples.find(s=>s.id===id)??facadeSamples[0];
-  setScene("facade");setSampleId(next.id);setTarget("all");setFacadeStyles({});setMode("paint");openPhoto(next.src);
+  setWholeShade(base);setScene("facade");setSampleId(next.id);setTarget("all");setFacadeStyles({});setMode("paint");openPhoto(next.src);
  }
  function chooseTarget(next:FacadeTarget){
   if(next===target)return;
+  if(target==="all")setWholeShade(base);
   setPatchMode(false);setHistory(emptyMaskHistory());
   const saved=stylesForTarget(facadeStyles,target,currentStyle,facadeZones);
   setFacadeStyles(saved);setTarget(next);setShowOriginal(false);setCloseUp(false);
@@ -169,13 +185,13 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  function chooseMode(next:"paint"|"design"){
   setPatchMode(false);if(scene==="facade")setHistory(emptyMaskHistory());
   if(next==="design"&&mode==="paint"&&scene==="facade"&&target==="all"){
-   setFacadeStyles(stylesForTarget(facadeStyles,target,currentStyle,facadeZones));setTarget("right");setCloseUp(false);
+   setWholeShade(base);setFacadeStyles(stylesForTarget(facadeStyles,target,currentStyle,facadeZones));setTarget("right");setCloseUp(false);
   }
   setMode(next);setShowOriginal(false);
  }
  function toggleOriginal(){setOriginalKey(styleKey);setShowOriginal(!originalVisible);}
 
- useEffect(()=>{const frame=requestAnimationFrame(openRoom),shades=tintCache.current;const invalidate=()=>{++generation.current;};return ()=>{invalidate();cancelAnimationFrame(frame);if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of shades.values()){surface.width=0;surface.height=0;}shades.clear();sourceLuma.current=null;tintPixels.current=null;if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
+ useEffect(()=>{const frame=requestAnimationFrame(openRoom),shades=tintCache.current;const invalidate=()=>{++generation.current;};return ()=>{invalidate();cancelAnimationFrame(frame);if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of shades.values()){surface.width=0;surface.height=0;}shades.clear();sourceLuma.current=null;tintPixels.current=null;if(patternScratch.current){patternScratch.current.width=0;patternScratch.current.height=0;patternScratch.current=null;}if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
  async function load(e:ChangeEvent<HTMLInputElement>){
   const f=e.target.files?.[0];e.target.value="";if(!f)return;
   if(!["image/jpeg","image/png","image/webp"].includes(f.type)||f.size>10*1024*1024){

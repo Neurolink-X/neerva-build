@@ -1213,8 +1213,10 @@ async function main(){
  await page.getByText("Wall selection tools",{exact:true}).click();
  await page.getByRole("button",{name:/Reset wall selection/}).click();
  await mark(.06);
+ const plainBeforePattern=await canvas.evaluate(c=>c.toDataURL());
  await page.getByRole("button",{name:"Paint + design",exact:true}).click();
  await page.getByRole("button",{name:"Pinstripes",exact:true}).click();
+ assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),plainBeforePattern,"pattern must alter actual canvas pixels");
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
  const png=()=>canvas.evaluate(c=>c.toDataURL());
