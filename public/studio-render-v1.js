@@ -7,6 +7,22 @@ const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]
 const product=(a,b)=>a.map((v,i)=>v*b[i]);
 const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 const EPS=.0001;
+const vec=v=>Array.isArray(v)&&v.length===3&&v.every(Number.isFinite);
+const unitColor=v=>vec(v)&&v.every(x=>x>=0&&x<=1);
+const range=(v,a,b)=>Number.isFinite(v)&&v>=a&&v<=b;
+function validateScene(boxes,camera){
+ if(!camera||![camera.origin,camera.forward,camera.right,camera.up].every(vec)||!range(camera.fov,10,120))throw new Error("Invalid render camera.");
+ const axes=[camera.forward,camera.right,camera.up];
+ if(axes.some(v=>Math.abs(Math.hypot(...v)-1)>.02)||Math.abs(dot(axes[0],axes[1]))>.02||Math.abs(dot(axes[0],axes[2]))>.02||Math.abs(dot(axes[1],axes[2]))>.02)throw new Error("Invalid camera orientation.");
+ if(boxes.some(b=>!b||!vec(b.lo)||!vec(b.hi)||b.lo.some((v,i)=>v>=b.hi[i]||Math.abs(v)>10000||Math.abs(b.hi[i])>10000)||!unitColor(b.color)||!range(b.opacity,0,1)||!range(b.rough,0,1)||!range(b.metal,0,1)))throw new Error("Invalid render geometry or material.");
+}
+const linear=v=>v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4);
+function highlight(n,l,d,rough,metal,albedo){
+ const h=norm(sub(l,d)),nh=Math.max(0,dot(n,h)),vh=Math.max(0,-dot(d,h));
+ const f0=albedo.map(v=>.04*(1-metal)+v*metal),f=f0.map(v=>v+(1-v)*Math.pow(1-vh,5));
+ const exponent=Math.min(256,Math.max(4,2/Math.pow(Math.max(.09,rough),2)-2));
+ return mul(f,Math.pow(nh,exponent)*Math.min(8,(exponent+2)/8));
+}
 export function intersectBox(o,d,lo,hi,limit=Infinity){
  let near=-Infinity,far=limit,na=0,fa=0,ns=1,fs=1;
  for(let k=0;k<3;k++){
@@ -76,13 +92,18 @@ function shade(tree,origin,dir,rng,evening,lights){
   // Low-amplitude, world-anchored diffuse variation gives matte surfaces depth
   // without texture downloads, additional rays or changes to scene geometry.
   const texture=m.opacity>.98&&m.rough>.6&&m.metal<.15?1+.025*Math.sin(p[0]*67+p[1]*53+p[2]*79)*Math.cos(p[0]*31-p[2]*43):1;
-  const albedo=m.color.map(v=>clamp(v*texture*materialVariation(m.finish,p,n),0,1));
+  const albedo=m.color.map(v=>clamp(linear(v)*texture*materialVariation(m.finish,p,n),0,1));
   // Transparent panels allow transmission; this is a bounded approximation, not full spectral refraction.
-  if(m.opacity<.98&&rng()>m.opacity){o=add(p,mul(d,EPS*5));weight=product(weight,m.color.map(v=>.8+.2*v));continue}
+  if(m.opacity<.98){
+   const fresnel=.04+.96*Math.pow(1-clamp(-dot(d,n),0,1),5);
+   if(rng()<fresnel){d=norm(reflect(d,n));o=add(p,mul(n,EPS*5));continue;}
+   if(rng()>m.opacity){o=add(p,mul(d,EPS*5));weight=product(weight,m.color.map(v=>.88+.12*v));continue;}
+  }
   const l=norm(add(light,mul(hemisphere(light,rng),.035))),cos=Math.max(0,dot(n,l));
   if(cos>0){const blocker=nearest(tree,add(p,mul(n,EPS*5)),l);const visibility=blocker?(blocker.b.opacity<.98?.5:0):1;
-   result=add(result,mul(product(product(weight,albedo),sun),cos*visibility*(1-m.metal)*.6))}
-  if(bounce===0&&lights?.length){for(const lamp of lights){const delta=sub(lamp.position,p),distance=Math.hypot(...delta);if(distance<EPS)continue;const l=mul(delta,1/distance),cos=Math.max(0,dot(n,l));if(cos===0)continue;const shadow=nearest(tree,add(p,mul(n,EPS*5)),l,distance-EPS*8);if(!shadow||shadow.b.opacity<.98)result=add(result,mul(product(product(weight,albedo),lamp.color),cos*lamp.power/(1+distance*distance)*(shadow?.b.opacity<.98?.5:1)));}}
+   const diffuse=mul(albedo,(1-m.metal)*.6),gloss=highlight(n,l,d,m.rough,m.metal,albedo);
+   result=add(result,mul(product(product(weight,add(diffuse,gloss)),sun),cos*visibility));}
+  if(bounce===0&&lights?.length){for(const lamp of lights){const sample=add(lamp.position,[(rng()-.5)*.35,0,(rng()-.5)*.35]),delta=sub(sample,p),distance=Math.hypot(...delta);if(distance<EPS)continue;const l=mul(delta,1/distance),cos=Math.max(0,dot(n,l));if(cos===0)continue;const shadow=nearest(tree,add(p,mul(n,EPS*5)),l,distance-EPS*8);if(!shadow||shadow.b.opacity<.98)result=add(result,mul(product(product(weight,add(mul(albedo,1-m.metal),highlight(n,l,d,m.rough,m.metal,albedo))),lamp.color),cos*lamp.power/(1+distance*distance)*(shadow?.b.opacity<.98?.5:1)));}}
   const spec=clamp(.04+m.metal*.72+(1-m.rough)*.12,.04,.92);
   if(rng()<spec){d=norm(add(reflect(d,n),mul(hemisphere(n,rng),m.rough*m.rough*.65)));if(dot(d,n)<=0)d=hemisphere(n,rng);weight=product(weight,m.color.map(v=>m.metal?v:.85+.15*v));}
   else{d=hemisphere(n,rng);weight=product(weight,albedo);}
@@ -95,6 +116,7 @@ export function renderScene(job,report){
  const {boxes,camera,width,height,samples,evening}=job;
  const lights=Array.isArray(job.lights)?job.lights.slice(0,4).filter(l=>l.position?.length===3&&l.color?.length===3&&[...l.position,...l.color,l.power].every(Number.isFinite)&&l.power>=0&&l.power<=100):[];
  if(!Array.isArray(boxes)||!boxes.length||boxes.length>2500||!Number.isInteger(width)||!Number.isInteger(height)||width<16||height<16||width>768||height>768||width*height>420000||!Number.isInteger(samples)||samples<1||samples>16)throw Error("Unsupported render size or scene complexity.");
+ validateScene(boxes,camera);
  const tree=bvh(boxes),acc=new Float32Array(width*height*3),rng=random(7319);
  const scale=Math.tan(camera.fov*Math.PI/360),aspect=width/height;
  for(let s=0;s<samples;s++){
