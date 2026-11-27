@@ -16,9 +16,11 @@ export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishSch
  push([0,h,0],[w,h+.12,d],shadeRgb(f.ceiling),finishRoughness(f.materials?.ceiling));
  const portals=commercialPortals(plan).filter(p=>p.zoneId===r.id);
  for(const side of ["front","rear","left","right"] as Side[]){
-  const vertical=side==="left"||side==="right",plane=vertical?(side==="left"?r.x:r.x+r.w):(side==="front"?r.y:r.y+r.d),start=vertical?r.y:r.x,length=vertical?r.d:r.w;
-  const openings=portals.filter(p=>p.axis===(vertical?"y":"x")&&Math.abs((vertical?p.x:p.y)-plane)<1e-5).map(p=>({atFt:(vertical?p.y:p.x)-start,widthFt:p.length,sillFt:p.kind==="access"?0:3,heightFt:p.kind==="access"?8:5,kind:p.kind})).filter(p=>p.atFt>=-1e-5&&p.atFt+p.widthFt<=length+1e-5).sort((a,b)=>a.atFt-b.atFt);
-  const accepted:typeof openings=[];for(const p of openings)if(!accepted.length||p.atFt>=accepted[accepted.length-1].atFt+accepted[accepted.length-1].widthFt-1e-6)accepted.push({...p,atFt:Math.max(0,p.atFt)});
+  const vertical:boolean=side==="left"||side==="right";
+  const plane:number=vertical?(side==="left"?r.x:r.x+r.w):(side==="front"?r.y:r.y+r.d);
+  const start:number=vertical?r.y:r.x,length:number=vertical?r.d:r.w;
+  const openings:{atFt:number;widthFt:number;sillFt:number;heightFt:number;kind:"access"|"exterior-glazing"}[]=portals.filter(p=>p.axis===(vertical?"y":"x")&&Math.abs((vertical?p.x:p.y)-plane)<1e-5).map(p=>({atFt:(vertical?p.y:p.x)-start,widthFt:p.length,sillFt:p.kind==="access"?0:3,heightFt:p.kind==="access"?8:5,kind:p.kind})).filter(p=>p.atFt>=-1e-6&&p.atFt+p.widthFt<=length+1e-6).sort((a,b)=>a.atFt-b.atFt);
+  const accepted: {atFt:number;widthFt:number;sillFt:number;heightFt:number;kind:"access"|"exterior-glazing"}[]=[];for(const p of openings)if(!accepted.length||p.atFt>=accepted[accepted.length-1].atFt+accepted[accepted.length-1].widthFt-1e-6){const atFt=Math.max(0,p.atFt),widthFt=Math.min(p.widthFt,length-atFt);if(widthFt>1e-6)accepted.push({...p,atFt,widthFt});}
   const coords=(a:number,b:number,low:number,high:number,t:number):[Vec3,Vec3]=>vertical?[[side==="left"?-t:w,low*FT,a*FT],[side==="left"?0:w+t,high*FT,b*FT]]:[[a*FT,low*FT,side==="front"?-t:d],[b*FT,high*FT,side==="front"?0:d+t]];
   for(const cell of wallBoxes(length,13,accepted)){const [lo,hi]=coords(cell.x0,cell.x1,cell.y0,cell.y1,.12);push(lo,hi,shadeRgb(wallShade(f,side,f.wall)),finishRoughness(f.materials?.wall));}
   for(const p of accepted.filter(p=>p.kind==="exterior-glazing")){const [lo,hi]=coords(p.atFt,p.atFt+p.widthFt,3,8,.03);push(lo,hi,shadeRgb(scheme.glass),.15,.3);}
