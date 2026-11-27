@@ -1,4 +1,5 @@
 import {wallBoxes,type Rect} from "./plan-model.ts";
+import {commercialInternalSpaces} from "./commercial-internal.ts";
 import {commercialPortals} from "./commercial-detail.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
 export type ConceptWall={id:string;floor:number;axis:"x"|"y";plane:number;start:number;end:number;bottom:number;top:number;thickness:number};
@@ -10,6 +11,9 @@ export function commercialElements(plan:BuildingConcept){
  for(const z of plan.zones.filter(z=>!["open","parking"].includes(z.kind))){
   slabs.push({id:z.id+"-floor",floor:z.floor,x:z.x,y:z.y,w:z.w,d:z.d,bottom:0,top:.35});
   if(z.floor===plan.brief.floors-1)slabs.push({id:z.id+"-roof",floor:z.floor,x:z.x,y:z.y,w:z.w,d:z.d,bottom:12.5,top:13});
+ }
+ const internal=commercialInternalSpaces(plan),parents=new Set(internal.map(r=>r.parentId));
+ for(const z of [...plan.zones.filter(z=>!["open","parking"].includes(z.kind)&&!parents.has(z.id)),...internal]){
   for(const [axis,plane,a,b] of [["x",z.y,z.x,z.x+z.w],["x",z.y+z.d,z.x,z.x+z.w],["y",z.x,z.y,z.y+z.d],["y",z.x+z.w,z.y,z.y+z.d]] as const){
    const key=[z.floor,axis,Math.round(plane/EPS)].join(":");
    const g=groups.get(key)??{floor:z.floor,axis,plane,spans:[]};g.spans.push({a,b});groups.set(key,g);
