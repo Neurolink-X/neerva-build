@@ -6,9 +6,7 @@ import {stairStepDepthFt} from "./stair-study.ts";
 import {commercialFrontPanels,commercialFacadeProfile} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
-const ft=.3048;
-const normalize=(v:Vec3):Vec3=>{const n=Math.hypot(...v)||1;return [v[0]/n,v[1]/n,v[2]/n]};
-const cross=(a:Vec3,b:Vec3):Vec3=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+import {FEET_TO_METRES as ft,normalize,cross} from "./core/geometry-primitives.ts";
 const finishes={limestone:[.72,.67,.56],concrete:[.49,.52,.52],terracotta:[.58,.29,.18]} as const;
 export type BuildingFinish=keyof typeof finishes;
 /** Render concept walls, openings and slabs from the shared element model. */

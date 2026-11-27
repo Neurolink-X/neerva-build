@@ -20,7 +20,7 @@ import {exposedRoofPatches} from "@/modules/studio/plan-surfaces";
 import {nonRoadBoundaryEdges} from "@/modules/studio/site-shape";
 import {studioDevice,configureStudioRenderer,releaseStudioRenderer,proceduralTexture,plasterTexture,projectedFit} from "@/modules/studio/core/render-core";
 import {browserFrameScheduler} from "@/modules/studio/core/frame-scheduler";
-const FT=.3048;
+import {FEET_TO_METRES as FT} from "@/modules/studio/core/geometry-primitives";
 type Mode="exterior"|"dollhouse"|"floor"|"walkthrough";
 type CameraView="front"|"rear"|"left"|"right"|"top"|"fit";
 export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:{design:StudioDesign;colour:string;planModel?:PlanModel;selectedFloor?:number;scheme?:FinishScheme}){

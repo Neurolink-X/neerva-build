@@ -80,9 +80,9 @@
 
 /* Keep photographic pixels clean; captions remain readable below every image. */
 .nstudio-landing .nstudio-photo,.nstudio-landing .nstudio-feature-photo{display:grid;grid-template-rows:minmax(0,1fr) auto;overflow:visible;aspect-ratio:auto;max-height:none;box-shadow:none;background:transparent}
-.nstudio-landing .nstudio-photo img{position:relative!important;inset:auto!important;width:100%!important;height:auto!important;aspect-ratio:1.35;object-fit:cover;border-radius:16px}
+.nstudio-landing .nstudio-photo img{display:block;width:100%;height:auto;aspect-ratio:1.5;object-fit:contain;border-radius:16px}
 .nstudio-landing .nstudio-feature-photo img{width:100%;height:auto;aspect-ratio:600/264;object-fit:contain;border-radius:14px;background:#e8eee6}
 .nstudio-landing .nstudio-paint-photo img{aspect-ratio:auto;max-height:360px;object-fit:contain}
 .nstudio-landing .nstudio-photo figcaption,.nstudio-landing .nstudio-feature-photo figcaption{position:static;color:#526456;background:none;padding:8px 0 0;border-radius:0;font-size:12px;line-height:1.5}
 .nstudio-form-presets{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px}.nstudio-form-presets button{min-height:44px;padding:8px 12px;border:1px solid #c4d2c5;background:#f5f8f3;color:#254c37;border-radius:8px;font-weight:700;cursor:pointer}.nstudio-form-presets button[aria-pressed=true]{background:#254c37;color:white}.nstudio-form-group{margin:0 0 14px;padding:0;border:0;min-width:0}.nstudio-form-group legend{font-weight:750;margin-bottom:10px;color:#304b38}.nstudio-advanced{margin-top:12px;border-top:1px solid #d5e1d7}.nstudio-advanced summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700;color:#304b38}.nstudio-start-form small{overflow-wrap:anywhere}
-@media(max-width:650px){.nstudio-landing .nstudio-photo img{aspect-ratio:1.55}.nstudio-landing .nstudio-feature-photo img{aspect-ratio:auto}.nstudio-form-presets button{flex:1 1 80px}.nstudio-start-grid label{overflow-wrap:anywhere}}
+@media(max-width:650px){.nstudio-landing .nstudio-photo img{aspect-ratio:1.5}.nstudio-landing .nstudio-feature-photo img{aspect-ratio:auto}.nstudio-form-presets button{flex:1 1 80px}.nstudio-start-grid label{overflow-wrap:anywhere}}
