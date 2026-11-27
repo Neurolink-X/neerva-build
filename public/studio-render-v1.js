@@ -56,6 +56,16 @@ function hemisphere(n,rng){
 }
 const reflect=(d,n)=>sub(d,mul(n,2*dot(d,n)));
 function random(seed){return ()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296}}
+/** Meter-anchored material patterns shared by image renders. No network assets. */
+export function materialVariation(finish,p,n){
+ const a=Math.abs(n[0])>.5?p[2]:p[0],b=Math.abs(n[1])>.5?p[2]:p[1];
+ const fract=x=>x-Math.floor(x),edge=(x,period)=>Math.min(fract(x/period),1-fract(x/period));
+ if(finish==="tile")return edge(a,.6)<.012||edge(b,.6)<.012?.62:.96+.03*Math.sin(a*41+b*17);
+ if(finish==="marble"){const vein=Math.abs(Math.sin(a*8+b*3+1.8*Math.sin(b*5)+.6*Math.sin(a*19)));return .79+.21*Math.min(1,vein*4);}
+ if(finish==="wood")return .87+.11*Math.sin(a*95+2*Math.sin(b*3))+.02*Math.sin(a*250+b*6);
+ if(finish==="panel"||finish==="acp")return edge(a,finish==="acp"?1.2:.3)<.009||finish==="acp"&&edge(b,1.2)<.009?.55:.98;
+ return 1;
+}
 function shade(tree,origin,dir,rng,evening){
  let result=[0,0,0],weight=[1,1,1],o=origin,d=dir;
  const light=norm(evening?[-.8,.28,-.6]:[-.65,.85,-.7]),sun=evening?[2.1,1.1,.55]:[2.4,2.25,1.95];
@@ -66,7 +76,7 @@ function shade(tree,origin,dir,rng,evening){
   // Low-amplitude, world-anchored diffuse variation gives matte surfaces depth
   // without texture downloads, additional rays or changes to scene geometry.
   const texture=m.opacity>.98&&m.rough>.6&&m.metal<.15?1+.025*Math.sin(p[0]*67+p[1]*53+p[2]*79)*Math.cos(p[0]*31-p[2]*43):1;
-  const albedo=m.color.map(v=>clamp(v*texture,0,1));
+  const albedo=m.color.map(v=>clamp(v*texture*materialVariation(m.finish,p,n),0,1));
   // Transparent panels allow transmission; this is a bounded approximation, not full spectral refraction.
   if(m.opacity<.98&&rng()>m.opacity){o=add(p,mul(d,EPS*5));weight=product(weight,m.color.map(v=>.8+.2*v));continue}
   const l=norm(add(light,mul(hemisphere(light,rng),.035))),cos=Math.max(0,dot(n,l));
