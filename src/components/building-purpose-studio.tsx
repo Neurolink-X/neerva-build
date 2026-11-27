@@ -2,7 +2,7 @@
 import {useMemo,useState,type FormEvent} from "react";
 import Link from "next/link";
 import {PlanFinishStudio} from "./plan-finish-studio";
-import {defaultFinishScheme,type FinishScheme} from "@/modules/studio/finish-model";
+import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/studio/finish-model";
 import {BuildingEngineeringPanel} from "./building-engineering-panel";
 import {buildingPurposes,purposeDetails,generateBuildingConcepts,buildingInputRequirements,buildingStarter,validateBuildingBrief,type BuildingPurpose,type BuildingBrief,type BuildingConcept,type BuildingZone} from "@/modules/studio/building-purpose";
 import {commercialFixtures,commercialPortals,commercialFrontPanels} from "@/modules/studio/commercial-detail";
@@ -52,8 +52,8 @@ function CommercialFront({plan,scheme}:{plan:BuildingConcept;scheme:FinishScheme
 export function BuildingPurposeStudio(){
  const [draft,setDraft]=useState<BuildingBrief>(defaults),[brief,setBrief]=useState<BuildingBrief>(defaults),[selected,setSelected]=useState(0),[floor,setFloor]=useState(0),[full,setFull]=useState(false),[angle,setAngle]=useState(0);
  const result=useMemo(()=>generateBuildingConcepts(brief),[brief]),plan=result.plans[selected];
- const [finishDraft,setFinishDraft]=useState<FinishScheme|null>(null);
- const scheme=useMemo(()=>plan?(finishDraft?.planId===plan.id?finishDraft:defaultFinishScheme({kind:"commercial",plan})):null,[plan,finishDraft]);
+ const [finishHistory,setFinishHistory]=useState<Record<string,FinishScheme>>({});
+ const scheme=useMemo(()=>plan?(finishHistory[plan.id]??defaultFinishScheme({kind:"commercial",plan})):null,[plan,finishHistory]);
  const info=purposeDetails[draft.purpose],active=purposeDetails[brief.purpose];
  const requirements=buildingInputRequirements(draft),issues=validateBuildingBrief(draft);
  function update<K extends keyof BuildingBrief>(key:K,value:BuildingBrief[K]){setDraft(d=>({...d,[key]:value}))}
@@ -84,7 +84,7 @@ export function BuildingPurposeStudio(){
     <div className="purpose-tabs" role="group" aria-label="Floor selection">{Array.from({length:brief.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>{setFloor(i);setFull(false)}}>{i===0?"Ground":"Floor "+i}</button>)}</div>
     <div className="purpose-views"><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor} scheme={scheme}/></section><section><h3>3D massing · same zones</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle} scheme={scheme}/></section></div>
     <CommercialFront plan={plan} scheme={scheme}/>
-    <PlanFinishStudio key={plan.id+":"+floor} source={{kind:"commercial",plan}} floor={floor} scheme={scheme} onChange={setFinishDraft}/>
+    <PlanFinishStudio key={plan.id+":"+floor} source={{kind:"commercial",plan}} floor={floor} scheme={scheme} onChange={next=>setFinishHistory(h=>rememberFinish(h,plan.id,next))}/>
     <details><summary>Plan legend</summary><p>Brown: proposed entry. Blue: proposed glazing. Furniture and floor partitions are illustrative.</p></details>
     <details><summary>Selected floor zone schedule</summary><div className="purpose-table"><table><thead><tr><th>Zone</th><th>Dimensions (ft)</th><th>Area (sq ft)</th></tr></thead><tbody>{plan.zones.filter(z=>z.floor===floor).map(z=><tr key={z.id}><td>{z.label}</td><td>{z.w.toFixed(1)} × {z.d.toFixed(1)}</td><td>{Math.round(z.w*z.d)}</td></tr>)}</tbody></table></div></details>
     {brief.purpose==="rental"&&<details><summary>Rental room schedules · {brief.rentalBedrooms??1} BHK per unit</summary>{rentalLayouts(plan).filter(u=>u.floor===floor).map((u,i)=><div key={u.unitId}><h4>Unit {i+1}</h4><ul>{u.rooms.map(r=><li key={r.id}>{r.label} · {r.w.toFixed(1)} × {r.d.toFixed(1)} ft</li>)}</ul></div>)}<p>Indicative room extents only; doors, windows, wall thickness and independent utility connections need professional design.</p></details>}
