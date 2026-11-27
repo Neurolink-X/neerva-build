@@ -549,6 +549,13 @@ async function main(){
     const surfaces=await page.evaluate(()=>({root:getComputedStyle(document.documentElement).backgroundColor,body:getComputedStyle(document.body).backgroundColor,home:getComputedStyle(document.querySelector(".nbh")).backgroundColor}));
     assert.deepEqual(surfaces,{root:"rgb(245, 244, 239)",body:"rgb(245, 244, 239)",home:"rgb(245, 244, 239)"},"manifest and first page surfaces agree");
     assert.ok(appManifest.icons?.some(icon=>icon.purpose?.includes("maskable")),"PWA maskable icon");
+    for(const size of [192,512]){
+     const icon=appManifest.icons.find(i=>i.sizes===size+"x"+size&&i.purpose==="any");
+     assert.ok(icon,"PWA icon "+size+"px must be declared");
+     const response=await page.request.get(new URL(icon.src,base).href);
+     assert.equal(response.status(),200);assert.match(response.headers()["content-type"],/image\/png/);
+     const bytes=await response.body();assert.equal(bytes.subarray(1,4).toString(),"PNG");assert.equal(bytes.readUInt32BE(16),size);assert.equal(bytes.readUInt32BE(20),size);
+    }
     for(const asset of ["/icon","/apple-icon"]){
       const response=await page.request.get(base+asset);
       assert.equal(response.status(),200,asset+" PNG route");
@@ -614,9 +621,11 @@ async function main(){
     await page.locator(".unified-footer-install-feedback").filter({hasText:"Installation cancelled"}).waitFor();
     assert.equal(await page.evaluate(()=>window.__footerNativePrompts),1,"footer calls native install prompt exactly once");
     assert.equal(page.url(),beforeInstallUrl,"dismissed native install stays on current page");
-    await footerInstall.click();
-    await page.locator(".unified-footer-install-feedback").filter({hasText:"Direct installation is not available"}).waitFor();
-    assert.equal(page.url(),beforeInstallUrl,"unsupported install displays inline guide without redirect");
+    const fallback=page.locator(".unified-footer-app a.unified-footer-app-link[href='/install']");
+    await fallback.waitFor({state:"visible"});
+    assert.equal(await footerInstall.count(),0,"consumed prompt must not offer another native action");
+    assert.equal(page.url(),beforeInstallUrl,"dismissal leaves the user on the current page");
+    assert.equal(await fallback.innerText(),"Get Neerva app","unsupported browser offers setup guidance, not fake install");
     await page.evaluate(()=>{const event=new Event("beforeinstallprompt",{cancelable:true});Object.assign(event,{prompt:async()=>{window.__footerNativePrompts++;},userChoice:Promise.resolve({outcome:"accepted"})});window.dispatchEvent(event);});
     await footerInstall.click();
     await page.locator(".unified-footer-install-feedback").filter({hasText:"Installation accepted"}).waitFor();
