@@ -75,7 +75,7 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
 export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:FinishScheme,fullHeight=false):RenderSnapshot{
  const {widthFt,depthFt}=plan.brief,boxes:RenderBox[]=[];
  const x=(v:number)=>(v-widthFt/2)*ft,z=(v:number)=>(v-depthFt/2)*ft;
- const add=(lo:Vec3,hi:Vec3,color:Vec3,rough=.82,opacity=1)=>{if(hi.every((v,i)=>v>lo[i]))boxes.push({lo,hi,color,rough,metal:0,opacity});};
+ const add=(lo:Vec3,hi:Vec3,color:Vec3,rough=.82,opacity=1,finish?:FinishScheme["cladding"])=>{if(hi.every((v,i)=>v>lo[i]))boxes.push({lo,hi,color,rough,metal:0,opacity,finish});};
  const elements=commercialElements(plan),cut=fullHeight?13:7;
  const rooms=finishSpaces({kind:"commercial",plan}).filter(r=>r.floor===floor);
  const selected=scheme.planId===plan.id?scheme:undefined;
@@ -84,7 +84,7 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
   // Apply finishes only over existing slab intersections, never fill stair or shaft voids.
   for(const r of rooms){
    const a=Math.max(r.x,s.x),b=Math.min(r.x+r.w,s.x+s.w),d=Math.max(r.y,s.y),e=Math.min(r.y+r.d,s.y+s.d);
-   if(b-a>1e-5&&e-d>1e-5)add([x(a),s.top*ft,z(d)],[x(b),s.top*ft+.003,z(e)],shadeRgb(selected?.rooms[r.id]?.floor??"#d5cabc"),finishRoughness(selected?.rooms[r.id]?.materials?.floor));
+   if(b-a>1e-5&&e-d>1e-5)add([x(a),s.top*ft,z(d)],[x(b),s.top*ft+.003,z(e)],shadeRgb(selected?.rooms[r.id]?.floor??"#d5cabc"),finishRoughness(selected?.rooms[r.id]?.materials?.floor),1,selected?.rooms[r.id]?.materials?.floor);
   }
  }
  for(const w of elements.walls.filter(w=>w.floor===floor&&w.bottom<cut)){
@@ -95,13 +95,29 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
    const owner=owners.find(o=>o.inward===inward),f=owner?selected?.rooms[owner.id]:undefined;
    const tone=shadeRgb(owner?wallShade(f,owner.side,selected?.exterior??"#ddd7c9"):selected?.exterior??"#ddd7c9");
    const a=w.plane+(inward===-1?-t:0),b=w.plane+(inward===-1?0:t);
-   if(w.axis==="x")add([x(w.start),lo,z(a)],[x(w.end),hi,z(b)],tone,finishRoughness(f?.materials?.wall));
-   else add([x(a),lo,z(w.start)],[x(b),hi,z(w.end)],tone,finishRoughness(f?.materials?.wall));
+   if(w.axis==="x")add([x(w.start),lo,z(a)],[x(w.end),hi,z(b)],tone,finishRoughness(f?.materials?.wall),1,f?.materials?.wall);
+   else add([x(a),lo,z(w.start)],[x(b),hi,z(w.end)],tone,finishRoughness(f?.materials?.wall),1,f?.materials?.wall);
   }
  }
- for(const p of elements.portals.filter(p=>p.floor===floor&&p.kind==="exterior-glazing")){
-  const t=.04;
-  add([x(p.x-(p.axis==="y"?t:0)),3*ft,z(p.y-(p.axis==="x"?t:0))],[x(p.x+(p.axis==="x"?p.length:t)),Math.min(8,cut)*ft,z(p.y+(p.axis==="y"?p.length:t))],shadeRgb(scheme.glass),.18,.45);
+ // Real aperture frames fit inside existing openings; no extra opening or solid doorway.
+ for(const p of elements.portals.filter(p=>p.floor===floor)){
+  const glass=p.kind==="exterior-glazing",bottom=(glass?3:0)*ft,top=Math.min(8,cut)*ft;
+  if(top<=bottom)continue;
+  const start=p.axis==="x"?x(p.x):z(p.y),end=start+p.length*ft,plane=p.axis==="x"?z(p.y):x(p.x),t=.035,bar=Math.min(.05,(end-start)/8);
+  const frame=(a:number,b:number,l:number,h:number,colour:Vec3,rough=.4,opacity=1)=>{
+   if(p.axis==="x")add([a,l,plane-t],[b,h,plane+t],colour,rough,opacity);
+   else add([plane-t,l,a],[plane+t,h,b],colour,rough,opacity);
+  };
+  const frameTone:Vec3=glass?[.18,.23,.25]:[.42,.35,.28];
+  frame(start,start+bar,bottom,top,frameTone);frame(end-bar,end,bottom,top,frameTone);
+  // A cutaway must not invent a header across a doorway/window below its real head.
+  if(cut>=8)frame(start+bar,end-bar,top-bar,top,frameTone);
+  if(glass){
+   frame(start+bar,end-bar,bottom,bottom+bar,frameTone);
+   frame(start+bar,end-bar,bottom+bar,cut>=8?top-bar:top,shadeRgb(selected?.glass??"#9bbac7"),.18,.32);
+   const n=Math.max(1,Math.ceil((end-start)/1.35));
+   for(let i=1;i<n;i++){const a=start+(end-start)*i/n;frame(a-bar/2,a+bar/2,bottom+bar,cut>=8?top-bar:top,frameTone);}
+  }
  }
  for(const z0 of plan.zones.filter(r=>r.floor===floor&&["open","parking"].includes(r.kind)))add([x(z0.x),0,z(z0.y)],[x(z0.x+z0.w),.08,z(z0.y+z0.d)],shadeRgb(z0.kind==="open"?"#bdcdb1":"#b8bcb9"));
  for(const s of commercialStairStudies(plan).studies.filter(s=>s.floor===floor))for(const r of [...s.steps,...s.landings.filter(l=>l.topFt>0)]){
