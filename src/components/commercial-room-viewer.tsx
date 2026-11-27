@@ -101,7 +101,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,cutaway=fa
     }
     for(const lamp of lamps)scene.remove(lamp);lamps.length=0;
     for(const source of (next.lights??[]).slice(0,4)){if(!source.position.every(Number.isFinite)||!source.color.every(Number.isFinite)||!Number.isFinite(source.power)||source.power<0)continue;const lamp=new THREE.PointLight(new THREE.Color().setRGB(...source.color,THREE.SRGBColorSpace),Math.min(source.power,100),0,2);lamp.position.fromArray(source.position);scene.add(lamp);lamps.push(lamp);}
-    scene.background=new THREE.Color(next.evening?0x8895a9:0xe1e8ec);ambient.intensity=next.evening?.95:.95;sun.intensity=next.evening?1.7:2.15;sun.color.set(next.evening?0xffc48b:0xfff3da);if(renderer)renderer.shadowMap.needsUpdate=true;schedule();
+    scene.background=new THREE.Color(next.evening?0x8895a9:0xe1e8ec);ambient.intensity=cutaway?1.55:.95;sun.intensity=cutaway?1.65:next.evening?1.7:2.15;sun.color.set(next.evening?0xffc48b:0xfff3da);if(renderer)renderer.shadowMap.needsUpdate=true;schedule();
    }};
    document.addEventListener("visibilitychange",scheduler.visibility);
   }catch{queueMicrotask(()=>{if(!disposed)setUnavailable(true)})}
