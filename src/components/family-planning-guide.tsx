@@ -20,6 +20,6 @@ export function FamilyPlanningGuide({lang}:{lang:"en"|"hi"}){
  <div className="family-editorial-body">{guidance.map(g=><section key={g.title[0]}><h3>{g.title[i]}</h3><p>{g.text[i]}</p>{"href" in g&&<Link href={g.href} className="family-text-link">{g.action[i]} →</Link>}</section>)}</div>
  <h2>{t("Spend wisely, without compromising safety","सुरक्षा से समझौता किए बिना सही खर्च")}</h2>
  <div className="family-decision-list">{decisions.map(d=><details key={d.title[0]}><summary>{d.title[i]}</summary><p>{d.body[i]}</p></details>)}</div>
- <p className="family-guide-next"><Link href="/my-project" className="family-text-link">{t("Keep your construction decisions in My Project →","अपने निर्माण के फैसले मेरी योजना में संभालें →")}</Link></p>
+ <p className="family-guide-next"><Link href="/learn/property-guide" className="family-text-link">{t("Buying or selling? Check property documents first →","खरीद या बिक्री से पहले संपत्ति के दस्तावेज जांचें →")}</Link></p><p className="family-guide-next"><Link href="/my-project" className="family-text-link">{t("Keep your construction decisions in My Project →","अपने निर्माण के फैसले मेरी योजना में संभालें →")}</Link></p>
  </section>
 }
