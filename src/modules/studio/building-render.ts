@@ -50,7 +50,7 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
   push([left,top-band,plane-profile.trimDepth],[right,top-band+trim,plane-profile.bandDepth],frame,.48);
  }
  for(const d of commercialFrontageDetails(plan)){
-  const plane=z(d.y),level=d.floor*13,colour=d.kind==="fin"?frame:accent;
+  const plane=z(d.y),level=d.floor*13,colour=d.kind==="fin"||d.kind==="window-sill"?frame:accent;
   push([x(d.x),(level+d.bottomFt)*ft,plane-d.depthFt*ft],[x(d.x+d.widthFt),(level+d.topFt)*ft,plane],colour,.48);
  }
  for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
@@ -75,7 +75,7 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
   for(const [a,b] of [[start,mid-.01],[mid+.01,end]])if(b>a)boxes.push({lo:[plane-.025,low,a],hi:[plane+.025,high,b],color:[.52,.56,.58],rough:.3,metal:.72,opacity:1});
  }
  const distance=Math.max(widthFt,depthFt,floors*13)*ft;
- const origin:Vec3=[distance*.85,distance*.7,(view==="front"?-1:1)*distance*1.45];
+ const origin:Vec3=[distance*.72,Math.max(floors*13*ft*.65,distance*.30),(view==="front"?-1:1)*distance*1.55];
  const forward=normalize([-origin[0],floors*13*ft*.35-origin[1],-origin[2]]),right=normalize(cross(forward,[0,1,0])),up=normalize(cross(right,forward));
  return {boxes,camera:{origin,forward,right,up,fov:45,aspect:1.5},evening};
 }

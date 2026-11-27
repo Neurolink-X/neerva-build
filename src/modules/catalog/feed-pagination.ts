@@ -13,3 +13,14 @@ export function takeFeedPage<T extends {id:string}>(rows:T[],limit:number){
  const page=rows.slice(0,limit);
  return {rows:page,nextCursor:rows.length>limit?page.at(-1)?.id??null:null};
 }
+
+const feedCategories=new Set(["steel","cement","bricks-blocks","plumbing","electrical","aggregates","paint","tiles","hardware"]);
+export function catalogFeedScope(path:string):string|undefined{
+ const match=/^\/materials\/([^/]+)(?:\/|$)/.exec(path);
+ return match&&feedCategories.has(match[1])?match[1]:undefined;
+}
+export function parseFeedCategory(params:URLSearchParams):string|null|undefined{
+ const values=params.getAll("category");
+ if(!values.length)return undefined;
+ return values.length===1&&feedCategories.has(values[0])?values[0]:null;
+}

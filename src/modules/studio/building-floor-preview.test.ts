@@ -107,11 +107,21 @@ test("purpose-led facade features match the full model and preserve actual openi
    assert.ok(panels.some(p=>p.floor===d.floor&&p.y===d.y&&d.x>=p.x-1e-7&&d.x+d.widthFt<=p.x+p.w+1e-7));
    const openings=portals.filter(p=>p.axis==="x"&&p.floor===d.floor&&Math.abs(p.y-d.y)<1e-5);
    if(d.kind==="fin")assert.ok(openings.every(p=>d.x+d.widthFt<=p.x||d.x>=p.x+p.length));
-   else assert.ok(d.bottomFt>8&&openings.some(p=>p.kind==="access"&&p.x>=d.x-1e-7&&p.x+p.length<=d.x+d.widthFt+1e-7));
+   else if(d.kind==="entry-hood")assert.ok(d.bottomFt>8&&openings.some(p=>p.kind==="access"&&p.x>=d.x-1e-7&&p.x+p.length<=d.x+d.widthFt+1e-7));
+   else {assert.ok(d.kind==="window-head"?d.bottomFt>8:d.topFt<3);assert.ok(openings.some(p=>p.kind==="exterior-glazing"&&p.x>=d.x-1e-7&&p.x+p.length<=d.x+d.widthFt+1e-7));}
    const expectedLo=[(d.x-plan.brief.widthFt/2)*.3048,(d.floor*13+d.bottomFt)*.3048,(d.y-plan.brief.depthFt/2-d.depthFt)*.3048];
    const expectedHi=[(d.x+d.widthFt-plan.brief.widthFt/2)*.3048,(d.floor*13+d.topFt)*.3048,(d.y-plan.brief.depthFt/2)*.3048];
    assert.ok(model.boxes.some(b=>b.lo.every((v,i)=>Math.abs(v-expectedLo[i])<1e-7)&&b.hi.every((v,i)=>Math.abs(v-expectedHi[i])<1e-7)));
   }
  }
  assert.equal(styles.size,buildingPurposes.length);
+});
+test("shop and restaurant facade detailing stays outside actual window apertures",()=>{
+ for(const purpose of ["shops","restaurant"] as const){
+  const plan=generateBuildingConcepts(buildingStarter(purpose),1,"purpose-led").plans[0];assert.ok(plan);
+  const details=commercialFrontageDetails(plan);
+  assert.ok(details.some(d=>d.kind==="window-head"),purpose+" window head");
+  assert.ok(details.some(d=>d.kind==="window-sill"),purpose+" window sill");
+  assert.ok(details.filter(d=>d.kind==="window-head"||d.kind==="window-sill").every(d=>d.bottomFt>=8||d.topFt<=3));
+ }
 });

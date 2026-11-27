@@ -12,6 +12,7 @@ on:
     paths:
       - 'src/modules/catalog/**'
       - 'scripts/catalog/**'
+      - 'scripts/ops/prepare-image-optimizations.mjs'
       - 'public/images/catalog/**'
       - 'assets/catalog/**'
       - 'package-lock.json'
@@ -45,6 +46,15 @@ jobs:
           else
             node --experimental-strip-types scripts/catalog/full-catalog-audit.mjs
           fi
+      - name: Stage large image optimization candidates (review only)
+        run: |
+          mkdir -p "$RUNNER_TEMP/neerva-image-review"
+          TMPDIR="$RUNNER_TEMP/neerva-image-review" node scripts/ops/prepare-image-optimizations.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: neerva-image-optimization-candidates
+          path: ${{ runner.temp }}/neerva-image-review/
+          retention-days: 7
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:

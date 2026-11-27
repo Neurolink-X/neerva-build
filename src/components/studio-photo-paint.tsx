@@ -1,7 +1,7 @@
 "use client";
 import {useCallback,useEffect,useLayoutEffect,useRef,useState,type ChangeEvent,type PointerEvent as ReactPointerEvent,type ReactNode} from "react";
 import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type MaskCorner} from "@/modules/studio/mask-editor";
-import {encodedPhotoDimensions,photoDimensionsAllowed,maxPreviewSide} from "@/modules/studio/photo-budget";
+import {encodedPhotoDimensions,photoDimensionsAllowed,paintPreviewDimensions} from "@/modules/studio/photo-budget";
 import {finishes,patternGroups,groupForPattern,isRetiredPattern,type PatternGroup,type Pattern,type Motif} from "@/modules/studio/wall-patterns";
 import NextImage from "next/image";
 import {isSurfaceProfile} from "@/modules/studio/surface-texture";
@@ -166,8 +166,9 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    if(generation.current!==ticket){release();return;}
    const el=canvas.current;if(!el){release();setMessage("Preview not ready. Please retry the sample.");return;}
    if(!photoDimensionsAllowed(img.naturalWidth,img.naturalHeight)){release();setMessage("Photo dimensions are too large. Resize the image before trying again.");return;}
-   const scale=Math.min(1,maxPreviewSide/Math.max(img.naturalWidth,img.naturalHeight));
-   const source=document.createElement("canvas");source.width=Math.max(1,Math.round(img.naturalWidth*scale));source.height=Math.max(1,Math.round(img.naturalHeight*scale));
+   const nav=navigator as Navigator&{deviceMemory?:number;connection?:{saveData?:boolean}};
+   const size=paintPreviewDimensions(img.naturalWidth,img.naturalHeight,{memory:nav.deviceMemory,cores:nav.hardwareConcurrency,saveData:nav.connection?.saveData});
+   const source=document.createElement("canvas");source.width=size.width;source.height=size.height;
    const context=source.getContext("2d");if(!context){release();setMessage("Photo preview unavailable on this device.");return;}
    try{context.drawImage(img,0,0,source.width,source.height);}catch{release();setMessage("Could not prepare this photo. Try a smaller image.");return;}
    el.width=source.width;el.height=source.height;image.current=source;release();setReady(true);
@@ -236,7 +237,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  }
  return <section className="nbd-photo" aria-label="Private wall colour preview">
   <div className="paint-source"><button type="button" aria-pressed={scene==="room"} onClick={openRoom}>Sample room</button><button type="button" aria-pressed={scene==="facade"} onClick={()=>openFacade()}>Sample house exterior</button><label>Use my home photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label></div>
-  {scene==="facade"&&<div className="paint-sample-gallery" role="group" aria-label="Choose sample house">{facadeSamples.map(s=><button key={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={s.src} alt="" fill sizes="(max-width:600px) 46vw, (max-width:900px) 42vw, 240px" loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
+  {scene==="facade"&&<div className="paint-sample-gallery" data-journey="premium" role="group" aria-label="Choose sample house">{facadeSamples.map(s=><button key={s.id} data-facade-sample={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={s.src} alt="" fill sizes={s.id==="family"?"(max-width:900px) 90vw, 440px":"(max-width:600px) 46vw, (max-width:900px) 42vw, 240px"} loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
   {scene==="facade"&&<p className="paint-sample-feedback" role="status">{ready?"Previewing: ":message==="Loading photo…"?"Preparing: ":"Selected: "}<strong>{sample.label}</strong>{ready?" · Try a colour or wall design.":""}</p>}
   <div className="paint-mode" role="group" aria-label="Paint preview mode"><button type="button" aria-pressed={mode==="paint"} onClick={()=>chooseMode("paint")}>Plain paint</button><button type="button" aria-pressed={mode==="design"} onClick={()=>chooseMode("design")}>Paint + design</button></div>
   {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}</button>)}</div>}

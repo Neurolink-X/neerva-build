@@ -5,10 +5,13 @@ import {paintReferencePrice} from "@/modules/catalog/paint-references";
 import {tileReferencePrice} from "@/modules/catalog/tile-references";
 import {planningRate} from "@/modules/catalog/planning-rate";
 import {useSyncExternalStore} from "react";
+import {usePathname} from "next/navigation";
+import {catalogFeedScope} from "@/modules/catalog/feed-pagination";
 import {loadPublicFeed} from "@/modules/catalog/public-feed-client";
 import {subscribeCatalogPriceSignal} from "./catalog-price-signal";
 import {validPublicRate,type PublicRate as Rate} from "@/modules/catalog/public-feed-validation";
 
+function makePriceStore(categoryScope?:string){
 const listeners=new Set<()=>void>();
 let rates=new Map<string,Rate>(),request:Promise<void>|undefined,lastLoaded=0,lastAttempt=0;
 const rateKey=(category:string,slug:string,sku?:string,unit?:string)=>category+"|"+slug+"|"+(sku??"")+"|"+(unit??"");
@@ -33,30 +36,35 @@ function refresh(force=false){
  if(request||!listeners.size||document.visibilityState==="hidden"||navigator.onLine===false||(!invalidated&&Date.now()-lastAttempt<30000))return;
  invalidated=false;
  lastAttempt=Date.now();
- request=loadPublicFeed("prices").then(value=>{
+ request=loadPublicFeed("prices",categoryScope).then(value=>{
   const body=value as {prices:unknown[]};
   const next=new Map<string,Rate>(),now=Date.now();
   if(Array.isArray(body?.prices))for(const r of body.prices as unknown[]){
-   if(!validPublicRate(r,now))continue;
+   if(!validPublicRate(r,now)||(categoryScope&&r.category!==categoryScope))continue;
    for(const key of [rateKey(r.category,r.slug,r.sku),rateKey(r.category,r.slug),rateKey(r.category,r.slug,r.sku,r.unit),rateKey(r.category,r.slug,undefined,r.unit)])if(!next.has(key))next.set(key,r);
   }
   if(!invalidated){rates=next;lastLoaded=now;}
  }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{request=undefined;notifyRates();scheduleExpiry();if(invalidated)refresh()});
 }
-function onVisible(){if(document.visibilityState==="visible"){prune();scheduleExpiry();notifyRates();if(Date.now()-lastLoaded>=30000)refresh()}}
+function onVisible(){clearInterval(timer);timer=undefined;if(document.visibilityState==="visible"){prune();scheduleExpiry();notifyRates();if(Date.now()-lastLoaded>=30000)refresh();if(listeners.size)timer=setInterval(()=>refresh(),30000)}else clearTimeout(expiry)}
 function subscribe(notify:()=>void){
  listeners.add(notify);
- if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true));timer=setInterval(()=>refresh(),30000)}
+ if(listeners.size===1){lastAttempt=0;onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true))}
  return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;stopSignal?.();stopSignal=undefined;document.removeEventListener("visibilitychange",onVisible);}};
 }
-const noRate=()=>undefined;
 function currentRate(category:string,slug:string,sku?:string,unit?:string){
  const rate=rates.get(rateKey(category,slug,sku,unit));
  return rate&&(!rate.until||Date.parse(rate.until)>Date.now())&&Date.now()-lastLoaded<90000?rate:undefined;
 }
+return {subscribe,currentRate};
+}
+const priceStores=new Map<string,ReturnType<typeof makePriceStore>>();
+function priceStore(scope?:string){const key=scope??"all";let store=priceStores.get(key);if(!store){store=makePriceStore(scope);priceStores.set(key,store)}return store}
+const noRate=()=>undefined,skipSubscribe=()=>()=>{};
 const format=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2});
 export function ProductPrice({category,slug,sku,unit,quoteOnly}:{sku?:string;unit?:string;category:string;slug:string;quoteOnly?:boolean}){
- const rate=useSyncExternalStore(subscribe,()=>currentRate(category,slug,sku,unit),noRate);
+ const path=usePathname(),scope=catalogFeedScope(path??""),store=priceStore(scope===category?scope:undefined);
+ const rate=useSyncExternalStore(quoteOnly?skipSubscribe:store.subscribe,()=>quoteOnly?undefined:store.currentRate(category,slug,sku,unit),noRate);
  // A published exact SKU must not inherit a generic historical family price.
  if(sku&&!rate)return <span>{quoteOnly?"Private quotation":"Get today’s price"}</span>;
  const budgetUnit:Record<string,string>={cement:"bag","bricks-blocks":"piece",steel:"kg",paint:"litre"};

@@ -1,3 +1,4 @@
+import {houseJourney} from "./house-journey.ts";
 import type {MaskCorner} from "./mask-editor.ts";
 import type {Pattern} from "./wall-patterns.ts";
 export type PhotoMask={outline:number[][];holes?:number[][][]};
@@ -11,31 +12,6 @@ function zone(id:Exclude<FacadeTarget,"all">,label:string,outline:number[][],hol
  const box=bounds??rect(Math.min(...xs),Math.min(...ys),Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys));
  return {id,label,mask,points:ring(box,width,height).map(([x,y]):MaskCorner=>({x,y}))};
 }
-// These conservative polygons correspond ONLY to the bundled finished.webp
-// image (3:1). Windows, timber, glazing, door and foreground plants are excluded.
-export const facadeZones=[
- zone("left","Left facade",[[360,18],[458,18],[458,413],[387,413],[387,381],[317,381],[317,112],[350,66]], [rect(400,105,58,276),[[317,344],[354,354],[378,374],[387,396],[347,396],[317,381]]]),
- zone("right","Right facade",[[970,61],[1228,61],[1228,282],[1203,282],[1191,307],[1185,340],[1178,359],[1174,391],[1169,412],[983,412],[983,379],[916,379],[900,365],[900,310],[970,285],[970,251],[938,251],[938,193],[958,193],[958,92],[970,79]], [rect(983,116,187,129),rect(983,322,186,90),[[1190,291],[1203,283],[1220,282],[1228,286],[1228,306],[1207,304],[1198,322],[1191,319]] ]),
- zone("balcony","Balcony frame",[[526,46],[972,46],[972,76],[555,76],[555,251],[972,251],[972,286],[526,286]]),
- zone("entry","Entrance and recessed walls",[[526,286],[554,286],[554,310],[648,310],[648,368],[630,368],[614,394],[575,398],[554,413],[526,413]]),
- zone("boundary","Left boundary band",[[244,398],[277,398],[277,412],[630,412],[630,398],[668,398],[668,508],[630,508],[630,433],[277,433],[277,461],[244,478]]),
- zone("roof","Roof trim",[[901,23],[1239,23],[1239,60],[1228,63],[972,62],[972,46],[891,46]]),
- zone("upper-recess","Balcony recessed wall",[[555,79],[580,116],[887,116],[913,92],[958,79],[958,192],[938,192],[938,251],[555,251]],[[[650,132],[850,132],[850,251],[650,251]],[[558,191],[575,177],[575,159],[597,153],[618,162],[641,175],[645,194],[645,251],[558,251]],[[851,166],[864,149],[890,142],[912,156],[915,180],[936,193],[936,251],[851,251]]]),
- zone("lower-recess","Ground floor recessed wall",[[555,288],[578,309],[885,309],[907,288],[971,288],[971,413],[916,413],[916,397],[879,397],[879,413],[850,413],[850,326],[651,326],[651,397],[555,397]],[[[556,383],[575,374],[593,368],[615,374],[641,397],[641,413],[556,413]],[[851,383],[869,371],[886,374],[900,395],[900,413],[851,413]]]),
- zone("boundary-right","Right boundary band",[[879,398],[916,398],[916,414],[1268,414],[1268,399],[1311,399],[1311,457],[1280,444],[1268,433],[916,433],[916,508],[879,508]]),
- // The garden-facing panels were previously excluded wholesale. Trace the
- // exposed plaster and keep conservative holes around leaves and wall lights.
- zone("garden-left","Left garden wall",rect(278,434,351,64),[
-  [[278,452],[302,448],[322,438],[350,439],[373,451],[388,465],[391,498],[278,498]],
-  [[377,474],[400,468],[429,469],[447,478],[452,498],[377,498]],
-  [[444,467],[461,451],[476,438],[508,438],[532,452],[543,470],[543,498],[444,498]],
-  [[535,476],[554,467],[581,464],[597,455],[620,449],[629,451],[629,498],[535,498]],rect(417,441,12,25),rect(565,441,13,25)]),
- zone("garden-right","Right garden wall",rect(917,434,350,64),[
-  [[927,477],[944,458],[966,443],[991,445],[1005,465],[1020,476],[1023,498],[927,498]],
-  [[1013,480],[1035,470],[1052,461],[1061,437],[1080,437],[1096,449],[1109,474],[1117,498],[1013,498]],
-  [[1104,481],[1133,467],[1153,457],[1184,459],[1201,476],[1201,498],[1104,498]],
-  [[1197,434],[1267,434],[1267,498],[1197,498]],rect(1125,441,14,25)])
-] as const;
 // Every photograph owns its mask geometry. Never reuse a polygon from another home.
 const villaZones=[
  zone("left","Lower front wall",[[231,291],[259,249],[413,258],[457,279],[457,366],[342,366],[342,296],[265,296],[265,343],[242,344],[242,307],[231,316]],[],undefined,880,584),
@@ -66,8 +42,19 @@ const compactFamilyZones=[
  zone("boundary","Left boundary wall",[[200,775],[355,775],[355,765],[402,765],[402,968],[200,968]],[rect(255,804,63,132),[[200,832],[230,828],[276,835],[310,860],[332,920],[335,968],[200,968]],rect(362,785,31,30)],undefined,1536,1024),
  zone("boundary-right","Right boundary wall",[[784,767],[823,767],[823,775],[1265,775],[1265,974],[784,974]],[rect(790,786,27,30),rect(864,804,55,140),rect(1050,805,169,136),[[850,912],[865,861],[885,824],[888,790],[902,770],[927,764],[950,755],[986,754],[1017,770],[1048,801],[1050,862],[1036,911],[1020,974],[850,974]],[[1017,940],[1060,932],[1120,921],[1170,922],[1225,913],[1250,937],[1250,974],[1017,974]]],undefined,1536,1024)
 ] as const;
+// Dedicated 1200×600 paint geometry for the reviewed premium house asset.
+export const facadeZones=[
+ zone("roof","Roof plaster band",[[243,37],[573,50],[573,80],[243,73]],[],undefined,1200,600),
+ zone("right","Right facade frame",[[925,22],[1062,24],[1062,269],[1032,269],[1032,43],[925,38]],[],undefined,1200,600),
+ zone("left","Left upper column",rect(244,98,26,158),[],undefined,1200,600),
+ zone("upper-recess","Centre balcony column",rect(550,123,30,85),[],undefined,1200,600),
+ zone("balcony","Front balcony plaster",rect(240,266,611,39),[],undefined,1200,600),
+ zone("entry","Ground floor centre column",rect(551,317,28,67),[],undefined,1200,600),
+ zone("lower-recess","Ground floor right wall",rect(1030,325,28,79),[],undefined,1200,600),
+ zone("boundary","Left boundary plaster",rect(82,410,122,18),[],undefined,1200,600)
+] as const;
 export const facadeSamples=[
- {id:"family",label:"Modern family home",description:"Street-facing two-storey home",src:"/images/studio/finished.webp",zones:facadeZones},
+ {id:"family",label:"Modern family home",description:"Premium two-storey family residence",src:houseJourney.finished.src,zones:facadeZones},
  {id:"contemporary",label:"Contemporary home",description:"Clean lines and contrasting cladding",src:"/images/studio/house-3.webp",zones:contemporaryZones},
  {id:"villa",label:"Premium villa",description:"Modern facade with terraces",src:"/images/studio/house-2.webp",zones:villaZones},
  {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 photorealistic concept",src:"/images/studio/family/neerva-100gaj-photorealistic.webp",zones:compactFamilyZones}

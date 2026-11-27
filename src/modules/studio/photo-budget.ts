@@ -29,3 +29,13 @@ export function encodedPhotoDimensions(bytes:Uint8Array):{width:number;height:nu
  }
  return null;
 }
+
+/** Bound the working surfaces independently of the uploaded file size.
+ * At most six RGBA buffers plus one luminance buffer are retained while editing. */
+export function paintPreviewDimensions(width:number,height:number,hints:{memory?:number;cores?:number;saveData?:boolean}={}){
+ if(!photoDimensionsAllowed(width,height))throw new RangeError("Invalid photo dimensions");
+ const lite=hints.saveData===true||(hints.memory!==undefined&&hints.memory<=4)||(hints.cores!==undefined&&hints.cores<=2);
+ const side=lite?896:maxPreviewSide,pixels=lite?480000:1200000;
+ const scale=Math.min(1,side/Math.max(width,height),Math.sqrt(pixels/(width*height)));
+ return {width:Math.max(1,Math.floor(width*scale)),height:Math.max(1,Math.floor(height*scale))};
+}

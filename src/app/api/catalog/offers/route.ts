@@ -1,4 +1,4 @@
-import {parseFeedPage,takeFeedPage} from "@/modules/catalog/feed-pagination";
+import {parseFeedPage,takeFeedPage,parseFeedCategory} from "@/modules/catalog/feed-pagination";
 import {createClient} from "@supabase/supabase-js";
 import {hasRealActiveDiscount} from "@/modules/catalog/offer-eligibility";
 export const dynamic="force-dynamic";
@@ -7,7 +7,7 @@ type Price={id:string;amount_paise:number;unit:string;city:string;minimum_quanti
  variant:{sku:string;status:string;unit:string;product:{slug:string;status:string;category:{slug:string;status:string}}}|null};
 const single=<T,>(record:T|T[]|null|undefined):T|null=>Array.isArray(record)?record[0]??null:record??null;
 export async function GET(request:Request){
- const page=parseFeedPage(new URL(request.url).searchParams);if(!page)return Response.json({error:"Invalid offer page."},{status:400,headers:{"Cache-Control":"no-store"}});
+ const params=new URL(request.url).searchParams,page=parseFeedPage(params),scope=parseFeedCategory(params);if(!page||scope===null)return Response.json({error:"Invalid offer page."},{status:400,headers:{"Cache-Control":"no-store"}});
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
  if(!url||!key)return Response.json({offers:[],error:"Published offers temporarily unavailable."},{status:503,headers:{"Cache-Control":"no-store","x-neerva-service-state":"degraded"}});
  try{
@@ -16,6 +16,7 @@ export async function GET(request:Request){
   let query=db.from("catalog_campaigns").select(
    "id,title,terms,base_amount_paise,offer_amount_paise,starts_at,ends_at,price:pricing_rules!inner(id,amount_paise,unit,city,minimum_quantity,pincode_prefix,valid_from,valid_to,status,visibility,currency,tenant_id,variant:product_variants!inner(sku,status,unit,product:products!inner(slug,status,category:categories!inner(slug,status))))"
   ).eq("status","published").lte("starts_at",now).gt("ends_at",now).order("id").limit(page.paginated?page.limit+1:page.limit);
+  if(scope)query=query.eq("price.variant.product.category.slug",scope);
   if(page.after)query=query.gt("id",page.after);
   const {data,error}=await query.abortSignal(deadline);
   if(error||!data||(!page.paginated&&data.length>=1000))return Response.json({offers:[]},{status:503,headers:{"Cache-Control":"no-store"}});
@@ -24,7 +25,7 @@ export async function GET(request:Request){
   for(const row of slice.rows){
    const price=single(row.price) as Price|null;
    const variant=single(price?.variant),product=single(variant?.product),category=single(product?.category);
-   if(!price||!variant||!product||!category||/^NEERVA-REF-/i.test(variant.sku))continue;
+   if(!price||!variant||!product||!category||(scope&&category.slug!==scope)||/^NEERVA-REF-/i.test(variant.sku))continue;
    if(price.tenant_id!==null||price.currency!=="INR"||price.unit!==variant.unit||price.status!=="published"||price.visibility!=="public"||variant.status!=="published"||
     product.status!=="published"||category.status!=="published"||category.slug==="aggregates")continue;
    if(!hasRealActiveDiscount({

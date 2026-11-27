@@ -4,7 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
-import {assessPerformance} from "./performance-budget.mjs";
+import {assessPerformance,resourceSummary} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
 const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/learn/property-guide","/learn/future-homes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
@@ -75,7 +75,7 @@ async function main(){
        }
       };
       if(await capture("cutaway")){
-       if(purpose==="shops"){await studio.getByRole("button",{name:"Show space-use guidance",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Hide space-use guidance",exact:true}).click();}
+       if(purpose==="shops"){await studio.getByRole("button",{name:"Hide space-use guidance",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Show space-use guidance",exact:true}).click();}
        await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
        await capture("exterior");
        await studio.getByRole("button",{name:"Show selected floor",exact:true}).click();
@@ -184,7 +184,7 @@ async function main(){
     const page=await ctx.newPage(),session=await ctx.newCDPSession(page);await session.send("Network.enable");await session.send("Network.emulateNetworkConditions",{offline:false,latency:profile.latency,downloadThroughput:profile.download,uploadThroughput:profile.upload,connectionType:"cellular3g"});
     let speculative=0;page.on("request",r=>{const h=r.headers();if(h["next-router-prefetch"]||h["purpose"]==="prefetch"||h["sec-purpose"]?.includes("prefetch"))speculative++;});
     for(const visit of ["cold","repeat"]){const started=Date.now();await page.goto(base+"/",{waitUntil:"domcontentloaded",timeout:120000});await page.locator(".nbh-journey.nbh-primary").waitFor({state:"visible",timeout:60000});const usefulMs=Date.now()-started;
-     await page.waitForLoadState("load",{timeout:120000});const resources=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],r=performance.getEntriesByType("resource");return {documentBytes:n?.transferSize??0,resourceBytes:r.reduce((sum,e)=>sum+e.transferSize,0),resourceCount:r.length};});
+     await page.waitForLoadState("load",{timeout:120000});const resources=await page.evaluate(resourceSummary);
      assert.ok(usefulMs<60000,profile.name+" useful homepage exceeded severe smoke ceiling");assert.equal(speculative,0,profile.name+" must not prefetch routes before interaction");performanceReports.push({profile:profile.name,visit,usefulMs,...resources,scope:"simulated constrained network; not production field latency"});
     }
     await page.locator(".nbh-journey.nbh-primary").click({timeout:60000});await page.waitForURL("**/materials",{timeout:120000});assert.equal(new URL(page.url()).pathname,"/materials","real navigation still works with prefetch disabled");
@@ -254,7 +254,7 @@ async function main(){
     const main=route.includes("/portfolio?")?".nroad-form":route==="/brands"?".br-filters":route==="/materials"?".catalog-toolbar":".tile-showroom";
     await page.locator(main).first().waitFor({state:"visible",timeout:90000});const usefulMs=Date.now()-started;
     await page.waitForLoadState("load",{timeout:120000});
-    const resources=await page.evaluate(()=>{const n=performance.getEntriesByType("navigation")[0],r=performance.getEntriesByType("resource");return {documentBytes:n?.transferSize??0,resourceBytes:r.reduce((sum,e)=>sum+e.transferSize,0),resourceCount:r.length};});
+    const resources=await page.evaluate(resourceSummary);
     assert.ok(usefulMs<90000,route+" initial useful content exceeded severe test ceiling");
     if(route.includes("/portfolio?"))assert.equal(await page.locator(".nbd-building").count(),0,"slow link must not eagerly initialize 3D");
     performanceReports.push({route,profile:"weak-4g",usefulMs,prefetch,...resources,scope:"simulated local Chromium; not field Web Vitals"});
@@ -294,8 +294,8 @@ async function main(){
     assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
     assert.ok(await gallery.evaluate(el=>{const active=el.querySelector("button[aria-pressed=true]"),other=el.querySelector("button[aria-pressed=false]");return active&&other&&getComputedStyle(active).borderColor!==getComputedStyle(other).borderColor}),"active house is visually distinguishable without a badge");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
-    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-4/3)<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="contain";})};});
-    assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
+    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-(b.dataset.facadeSample==="family"?2:b.dataset.facadeSample==="compact-family"&&innerWidth<=900?1.5:4/3))<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
+    assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:3),v.w+"px facade gallery: "+JSON.stringify(geometry));
     await page.getByRole("button",{name:/100 gaj family home/}).click();
     assert.match(await page.locator(".paint-sample-feedback").innerText(),/100 gaj family home/);
     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="compact-family"&&!!document.querySelector(".paint-preview-actions button")&&c.getBoundingClientRect().height>0});
@@ -309,6 +309,7 @@ async function main(){
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
      await pattern.locator("svg[data-surface-profile=marble] image").waitFor({state:"attached"});assert.match(await pattern.locator("svg image").getAttribute("href")??"",/^data:image\/png/,"preview uses the actual local material mask");
      const intensity=page.getByLabel(/Design intensity/);await intensity.fill("0.45");assert.equal(await pattern.locator("svg rect[mask]").getAttribute("opacity"),"0.45","texture swatch intensity matches the wall control");await intensity.press("End");assert.equal(await intensity.inputValue(),"1","keyboard reaches maximum intensity");await intensity.press("ArrowLeft");assert.equal(await intensity.inputValue(),"0.95","keyboard follows the declared step");
+     await page.getByRole("button",{name:"Geometry",exact:true}).click();const geo=page.getByRole("button",{name:"Chevron herringbone",exact:true});await geo.click();assert.equal(await geo.getAttribute("aria-pressed"),"true");
      const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
      assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");
     }
@@ -904,6 +905,7 @@ async function main(){
     assert.ok(await page.locator(".nstudio-landing").evaluate(el=>el.scrollWidth<=innerWidth+2),"studio landing must not overflow horizontally");
     assert.ok(await page.locator(".nstudio-landing figure figcaption").evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).position==="static")),"image text belongs below the image");
     await page.getByRole("button",{name:"150 gaj",exact:true}).click();assert.equal(await page.getByLabel("Plot width (feet)").inputValue(),"27");assert.equal(await page.getByLabel("Plot depth (feet)").inputValue(),"50");
+    await page.getByText("Smart plot calculator · find a missing side",{exact:true}).click();await page.getByLabel("Plot area",{exact:true}).fill("180");await page.getByRole("button",{name:"Apply depth",exact:true}).click();assert.equal(await page.getByLabel("Plot depth (feet)").inputValue(),"60");
     await page.locator(".nstudio-start-form input").nth(0).fill("18");
     await page.locator(".nstudio-start-form input").nth(1).fill("50");
     await page.getByRole("button",{name:/Create room layouts/}).click();
@@ -1198,7 +1200,7 @@ async function main(){
     assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
     // Test actual painted canvas pixels, not merely sample labels or changed image hashes.
     const visualCases=[
-      {id:"family",label:/Modern family home/,w:1536,h:512,paint:[[420,60],[375,55],[370,250],[340,180],[600,335],[250,420],[1200,100],[750,122],[750,316],[949,217],[963,106],[978,263],[1181,347],[1172,387]],protect:[[1050,160],[500,200],[1450,80],[750,160],[750,350],[1210,292],[1050,360]]},
+      {id:"family",label:/Modern family home/,w:1200,h:600,paint:[[350,60],[1045,110],[257,150],[565,160],[500,285],[565,350],[1042,365],[160,420]],protect:[[980,190],[450,205],[880,180],[720,190],[750,440],[1100,170]]},
       {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
       {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]},
       {id:"compact-family",label:/100 gaj family home/,w:1536,h:1024,paint:[[402,240],[800,145],[840,290],[790,285],[820,540],[460,730],[800,645],[370,850],[1244,850]],protect:[[480,250],[570,380],[699,350],[965,365],[700,450],[950,470],[620,635],[555,745],[700,740],[950,720],[430,850],[275,865],[970,850],[1120,850],[100,200],[1300,420],[700,55],[700,640]]}
@@ -1493,8 +1495,9 @@ async function main(){
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
      assert.equal(await page.locator(".home-stage-comparison img").count(),2,"paired construction-stage renders");
      const comparisonGeometry=await page.locator(".nbh-compare-frame").evaluate(el=>{const r=el.getBoundingClientRect();return {ratio:r.width/r.height,fit:[...el.querySelectorAll("img")].map(img=>getComputedStyle(img).objectFit)}});
-     assert.ok(Math.abs(comparisonGeometry.ratio-3)<.08,"native 1536x512 comparison image ratio, no oversized crop");
-     assert.ok(comparisonGeometry.fit.every(f=>f==="contain"),"both comparison images must retain the complete house");
+     assert.ok(Math.abs(comparisonGeometry.ratio-2)<.08,"centered facade crop removes peripheral context");
+     assert.ok(comparisonGeometry.fit.every(f=>f==="cover"),"both comparison images must share the same centered crop");
+     const stage=page.locator(".home-stage-comparison"),slider=stage.getByRole("slider");await stage.getByRole("button",{name:"Under construction",exact:true}).click();assert.equal(await slider.inputValue(),"100");await stage.getByRole("button",{name:"Finished home",exact:true}).click();assert.equal(await slider.inputValue(),"0");await stage.getByRole("button",{name:"Compare",exact:true}).click();assert.equal(await slider.inputValue(),"50");assert.equal(await stage.locator("a[href=\"/materials/bricks-blocks\"]").count(),1);
      const cardRows=await categories.locator(".nbh-material-card").evaluateAll(cards=>cards.slice(0,2).map(card=>{const add=card.querySelector(".nb-shop-add"),product=card.querySelector(".nbh-category-cart-product"),options=card.querySelector(".nbh-material-options"),rect=add?.getBoundingClientRect();return {top:rect?.top,productBottom:product?.getBoundingClientRect().bottom,optionsBottom:options?.getBoundingClientRect().bottom,productTop:product?.getBoundingClientRect().top}}));
      if(cardRows.every(r=>r.top!=null)&&await page.evaluate(()=>CSS.supports("grid-template-rows","subgrid")&&innerWidth>350)){assert.ok(Math.abs(cardRows[0].top-cardRows[1].top)<3,"adjacent cart actions align");}
 

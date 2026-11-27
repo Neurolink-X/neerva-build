@@ -24,11 +24,27 @@ export function commercialPortals(plan:BuildingConcept):ConceptPortal[]{
   if(!occupied)result.push({id:z.id+"-glazing",zoneId:z.id,floor:z.floor,axis:"y",x,y:z.y+z.d/2-2,length:4,kind:"exterior-glazing",reviewRequired:true});
  }
  for(const p of commercialFrontPanels(plan)){
-  if(p.w<8||p.y>plan.brief.frontFt+.01)continue;
+  if(p.w<8)continue;
+  // Front panels already select the nearest covered wall across each frontage interval.
+  // A parking forecourt can move that wall back from the nominal setback.
   const entry=p.kind==="circulation"&&p.floor===0;
-  if(!entry&&(p.kind!=="primary"&&p.kind!=="circulation"))continue;
+  if(!entry&&(p.kind!=="primary"&&p.kind!=="circulation"&&!(plan.brief.purpose==="school"&&p.kind==="support")))continue;
+  if(!entry&&partitioned.has(p.zoneId)){
+   // The actual front-facing room owns its aperture, never a parent envelope
+   // or a shaft/toilet. Rental living and bedroom glazing remains privacy-sized.
+   const usable=inside.filter(r=>r.parentId===p.zoneId&&Math.abs(r.y-p.y)<EPS&&(plan.brief.purpose==="rental"?["living","bedroom"].includes(r.kind):plan.brief.purpose==="school"?["service-a","service-b"].includes(r.kind):false));
+   for(const r of usable){
+    const left=Math.max(r.x,p.x),right=Math.min(r.x+r.w,p.x+p.w),span=right-left;
+    if(span<6)continue;
+    const length=Math.min(plan.brief.purpose==="school"?10:7,span-2,span*.65);
+    result.push({id:r.id+"-front-"+p.x,zoneId:r.id,floor:p.floor,axis:"x",x:left+(span-length)/2,y:p.y,length,kind:"exterior-glazing",reviewRequired:true});
+   }
+   continue;
+  }
   if(partitioned.has(p.zoneId)||plan.brief.purpose==="rental"&&!entry)continue;
-  const length=entry?Math.min(6,p.w-2):Math.min(8,p.w-2);
+  const glazingRatio={shops:.80,mall:.86,restaurant:.72,school:.52,rental:.45}[plan.brief.purpose];
+  const glazingCap={shops:22,mall:26,restaurant:18,school:12,rental:8}[plan.brief.purpose];
+  const length=entry?Math.min(6,p.w-2):Math.min(glazingCap,p.w-2,Math.max(4,p.w*glazingRatio));
   result.push({id:p.zoneId+"-front-"+p.x,zoneId:p.zoneId,floor:p.floor,axis:"x",x:p.x+(p.w-length)/2,y:p.y,length,kind:entry?"access":"exterior-glazing",reviewRequired:true});
  }
  return [...result,...commercialInternalOpenings(plan)];
@@ -115,7 +131,7 @@ const frontageLanguage={
  rental:{style:"Quiet residential rhythm",materialMood:"Stone tones, slender frames and restrained glass",suitability:"Rental apartments and flats",finWidth:.35,finSpacing:5,finDepth:.5,canopyDepth:1.5}
 } as const;
 export function commercialFrontageLanguage(purpose:BuildingConcept["brief"]["purpose"]){return frontageLanguage[purpose];}
-export type FrontageDetail={id:string;kind:"fin"|"entry-hood";floor:number;x:number;y:number;widthFt:number;depthFt:number;bottomFt:number;topFt:number};
+export type FrontageDetail={id:string;kind:"fin"|"entry-hood"|"window-head"|"window-sill";floor:number;x:number;y:number;widthFt:number;depthFt:number;bottomFt:number;topFt:number};
 /** Shared elevation/render detail geometry in local, road-facing feet.
  * Place fins only on opaque frontage and entrance hoods above actual access openings.
  * Limit projections to the available front space; never create an opening or a floor. */
@@ -133,6 +149,16 @@ export function commercialFrontageDetails(plan:BuildingConcept):FrontageDetail[]
     if(openings.some(a=>x<a.x+a.length+.2&&x+style.finWidth>a.x-.2))continue;
     out.push({id:`fin-${i}-${n}`,kind:"fin",floor:p.floor,x,y:p.y,widthFt:style.finWidth,depthFt:depth,bottomFt:.8,topFt:12.5-profile.bandFt-.2});
    }
+  }
+  // Purpose-led detailing on the existing opaque strips above/below real glazing.
+  // Keep clear of the aperture and do not add any floor area or structural claim.
+  if(p.y>=.3)for(const a of openings.filter(a=>a.kind==="exterior-glazing"&&a.x>=p.x-EPS&&a.x+a.length<=p.x+p.w+EPS)){
+   const purpose=plan.brief.purpose;
+   const spread=purpose==="mall"?.45:purpose==="restaurant"?.35:.15;
+   const x=Math.max(p.x,a.x-spread),right=Math.min(p.x+p.w,a.x+a.length+spread);
+   const head=purpose==="mall"?{bottom:8.35,top:9.65,depth:1.6}:purpose==="restaurant"?{bottom:8.25,top:9.1,depth:1.15}:purpose==="school"?{bottom:8.3,top:8.65,depth:1.35}:purpose==="shops"?{bottom:8.25,top:8.85,depth:.85}:null;
+   if(head)out.push({id:`head-${i}-${a.id}`,kind:"window-head",floor:p.floor,x,y:p.y,widthFt:right-x,depthFt:Math.min(head.depth,p.y),bottomFt:head.bottom,topFt:head.top});
+   if(purpose!=="mall")out.push({id:`sill-${i}-${a.id}`,kind:"window-sill",floor:p.floor,x,y:p.y,widthFt:right-x,depthFt:Math.min(purpose==="rental"?.85:purpose==="restaurant"?.45:.35,p.y),bottomFt:purpose==="rental"?2.35:2.65,topFt:2.95});
   }
   if(p.floor!==0||p.y<1)continue;
   for(const a of openings.filter(a=>a.kind==="access"&&a.x>=p.x-EPS&&a.x+a.length<=p.x+p.w+EPS)){

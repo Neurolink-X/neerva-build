@@ -86,6 +86,16 @@ assert.deepEqual(results.filter(r=>!r.ok),[],"API connectivity or authorization 
 console.log(JSON.stringify({routes:manifest.length,methods:manifest.reduce((n,r)=>n+r.methods.length,0),checks:results.length,status:"passed"}));
 
 // Bounded concurrent read smoke on the disposable stack only. No production traffic or writes.
+// Verify the scoped API contract against the isolated database, not just mocks.
+for(const kind of ["prices","offers"]){
+ const route="http://127.0.0.1:3000/api/catalog/"+kind;
+ const result=await fetch(route+"?limit=10&category=cement",{signal:AbortSignal.timeout(15000)});
+ assert.equal(result.status,200,"Scoped "+kind+" must be connected");
+ const payload=await result.json();
+ assert.ok(Array.isArray(payload[kind])&&payload[kind].every(row=>row.category==="cement"),"Scoped "+kind+" must not return other categories");
+ const invalid=await fetch(route+"?limit=10&category=not-a-category",{signal:AbortSignal.timeout(15000)});
+ assert.equal(invalid.status,400,"Invalid category must fail closed");
+}
 const readPaths=["/api/catalog?limit=24","/api/catalog/prices?limit=250","/api/catalog/offers?limit=250","/api/direct-orders","/api/orders"];
 for(const concurrency of [4,8]){
  const jobs=Array.from({length:concurrency*3},(_,i)=>readPaths[i%readPaths.length]);

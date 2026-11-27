@@ -41,3 +41,17 @@ test("price pages merge in price order; interrupted or cyclic pagination never p
   globalThis.fetch=async()=>Response.json({prices:[],nextCursor:null});assert.deepEqual(await loadPublicFeed("prices"),{prices:[]});
  }finally{globalThis.fetch=original;invalidatePublicFeeds()}
 });
+
+test("category reads deduplicate only identical scopes and never share other categories",async()=>{
+ const original=globalThis.fetch;const calls:string[]=[];
+ try{
+  invalidatePublicFeeds();globalThis.fetch=async input=>{const category=new URL(String(input),"https://test.invalid").searchParams.get("category")??"all";calls.push(category);return Response.json({prices:[{category,paise:100}]});};
+  const a=loadPublicFeed("prices","cement");assert.equal(a,loadPublicFeed("prices","cement"));
+  const b=loadPublicFeed("prices","steel");assert.notEqual(a,b);
+  assert.deepEqual(await a,{prices:[{category:"cement",paise:100}]});
+  assert.deepEqual(await b,{prices:[{category:"steel",paise:100}]});
+  await loadPublicFeed("prices");assert.deepEqual(calls,["cement","steel","all"]);
+ }finally{globalThis.fetch=original;invalidatePublicFeeds()}
+});
+
+test("a scoped feed rejects leaked cross-category rows",async()=>{const original=globalThis.fetch;try{invalidatePublicFeeds();globalThis.fetch=async()=>Response.json({prices:[{category:"steel",paise:100}]});await assert.rejects(loadPublicFeed("prices","cement"),/another category/)}finally{globalThis.fetch=original;invalidatePublicFeeds()}});
