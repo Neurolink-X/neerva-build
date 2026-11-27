@@ -29,6 +29,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
  const exportScene=useRef<(()=>Promise<void>)|null>(null);
  const captureRender=useRef<(()=>RenderSnapshot)|null>(null);
  const [exportStatus,setExportStatus]=useState(""),[exporting,setExporting]=useState(false);
+ const [showFurniture,setShowFurniture]=useState(false);
  const [lighting,setLighting]=useState<"day"|"evening">("day");
  const [quality,setQuality]=useState<"balanced"|"detail">("balanced");
  const [mode,setMode]=useState<Mode>(selectedFloor===undefined?"exterior":"dollhouse"),[fallback,setFallback]=useState(false);
@@ -47,11 +48,11 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
   const shared=new THREE.BoxGeometry(1,1,1),materials:THREE.Material[]=[],textures:THREE.Texture[]=[];
   const material=(hex:string,roughness=.83,metalness=0)=>{const m=new THREE.MeshStandardMaterial({color:hex,roughness,metalness});materials.push(m);return m;};
   try{
-   renderer=new THREE.WebGLRenderer({antialias:quality==="detail",alpha:false,powerPreference:quality==="detail"?"high-performance":"low-power"});
+   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:quality==="detail"?"high-performance":"low-power"});
    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,quality==="detail"?1.75:1.35));
    renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=lighting==="day"?1.08:1.25;
    renderer.outputColorSpace=THREE.SRGBColorSpace;
-   renderer.shadowMap.enabled=quality==="detail"||window.innerWidth>720;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
    target.appendChild(renderer.domElement);
    if(quality==="detail"){
     const env=new RoomEnvironment(),pmrem=new THREE.PMREMGenerator(renderer);
@@ -84,7 +85,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     const size=64,bytes=new Uint8Array(size*size*4);let seed=7183;
     for(let i=0;i<bytes.length;i+=4){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const shade=110+(seed>>>24)%35;bytes[i]=shade;bytes[i+1]=shade;bytes[i+2]=shade;bytes[i+3]=255;}
     const texture=new THREE.DataTexture(bytes,size,size);texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(3,3);texture.magFilter=THREE.LinearFilter;texture.minFilter=THREE.LinearMipmapLinearFilter;texture.generateMipmaps=true;texture.needsUpdate=true;textures.push(texture);
-    wall.bumpMap=texture;wall.bumpScale=.018;concrete.bumpMap=texture;concrete.bumpScale=.012;
+    wall.bumpMap=texture;wall.bumpScale=.009;concrete.bumpMap=texture;concrete.bumpScale=.006;
    }
    const box=(x:number,y:number,z:number,sx:number,sy:number,sz:number,mat:THREE.MeshStandardMaterial,cast=true)=>{const mesh=new THREE.Mesh(shared,mat);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);mesh.castShadow=cast;mesh.receiveShadow=true;site.add(mesh);return mesh;};
    const xCoord=(v:number)=>(v-design.plot.widthFt/2)*FT;
@@ -152,7 +153,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     for(const patch of patches)if(patch.w*FT>.03&&patch.d*FT>.03)box(xCoord(patch.x+patch.w/2),r.floorIndex*height+.09,zCoord(patch.y+patch.d/2),patch.w*FT-.03,.025,patch.d*FT-.03,surface,false);
     if(mode==="walkthrough"&&r.kind!=="stairs"&&planModel)box(xCoord(r.xFt+r.wFt/2),(r.floorIndex+1)*height-.08,zCoord(r.yFt+r.dFt/2),r.wFt*FT-.03,.02,r.dFt*FT-.03,bindFinish(r.id,"ceiling","#ffffff"),false);
    }
-   if(planModel&&mode!=="exterior"){
+   if(showFurniture&&planModel&&mode!=="exterior"){
     const timber=material("#a4896d"),upholstery=material("#c4c7ba"),linen=material("#eee9df"),worktop=material("#777d78");
     for(const p of planFurniture(planModel).filter(p=>visible(p.floor))){
      const x=xCoord(p.x+p.w/2),z=zCoord(p.y+p.d/2),base=p.floor*height+.11,h=p.heightFt*FT,w=p.w*FT,d=p.d*FT;
@@ -246,7 +247,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     box(0,-.26,0,width*1.8,.05,depth*1.8,material("#b4c7ad"),false);
     if(quality==="detail"){const road=material("#62696b",.95),paving=material("#b8b3a6",.94);box(0,-.19,-depth/2-2.2,width*1.6,.06,3.5,road,false);box(0,-.15,-depth/2-.35,width*1.6,.08,.7,paving,false);}
    }
-   scene.add(new THREE.HemisphereLight(lighting==="day"?"#edf5ff":"#a8bce6","#78816d",quality==="detail"?1.2:2.2));const sun=new THREE.DirectionalLight(lighting==="day"?"#fff1d7":"#ffba83",lighting==="day"?2.6:1.6);sun.position.set(-width*.8,top+(lighting==="day"?8:1.8),-depth*.85).applyAxisAngle(new THREE.Vector3(0,1,0),angle);sun.castShadow=renderer.shadowMap.enabled;sun.shadow.mapSize.set(quality==="detail"?1536:1024,quality==="detail"?1536:1024);sun.shadow.camera.left=-width*1.8;sun.shadow.camera.right=width*1.8;sun.shadow.camera.top=depth*1.8;sun.shadow.camera.bottom=-depth*1.8;sun.shadow.bias=-.001;sun.shadow.normalBias=.025;scene.add(sun);
+   scene.add(new THREE.HemisphereLight(lighting==="day"?"#edf5ff":"#a8bce6","#78816d",quality==="detail"?1.2:1.45));const sun=new THREE.DirectionalLight(lighting==="day"?"#fff1d7":"#ffba83",lighting==="day"?2.6:1.6);sun.position.set(-width*.8,top+(lighting==="day"?8:1.8),-depth*.85).applyAxisAngle(new THREE.Vector3(0,1,0),angle);sun.castShadow=renderer.shadowMap.enabled;sun.shadow.mapSize.set(quality==="detail"?1536:512,quality==="detail"?1536:1024);sun.shadow.camera.left=-width*1.8;sun.shadow.camera.right=width*1.8;sun.shadow.camera.top=depth*1.8;sun.shadow.camera.bottom=-depth*1.8;sun.shadow.bias=-.001;sun.shadow.normalBias=.025;scene.add(sun);
    const camera=new THREE.PerspectiveCamera(46,1,.04,300);
    const focusHeight=selectedFloor!==undefined&&mode!=="exterior"?(selectedFloor+.5)*height:Math.min(top,top*.55);
    const up=new THREE.Vector3(0,1,0);
@@ -268,7 +269,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    for(const x of [-width/2,width/2])for(const y of [low,high])for(const z of [-depth/2,depth/2]){
     corners.push(new THREE.Vector3(x,y,z).applyAxisAngle(up,angle).sub(focus));
    }
-   let previousFit=0;
+   
    function draw(){frame=0;if(!renderer||!controls||document.hidden)return;controls.update();renderer.render(scene,camera)}
    function schedule(){if(!frame&&!document.hidden)frame=window.requestAnimationFrame(draw)}
    resumeDrawing=()=>{if(document.hidden){window.cancelAnimationFrame(frame);frame=0}else schedule()};document.addEventListener("visibilitychange",resumeDrawing);
@@ -285,13 +286,13 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
      const currentDirection=camera.position.clone().sub(controls.target).normalize();
      if(currentDirection.lengthSq()>.1&&Math.abs(currentDirection.dot(up))<.999999)activeDirection=currentDirection;
      const right=new THREE.Vector3().crossVectors(up,activeDirection).normalize(),screenUp=new THREE.Vector3().crossVectors(activeDirection,right);
-     const fit=Math.max(...corners.map(point=>point.dot(activeDirection)+1.12*Math.max(
+     const fit=Math.max(...corners.map(point=>point.dot(activeDirection)+1.24*Math.max(
       Math.abs(point.dot(right))/(tanY*camera.aspect),Math.abs(point.dot(screenUp))/tanY)));
-     const offset=previousFit?camera.position.clone().sub(controls.target).multiplyScalar(fit/previousFit):activeDirection.clone().multiplyScalar(fit);
+     const offset=activeDirection.clone().multiplyScalar(fit);
      controls.maxDistance=fit*3;
      camera.far=Math.max(300,fit*5);
      camera.position.copy(controls.target).add(offset);
-     previousFit=fit;
+
     }
     camera.updateProjectionMatrix();
     controls.update();
@@ -303,8 +304,8 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     const dir=new THREE.Vector3(v[0],v[1],v[2]).normalize().applyAxisAngle(up,angle);
     const rightVector=new THREE.Vector3().crossVectors(up,dir).normalize(),upVector=new THREE.Vector3().crossVectors(dir,rightVector);
     const tanY=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-    const fit=Math.max(...corners.map(p=>p.dot(dir)+1.18*Math.max(Math.abs(p.dot(rightVector))/(tanY*camera.aspect),Math.abs(p.dot(upVector))/tanY)));
-    activeDirection=dir;previousFit=fit;controls.target.copy(focus);controls.maxDistance=Math.max(fit*3,10);camera.far=Math.max(300,fit*5);camera.updateProjectionMatrix();
+    const fit=Math.max(...corners.map(p=>p.dot(dir)+1.24*Math.max(Math.abs(p.dot(rightVector))/(tanY*camera.aspect),Math.abs(p.dot(upVector))/tanY)));
+    activeDirection=dir;controls.target.copy(focus);controls.maxDistance=Math.max(fit*3,10);camera.far=Math.max(300,fit*5);camera.updateProjectionMatrix();
     camera.position.copy(focus).addScaledVector(dir,fit);controls.update();schedule();
    };
    // Snapshot the actual visible scene in site-local coordinates. The site rotation
@@ -364,8 +365,8 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    observer=new ResizeObserver(resize);observer.observe(target);resize();
   }catch{failedTimer=window.setTimeout(()=>setFallback(true),0)}
   return()=>{disposed=true;updateFinish.current=null;exportScene.current=null;captureRender.current=null;environmentTarget?.dispose();if(resumeDrawing)document.removeEventListener("visibilitychange",resumeDrawing);window.cancelAnimationFrame(frame);window.clearTimeout(failedTimer);refresh.current=null;cameraView.current=null;wallMat.current=null;observer?.disconnect();controls?.dispose();shared.dispose();for(const m of materials)m.dispose();for(const t of textures)t.dispose();scene.traverse(o=>{if(o instanceof THREE.InstancedMesh)o.dispose();if(o instanceof THREE.DirectionalLight)o.shadow.dispose()});renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement)};
- },[design,mode,planModel,selectedFloor,wallCells,quality,lighting,stairReview]);
+ },[design,mode,planModel,selectedFloor,wallCells,showFurniture,quality,lighting,stairReview]);
  async function downloadModel(){if(!exportScene.current||exporting)return;setExporting(true);setExportStatus("");try{await exportScene.current();setExportStatus("3D scene exported. Open the GLB in Blender for offline architectural rendering.");}catch{setExportStatus("Export unavailable. Keep the current plan open and retry.");}finally{setExporting(false);}}
- return <section className="nbd-building" data-plan-id={design.id} data-frontage-signature={planModel?frontageSignature(planModel):undefined} data-selected-floor={mode==="exterior"?"all":selectedFloor??"all"} data-wall-cells={wallCells.length}><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>{selectedFloor===undefined?"Full building":mode==="exterior"?"Full building · all floors":`${["Ground floor","First floor","Second floor"][selectedFloor]??`Floor ${selectedFloor+1}`} only`} · touch to rotate</span></div>{fallback?<div><p role="status">Interactive rotation is unavailable on this device.</p>{planModel?<PlanAxonometric plan={planModel} design={design} floor={mode==="exterior"?undefined:selectedFloor} cutaway={mode==="dollhouse"}/>:<DesignPlanArt design={design} floor={selectedFloor??0}/>}</div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}{!fallback&&<>{mode!=="walkthrough"&&<div className="nbd-buttons" role="group" aria-label="3D camera views">{(["front","rear","left","right","top"] as CameraView[]).map(view=><button type="button" key={view} onClick={()=>cameraView.current?.(view)}>{({front:"Front view",rear:"Rear view",left:"Left view",right:"Right view",top:"Top view"} as const)[view]}</button>)}</div>}</>}<div className="nbd-buttons nbd-mode-controls" role="group" aria-label="3D display mode">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Selected floor cutaway":"Full exterior · all floors"}</button>)}</div>{!fallback&&<details className="nbd-quality-options"><summary>Rendering quality</summary><div className="nbd-buttons" role="group" aria-label="3D rendering quality"><button type="button" aria-pressed={quality==="balanced"} onClick={()=>setQuality("balanced")}>Smooth preview</button><button type="button" aria-pressed={quality==="detail"} onClick={()=>setQuality("detail")}>Enhanced detail</button></div><div className="nbd-buttons" role="group" aria-label="Scene lighting"><button type="button" aria-pressed={lighting==="day"} onClick={()=>setLighting("day")}>Daylight</button><button type="button" aria-pressed={lighting==="evening"} onClick={()=>setLighting("evening")}>Evening</button></div><button type="button" disabled={exporting} onClick={()=>void downloadModel()}>{exporting?"Exporting…":"Download 3D scene (.glb)"}</button>{exportStatus&&<p role="status">{exportStatus}</p>}</details>}{!fallback&&<BrowserArchitectureRender key={JSON.stringify([design.id,colour,mode,selectedFloor,lighting,quality,planModel?.facade,scheme])} capture={()=>captureRender.current?.()??null}/>}{planModel&&stairReview&&stairReview.unresolved.length>0&&<p role="status" className="nbd-disclaimer"><strong>Stair layout unresolved.</strong> The marked stair bay is a space reservation only. A usable flight, headroom and landing connections have not been established; no floating steps are drawn. Ask an architect to revise the bay before construction.</p>}<p className="nbd-disclaimer">{selectedFloor!==undefined?"Floor tabs show that level only by default. Choose Full exterior to inspect all selected storeys. ":""}Parametric study only — not certified structural BIM. Concept walls and actual openings derive from the plan. Roofs and parapets follow modeled upper-floor boundaries; structural details remain conceptual. Enhanced detail adds physically based reflections, local plaster texture, daylight/evening lighting and shadows. Use the separate ray-traced image tool for realistic concept images, or export the exact visible scene for offline rendering. Eye-level beta is not a measured walkthrough.</p></section>;
+ return <section className="nbd-building" data-plan-id={design.id} data-frontage-signature={planModel?frontageSignature(planModel):undefined} data-selected-floor={mode==="exterior"?"all":selectedFloor??"all"} data-wall-cells={wallCells.length}><div className="nbd-hrow"><h2>Plan-based 3D house</h2><span>{selectedFloor===undefined?"Full building":mode==="exterior"?"Full building · all floors":`${["Ground floor","First floor","Second floor"][selectedFloor]??`Floor ${selectedFloor+1}`} only`} · touch to rotate</span></div>{fallback?<div><p role="status">Interactive rotation is unavailable on this device.</p>{planModel?<PlanAxonometric plan={planModel} design={design} floor={mode==="exterior"?undefined:selectedFloor} cutaway={mode==="dollhouse"}/>:<DesignPlanArt design={design} floor={selectedFloor??0}/>}</div>:<div ref={host} className="nbd-webgl" aria-label="Interactive 3D building model with touch orbit and zoom"/>}{!fallback&&<>{mode!=="walkthrough"&&<div className="nbd-buttons" role="group" aria-label="3D camera views">{(["front","rear","left","right","top"] as CameraView[]).map(view=><button type="button" key={view} onClick={()=>cameraView.current?.(view)}>{({front:"Front view",rear:"Rear view",left:"Left view",right:"Right view",top:"Top view"} as const)[view]}</button>)}</div>}</>}<div className="nbd-buttons nbd-mode-controls" role="group" aria-label="3D display mode">{(["exterior","dollhouse","walkthrough"] as Mode[]).map(option=><button key={option} aria-pressed={mode===option} onClick={()=>setMode(option)}>{option==="walkthrough"?"Eye-level beta":option==="dollhouse"?"Selected floor cutaway":"Full exterior · all floors"}</button>)}</div>{!fallback&&<details className="nbd-quality-options"><summary>View settings & export</summary>{planModel&&mode!=="exterior"&&<label><input type="checkbox" checked={showFurniture} onChange={e=>setShowFurniture(e.target.checked)}/> Show optional furniture for space guidance</label>}<div className="nbd-buttons" role="group" aria-label="3D rendering quality"><button type="button" aria-pressed={quality==="balanced"} onClick={()=>setQuality("balanced")}>Smooth preview</button><button type="button" aria-pressed={quality==="detail"} onClick={()=>setQuality("detail")}>Enhanced detail</button></div><div className="nbd-buttons" role="group" aria-label="Scene lighting"><button type="button" aria-pressed={lighting==="day"} onClick={()=>setLighting("day")}>Daylight</button><button type="button" aria-pressed={lighting==="evening"} onClick={()=>setLighting("evening")}>Evening</button></div><button type="button" disabled={exporting} onClick={()=>void downloadModel()}>{exporting?"Exporting…":"Download 3D scene (.glb)"}</button>{exportStatus&&<p role="status">{exportStatus}</p>}</details>}{!fallback&&<BrowserArchitectureRender key={JSON.stringify([design.id,colour,mode,selectedFloor,lighting,quality,planModel?.facade,scheme])} capture={()=>captureRender.current?.()??null}/>}{planModel&&stairReview&&stairReview.unresolved.length>0&&<p role="status" className="nbd-disclaimer"><strong>Stair layout unresolved.</strong> Stair space is reserved, but usable flights and headroom are not verified. Ask an architect before building.</p>}<p className="nbd-disclaimer">Concept only · professional review required before construction.</p><details className="nbd-quality-options"><summary>How to read this model</summary><p>Cutaway lowers walls for visibility only. Full exterior shows complete wall height and all floors. Openings follow the selected plan; eye-level is an illustrative view, not a measured walkthrough.</p></details></section>;
 }
 
