@@ -30,8 +30,9 @@ export function loadPublicFeed(kind:Feed):Promise<unknown>{
     if(kind==="prices")rows.sort((a,b)=>Number((a as {paise?:number})?.paise??Infinity)-Number((b as {paise?:number})?.paise??Infinity));
     const result={[kind]:rows};entry.data=result;entry.at=Date.now();return result;
    }
-   if(!feedCursor(value.nextCursor)||seen.has(value.nextCursor)||cursor!==null&&value.nextCursor<=cursor)throw Error("Invalid public feed cursor");
-   cursor=value.nextCursor;seen.add(cursor);
+   const nextCursor:unknown=value.nextCursor;
+   if(!feedCursor(nextCursor)||seen.has(nextCursor)||cursor!==null&&nextCursor<=cursor)throw Error("Invalid public feed cursor");
+   seen.add(nextCursor);cursor=nextCursor;
   }
   throw Error("Public feed exceeds safe page budget");
  })().catch(error=>{if(entries.get(kind)===entry)entries.delete(kind);throw entry.revision!==revision?Error("Public feed was revised"):error}).finally(()=>{clearTimeout(deadline);entry.pending=undefined;entry.controller=undefined});
