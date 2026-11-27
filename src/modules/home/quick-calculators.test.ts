@@ -19,7 +19,7 @@ test("durable resource and drainage calculations",()=>{assert.equal(quickEstimat
 import {calculatorSpecs,calculatorErrors,calculatorBreakdown,calculatorFormulas} from "./quick-calculators.ts";
 test("every calculator has explicit validation, a formula and finite example result",()=>{
  for(const spec of calculatorSpecs){
-  const values=spec.fields.map(f=>f[1]);const result=quickEstimate(spec.id,values);
+  const values:number[]=spec.fields.map(f=>f[1]);const result=quickEstimate(spec.id,values);
   assert.ok(result!==null&&Number.isFinite(result),spec.id);
   assert.ok(calculatorFormulas[spec.id].length>10);
   assert.ok(calculatorErrors(spec.id,values).every(e=>!e));

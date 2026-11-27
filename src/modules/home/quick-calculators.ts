@@ -42,7 +42,7 @@ export function calculatorFieldRule(id:CalculatorId,index:number):FieldRule{retu
 export function calculatorErrors(id:CalculatorId,values:readonly number[]):string[]{
  const spec=calculatorSpecs.find(s=>s.id===id);
  if(!spec||values.length!==spec.fields.length)return ["Input count does not match this calculator."];
- return spec.fields.map(([label],i)=>{
+ return spec.fields.map((_,i)=>{
   const n=values[i],r=calculatorFieldRule(id,i);
   if(!Number.isFinite(n))return "Enter a valid number.";
   if(n<0||n>1e9)return "Enter a number between 0 and 1,000,000,000.";
