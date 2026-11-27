@@ -17,7 +17,7 @@ import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 import {PlanShortlist} from "./plan-shortlist";
 import {briefKey} from "@/modules/studio/plan-shortlist";
-import {allowStudioWarmup,studioWarmupDelay,type NetworkHint} from "@/modules/navigation/intent";
+import {allowStudioWarmup,studioWarmupDelay,preferLitePreview,type NetworkHint} from "@/modules/navigation/intent";
 const Building3D=dynamic(()=>import("./studio-building-3d").then(m=>m.StudioBuilding3D),{
  ssr:false,loading:()=> <p role="status" className="nroad-loading">Loading plan-matched 3D viewer… The 2D plan is available immediately.</p>
 });
@@ -71,7 +71,12 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  // Keep Three.js and WebGL off the initial route critical path. Auto-load near
  // the viewer, or load immediately on explicit request; 2D remains independent.
  useEffect(()=>{const node=threeSection.current;if(!hasPlan||threeReady||!node||!("IntersectionObserver" in window))return;
-  const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();setThreeReady(true)}},{rootMargin:"120px"});
+  const nav=navigator as Navigator&{connection?:NetworkHint};
+  const observer=new IntersectionObserver(entries=>{
+   // Scrolling must not download the large WebGL chunk on a constrained link.
+   // The explicit Load interactive 3D button stays available on every network.
+   if(entries.some(entry=>entry.isIntersecting)&&!preferLitePreview(nav.connection,nav.onLine)){observer.disconnect();setThreeReady(true)}
+  },{rootMargin:"120px"});
   observer.observe(node);return()=>observer.disconnect();
  },[hasPlan,threeReady]);
  function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setBrief(v=>({...v,[key]:value}));if(key==="floors"&&value===1)setStairReady(false);setChosen(0);setFloor(0);setKit(null);setSaveInfo("")}
@@ -178,7 +183,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <OrientedPlanDrawing plan={plan} floor={floor} scheme={scheme??undefined}/>
      <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0){setChosen(i);setKit(null)}}}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
-     <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. The interactive 3D viewer loads when you reach this section.","2D नक्शा तैयार है। 3D व्यू इस भाग में आने पर लोड होगा।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
+     <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. On slow connections, select Load interactive 3D when you need it.","2D नक्शा तैयार है। धीमे इंटरनेट पर जरूरत होने पर 3D व्यू खोलें।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The selected floor uses the same room footprints and openings. Wall thickness, stairs and finishes remain conceptual, not verified CAD/BIM.</p>
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
