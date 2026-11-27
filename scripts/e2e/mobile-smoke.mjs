@@ -44,9 +44,12 @@ async function main(){
     assert.ok(await irregular.getByRole("img",{name:"Measured polygon and candidate rectangular envelope"}).isVisible());
     await irregular.getByRole("button",{name:"Use envelope dimensions in planner"}).click();
     assert.ok(await studio.getByLabel("Frontage (ft)").inputValue());
-    const worksheet=studio.getByText("Commercial building quantity worksheet",{exact:true});
-    await worksheet.click();
-    assert.ok(await studio.getByText(/Selected floor area:/).isVisible());
+    // Scope to the quantity worksheet itself, rather than the similarly named engineering summary.
+    const summary=studio.getByText("Commercial building quantity worksheet",{exact:true});
+    await summary.click();
+    const panel=summary.locator("..");
+    assert.equal(await panel.locator("p").filter({hasText:/^Selected floor area:/}).count(),1);
+    assert.ok(await panel.locator("p").filter({hasText:/^Selected floor area:/}).isVisible());
     const anonymous=await page.request.get(base+"/api/studio/commercial-projects");
     assert.ok([401,503].includes(anonymous.status()),"anonymous commercial projects must not be disclosed");
     assert.deepEqual(errors,[]);
