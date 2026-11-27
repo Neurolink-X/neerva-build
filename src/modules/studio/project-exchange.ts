@@ -1,4 +1,5 @@
 import {area,planGeometryDigest,planMetrics,validatePlan,type PlanModel,type Rect} from "./plan-model.ts";
+import {commercialFixtures,commercialPortals,commercialGeometryIssues,commercialFrontPanels} from "./commercial-detail.ts";
 import {rentalLayouts} from "./rental-layout.ts";
 import {validateBuildingConcept,type BuildingConcept} from "./building-purpose.ts";
 import {validMaterialQuantity,type MaterialCategory,type MaterialQuantityUnit} from "../catalog/category-units.ts";
@@ -23,12 +24,12 @@ export function conceptTakeoff(source:ProjectSource):QuantityLine[]{
  }
  return out;
 }
-export function projectErrors(s:ProjectSource){return s.kind==="residential"?validatePlan(s.plan):validateBuildingConcept(s.plan);}
+export function projectErrors(s:ProjectSource){return s.kind==="residential"?validatePlan(s.plan):[...validateBuildingConcept(s.plan),...commercialGeometryIssues(s.plan)];}
 export async function createProjectExchange(source:ProjectSource){
  const errors=projectErrors(source);if(errors.length)throw new Error("Concept geometry failed validation.");
  const p=source.plan,spaces=projectSpaces(source);
  const digest=source.kind==="residential"?await planGeometryDigest(source.plan):Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",new TextEncoder().encode(JSON.stringify([source.plan.brief,spaces.map(s=>[s.id,s.floor,s.kind,s.x,s.y,s.w,s.d]).sort()])))),x=>x.toString(16).padStart(2,"0")).join("");
- return {schema:"neerva.spatial-concept",schemaVersion:1,units:"ft",coordinateSystem:"site-local x along frontage; y away from road; north orientation stored separately",approval:"CONCEPT_ONLY",planId:p.id,geometryDigest:digest,source,spaces,rentalUnitLayouts:source.kind==="commercial"?rentalLayouts(source.plan):[],quantities:conceptTakeoff(source),unsupported:["Certified IFC exchange","Structural and MEP quantities","Statutory compliance","Approved construction BOQ"]};
+ return {schema:"neerva.spatial-concept",schemaVersion:1,units:"ft",coordinateSystem:"site-local x along frontage; y away from road; north orientation stored separately",approval:"CONCEPT_ONLY",planId:p.id,geometryDigest:digest,source,spaces,rentalUnitLayouts:source.kind==="commercial"?rentalLayouts(source.plan):[],commercialDetail:source.kind==="commercial"?{fixtures:commercialFixtures(source.plan),portalCandidates:commercialPortals(source.plan),frontPanels:commercialFrontPanels(source.plan)}:null,quantities:conceptTakeoff(source),unsupported:["Certified IFC exchange","Structural and MEP quantities","Statutory compliance","Approved construction BOQ"]};
 }
 /** Only explicitly reviewed quantities enter the existing request form.
  * This link never creates orders, reserves stock or guarantees current pricing. */
