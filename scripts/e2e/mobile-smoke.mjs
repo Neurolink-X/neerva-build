@@ -1224,6 +1224,8 @@ async function main(){
       return !!a&&!!b&&a.getAttribute("data-selected-floor")==="1"
         &&b.getAttribute("data-selected-floor")==="1"&&Number(b.getAttribute("data-wall-cells"))>0;
     });
+    await page.getByRole("button",{name:"Full-height floor",exact:true}).click();
+    assert.equal(await plan3D.getAttribute("data-selected-floor"),"1","full-height view preserves selected floor");
     await page.getByRole("button",{name:"Full exterior · all floors"}).click();
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"all","full exterior intentionally displays both floors");
     await page.getByRole("button",{name:"Selected floor cutaway"}).click();
@@ -1300,6 +1302,7 @@ async function main(){
     const liveCanvas=page.locator(".nbd-webgl canvas");
     if(await liveCanvas.count()){
      const renderPanel=page.getByRole("region",{name:"Browser architectural rendering"});
+     await renderPanel.locator("summary").click();
      await renderPanel.getByRole("button",{name:"Generate realistic image"}).click();
      await renderPanel.getByRole("button",{name:"Cancel render"}).click();
      await renderPanel.getByText(/Rendering cancelled/).waitFor();
