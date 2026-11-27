@@ -70,3 +70,28 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
  const forward=normalize([-origin[0],floors*13*ft*.35-origin[1],-origin[2]]),right=normalize(cross(forward,[0,1,0])),up=normalize(cross(right,forward));
  return {boxes,camera:{origin,forward,right,up,fov:45,aspect:1.5},evening};
 }
+
+/** Selected floor preview: keep the actual opening-aware wall/slab model, not the roof or adjacent storeys. */
+export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:FinishScheme):RenderSnapshot{
+ const {widthFt,depthFt}=plan.brief,boxes:RenderBox[]=[];
+ const x=(v:number)=>(v-widthFt/2)*ft,z=(v:number)=>(v-depthFt/2)*ft;
+ const add=(lo:Vec3,hi:Vec3,color:Vec3,rough=.82,opacity=1)=>{if(hi.every((v,i)=>v>lo[i]))boxes.push({lo,hi,color,rough,metal:0,opacity});};
+ const elements=commercialElements(plan),cut=7;
+ for(const s of elements.slabs.filter(s=>s.floor===floor&&s.bottom===0))add([x(s.x),0,z(s.y)],[x(s.x+s.w),s.top*ft,z(s.y+s.d)],shadeRgb("#d5cabc"));
+ for(const w of elements.walls.filter(w=>w.floor===floor&&w.bottom<cut)){
+  const t=w.thickness/2,lo=w.bottom*ft,hi=Math.min(w.top,cut)*ft;
+  if(w.axis==="x")add([x(w.start),lo,z(w.plane-t)],[x(w.end),hi,z(w.plane+t)],shadeRgb(scheme.exterior));
+  else add([x(w.plane-t),lo,z(w.start)],[x(w.plane+t),hi,z(w.end)],shadeRgb(scheme.exterior));
+ }
+ for(const p of elements.portals.filter(p=>p.floor===floor&&p.kind==="exterior-glazing")){
+  const t=.04;
+  add([x(p.x-(p.axis==="y"?t:0)),3*ft,z(p.y-(p.axis==="x"?t:0))],[x(p.x+(p.axis==="x"?p.length:t)),cut*ft,z(p.y+(p.axis==="y"?p.length:t))],shadeRgb(scheme.glass),.18,.45);
+ }
+ for(const z0 of plan.zones.filter(r=>r.floor===floor&&["open","parking"].includes(r.kind)))add([x(z0.x),0,z(z0.y)],[x(z0.x+z0.w),.08,z(z0.y+z0.d)],shadeRgb(z0.kind==="open"?"#bdcdb1":"#b8bcb9"));
+ for(const s of commercialStairStudies(plan).studies.filter(s=>s.floor===floor))for(const r of [...s.steps,...s.landings.filter(l=>l.topFt>0)]){
+  if(r.topFt<=cut)add([x(r.x),Math.max(0,r.topFt-.45)*ft,z(r.y)],[x(r.x+r.w),r.topFt*ft,z(r.y+r.d)],shadeRgb("#b4a48d"));
+ }
+ const distance=Math.max(widthFt,depthFt)*ft,origin:Vec3=[distance*.8,distance*1.4,-distance*1.2];
+ const forward=normalize([-origin[0],1-origin[1],-origin[2]]),right=normalize(cross(forward,[0,1,0])),up=normalize(cross(right,forward));
+ return {boxes,camera:{origin,forward,right,up,fov:45,aspect:1.5},evening:false};
+}
