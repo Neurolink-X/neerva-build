@@ -1,5 +1,6 @@
 export type Vec3=[number,number,number];
-export type RenderBox={lo:Vec3;hi:Vec3;color:Vec3;opacity:number;metal:number;rough:number};
+export type RenderFinish="plain"|"tile"|"marble"|"wood"|"panel"|"acp";
+export type RenderBox={lo:Vec3;hi:Vec3;color:Vec3;opacity:number;metal:number;rough:number;finish?:RenderFinish};
 export type RenderSnapshot={boxes:RenderBox[];camera:{origin:Vec3;forward:Vec3;right:Vec3;up:Vec3;fov:number;aspect?:number};evening:boolean};
 export type RenderJob=RenderSnapshot&{width:number;height:number;samples:number};
 export type RenderFrame={pixels:Uint8ClampedArray;width:number;height:number;completed:number;samples:number};
