@@ -7,7 +7,7 @@ const text=(value:unknown):value is string=>typeof value==="string"&&value.trim(
 const positiveMoney=(value:unknown):value is number=>typeof value==="number"&&Number.isSafeInteger(value)&&value>0;
 const future=(value:unknown,now:number):value is string=>typeof value==="string"&&Number.isFinite(Date.parse(value))&&Date.parse(value)>now;
 function common(value:Record<string,unknown>){
- return text(value.category)&&value.category!=="aggregates"&&text(value.slug)&&text(value.sku)&&text(value.unit)&&
+ return text(value.category)&&value.category!=="aggregates"&&text(value.slug)&&text(value.sku)&&!/^NEERVA-REF-/i.test(value.sku)&&text(value.unit)&&
  text(value.city)&&
  (value.prefix===null||typeof value.prefix==="string"&&/^\d{1,6}$/.test(value.prefix))&&
  typeof value.min==="number"&&validProductQuantity(value.category,value.slug,value.unit,value.min);
