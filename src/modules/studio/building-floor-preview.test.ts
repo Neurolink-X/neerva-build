@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildingStarter,generateBuildingConcepts} from "./building-purpose.ts";
+import {buildingPurposes,buildingStarter,generateBuildingConcepts} from "./building-purpose.ts";
 import {defaultFinishScheme,finishSpaces,applyRoomFinish,shadeRgb} from "./finish-model.ts";
-import {buildingFloorSnapshot} from "./building-render.ts";
+import {buildingFloorSnapshot,buildingRenderSnapshot} from "./building-render.ts";
 test("commercial cutaway stays within selected floor height and uses valid boxes",()=>{
  for(const purpose of ["shops","restaurant","school","mall","rental"] as const){
   const plan=generateBuildingConcepts(buildingStarter(purpose),1).plans[0];
@@ -32,4 +32,27 @@ test("room finish colours are visible on selected commercial floor without chang
  assert.deepEqual(before.boxes.map(b=>[b.lo,b.hi]),after.boxes.map(b=>[b.lo,b.hi]));
  assert.ok(after.boxes.some(b=>b.color.every((v,i)=>v===shadeRgb("#112233")[i])));
  assert.ok(after.boxes.some(b=>b.color.every((v,i)=>v===shadeRgb("#abcdef")[i])));
+});
+
+import {commercialFacadeProfile,commercialFrontPanels} from "./commercial-detail.ts";
+import {commercialElements} from "./commercial-elements.ts";
+test("all five purpose facades use the shared band size and preserve the selected opening geometry",()=>{
+ const profiles=new Set<number>();
+ for(const purpose of buildingPurposes){
+  const plan=generateBuildingConcepts(buildingStarter(purpose),1).plans[0];assert.ok(plan,purpose);
+  const profile=commercialFacadeProfile(purpose),scheme=defaultFinishScheme({kind:"commercial",plan}),model=buildingRenderSnapshot(plan,"limestone",false,"front",scheme);
+  profiles.add(profile.bandFt);
+  assert.ok(model.boxes.every(b=>b.hi.every((v,i)=>Number.isFinite(v)&&Number.isFinite(b.lo[i])&&v>b.lo[i])));
+  const panels=commercialFrontPanels(plan).filter(p=>p.w*.3048>=.6);
+  assert.ok(panels.length);
+  for(const p of panels){const top=(p.floor*13+12.5)*.3048;
+   assert.ok(model.boxes.some(b=>Math.abs(b.hi[1]-top)<1e-7&&Math.abs(b.hi[1]-b.lo[1]-profile.bandFt*.3048)<1e-7&&Math.abs(b.hi[0]-b.lo[0]-p.w*.3048)<1e-7),purpose+" facade band");
+  }
+  const portals=commercialElements(plan).portals.filter(p=>p.floor===0&&p.kind==="exterior-glazing");
+  const cut=buildingFloorSnapshot(plan,0,scheme);
+  for(const p of portals){const x=(p.x-plan.brief.widthFt/2)*.3048,z=(p.y-plan.brief.depthFt/2)*.3048;
+   assert.ok(cut.boxes.some(b=>b.opacity<.98&&b.lo[1]>=3*.3048-1e-7&&b.hi[1]<=7*.3048+1e-7&&(p.axis==="x"?Math.abs(b.lo[2]-(z-.035))<1e-7:Math.abs(b.lo[0]-(x-.035))<1e-7)));
+  }
+ }
+ assert.equal(profiles.size,buildingPurposes.length);
 });
