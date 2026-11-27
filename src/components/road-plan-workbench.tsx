@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import {SiteFooter} from "@/components/site-chrome";
 import {PlanFinishStudio} from "./plan-finish-studio";
-import {defaultFinishScheme,type FinishScheme} from "@/modules/studio/finish-model";
+import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/studio/finish-model";
 import {StudioProjectExchange} from "./studio-project-exchange";
 import {StudioPremiumTools} from "./studio-premium-tools";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
@@ -57,8 +57,9 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const kit=kitOverride??draft?.facade.kit??"simple-parapet";
  const shade=colours.find(c=>c.id===palette)??colours[0];
  const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,kit,main:shade.main,accent:shade.accent}}:null,[draft,shade,kit]);
- const [finishDraft,setFinishDraft]=useState<FinishScheme|null>(null);
- const scheme=useMemo(()=>plan?{...(finishDraft?.planId===plan.id?finishDraft:defaultFinishScheme({kind:"residential",plan})),exterior:plan.facade.main,accent:plan.facade.accent}:null,[plan,finishDraft]);
+ const [finishHistory,setFinishHistory]=useState<Record<string,FinishScheme>>({});
+ const finishKey=plan?JSON.stringify([briefKey(brief),plan.id]):"";
+ const scheme=useMemo(()=>plan?{...(finishHistory[finishKey]??defaultFinishScheme({kind:"residential",plan})),exterior:plan.facade.main,accent:plan.facade.accent}:null,[plan,finishHistory,finishKey]);
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
  const metrics=useMemo(()=>plan?planMetrics(plan):null,[plan]);
  const hasPlan=!!plan;
@@ -193,7 +194,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
       <p className="nroad-small">{metrics.note}</p>
       <Link href="/basket" className="nroad-quote">{str("Build my material list →","सामग्री सूची बनाएं →")}</Link>
       <p className="nroad-small">Review the quantities in Project data & material planning below before opening a quote draft.</p></section>}
-     {scheme&&<PlanFinishStudio key={plan.id+":"+floor} source={{kind:"residential",plan}} floor={floor} scheme={scheme} onChange={setFinishDraft} showExterior={false}/>}
+     {scheme&&<PlanFinishStudio key={plan.id+":"+floor} source={{kind:"residential",plan}} floor={floor} scheme={scheme} onChange={next=>{setFinishHistory(h=>rememberFinish(h,finishKey,next));setSaveInfo("")}} showExterior={false}/>}
      <StudioProjectExchange key={plan.id} source={{kind:"residential",plan}} scheme={scheme??undefined}/>
      <section className="nroad-notes"><h2>{str("What still needs a professional?","क्या-क्या जाँचना बाकी है?")}</h2>
       <ul>{plan.notes.map(x=><li key={x}>{x}</li>)}</ul></section>
