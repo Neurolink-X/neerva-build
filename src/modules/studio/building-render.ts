@@ -3,7 +3,7 @@ import {shadeRgb,finishSpaces,wallFaceOwners,wallShade,type FinishScheme} from "
 import {finishRoughness} from "./commercial-interior-render.ts";
 import {commercialStairStudies,commercialInternalSpaces} from "./commercial-internal.ts";
 import {stairStepDepthFt} from "./stair-study.ts";
-import {commercialFrontPanels} from "./commercial-detail.ts";
+import {commercialFrontPanels,commercialFacadeProfile} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
 const ft=.3048;
@@ -37,11 +37,11 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
  }
  // Finish details follow actual facade intervals and existing window holes.
  // No invented windows, cantilevers or additional floor area.
- const accent:Vec3=selected?shadeRgb(selected.accent):[.25,.29,.28],frame:Vec3=[.16,.20,.21];
+ const profile=commercialFacadeProfile(plan.brief.purpose),accent:Vec3=selected?shadeRgb(selected.accent):[.25,.29,.28],frame:Vec3=profile.frame;
  for(const p of commercialFrontPanels(plan)){
   const top=(p.floor*13+12.5)*ft,plane=z(p.y),left=x(p.x),right=x(p.x+p.w);
   if(right-left<.6)continue;
-  const band=plan.brief.purpose==="school"?.16:plan.brief.purpose==="restaurant"?.32:.24;
+  const band=profile.bandFt*ft;
   push([left,top-band,plane-.11],[right,top,plane-.03],accent,.65,selected?.cladding);
  }
  for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
@@ -108,7 +108,7 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
    if(p.axis==="x")add([a,l,plane-t],[b,h,plane+t],colour,rough,opacity);
    else add([plane-t,l,a],[plane+t,h,b],colour,rough,opacity);
   };
-  const frameTone:Vec3=glass?[.18,.23,.25]:[.42,.35,.28];
+  const frameTone:Vec3=glass?commercialFacadeProfile(plan.brief.purpose).frame:[.42,.35,.28];
   frame(start,start+bar,bottom,top,frameTone);frame(end-bar,end,bottom,top,frameTone);
   // A cutaway must not invent a header across a doorway/window below its real head.
   if(cut>=8)frame(start+bar,end-bar,top-bar,top,frameTone);
