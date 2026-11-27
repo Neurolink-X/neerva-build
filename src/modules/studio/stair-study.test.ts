@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {straightStairStudy,residentialStairStudies,dogLegStairStudy,stairFloorPatches} from "./stair-study.ts";
-import {generateSpatialPortfolio} from "./road-generator.ts";
+import {generateSpatialPortfolio,generateStairReadyPortfolio,portfolioForPlanId} from "./road-generator.ts";
 import {overlapArea,area,type Room,type Opening} from "./plan-model.ts";
 const lower:Room={id:"s0",label:"Stair",kind:"stairs",floor:0,x:2,y:4,w:5,d:24,minClearWidthFt:3.25};
 const upper={...lower,id:"s1",floor:1};
@@ -39,4 +39,12 @@ test("dog-leg flight uses distinct aligned entry and exit doors with a real turn
  assert.ok(area(stairFloorPatches(b,[study])[0])<area(b));
  assert.equal(dogLegStairStudy({...a,w:5},{...b,w:5},9.5,ds),null);
  assert.equal(dogLegStairStudy(a,b,9.5,[ds[0],{...ds[1],atFt:.5}]),null);
+});
+
+test("actual wide G+1 house concepts offer checked dog-leg stair variants without changing the old portfolio",()=>{
+ const brief={widthFt:40,depthFt:50,floors:2 as const,bedrooms:3,parking:true,roadSide:"N" as const,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
+ const before=generateSpatialPortfolio(brief,24);const ready=generateStairReadyPortfolio(brief,24);
+ assert.ok(ready.plans.length,"wide house must offer real dog-leg geometry");
+ for(const p of ready.plans){assert.equal(residentialStairStudies(p).unresolved.length,0);assert.equal(residentialStairStudies(p).studies[0].kind,"dog-leg");assert.equal(portfolioForPlanId(brief,p.id).plans.find(v=>v.id===p.id)?.id,p.id);}
+ assert.deepEqual(generateSpatialPortfolio(brief,24),before);
 });
