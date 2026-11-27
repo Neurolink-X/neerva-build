@@ -3,6 +3,8 @@ import {useEffect,useMemo,useRef,useState} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {SiteFooter} from "@/components/site-chrome";
+import {PlanFinishStudio} from "./plan-finish-studio";
+import {defaultFinishScheme,type FinishScheme} from "@/modules/studio/finish-model";
 import {StudioProjectExchange} from "./studio-project-exchange";
 import {StudioPremiumTools} from "./studio-premium-tools";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
@@ -55,6 +57,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const kit=kitOverride??draft?.facade.kit??"simple-parapet";
  const shade=colours.find(c=>c.id===palette)??colours[0];
  const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,kit,main:shade.main,accent:shade.accent}}:null,[draft,shade,kit]);
+ const [finishDraft,setFinishDraft]=useState<FinishScheme|null>(null);
+ const scheme=useMemo(()=>plan?{...(finishDraft?.planId===plan.id?finishDraft:defaultFinishScheme({kind:"residential",plan})),exterior:plan.facade.main,accent:plan.facade.accent}:null,[plan,finishDraft]);
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
  const metrics=useMemo(()=>plan?planMetrics(plan):null,[plan]);
  const hasPlan=!!plan;
@@ -167,10 +171,10 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{["Ground floor","First floor","Second floor"][i]}</button>)}
      </div>
      <div className="nroad-plan-summary" data-plan-id={plan.id} data-selected-floor={floor} aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.floor===floor).length}</strong> Spaces on this floor</span><span><strong>{plan.plot.widthFt} × {plan.plot.depthFt}</strong> Plot (ft)</span><span><strong>{plan.floors}</strong> Level(s)</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom").length}</strong> Bedrooms total</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===floor).length}</strong> Bedrooms on this floor</span></div>
-     <OrientedPlanDrawing plan={plan} floor={floor}/>
+     <OrientedPlanDrawing plan={plan} floor={floor} scheme={scheme??undefined}/>
      <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0){setChosen(i);setKit(null)}}}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
-     <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. The interactive 3D viewer loads when you reach this section.","2D नक्शा तैयार है। 3D व्यू इस भाग में आने पर लोड होगा।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
+     <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. The interactive 3D viewer loads when you reach this section.","2D नक्शा तैयार है। 3D व्यू इस भाग में आने पर लोड होगा।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
      <p className="nroad-small">3D derives room footprints, doors and windows from the selected PlanModel. The selected floor uses the same room footprints and openings. Wall thickness, stairs and finishes remain conceptual, not verified CAD/BIM.</p>
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
@@ -189,7 +193,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
       <p className="nroad-small">{metrics.note}</p>
       <Link href="/basket" className="nroad-quote">{str("Build my material list →","सामग्री सूची बनाएं →")}</Link>
       <p className="nroad-small">Review the quantities in Project data & material planning below before opening a quote draft.</p></section>}
-     <StudioProjectExchange key={plan.id} source={{kind:"residential",plan}}/>
+     {scheme&&<PlanFinishStudio key={plan.id+":"+floor} source={{kind:"residential",plan}} floor={floor} scheme={scheme} onChange={setFinishDraft} showExterior={false}/>}
+     <StudioProjectExchange key={plan.id} source={{kind:"residential",plan}} scheme={scheme??undefined}/>
      <section className="nroad-notes"><h2>{str("What still needs a professional?","क्या-क्या जाँचना बाकी है?")}</h2>
       <ul>{plan.notes.map(x=><li key={x}>{x}</li>)}</ul></section>
     </>}
