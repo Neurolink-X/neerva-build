@@ -44,5 +44,6 @@ test("commercial comparison matrix respects exact input, direction, parking and 
    assert.equal(p.zones.filter(z=>z.kind==="parking").length,brief.parkingBays);
   }
   assert.equal(r.options.length,Math.min(24,r.distinct));
+  console.log("architecture-coverage "+JSON.stringify({kind:"commercial",purpose,roadSide,unique:r.distinct,shown:r.options.length,detailed:r.detailedCount}));
  }
 });
