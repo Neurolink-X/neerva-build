@@ -1,5 +1,6 @@
 import {overlapArea,area,type Rect,type RoadSide} from "./plan-model.ts";
 import {plotContextIssue,plotContextKey,type PlotContext} from "./irregular-plot.ts";
+import {internalGeometryIssues,commercialInternalSpaces} from "./commercial-internal.ts";
 import {rentalLayouts} from "./rental-layout.ts";
 export const buildingPurposes=["mall","school","restaurant","shops","rental"] as const;
 export type BuildingPurpose=typeof buildingPurposes[number];
@@ -77,18 +78,19 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
  }
  if(c.zones.filter(z=>z.kind==="parking").length!==b.parkingBays)e.push("Parking reservation count mismatch");
  if(b.purpose==="rental"&&rentalLayouts(c).length!==b.floors*b.unitsPerFloor)e.push("Every rental envelope must fit the requested internal BHK programme.");
- return [...new Set(e)];
+ return [...new Set([...e,...internalGeometryIssues(c)])];
 }
 function siteIdentity(b:BuildingBrief){return b.siteContext?"-site-"+plotContextKey(b.siteContext):"";}
 function buildingSignature(b:BuildingBrief,zones:BuildingZone[]){
  const geometry=zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort();
  return b.siteContext?JSON.stringify([geometry,b.siteContext.offsetXFt,b.siteContext.points.map(p=>[p.x,p.y])]):JSON.stringify(geometry);
 }
-export type BuildingLayoutFamily="classic"|"purpose-led"|"side-gallery";
-export const buildingLayoutFamily=(id:string):BuildingLayoutFamily=>id.endsWith("-gallery-v1")?"side-gallery":id.endsWith("-purpose-v2")?"purpose-led":"classic";
+export type BuildingLayoutFamily="classic"|"purpose-led"|"side-gallery"|"internal";
+export const buildingLayoutFamily=(id:string):BuildingLayoutFamily=>/-internal-v1-[012]$/.test(id)?"internal":id.endsWith("-gallery-v1")?"side-gallery":id.endsWith("-purpose-v2")?"purpose-led":"classic";
 export function generateBuildingConcepts(b:BuildingBrief,limit=24,family:BuildingLayoutFamily="classic"):{plans:BuildingConcept[];blockers:string[]}{
  const blockers=validateBuildingBrief(b);if(blockers.length)return {plans:[],blockers};
  const p=purpose[b.purpose],W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
+ if(family==="internal")return internalConcepts(b,limit);
  if(family==="side-gallery")return sideGalleryConcepts(b,limit);
  const out:BuildingConcept[]=[],seen=new Set<string>(),max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24;
  // Different circulation widths, asymmetric wings, unit allocation and service
@@ -177,4 +179,21 @@ function sideGalleryConcepts(b:BuildingBrief,limit:number):{plans:BuildingConcep
   seen.add(signature);plans.push(c);
  }
  return {plans,blockers:plans.length?[]:["A single-loaded gallery needs additional depth for the full programme and both core reserves. Select a different family or review the exact plot dimensions."]};
+}
+
+/** Versioned internal programme: keep the exact brief and select only
+ * candidates whose room and service reservations pass geometric access checks.
+ * Never change the saved legacy recipes or pretend to engineer the core. */
+function internalConcepts(b:BuildingBrief,limit:number){
+ const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,plans:BuildingConcept[]=[],seen=new Set<string>();
+ const candidates=generateBuildingConcepts(b,24,"purpose-led").plans;
+ // Try each internal variant across the same envelope before changing it.
+ for(const base of candidates)for(const variant of (b.purpose==="rental"?[2,0,1]:[0])){
+  const p:BuildingConcept={...base,id:base.id+"-internal-v1-"+variant,layout:b.purpose==="rental"?["Private passage","Rear living / entry","Living-first family flat"][variant]:"Shared lobby & service core"};
+  if(validateBuildingConcept(p).length||internalGeometryIssues(p).length)continue;
+  const internal=commercialInternalSpaces(p).map(r=>[r.floor,r.kind,fmt(r.x),fmt(r.y),fmt(r.w),fmt(r.d)]).sort();
+  p.signature=JSON.stringify([base.signature,internal]);if(seen.has(p.signature))continue;
+  seen.add(p.signature);if(plans.length<max)plans.push(p);if(plans.length>=max)return {plans,blockers:[]};
+ }
+ return {plans,blockers:plans.length?[]:["No detailed room and service-core layout fits this exact request. Try a different layout family or review the dimensions with an architect."]};
 }
