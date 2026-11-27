@@ -1,4 +1,6 @@
 "use client";
+import {useMemo,useState} from "react";
+import {planFurniture} from "@/modules/studio/furniture";
 import type {Opening,PlanModel,Room} from "@/modules/studio/plan-model";
 import {roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {siteOutline} from "@/modules/studio/site-shape";
@@ -11,6 +13,8 @@ function ends(o:Opening,r:Room){
  return [[r.x+r.w,r.y+o.atFt],[r.x+r.w,r.y+o.atFt+o.widthFt]];
 }
 export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number}){
+ const [showFurniture,setShowFurniture]=useState(true);
+ const furniture=useMemo(()=>planFurniture(plan),[plan]);
  const {widthFt:w,depthFt:d,roadSide:side}=plan.plot,dim=siteDimensions(w,d,side);
  const rooms=plan.rooms.filter(r=>r.floor===floor),ids=new Set(rooms.map(r=>r.id));
  const seenOpenings=new Set<string>();
@@ -22,6 +26,7 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
  const gates=(g:{xFt:number;widthFt:number})=>[point(g.xFt,0),point(g.xFt+g.widthFt,0)];
  const roadLabel={x:mid.x+(side==="E"?2.6:side==="W"?-2.6:0),y:mid.y+(side==="N"?-1.7:side==="S"?2.2:0)};
  return <section className="nroad-diagram" aria-label="Single-source geographical floor plan" data-plan-id={plan.id} data-selected-floor={floor} data-room-count={rooms.length} data-bedroom-count={rooms.filter(r=>r.kind==="bedroom").length} data-total-bedrooms={plan.rooms.filter(r=>r.kind==="bedroom").length}>
+  <label className="nroad-small"><input type="checkbox" checked={showFurniture} onChange={e=>setShowFurniture(e.target.checked)}/> Indicative furniture layout</label>
   <svg role="img" aria-label={`Road on ${side} side. Floor ${floor+1} with matching doors and rooms.`} viewBox={[-5,-5,dim.w+10,dim.d+10].join(" ")}>
    <rect width={dim.w} height={dim.d} fill="#f1eee6" stroke="#b0b0a7" strokeDasharray=".6 .3" strokeWidth=".15"/>
    <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#fdfcf7" stroke="#516552" strokeWidth=".4"/>
@@ -34,6 +39,7 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
     return <g key={r.id} data-room-id={r.id} data-room-kind={r.kind}>
      <title>{r.label}</title>
      <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={colors[r.kind]??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
+     {showFurniture&&furniture.filter(p=>p.roomId===r.id).map(p=>{const b=roadRect(p,w,d,side);return <g key={p.id} data-furniture-id={p.id}><rect x={b.x} y={b.y} width={b.w} height={b.d} rx=".12" fill="#a38970" fillOpacity=".25" stroke="#806b58" strokeWidth=".09"/><title>{p.kind} · illustrative placement</title></g>})}
      <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font} data-room-label="true">{label.toUpperCase()}</text>
      <text x={cx} y={cy+(small?.6:.95)} textAnchor="middle" fill="#526955" fontSize={Math.min(small?.52:.84,rect.w*.1,rect.d*.18)}>{r.w.toFixed(1)} × {r.d.toFixed(1)} ft</text>
     </g>;
@@ -52,6 +58,6 @@ export function OrientedPlanDrawing({plan,floor=0}:{plan:PlanModel;floor?:number
   <div className="nroad-legend"><span>Road {side} · {plan.plot.siteShape&&plan.plot.siteShape.kind!=="rectangle"?"measured L-site outline, conservative no-build strip":"true compass orientation"}</span><span>{plan.parking?"Brown: doors & car gate":"Brown: doors"}</span><span>Blue: windows</span><span>Green: pedestrian gate</span></div>
   <p className="nroad-small">Open margins are unbuilt concept space, not extra rooms or confirmed legal setbacks. Front {plan.setbacks.frontFt.toFixed(1)} ft · rear {plan.setbacks.rearFt.toFixed(1)} ft · left {plan.setbacks.leftFt.toFixed(1)} ft · right {plan.setbacks.rightFt.toFixed(1)} ft.</p>
   <details><summary>Room dimensions & opening list</summary><ul>{rooms.map(r=><li key={r.id}><strong>{r.label}</strong> — {r.w.toFixed(1)} × {r.d.toFixed(1)} ft · {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="door").length} doors / {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="window").length} windows</li>)}</ul></details>
-  <p className="nroad-small">Concept only. Verify with a licensed architect/engineer and local authority approval. Stairs, turning and legal setbacks remain unchecked.</p>
+  <p className="nroad-small">Furniture is indicative; missing items did not fit the clearance check. Concept only. Verify with a licensed architect/engineer and local authority approval. Stairs, turning and legal setbacks remain unchecked.</p>
  </section>;
 }
