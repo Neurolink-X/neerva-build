@@ -24,11 +24,15 @@ export function commercialPortals(plan:BuildingConcept):ConceptPortal[]{
   if(!occupied)result.push({id:z.id+"-glazing",zoneId:z.id,floor:z.floor,axis:"y",x,y:z.y+z.d/2-2,length:4,kind:"exterior-glazing",reviewRequired:true});
  }
  for(const p of commercialFrontPanels(plan)){
-  if(p.w<8||p.y>plan.brief.frontFt+.01)continue;
+  if(p.w<8)continue;
+  // Front panels already select the nearest covered wall across each frontage interval.
+  // A parking forecourt can move that wall back from the nominal setback.
   const entry=p.kind==="circulation"&&p.floor===0;
   if(!entry&&(p.kind!=="primary"&&p.kind!=="circulation"))continue;
   if(partitioned.has(p.zoneId)||plan.brief.purpose==="rental"&&!entry)continue;
-  const length=entry?Math.min(6,p.w-2):Math.min(8,p.w-2);
+  const glazingRatio={shops:.80,mall:.86,restaurant:.72,school:.52,rental:.45}[plan.brief.purpose];
+  const glazingCap={shops:22,mall:26,restaurant:18,school:12,rental:8}[plan.brief.purpose];
+  const length=entry?Math.min(6,p.w-2):Math.min(glazingCap,p.w-2,Math.max(4,p.w*glazingRatio));
   result.push({id:p.zoneId+"-front-"+p.x,zoneId:p.zoneId,floor:p.floor,axis:"x",x:p.x+(p.w-length)/2,y:p.y,length,kind:entry?"access":"exterior-glazing",reviewRequired:true});
  }
  return [...result,...commercialInternalOpenings(plan)];
