@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {generateBuildingConcepts,type BuildingBrief} from "./building-purpose.ts";
 import {engineeringPreflight} from "./building-engineering.ts";
+import {commercialFrontPanels} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import {buildingRenderSnapshot} from "./building-render.ts";
 import {calculateConceptDemand} from "./building-demand.ts";
@@ -24,7 +25,22 @@ test("massing renderer uses exact zone extents with bounded camera and no synthe
  const plan=generateBuildingConcepts(brief,1).plans[0];assert.ok(plan);
  const snap=buildingRenderSnapshot(plan);
  const elements=commercialElements(plan);
- assert.equal(snap.boxes.length,3+plan.zones.filter(z=>z.kind==="open"||z.kind==="parking").length+elements.slabs.length+elements.walls.length+elements.portals.filter(p=>p.kind==="exterior-glazing").length);
+ const ft=.3048,glazing=elements.portals.filter(p=>p.kind==="exterior-glazing");
+ const baseCount=3+plan.zones.filter(z=>z.kind==="open"||z.kind==="parking").length+elements.slabs.length+elements.walls.length+glazing.length;
+ const panels=commercialFrontPanels(plan).filter(p=>p.w*ft>=.6);
+ const frames=glazing.reduce((n,p)=>n+3+Math.max(1,Math.ceil(p.length*ft/1.35)),0);
+ assert.equal(snap.boxes.length,baseCount+panels.length+frames);
+ // Every decorative frame must stay inside its real aperture, not obstruct an entry.
+ const details=snap.boxes.slice(baseCount+panels.length);
+ const eps=1e-6;
+ for(const b of details)assert.ok(glazing.some(p=>{
+  const vertical=p.axis==="y",axis=vertical?2:0,normal=vertical?0:2;
+  const offset=vertical?brief.depthFt/2:brief.widthFt/2,normalOffset=vertical?brief.widthFt/2:brief.depthFt/2;
+  const start=((vertical?p.y:p.x)-offset)*ft,plane=((vertical?p.x:p.y)-normalOffset)*ft;
+  return b.lo[axis]>=start-eps&&b.hi[axis]<=start+p.length*ft+eps&&
+   b.lo[normal]>=plane-.045-eps&&b.hi[normal]<=plane+.045+eps&&
+   b.lo[1]>=(p.floor*13+3)*ft-eps&&b.hi[1]<=(p.floor*13+8)*ft+eps;
+ }),"frame must belong to a modeled glazing aperture");
  assert.ok(snap.boxes.length<2500);
  for(const box of snap.boxes)for(let i=0;i<3;i++)assert.ok(Number.isFinite(box.lo[i])&&box.hi[i]>box.lo[i]);
  for(const p of elements.portals){
