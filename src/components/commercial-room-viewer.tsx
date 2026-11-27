@@ -16,9 +16,10 @@ export default function CommercialRoomViewer({snapshot,exterior=false}:{snapshot
   let geometryKey="",appearanceKey="",current:RenderSnapshot|null=null;
   const lamps:THREE.PointLight[]=[];
   const detailed=window.innerWidth>=768&&(navigator.hardwareConcurrency??4)>=6;
+  const shadows=exterior||detailed;
   const contextLost=(event:Event)=>{event.preventDefault();setUnavailable(true);};
   scene.add(group);
-  const ambient=new THREE.HemisphereLight(0xeaf3ff,0xbcb5a8,2.1),sun=new THREE.DirectionalLight(0xfff3da,2.5);sun.position.set(4,9,2);scene.add(ambient,sun);
+  const ambient=new THREE.HemisphereLight(0xeaf3ff,0xbcb5a8,1.4),sun=new THREE.DirectionalLight(0xfff3da,2.5);sun.position.set(4,9,2);scene.add(ambient,sun);
   const schedule=()=>{if(disposed||frame||document.hidden)return;frame=requestAnimationFrame(()=>{frame=0;if(!disposed&&renderer)renderer.render(scene,camera)})};
   const clear=()=>{for(const m of meshes){group.remove(m);if(m instanceof THREE.InstancedMesh)m.dispose();m.material.dispose()}meshes.length=0;};
   function texture(finish:RenderFinish){
@@ -49,8 +50,8 @@ export default function CommercialRoomViewer({snapshot,exterior=false}:{snapshot
   };
   try{
    renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
-   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,detailed?1.75:1.25));renderer.shadowMap.enabled=detailed;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-   sun.castShadow=detailed;sun.shadow.mapSize.set(1024,1024);sun.shadow.bias=-.0003;sun.shadow.normalBias=.025;
+   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,detailed?1.75:1.25));renderer.shadowMap.enabled=shadows;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+   sun.castShadow=shadows;sun.shadow.mapSize.set(detailed?1024:512,detailed?1024:512);sun.shadow.bias=-.0003;sun.shadow.normalBias=.025;
    // Small procedural studio environment: no external HDR downloads.
    const envScene=new THREE.Scene();envScene.background=new THREE.Color(0x888f99);
    const panelGeo=new THREE.PlaneGeometry(8,6),panelMaterials=[new THREE.MeshBasicMaterial({color:0xe5efff,side:THREE.DoubleSide}),new THREE.MeshBasicMaterial({color:0xffe0b6,side:THREE.DoubleSide})];
@@ -59,7 +60,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false}:{snapshot
    const pmrem=new THREE.PMREMGenerator(renderer);try{environment=pmrem.fromScene(envScene,.12);scene.environment=environment.texture;}finally{pmrem.dispose();panelGeo.dispose();panelMaterials.forEach(m=>m.dispose());}
    renderer.domElement.addEventListener("webglcontextlost",contextLost);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
    renderer.domElement.style.width="100%";renderer.domElement.style.height="100%";renderer.domElement.style.touchAction="none";target.appendChild(renderer.domElement);
-   controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=false;controls.minDistance=.3;controls.maxDistance=50;controls.addEventListener("change",schedule);
+   controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=false;controls.enablePan=!exterior;controls.minDistance=.3;controls.maxDistance=50;controls.addEventListener("change",schedule);
    const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(exterior&&current)reset();schedule()};
    observer=new ResizeObserver(resize);observer.observe(target);resize();
    viewer.current={reset,update(next){
@@ -87,9 +88,9 @@ export default function CommercialRoomViewer({snapshot,exterior=false}:{snapshot
      for(const batch of batches.values()){
       const mesh=new THREE.InstancedMesh(geometry,material(batch[0]),batch.length);
       batch.forEach((b,i)=>{transform(b,dummy);mesh.setMatrixAt(i,dummy.matrix)});
-      mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();mesh.castShadow=detailed;mesh.receiveShadow=detailed;group.add(mesh);meshes.push(mesh);
+      mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();mesh.castShadow=shadows;mesh.receiveShadow=shadows;group.add(mesh);meshes.push(mesh);
      }
-     for(const b of glass){const mesh=new THREE.Mesh(geometry,material(b));transform(b,mesh);mesh.receiveShadow=detailed;group.add(mesh);meshes.push(mesh);}
+     for(const b of glass){const mesh=new THREE.Mesh(geometry,material(b));transform(b,mesh);mesh.receiveShadow=shadows;group.add(mesh);meshes.push(mesh);}
      target.dataset.sceneBoxes=String(next.boxes.length);target.dataset.meshBatches=String(meshes.length);
      if(geometryChanged){
       const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
@@ -99,7 +100,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false}:{snapshot
     }
     for(const lamp of lamps)scene.remove(lamp);lamps.length=0;
     for(const source of (next.lights??[]).slice(0,4)){if(!source.position.every(Number.isFinite)||!source.color.every(Number.isFinite)||!Number.isFinite(source.power)||source.power<0)continue;const lamp=new THREE.PointLight(new THREE.Color().setRGB(...source.color,THREE.SRGBColorSpace),Math.min(source.power,100),0,2);lamp.position.fromArray(source.position);scene.add(lamp);lamps.push(lamp);}
-    scene.background=new THREE.Color(next.evening?0x8895a9:0xe1e8ec);ambient.intensity=next.evening?1.4:2.1;sun.intensity=next.evening?1.7:2.5;sun.color.set(next.evening?0xffc48b:0xfff3da);schedule();
+    scene.background=new THREE.Color(next.evening?0x8895a9:0xe1e8ec);ambient.intensity=next.evening?1.1:1.4;sun.intensity=next.evening?1.7:2.5;sun.color.set(next.evening?0xffc48b:0xfff3da);if(renderer)renderer.shadowMap.needsUpdate=true;schedule();
    }};
    document.addEventListener("visibilitychange",schedule);
   }catch{queueMicrotask(()=>{if(!disposed)setUnavailable(true)})}
