@@ -2,7 +2,7 @@ import {readFileSync} from "node:fs";
 import {pathToFileURL} from "node:url";
 const parse=v=>typeof v==="string"&&/^\d+\.\d+\.\d+$/.test(v)?v.split(".").map(Number):null;
 export function upstashIssues(p,l){
- const issues=[],packages=l.packages??{},root=packages[""]?.dependencies??{},name="@upstash/redis",rate="@upstash/ratelimit",redis=p.dependencies?.[name],limiter=p.dependencies?.[rate];
+ const issues=[],packages=l.packages??{},root=packages[""]?.dependencies??{},name="@upstash/redis",rate="@upstash/ratelimit",redis=p.dependencies?.[name];
  for(const n of [name,rate]){const v=p.dependencies?.[n];if(!parse(v)||root[n]!==v||packages["node_modules/"+n]?.version!==v)issues.push("Manifest/lock mismatch: "+n);}
  const peer=packages["node_modules/"+rate]?.peerDependencies?.[name],a=parse(redis),min=typeof peer==="string"&&peer.startsWith("^")?parse(peer.slice(1)):null;
  if(!a||!min||min[0]===0||a[0]!==min[0]||a[1]<min[1]||a[1]===min[1]&&a[2]<min[2])issues.push("Upstash Redis peer incompatible or unreviewed: "+peer);
