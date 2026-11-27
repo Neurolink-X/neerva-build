@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {finishes,patternKeys,patternGroups,type Motif} from "./wall-patterns.ts";
-import {colourFamilies} from "./colour-families.ts";
+import {colourFamilies,colourPairings} from "./colour-families.ts";
 test("every non-plain design is in exactly one bounded collection",()=>{
  const keys=Object.values(patternGroups).flat();
  assert.equal(keys.length,19);
@@ -22,4 +22,10 @@ test("curated families expose eight valid distinct shades per family",()=>{
   assert.ok(shades.every(s=>/^#[0-9a-f]{6}$/i.test(s)));
  }
  assert.equal(Object.values(colourFamilies).flat().length,120);
+});
+
+test("curated premium pairings use distinct named shades from the shared palette",()=>{
+ const shades=new Set<string>(Object.values(colourFamilies).flat());
+ assert.equal(colourPairings.length,6);assert.equal(new Set(colourPairings.map(p=>p.id)).size,6);
+ for(const p of colourPairings){assert.ok(shades.has(p.base));assert.ok(shades.has(p.accent));assert.notEqual(p.base as string,p.accent as string);}
 });

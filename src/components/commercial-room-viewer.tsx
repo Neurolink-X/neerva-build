@@ -16,8 +16,9 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
   const meshes:(THREE.Mesh<THREE.BoxGeometry,THREE.MeshStandardMaterial>|THREE.InstancedMesh<THREE.BoxGeometry,THREE.MeshStandardMaterial>)[]=[];
   const cache=new Map<RenderFinish,THREE.DataTexture>();
   let plaster:THREE.DataTexture|undefined;
-  function plasterTexture(){if(plaster)return plaster;const n=64,data=new Uint8Array(n*n*4);let seed=3107;for(let i=0;i<data.length;i+=4){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const v=110+(seed>>>24)%35;data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;}plaster=new THREE.DataTexture(data,n,n);plaster.magFilter=THREE.LinearFilter;plaster.minFilter=THREE.LinearMipmapLinearFilter;plaster.generateMipmaps=true;plaster.needsUpdate=true;return plaster;}
+  function plasterTexture(){if(plaster)return plaster;const n=64,data=new Uint8Array(n*n*4);let seed=3107;for(let i=0;i<data.length;i+=4){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const v=110+(seed>>>24)%35;data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;}plaster=new THREE.DataTexture(data,n,n);plaster.wrapS=plaster.wrapT=THREE.RepeatWrapping;plaster.repeat.set(3,3);plaster.magFilter=THREE.LinearFilter;plaster.minFilter=THREE.LinearMipmapLinearFilter;plaster.generateMipmaps=true;plaster.needsUpdate=true;return plaster;}
   let geometryKey="",appearanceKey="",current:RenderSnapshot|null=null;
+  let cameraPreset:CameraPreset="fit";
   const lamps:THREE.PointLight[]=[];
   const memory=(navigator as Navigator&{deviceMemory?:number}).deviceMemory;
   const constrained=(navigator.hardwareConcurrency??4)<=2||(memory!==undefined&&memory>0&&memory<=2);
@@ -36,10 +37,11 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
     const v=finish==="tile"?(x%64<2||y%64<2?158:247):finish==="marble"?Math.round(255*(.79+.21*Math.min(1,vein*4))):finish==="wood"?Math.round(255*(.87+.11*Math.sin(a*190+2*Math.sin(b*6)))):x%32<2||finish==="acp"&&y%64<2?145:245;
     const i=(y*n+x)*4;data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;
    }
-   const t=new THREE.DataTexture(data,n,n);t.colorSpace=THREE.SRGBColorSpace;t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.needsUpdate=true;cache.set(finish,t);return t;
+   const t=new THREE.DataTexture(data,n,n);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.needsUpdate=true;cache.set(finish,t);return t;
   }
   const reset=(preset:CameraPreset="fit")=>{
    if(!current||!controls)return;
+   cameraPreset=preset;
    const c=current.camera;camera.position.fromArray(c.origin);camera.fov=c.fov;camera.updateProjectionMatrix();
    if(exterior){
     const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),dir=camera.position.clone().sub(center).normalize();
@@ -56,7 +58,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
    controls.update();schedule();
   };
   try{
-   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
+   renderer=new THREE.WebGLRenderer({antialias:!constrained,alpha:false,powerPreference:"low-power"});
    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,constrained?1:detailed?1.75:1.25));renderer.shadowMap.enabled=shadows;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
    sun.castShadow=shadows;sun.shadow.mapSize.set(detailed?1024:512,detailed?1024:512);sun.shadow.bias=-.0003;sun.shadow.normalBias=.025;
    // Small procedural studio environment: no external HDR downloads.
@@ -68,7 +70,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
    renderer.domElement.addEventListener("webglcontextlost",contextLost);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
    renderer.domElement.style.width="100%";renderer.domElement.style.height="100%";renderer.domElement.style.touchAction="none";target.appendChild(renderer.domElement);
    controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=false;controls.enablePan=!exterior;controls.minDistance=.3;controls.maxDistance=50;controls.addEventListener("change",schedule);
-   const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(exterior&&current)reset();schedule()};
+   const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(exterior&&current)reset(cameraPreset);schedule()};
    observer=new ResizeObserver(resize);observer.observe(target);resize();
    viewer.current={reset,update(next){
     if(!next.boxes.length||next.boxes.length>(constrained?1200:2500)||next.boxes.some(b=>b.hi.some((v,i)=>!Number.isFinite(v)||!Number.isFinite(b.lo[i])||v<=b.lo[i])||b.color.some(v=>!Number.isFinite(v)||v<0||v>1)||[b.rough,b.metal,b.opacity].some(v=>!Number.isFinite(v)||v<0||v>1))){

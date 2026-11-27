@@ -15,3 +15,13 @@ export const colourFamilies = {
   "Dusty pastels":["#f1e7dc","#e5dce9","#d8e5e0","#d6e3ef","#e8d6d0","#d9d5c0","#c2cedb","#c3c8b4"],
   "Jewel tones":["#244c44","#2f6258","#254c73","#384071","#633b61","#783d4c","#85562e","#3c424e"]
 };
+
+/** Curated digital pairings, not manufacturer-specific paints or physical shade matches. */
+export const colourPairings=[
+ {id:"warm-minimal",label:"Warm minimal",base:"#f0e8d8",accent:"#928376"},
+ {id:"quiet-sage",label:"Quiet sage",base:"#e5eadc",accent:"#606e4e"},
+ {id:"ocean-stone",label:"Ocean and stone",base:"#e0efed",accent:"#285b65"},
+ {id:"clay-ivory",label:"Clay and ivory",base:"#f7f1e5",accent:"#ad694f"},
+ {id:"modern-ink",label:"Modern ink",base:"#e3e5e6",accent:"#333b43"},
+ {id:"soft-plum",label:"Soft plum",base:"#f0ebf6",accent:"#604c73"}
+] as const;
