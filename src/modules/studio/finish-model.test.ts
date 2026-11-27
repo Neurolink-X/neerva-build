@@ -2,9 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {buildingStarter,generateBuildingConcepts} from "./building-purpose.ts";
 import {generateSpatialPortfolio} from "./road-generator.ts";
-import {applyRoomFinish,defaultFinishScheme,finishEstimate,finishSpaces,shadeRgb,wallShade,wallFaceOwners,setRoomMaterial} from "./finish-model.ts";
+import {applyRoomFinish,defaultFinishScheme,finishEstimate,finishSpaces,shadeRgb,wallShade,wallFaceOwners,setRoomMaterial,rememberFinish} from "./finish-model.ts";
 import {buildingRenderSnapshot} from "./building-render.ts";
 import {commercialInteriorSnapshot} from "./commercial-interior-render.ts";
+import {validatedFinishScheme} from "./finish-scheme-schema.ts";
 import {finishPackEstimate} from "./finish-procurement.ts";
 import type {ProjectSource} from "./project-exchange.ts";
 test("all six building purposes use isolated room and floor finishes without mutating geometry",()=>{
@@ -44,4 +45,21 @@ test("pack calculator rounds up only after verified coverage and allowance",()=>
  assert.deepEqual(finishPackEstimate({netSqFt:100,coverageSqFtPerPack:12,wastagePercent:10}),{netSqFt:100,allowanceSqFt:10,requiredSqFt:110,packs:10,orderedCoverageSqFt:120});
  assert.equal(finishPackEstimate({netSqFt:100,coverageSqFtPerPack:0,wastagePercent:10}),null);
  assert.equal(finishPackEstimate({netSqFt:100,coverageSqFtPerPack:12,wastagePercent:31}),null);
+});
+
+test("saved finish schema rejects wrong plan, missing or invented room IDs and invalid colors",()=>{
+ const p=generateSpatialPortfolio({widthFt:40,depthFt:50,roadSide:"N",floors:2,bedrooms:3,parking:true,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}},1).plans[0];assert.ok(p);
+ const source:ProjectSource={kind:"residential",plan:p},scheme=defaultFinishScheme(source),id=Object.keys(scheme.rooms)[0];
+ assert.ok(validatedFinishScheme(source,scheme));
+ assert.equal(validatedFinishScheme(source,{...scheme,planId:"wrong"}),null);
+ assert.equal(validatedFinishScheme(source,{...scheme,rooms:{...scheme.rooms,invented:scheme.rooms[id]}}),null);
+ assert.equal(validatedFinishScheme(source,{...scheme,rooms:{}}),null);
+ assert.equal(validatedFinishScheme(source,{...scheme,exterior:"#123456"}),null);
+ assert.equal(validatedFinishScheme(source,{...scheme,rooms:{...scheme.rooms,[id]:{...scheme.rooms[id],wall:"invalid"}}}),null);
+ const edited=applyRoomFinish(source,scheme,[id],"wall","#123456","left");
+ assert.equal(validatedFinishScheme(source,edited)?.rooms[id].wallSides?.left,"#123456");
+ let history=rememberFinish({},"first",edited);history=rememberFinish(history,"second",scheme);
+ assert.equal(history.first.rooms[id].wallSides?.left,"#123456");
+ for(let i=0;i<30;i++)history=rememberFinish(history,"other-"+i,scheme);
+ assert.equal(Object.keys(history).length,24);assert.equal(history.first,undefined);
 });
