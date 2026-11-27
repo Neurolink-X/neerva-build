@@ -1,5 +1,5 @@
 /** One in-flight public request per feed and revision per browser tab.
- * Only successful public data is reused briefly; never cache accounts or orders. */
+ * Only successful public data is reused for at most ten seconds; never cache accounts or orders. */
 type Feed="prices"|"offers";
 type Entry={revision:number;at:number;data?:unknown;pending?:Promise<unknown>;controller?:AbortController};
 const entries=new Map<Feed,Entry>();
@@ -9,7 +9,7 @@ export function loadPublicFeed(kind:Feed):Promise<unknown>{
  const now=Date.now(),existing=entries.get(kind);
  if(existing?.revision===revision){
   if(existing.pending)return existing.pending;
-  if(existing.data!==undefined&&now-existing.at<1500)return Promise.resolve(existing.data);
+  if(existing.data!==undefined&&now-existing.at<10000)return Promise.resolve(existing.data);
  }
  const controller=new AbortController();
  const deadline=setTimeout(()=>controller.abort(),10000);
