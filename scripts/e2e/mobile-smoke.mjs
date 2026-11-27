@@ -101,6 +101,13 @@ async function main(){
    await galleryPlan.waitFor({state:"visible"});
    assert.match(await galleryPlan.getAttribute("data-plan-id"),/-gallery-v1$/);
    assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await galleryPlan.getAttribute("data-plan-id"));
+   await page.goto(base+"/design-studio/road-planner",{waitUntil:"load"});
+   const slot=page.locator(".nroad-3d-slot");await slot.scrollIntoViewIfNeeded();
+   await slot.getByRole("button",{name:"Load interactive 3D",exact:true}).waitFor({state:"visible"});
+   assert.equal(await page.locator(".nbd-building").count(),0,"scrolling on data saver must leave the residential 3D viewer on demand");
+   assert.equal(await slot.getAttribute("data-warm-state"),"idle");
+   await slot.getByRole("button",{name:"Load interactive 3D",exact:true}).click();
+   await page.locator(".nbd-building").waitFor({state:"visible",timeout:30000});
   }finally{await liteContext.close()}
   // Cold and repeat navigation on a constrained connection. Do not confuse
   // simulated local Chromium timings with field Web Vitals.
