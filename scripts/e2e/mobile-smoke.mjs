@@ -236,6 +236,13 @@ async function main(){
   for(const v of [{w:320,h:640},{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:667,h:375},{w:768,h:1024},{w:1024,h:768},{w:1440,h:900},{w:1920,h:1080}]){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();await page.goto(base+"/design-studio/visualizer",{waitUntil:"load"});
+    await page.getByRole("button",{name:"Commercial & rental",exact:true}).click();
+    const commercialColours=page.getByRole("region",{name:"Commercial colour preview"});await commercialColours.waitFor();
+    await commercialColours.getByLabel("Building sample").selectOption("restaurant");
+    assert.match(await commercialColours.locator("svg").getAttribute("data-plan-id"),/^restaurant-/);
+    await commercialColours.getByLabel("Main wall",{exact:true}).fill("#abcdef");
+    assert.ok(await commercialColours.locator('svg rect[fill="#abcdef"]').count()>0,"commercial shade applies to actual facade");
+    await page.getByRole("button",{name:"Home & room colours",exact:true}).click();
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
     assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
