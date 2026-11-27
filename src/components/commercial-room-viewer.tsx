@@ -19,12 +19,14 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
   function plasterTexture(){if(plaster)return plaster;const n=64,data=new Uint8Array(n*n*4);let seed=3107;for(let i=0;i<data.length;i+=4){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const v=110+(seed>>>24)%35;data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;}plaster=new THREE.DataTexture(data,n,n);plaster.magFilter=THREE.LinearFilter;plaster.minFilter=THREE.LinearMipmapLinearFilter;plaster.generateMipmaps=true;plaster.needsUpdate=true;return plaster;}
   let geometryKey="",appearanceKey="",current:RenderSnapshot|null=null;
   const lamps:THREE.PointLight[]=[];
-  const detailed=window.innerWidth>=768&&(navigator.hardwareConcurrency??4)>=6;
-  const shadows=exterior||detailed;
+  const memory=(navigator as Navigator&{deviceMemory?:number}).deviceMemory;
+  const constrained=(navigator.hardwareConcurrency??4)<=2||(memory!==undefined&&memory>0&&memory<=2);
+  const detailed=!constrained&&window.innerWidth>=768&&(navigator.hardwareConcurrency??4)>=6;
+  const shadows=!constrained&&(exterior||detailed);
   const contextLost=(event:Event)=>{event.preventDefault();setUnavailable(true);};
   scene.add(group);
   const ambient=new THREE.HemisphereLight(0xeaf3ff,0xbcb5a8,1.4),sun=new THREE.DirectionalLight(0xfff3da,2.5);sun.position.set(4,9,2);scene.add(ambient,sun);
-  const schedule=()=>{if(disposed||frame||document.hidden)return;frame=requestAnimationFrame(()=>{frame=0;if(!disposed&&renderer)renderer.render(scene,camera)})};
+  const schedule=()=>{if(disposed||frame||document.hidden)return;frame=requestAnimationFrame(()=>{frame=0;if(!disposed&&renderer){try{renderer.render(scene,camera)}catch{setUnavailable(true)}}})};
   const clear=()=>{for(const m of meshes){group.remove(m);if(m instanceof THREE.InstancedMesh)m.dispose();m.material.dispose()}meshes.length=0;};
   function texture(finish:RenderFinish){
    if(finish==="plain")return null;const existing=cache.get(finish);if(existing)return existing;
@@ -55,7 +57,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
   };
   try{
    renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
-   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,detailed?1.75:1.25));renderer.shadowMap.enabled=shadows;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,constrained?1:detailed?1.75:1.25));renderer.shadowMap.enabled=shadows;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
    sun.castShadow=shadows;sun.shadow.mapSize.set(detailed?1024:512,detailed?1024:512);sun.shadow.bias=-.0003;sun.shadow.normalBias=.025;
    // Small procedural studio environment: no external HDR downloads.
    const envScene=new THREE.Scene();envScene.background=new THREE.Color(0x888f99);
@@ -69,7 +71,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
    const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(exterior&&current)reset();schedule()};
    observer=new ResizeObserver(resize);observer.observe(target);resize();
    viewer.current={reset,update(next){
-    if(!next.boxes.length||next.boxes.length>2500||next.boxes.some(b=>b.hi.some((v,i)=>!Number.isFinite(v)||!Number.isFinite(b.lo[i])||v<=b.lo[i]))){
+    if(!next.boxes.length||next.boxes.length>(constrained?1200:2500)||next.boxes.some(b=>b.hi.some((v,i)=>!Number.isFinite(v)||!Number.isFinite(b.lo[i])||v<=b.lo[i])||b.color.some(v=>!Number.isFinite(v)||v<0||v>1)||[b.rough,b.metal,b.opacity].some(v=>!Number.isFinite(v)||v<0||v>1))){
      clear();current=null;geometryKey="";appearanceKey="";setSceneIssue("This scene exceeds the supported interactive detail budget or contains invalid geometry. Use the matched 2D or lightweight concept view.");schedule();return;
     }
     setSceneIssue("");
@@ -96,7 +98,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
       mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();mesh.castShadow=shadows;mesh.receiveShadow=shadows;group.add(mesh);meshes.push(mesh);
      }
      for(const b of glass){const mesh=new THREE.Mesh(geometry,material(b));transform(b,mesh);mesh.receiveShadow=shadows;group.add(mesh);meshes.push(mesh);}
-     target.dataset.sceneBoxes=String(next.boxes.length);target.dataset.meshBatches=String(meshes.length);
+     target.dataset.sceneBoxes=String(next.boxes.length);target.dataset.meshBatches=String(meshes.length);target.dataset.renderTier=constrained?"constrained":detailed?"detail":"balanced";
      if(geometryChanged){
       const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
       const extent=Math.max(2,size.length()*.65);sun.position.copy(center).add(new THREE.Vector3(extent,extent*1.5,extent));sun.target.position.copy(center);scene.add(sun.target);
