@@ -14,6 +14,7 @@ test("every generated wide and compact plan matches its BHK brief and both rende
    const result=generateSpatialPortfolio(brief,24);
    assert.ok(result.plans.length>0,result.blockers.join(" / "));
    assert.equal(new Set(result.plans.map(planSignature)).size,result.plans.length);
+   console.log("architecture-coverage "+JSON.stringify({kind:"residential",widthFt,depthFt,bedrooms,floors,roadSide,shown:result.plans.length}));
    assert.equal(new Set(result.plans.map(p=>p.id)).size,result.plans.length);
    const first=generateSpatialPortfolio(brief,1).plans[0];
    assert.ok(first);assert.equal(await planGeometryDigest(first),await planGeometryDigest(result.plans[0]),"fit preview must open the same first plan");
