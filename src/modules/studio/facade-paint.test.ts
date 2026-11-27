@@ -104,3 +104,9 @@ test("all preset design quadrilaterals cover their actual paint mask, including 
  assert.ok(Math.min(...left.points.map(p=>p.y))<=60/512);
  assert.ok(Math.max(...left.points.map(p=>p.x))>=420/1536);
 });
+
+test("first facade retains the reviewed foreground foliage exclusion",()=>{
+ const left=facadeZones.find(z=>z.id==="left")!;
+ assert.equal(left.mask.holes.length,2);
+ assert.ok(left.mask.holes[1].some(([x,y])=>x===317/1536&&y===344/512));
+});
