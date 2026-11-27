@@ -19,6 +19,13 @@ export function conceptTakeoff(source:ProjectSource):QuantityLine[]{
   const rows=covered.filter(s=>s.floor===floor);
   out.push({id:"floor-"+floor,label:"Level "+(floor+1)+" covered rectangle area",quantity:rows.reduce((n,s)=>n+area(s),0),unit:"square_foot",category:null,basis:"Gross conceptual space rectangles, not net finish or order quantity.",sourceIds:rows.map(s=>s.id)});
  }
+ if(source.kind==="commercial"){
+  const elements=commercialElements(source.plan);
+  for(const floor of [...new Set(elements.walls.map(w=>w.floor))].sort((a,b)=>a-b)){
+   const walls=elements.walls.filter(w=>w.floor===floor);
+   out.push({id:"wall-face-"+floor,label:"Level "+(floor+1)+" concept wall face",quantity:walls.reduce((n,w)=>n+(w.end-w.start)*(w.top-w.bottom),0),unit:"square_foot",category:null,basis:"Single-face geometric wall area, with candidate openings subtracted. Not masonry, paint or structural BOQ.",sourceIds:source.plan.zones.filter(z=>z.floor===floor&&!["open","parking"].includes(z.kind)).map(z=>z.id)});
+  }
+ }
  if(source.kind==="residential"){
   const metrics=planMetrics(source.plan);
   out.push({id:"paint",label:"Illustrative interior wall paint",quantity:metrics.paintLitres,unit:"litre",category:"paint",basis:"Two coats, assumed 10 m²/L per coat. Verify wall finishes, manufacturer coverage, preparation and wastage.",sourceIds:covered.map(s=>s.id)});
