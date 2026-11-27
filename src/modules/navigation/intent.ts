@@ -44,3 +44,10 @@ export function preferLitePreview(connection:NetworkHint|undefined,online=true):
  (typeof connection.downlink==="number"&&Number.isFinite(connection.downlink)&&connection.downlink<1)||
  (typeof connection.rtt==="number"&&Number.isFinite(connection.rtt)&&connection.rtt>350));
 }
+
+/** Do not auto-allocate a GPU scene on explicitly resource-constrained devices.
+ * Missing hardware hints are not treated as evidence of a slow device.
+ * Explicitly opening 3D remains available. */
+export function preferLiteDevice(device:{cores?:number;memory?:number}):boolean{
+ return (typeof device.cores==="number"&&Number.isFinite(device.cores)&&device.cores>0&&device.cores<=2)||(typeof device.memory==="number"&&Number.isFinite(device.memory)&&device.memory>0&&device.memory<=2);
+}
