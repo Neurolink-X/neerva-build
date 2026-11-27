@@ -13,7 +13,7 @@ import {finishSpaces,wallFaceOwners,wallShade,type FinishScheme,type FinishMater
 import type {Side} from "@/modules/studio/plan-model";
 import type {PlanModel} from "@/modules/studio/plan-model";
 import {threeRoadRotation} from "@/modules/studio/plan-coordinate";
-import {residentialStairStudies,stairFloorPatches} from "@/modules/studio/stair-study";
+import {residentialStairStudies,stairFloorPatches,stairStepDepthFt} from "@/modules/studio/stair-study";
 import {planFurniture} from "@/modules/studio/furniture";
 import {facadeAccents,frontageSignature} from "@/modules/studio/frontage";
 import {exposedRoofPatches} from "@/modules/studio/plan-surfaces";
@@ -172,10 +172,10 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     }
    }
    // A bay is not a staircase. Render only checked flights and landings.
-   // Solid risers avoid the floating tread illusion; no invented flight in a narrow reserve.
+   // Adjacent tread envelopes overlap vertically; no solid blocks filling the headroom beneath the next flight. No invented flight in a narrow reserve.
    for(const stair of stairReview?.studies.filter(s=>visible(s.floor))??[]){
-    for(const step of stair.steps){const thickness=step.topFt*FT;box(xCoord(step.x+step.w/2),stair.floor*height+step.topFt*FT-thickness/2,zCoord(step.y+step.d/2),step.w*FT,thickness,step.d*FT,concrete);}
-    for(const landing of stair.landings.filter(l=>l.topFt>0)){const thickness=landing.topFt<design.layout.wallHeightFt?landing.topFt*FT:.14;box(xCoord(landing.x+landing.w/2),stair.floor*height+landing.topFt*FT-thickness/2,zCoord(landing.y+landing.d/2),landing.w*FT,thickness,landing.d*FT,concrete);}
+    for(const step of stair.steps){const thickness=stairStepDepthFt(stair,step.topFt)*FT;box(xCoord(step.x+step.w/2),stair.floor*height+step.topFt*FT-thickness/2,zCoord(step.y+step.d/2),step.w*FT,thickness,step.d*FT,concrete);}
+    for(const landing of stair.landings.filter(l=>l.topFt>0)){const thickness=.14;box(xCoord(landing.x+landing.w/2),stair.floor*height+landing.topFt*FT-thickness/2,zCoord(landing.y+landing.d/2),landing.w*FT,thickness,landing.d*FT,concrete);}
    }
    for(const r of planModel?.rooms.filter(r=>r.kind==="balcony"&&visible(r.floor))??[]){
     const center=xCoord(r.x+r.w/2),front=zCoord(r.y),y=r.floor*height;
