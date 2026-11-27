@@ -25,7 +25,7 @@ export type CalculatorId=typeof calculatorSpecs[number]["id"];
 export function quickEstimate(id:CalculatorId,v:readonly number[]):number|null{
 const spec=calculatorSpecs.find(s=>s.id===id);if(!spec||calculatorErrors(id,v).some(Boolean))return null;
 const [a,b,c,d]=v;let result:number;
-switch(id){case "excavation":result=a*b*c*0.028316846592;break;case "slab":result=a*.09290304*b/1000;break;case "plaster":result=a*.09290304*b/1000*(1+c/100);break;case "paint":if(c<=0||!Number.isInteger(b)||b<1)return null;result=a*.09290304*b/c*(1+d/100);break;case "tiles":if(b<=0||c<=0)return null;result=Math.ceil(a*.09290304/(b*c/1e6)*(1+d/100));break;case "tank":result=a*b*c*1000;break;case "roof":result=(a+b)*.09290304*(1+c/100);break;case "formwork":if(!Number.isInteger(c)||c<1)return null;result=a*b*c;break;case "floor":result=a*(b*(1+d/100)+c);break;case "units":result=a*.09290304;break;case "rainwater":if(c>100)return null;result=a*b*c/100;break;case "energy":if(b>24)return null;result=a*b*c*d/1000;break;case "budget":result=a*b*(1+c/100);break;case "lifecycle":if(!Number.isInteger(c)||c<1||c>100)return null;result=a+b*c;break;case "mortar":if(b<=0||c<=0)return null;result=a*b/(b+c);break;case "packs":if(b<=0)return null;result=Math.ceil(a*(1+c/100)/b);break;case "ventilation":if(a<=0)return null;result=b/a*100;break;case "module-grid":if(b<=0)return null;result=Math.floor(a/b);break;case "slope":if(a<=0||b>100)return null;result=a*b*10;break;case "reuse":if(a<=0||b>a)return null;result=b/a*100;break;case "energy-use":if(b>24)return null;result=a*b*c/1000;break;default:return null;}return Number.isFinite(result)?result:null;
+switch(id){case "excavation":result=a*b*c*0.028316846592;break;case "slab":result=a*.09290304*b/1000;break;case "plaster":result=a*.09290304*b/1000*(1+c/100);break;case "paint":if(c<=0||!Number.isInteger(b)||b<1)return null;result=a*.09290304*b/c*(1+d/100);break;case "tiles":if(b<=0||c<=0)return null;result=Math.ceil(a*.09290304/(b*c/1e6)*(1+d/100));break;case "tank":result=a*b*c*1000;break;case "roof":result=(a+b)*.09290304*(1+c/100);break;case "formwork":if(!Number.isInteger(c)||c<1)return null;result=a*b*c;break;case "floor":result=a*(b*(1+d/100)+c);break;case "units":result=a*.09290304;break;case "rainwater":if(c>100)return null;result=a*b*c/100;break;case "energy":if(b>24)return null;result=a*b*c*d/1000;break;case "budget":result=a*b*(1+c/100);break;case "lifecycle":if(!Number.isInteger(c)||c<1||c>100)return null;result=a+b*c;break;case "mortar":if(b<=0||c<=0)return null;result=a*b/(b+c);break;case "packs":if(b<=0)return null;result=Math.ceil(a*(1+c/100)/b);break;case "ventilation":if(a<=0)return null;result=b/a*100;break;case "module-grid":if(b<=0)return null;result=Math.floor(a/b);break;case "slope":if(a<=0||b>100)return null;result=a*b*10;break;case "reuse":if(a<=0||b>a)return null;result=b/a*100;break;case "energy-use":if(b>24)return null;result=a*b*c/1000;break;default:return null;}return Number.isFinite(result)&&result<=Number.MAX_SAFE_INTEGER?result:null;
 }
 
 type FieldRule={min?:number;max?:number;whole?:boolean;positive?:boolean};
@@ -46,7 +46,7 @@ export function calculatorErrors(id:CalculatorId,values:readonly number[]):strin
   const n=values[i],r=calculatorFieldRule(id,i);
   if(!Number.isFinite(n))return "Enter a valid number.";
   if(n<0||n>1e9)return "Enter a number between 0 and 1,000,000,000.";
-  if(r.positive&&n<=0)return "Must be greater than zero.";
+  if(r.positive&&n<.000001)return "Enter a positive measurement of at least 0.000001.";
   if(r.min!==undefined&&n<r.min)return "Minimum: "+r.min+".";
   if(r.max!==undefined&&n>r.max)return "Maximum: "+r.max+".";
   if(r.whole&&!Number.isInteger(n))return "Enter a whole number.";
@@ -65,6 +65,13 @@ export const calculatorFormulas:Record<CalculatorId,string>={
 export function calculatorBreakdown(id:CalculatorId,v:readonly number[],result:number):{label:string;value:number;unit:string}[]{
  const [a,b,c,d]=v;
  switch(id){
+  case "excavation":return [{label:"Measured volume",value:a*b*c,unit:"ft³"}];
+  case "slab":return [{label:"Measured area",value:a*.09290304,unit:"m²"},{label:"Specified thickness",value:b/1000,unit:"m"}];
+  case "plaster":return [{label:"Before allowance",value:a*.09290304*b/1000,unit:"m³"}];
+  case "roof":return [{label:"Before allowance",value:(a+b)*.09290304,unit:"m²"}];
+  case "formwork":return [{label:"Contact area per face",value:a*b,unit:"m²"}];
+  case "ventilation":return [{label:"Net openable window area",value:b,unit:"m²"}];
+  case "slope":return [{label:"Fall in centimetres",value:result/10,unit:"cm"}];
   case "units":return [{label:"Square feet",value:a,unit:"sq ft"},{label:"Square gaj",value:a/9,unit:"sq gaj"},{label:"Hectares",value:result/10000,unit:"ha"}];
   case "tiles":return [{label:"Net area",value:a*.09290304,unit:"m²"},{label:"Nominal purchased tile area",value:result*b*c/1e6,unit:"m²"}];
   case "paint":return [{label:"Before allowance",value:a*.09290304*b/c,unit:"L"}];
@@ -81,4 +88,29 @@ export function calculatorBreakdown(id:CalculatorId,v:readonly number[],result:n
   case "reuse":return [{label:"Unrecovered mass",value:a-b,unit:"kg"}];
   default:return [];
  }
+}
+
+/** Versioned reproducible estimate; no personal or account data. */
+export const calculatorModelVersion=1;
+export type CalculatorScenario={version:number;id:CalculatorId;inputs:number[];result:number};
+export function calculatorScenario(id:CalculatorId,inputs:readonly number[]):CalculatorScenario|null{
+ const result=quickEstimate(id,inputs);
+ return result===null?null:{version:calculatorModelVersion,id,inputs:[...inputs],result};
+}
+export function compareCalculatorScenarios(baseline:CalculatorScenario,current:CalculatorScenario){
+ if(baseline.id!==current.id||baseline.version!==calculatorModelVersion||current.version!==calculatorModelVersion)return null;
+ const a=quickEstimate(baseline.id,baseline.inputs),b=quickEstimate(current.id,current.inputs);
+ if(a===null||b===null||a!==baseline.result||b!==current.result)return null;
+ const difference=b-a,percent=a===0?null:difference/a*100;
+ return {difference,percent:percent!==null&&Number.isFinite(percent)?percent:null};
+}
+export function calculatorReport(scenario:CalculatorScenario):string{
+ const spec=calculatorSpecs.find(s=>s.id===scenario.id),valid=calculatorScenario(scenario.id,scenario.inputs);
+ if(!spec||!valid||valid.result!==scenario.result||scenario.version!==calculatorModelVersion)return "";
+ const format=(n:number)=>n.toLocaleString("en-IN",{maximumSignificantDigits:12});
+ return [`Neerva | ${spec.title} | calculation model v${scenario.version}`,
+ ...spec.fields.map(([label],i)=>label+": "+format(scenario.inputs[i])),
+ "Result: "+format(scenario.result)+" "+spec.unit,
+ ...calculatorBreakdown(scenario.id,scenario.inputs,scenario.result).map(r=>r.label+": "+format(r.value)+" "+r.unit),
+ "Formula: "+calculatorFormulas[scenario.id],spec.note,"Planning estimate only; verify measured inputs and approved specifications."].join("\n");
 }
