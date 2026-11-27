@@ -17,6 +17,9 @@ test("commercial cutaway stays within selected floor height and uses valid boxes
     assert.ok(box.lo[1]>=0&&box.hi[1]<=7*.3048+1e-8);
    }
    assert.deepEqual(snapshot,buildingFloorSnapshot(plan,floor,scheme));
+   const full=buildingFloorSnapshot(plan,floor,scheme,true);
+   assert.ok(full.boxes.every(b=>b.lo[1]>=0&&b.hi[1]<=13*.3048+1e-8));
+   assert.ok(full.boxes.some(b=>b.hi[1]>7*.3048),"full-height wall segments remain available");
   }
  }
 });
