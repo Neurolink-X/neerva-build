@@ -30,6 +30,12 @@ export function buildingInputRequirements(b:BuildingBrief){
  const usableDepth=Math.max(30,28+count*minUnitD,(18+count*minUnitD)/.85);
  return {front,rear:p.back,usableWidth,usableDepth,minWidthFt:Math.ceil(Math.max(20,usableWidth+2*b.sideFt,b.parkingBays>0?b.parkingBays*9+12+2*b.sideFt:0)),minDepthFt:Math.ceil(Math.max(30,usableDepth+Math.max(b.frontFt,front)+Math.max(b.rearFt,p.back))),unitAreaSqFt:p.minArea,unitWidthFt:minUnitW,unitDepthFt:minUnitD};
 }
+/** Explicit opt-in repair: never resize a measured plot or silently relax margins. */
+export function applyBuildingConceptMargins(b:BuildingBrief):BuildingBrief{
+ const p=purpose[b.purpose];
+ if(!p)return b;
+ return {...b,frontFt:Math.max(b.frontFt,p.front,b.parkingBays>0?36:0),rearFt:Math.max(b.rearFt,p.back)};
+}
 /** Explicit example inputs, not plot recommendations or approved design. */
 export function buildingStarter(purpose:BuildingPurpose):BuildingBrief{
  const dimensions={mall:[180,240,3,8,40,25,10],school:[150,200,2,4,40,35,10],restaurant:[80,120,1,2,10,12,5],shops:[80,100,1,4,10,10,5],rental:[90,130,2,2,10,10,5]} as const;

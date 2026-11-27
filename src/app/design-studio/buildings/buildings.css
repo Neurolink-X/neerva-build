@@ -44,3 +44,27 @@
 
 /* Reuse small local inspiration assets, without a long mobile gallery or JS carousel. */
 .commercial-idea-strip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,1fr);gap:12px;overflow-x:auto;scroll-snap-type:x proximity;overscroll-behavior-inline:contain;padding:4px 0 12px}.commercial-idea-strip article{min-width:0;border:1px solid #d7dfd3;border-radius:12px;overflow:hidden;background:#fff;color:#263d35;scroll-snap-align:start}.commercial-idea-strip a{display:block;color:#244735}.commercial-idea-strip img{display:block;width:100%;height:auto;aspect-ratio:600/264;object-fit:cover}.commercial-idea-strip strong,.commercial-idea-strip p{display:block;padding:8px 12px;margin:0}.commercial-idea-strip p{font-size:13px;line-height:1.5}@media(max-width:720px){.commercial-idea-strip{grid-auto-columns:minmax(220px,82%)}}
+
+/* Mobile-first compact controls; maintain accessible target sizes and avoid nested vertical scrollers. */
+.purpose-studio .purpose-wide{grid-column:1/-1}
+.purpose-studio .purpose-view-tools,.purpose-studio .purpose-drawing-note{margin:8px 0;font-size:13px}
+.purpose-studio :is(.purpose-view-tools,.purpose-drawing-note)>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600}
+.purpose-studio .purpose-input-review p{margin:6px 0;font-size:13px;line-height:1.45}
+.purpose-studio .purpose-input-review ul{margin:6px 0;font-size:13px}
+@media(max-width:720px){
+ .purpose-studio .purpose-form{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px;margin:12px 0}
+ .purpose-studio .purpose-form label{font-size:12px;min-width:0;align-content:start;gap:4px}
+ .purpose-studio .purpose-form :is(input,select){box-sizing:border-box;font-size:16px}
+ .purpose-studio .purpose-form>button{font-size:13px;padding:8px}
+ .purpose-studio .purpose-tabs{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-inline:contain;padding:2px 2px 6px;gap:6px;margin:8px 0}
+ .purpose-studio .purpose-tabs button{flex:0 0 auto;font-size:12px;padding:6px 10px;white-space:nowrap}
+ .purpose-studio .purpose-option-strip{display:flex;max-height:none;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;overscroll-behavior-inline:contain}
+ .purpose-studio .purpose-option-strip button{flex:0 0 clamp(130px,44%,190px);scroll-snap-align:start;padding:8px;min-width:0;font-size:13px}
+ .purpose-studio .purpose-option-strip button span{font-size:11px;line-height:1.35}
+ .purpose-studio .purpose-warning{margin:10px 0;padding:9px;font-size:12px}
+ .purpose-studio .purpose-plan-summary{gap:5px;margin:8px 0}
+ .purpose-studio .purpose-plan-summary span{padding:7px;font-size:11px}
+ .purpose-studio .purpose-views{gap:8px;margin:8px 0}
+ .purpose-studio .purpose-views>section{padding:8px}
+}
+@media(max-width:300px){.purpose-studio .purpose-form{grid-template-columns:minmax(0,1fr)}}

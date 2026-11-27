@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {buildingPurposes,buildingLayoutFamily,purposeDetails,buildingInputRequirements,buildingStarter,validateBuildingBrief,generateBuildingConcepts,validateBuildingConcept,type BuildingBrief} from "./building-purpose.ts";
+import {buildingPurposes,buildingLayoutFamily,purposeDetails,buildingInputRequirements,applyBuildingConceptMargins,buildingStarter,validateBuildingBrief,generateBuildingConcepts,validateBuildingConcept,type BuildingBrief} from "./building-purpose.ts";
 const base:BuildingBrief={purpose:"mall",widthFt:180,depthFt:240,roadSide:"N",floors:3,unitsPerFloor:4,parkingBays:8,frontFt:40,rearFt:25,sideFt:10};
 test("all supported purposes produce 24 unique feasible zoning concepts on a generous plot",()=>{
  for(const purpose of buildingPurposes)for(const roadSide of ["N","E","S","W"] as const){
@@ -71,4 +71,16 @@ test("single-loaded gallery creates real topology variation with same exact prog
    }
   }
  }
+});
+
+test("mall margin repair preserves the measured plot and programme without reducing larger margins",()=>{
+ const original={...buildingStarter("shops"),purpose:"mall" as const,widthFt:180,depthFt:240,roadSide:"E" as const};
+ assert.ok(validateBuildingBrief(original).length);
+ const repaired=applyBuildingConceptMargins(original);
+ assert.deepEqual(repaired,{...original,frontFt:20,rearFt:12});
+ assert.deepEqual(validateBuildingBrief(repaired),[]);
+ assert.ok(generateBuildingConcepts(repaired,1,"purpose-led").plans.length);
+ assert.equal(original.rearFt,10);
+ const generous={...repaired,frontFt:45,rearFt:30};assert.deepEqual(applyBuildingConceptMargins(generous),generous);
+ assert.equal(applyBuildingConceptMargins({...original,parkingBays:2}).frontFt,36);
 });
