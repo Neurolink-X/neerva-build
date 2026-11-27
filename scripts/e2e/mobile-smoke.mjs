@@ -100,6 +100,11 @@ async function main(){
    const galleryPlan=studio.getByRole("img",{name:/Purpose-specific zoning/});
    await galleryPlan.waitFor({state:"visible"});
    assert.match(await galleryPlan.getAttribute("data-plan-id"),/-gallery-v1$/);
+   await studio.getByRole("button",{name:"Compare recommended designs",exact:true}).click();
+   const comparison=studio.getByRole("region",{name:"Recommended concept comparison"});await comparison.waitFor();
+   const options=comparison.getByRole("button");assert.ok(await options.count()>0&&await options.count()<=24);
+   await options.first().click();
+   assert.equal(await galleryPlan.getAttribute("data-plan-id"),await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"));
    assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await galleryPlan.getAttribute("data-plan-id"));
    await page.goto(base+"/design-studio/road-planner",{waitUntil:"load"});
    const slot=page.locator(".nroad-3d-slot");await slot.scrollIntoViewIfNeeded();
