@@ -86,7 +86,7 @@ function buildingSignature(b:BuildingBrief,zones:BuildingZone[]){
  return b.siteContext?JSON.stringify([geometry,b.siteContext.offsetXFt,b.siteContext.points.map(p=>[p.x,p.y])]):JSON.stringify(geometry);
 }
 export type BuildingLayoutFamily="classic"|"purpose-led"|"side-gallery"|"internal";
-export const buildingLayoutFamily=(id:string):BuildingLayoutFamily=>/-internal-v1-[012]$/.test(id)?"internal":id.endsWith("-gallery-v1")?"side-gallery":id.endsWith("-purpose-v2")?"purpose-led":"classic";
+export const buildingLayoutFamily=(id:string):BuildingLayoutFamily=>/-internal-v1-[0123]$/.test(id)?"internal":id.endsWith("-gallery-v1")?"side-gallery":id.endsWith("-purpose-v2")?"purpose-led":"classic";
 export function generateBuildingConcepts(b:BuildingBrief,limit=24,family:BuildingLayoutFamily="classic"):{plans:BuildingConcept[];blockers:string[]}{
  const blockers=validateBuildingBrief(b);if(blockers.length)return {plans:[],blockers};
  const p=purpose[b.purpose],W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
@@ -188,8 +188,8 @@ function internalConcepts(b:BuildingBrief,limit:number){
  const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,plans:BuildingConcept[]=[],seen=new Set<string>();
  const candidates=generateBuildingConcepts(b,24,"purpose-led").plans;
  // Try each internal variant across the same envelope before changing it.
- for(const base of candidates)for(const variant of [2,0]){
-  const p:BuildingConcept={...base,id:base.id+"-internal-v1-"+variant,layout:b.purpose==="rental"?["Private passage","Rear living / entry","Living-first family flat"][variant]:variant===2?"Shared service passage":"Independent service rooms"};
+ for(const base of candidates)for(const variant of (b.purpose==="rental"?[2,0,3]:[2,0])){
+  const p:BuildingConcept={...base,id:base.id+"-internal-v1-"+variant,layout:b.purpose==="rental"?["Private passage","Rear living / entry","Living-first family flat","Living-first · exterior kitchen"][variant]:variant===2?"Shared service passage":"Independent service rooms"};
   if(validateBuildingConcept(p).length)continue;
   const internal=commercialInternalSpaces(p).map(r=>[r.floor,r.kind,fmt(r.x),fmt(r.y),fmt(r.w),fmt(r.d)]).sort();
   p.signature=JSON.stringify([base.signature,internal]);if(seen.has(p.signature))continue;
