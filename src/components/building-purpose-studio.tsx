@@ -1,6 +1,7 @@
 "use client";
 import {useMemo,useState,type FormEvent} from "react";
 import Link from "next/link";
+import {IrregularPlotPlanner} from "./irregular-plot-planner";
 import {CommercialProjectSave} from "./commercial-project-save";
 import {PlanFinishStudio} from "./plan-finish-studio";
 import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/studio/finish-model";
@@ -70,6 +71,7 @@ export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolea
  const changed=JSON.stringify(draft)!==JSON.stringify(brief);
  return <div className="purpose-studio">
   <header><span className="eyebrow">NEERVA BUILDING STUDIO · FEASIBILITY CONCEPTS</span><h1>Plan beyond your home.</h1><p>Choose a building purpose, enter exact site dimensions and compare up to 24 distinct zoning arrangements. Family homes use the dedicated residential planner.</p><Link className="button button-outline" href="/design-studio#start">Family home / BHK planner →</Link></header>
+  <IrregularPlotPlanner onUse={(widthFt,depthFt)=>setDraft(d=>({...d,widthFt,depthFt}))}/>
   <form onSubmit={submit} className="purpose-form">
    <label>Building purpose<select value={draft.purpose} onChange={e=>selectPurpose(e.target.value as BuildingPurpose)}>{buildingPurposes.map(p=><option key={p} value={p}>{purposeDetails[p].title}</option>)}</select></label>
    {([["widthFt","Frontage (ft)",20,500],["depthFt","Depth (ft)",30,600],["floors","Total floors",1,6],["unitsPerFloor",info.unit+"s per floor",1,24],["parkingBays","Parking reservations",0,40],["frontFt","Front open depth (ft)",info.front,300],["rearFt","Rear open depth (ft)",info.back,300],["sideFt","Open margin each side (ft)",0,100]] as const).map(([key,label,min,max])=><label key={key}>{label}<input type="number" required min={min} max={max} step={["floors","unitsPerFloor","parkingBays"].includes(key)?1:"any"} value={Number.isFinite(draft[key])?draft[key]:""} onChange={e=>update(key,e.target.valueAsNumber)}/></label>)}
