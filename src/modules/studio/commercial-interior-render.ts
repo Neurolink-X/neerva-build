@@ -27,6 +27,23 @@ export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishSch
  }
  for(const item of commercialFixtures(plan).filter(z=>z.zoneId===r.id)){
   const x=(item.x-r.x)*FT,z=(item.y-r.y)*FT,fw=item.w*FT,fd=item.d*FT;
+  if(item.kind==="bed"){
+   push([x,0,z],[x+fw,.30,z+fd],[.45,.32,.23],.65,1,"wood");
+   push([x+.025,.30,z+.025],[x+fw-.025,.53,z+fd-.025],[.89,.86,.79],.8);
+   push([x,.30,z],[x+fw,.94,z+.09],[.42,.31,.24],.68,1,"wood");
+   for(const i of [0,1])push([x+fw*(.08+i*.48),.53,z+.13],[x+fw*(.44+i*.48),.65,z+fd*.24],[.93,.91,.86],.9);
+   continue;
+  }
+  if(item.kind==="sofa"){
+   push([x,0,z],[x+fw,.43,z+fd],[.34,.40,.36],.8);
+   push([x,.43,z],[x+fw,.90,z+fd*.20],[.34,.40,.36],.8);
+   for(const a of [x,x+fw-.12])push([a,.43,z],[a+.12,.65,z+fd],[.34,.40,.36],.8);
+   continue;
+  }
+  if(item.kind==="counter"){
+   push([x,0,z],[x+fw,.85,z+fd],[.63,.56,.46],.7,1,"wood");
+   push([x,.85,z],[x+fw,.90,z+fd],[.34,.36,.35],.35,1,"marble");continue;
+  }
   // Distinct tabletop and support geometry, kept within the existing furniture footprint.
   if(fw<.25||fd<.25){push([x,0,z],[x+fw,.76,z+fd],[.45,.32,.21],.65);continue;}
   if(item.kind==="table"&&fw>=.8&&fd>=.8){
