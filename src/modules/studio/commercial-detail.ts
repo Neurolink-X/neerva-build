@@ -28,7 +28,19 @@ export function commercialPortals(plan:BuildingConcept):ConceptPortal[]{
   // Front panels already select the nearest covered wall across each frontage interval.
   // A parking forecourt can move that wall back from the nominal setback.
   const entry=p.kind==="circulation"&&p.floor===0;
-  if(!entry&&(p.kind!=="primary"&&p.kind!=="circulation"))continue;
+  if(!entry&&(p.kind!=="primary"&&p.kind!=="circulation"&&!(plan.brief.purpose==="school"&&p.kind==="support")))continue;
+  if(!entry&&partitioned.has(p.zoneId)){
+   // The actual front-facing room owns its aperture, never a parent envelope
+   // or a shaft/toilet. Rental living and bedroom glazing remains privacy-sized.
+   const usable=inside.filter(r=>r.parentId===p.zoneId&&Math.abs(r.y-p.y)<EPS&&(plan.brief.purpose==="rental"?["living","bedroom"].includes(r.kind):plan.brief.purpose==="school"?["service-a","service-b"].includes(r.kind):false));
+   for(const r of usable){
+    const left=Math.max(r.x,p.x),right=Math.min(r.x+r.w,p.x+p.w),span=right-left;
+    if(span<6)continue;
+    const length=Math.min(plan.brief.purpose==="school"?10:7,span-2,span*.65);
+    result.push({id:r.id+"-front-"+p.x,zoneId:r.id,floor:p.floor,axis:"x",x:left+(span-length)/2,y:p.y,length,kind:"exterior-glazing",reviewRequired:true});
+   }
+   continue;
+  }
   if(partitioned.has(p.zoneId)||plan.brief.purpose==="rental"&&!entry)continue;
   const glazingRatio={shops:.80,mall:.86,restaurant:.72,school:.52,rental:.45}[plan.brief.purpose];
   const glazingCap={shops:22,mall:26,restaurant:18,school:12,rental:8}[plan.brief.purpose];
