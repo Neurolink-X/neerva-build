@@ -1065,7 +1065,8 @@ async function main(){
   await page.getByRole("button",{name:"Brick wall",exact:true}).click();
     await page.getByRole("button",{name:"Smart Plot & Design"}).click();
     const converter=page.locator(".quick-calculators .calculator-page-card");
-    await converter.getByLabel("Unit",{exact:true}).selectOption("m");
+    await converter.waitFor({state:"visible"});
+    await converter.getByRole("combobox",{name:"Unit",exact:true}).selectOption("m");
     assert.ok(Math.abs(Number(await converter.getByLabel("Length",{exact:true}).inputValue())-6.096)<1e-8,"changing units preserves length");
     assert.match(await converter.locator(".area-results").innerText(),/800/);
     await page.getByRole("button",{name:"Smart Construction & Materials"}).click();

@@ -1,5 +1,5 @@
--- Candidate: apply to disposable CI database before role-isolation tests.
--- Do not run against production until reviewed and recorded as a migration.
+-- Rehearsal for the reviewed production migration on the disposable CI database.
+-- Accept both original and already-optimized policy expressions.
 begin;
 set local lock_timeout = '3s';
 set local statement_timeout = '20s';
@@ -20,6 +20,9 @@ begin
    raise exception 'Unexpected policy contract: %', target.pol;
   end if;
   expression := case when target.operation='SELECT' then existing.qual else existing.with_check end;
+  -- PostgreSQL deparses a cached auth.uid() as ( SELECT auth.uid() AS uid).
+  -- Accept an already optimized owner predicate without wrapping it a second time.
+  if expression is not null and expression ~* (target.owner_column || '[[:space:]]*=[[:space:]]*[(][[:space:]]*select[[:space:]]+auth[.]uid[(][)]([[:space:]]+as[[:space:]]+uid)?[[:space:]]*[)]') then continue; end if;
   predicate := target.owner_column || ' = auth.uid()';
   if expression is null or (length(expression)-length(replace(expression,predicate,'')))<>length(predicate) then
    raise exception 'Unexpected owner predicate: %', target.pol;
