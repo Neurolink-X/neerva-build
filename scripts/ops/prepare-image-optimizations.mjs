@@ -21,16 +21,17 @@ for(const file of tracked){
  if(size<=120000)continue;
  // Immutable SKU and paint-mask images require new content hashes and review.
  const protectedAsset=!file.startsWith("public/images/catalog/editorial/");
- if(protectedAsset){report.push({file,bytes:size,status:"review-manifest-or-mask-required"});continue}
+ const maxSide=protectedAsset?1600:1200;
  try{
   const raw=await readFile(file),meta=await sharp(raw,{limitInputPixels:16_000_000}).metadata();
   if(!meta.width||!meta.height||meta.pages>1){report.push({file,bytes:size,status:"unsupported-or-animated"});continue}
-  const candidate=await sharp(raw,{limitInputPixels:16_000_000}).rotate().resize({width:1200,height:1200,fit:"inside",withoutEnlargement:true}).webp({quality:85,effort:5}).toBuffer();
+  const candidate=await sharp(raw,{limitInputPixels:16_000_000}).rotate().resize({width:maxSide,height:maxSide,fit:"inside",withoutEnlargement:true}).webp({quality:85,effort:5}).toBuffer();
   if(candidate.length>=size*.9){report.push({file,bytes:size,status:"insufficient-saving"});continue}
   const hash=createHash("sha256").update(candidate).digest("hex");
   const name=basename(file,extname(file))+"-"+hash.slice(0,12)+".webp";
+  const outputMeta=await sharp(candidate).metadata();
   await writeFile(join(out,name),candidate,{flag:"wx"});
-  report.push({file,bytes:size,candidate:name,candidateBytes:candidate.length,saved:size-candidate.length,sha256:hash,status:"needs-visual-review"});
+  report.push({file,bytes:size,candidate:name,candidateBytes:candidate.length,saved:size-candidate.length,sha256:hash,originalDimensions:[meta.width,meta.height],candidateDimensions:[outputMeta.width,outputMeta.height],status:protectedAsset?"requires-hash-mask-and-visual-review":"needs-visual-review"});
  }catch(error){report.push({file,bytes:size,status:"error",message:String(error)})}
 }
 await writeFile(join(out,"report.json"),JSON.stringify(report,null,2));
