@@ -34,6 +34,8 @@ async function main(){
     const page=await ctx.newPage(),errors=[];page.on("pageerror",e=>errors.push(e.message));
     const response=await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});assert.equal(response?.status(),200);
     const studio=page.locator(".purpose-studio");
+    await studio.getByLabel("Building purpose").selectOption("school");
+    assert.equal(await studio.getByRole("img",{name:/Purpose-specific zoning/}).count(),0,"invalid new purpose must not display old shop geometry");
     for(const purpose of ["mall","school","restaurant","shops","rental"]){
      await studio.getByLabel("Building purpose").selectOption(purpose);
      await studio.getByRole("button",{name:/Load example inputs/}).click();
@@ -44,6 +46,11 @@ async function main(){
      assert.ok(planId?.startsWith(purpose+"-"),purpose+" selected geometry");
      const massing=studio.locator(".purpose-views svg").nth(1);
      assert.equal(await massing.getAttribute("data-plan-id"),planId);
+     assert.ok(await studio.locator(".purpose-views svg").nth(1).locator("polygon").count()>0,"3D view has actual geometry");
+     await studio.getByRole("button",{name:"Lite view · 2D only"}).click();
+     assert.equal(await studio.locator(".purpose-views svg").count(),1,"lite mode preserves only the selected 2D plan");
+     await studio.getByRole("button",{name:"Show 3D concept"}).click();
+     assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await plan.getAttribute("data-plan-id"));
      const choices=studio.getByRole("group",{name:"Choose zoning option"}).getByRole("button");
      assert.ok(await choices.count()>0);
      if(await choices.count()>1){await choices.nth(1).click();assert.notEqual(await plan.getAttribute("data-plan-id"),planId);assert.equal(await plan.getAttribute("data-plan-id"),await massing.getAttribute("data-plan-id"));}
@@ -67,6 +74,8 @@ async function main(){
     const anonymous=await page.request.get(base+"/api/studio/commercial-projects");
     assert.ok([401,503].includes(anonymous.status()),"anonymous commercial projects must not be disclosed");
     assert.deepEqual(errors,[],"commercial studio hydration and browser errors at "+viewport.width+"px");
+    await page.goto(base+"/build-iq",{waitUntil:"domcontentloaded"});
+    assert.equal(await page.locator("#practical-start article").count(),6,"practical site knowledge is prominent");
    }finally{await ctx.close()}
   }
   // Cold and repeat navigation on a constrained connection. Do not confuse
