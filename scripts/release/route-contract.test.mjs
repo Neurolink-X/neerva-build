@@ -1,4 +1,5 @@
 import test from "node:test";
+import ts from "typescript";
 import assert from "node:assert/strict";
 import {existsSync,readdirSync,readFileSync} from "node:fs";
 import {join,relative,dirname,resolve,sep} from "node:path";
@@ -228,4 +229,38 @@ test("production UI never embeds obvious demo contacts or hardcoded contact dest
 test("commercial project storage is authenticated, owner-scoped and disabled until rollout",()=>{
  const code=readFileSync(api.get("/api/studio/commercial-projects"),"utf8");
  assert.match(code,/requireAuth/);assert.match(code,/COMMERCIAL_PROJECT_STORAGE_ENABLED/);assert.match(code,/\.eq\("owner_id",auth\.userId\)/);assert.match(code,/owner_id:auth\.userId/);assert.match(code,/rebuildCommercialSnapshot/);
+});
+
+/** React's SVG/HTML title serialization requires one text child. Multiple JSX
+ * children may introduce hydration separators that the HTML parser handles
+ * differently from ordinary elements. Check syntax, not fragile string matches.
+ * Apply to every JSX title, including shared components outside studio routes. */
+function titleHydrationIssues(code,file){
+ const source=ts.createSourceFile(file,code,ts.ScriptTarget.Latest,true,file.endsWith(".jsx")?ts.ScriptKind.JSX:ts.ScriptKind.TSX);
+ const issues=[];
+ function walk(node){
+  if(ts.isJsxElement(node)&&node.openingElement.tagName.getText(source)==="title"){
+   const children=node.children.filter(child=>!ts.isJsxExpression(child)||child.expression!==undefined).filter(child=>!ts.isJsxText(child)||child.getText(source).trim().length>0||!/[\r\n]/.test(child.getText(source)));
+   const only=children[0];
+   if(children.length!==1||!(ts.isJsxText(only)||ts.isJsxExpression(only))){
+    const {line,character}=source.getLineAndCharacterOfPosition(node.getStart(source));
+    issues.push(file+":"+(line+1)+":"+(character+1)+" — <title> must contain exactly one text expression (use a template literal for combined labels)");
+   }
+  }
+  ts.forEachChild(node,walk);
+ }
+ walk(source);
+ return issues;
+}
+test("SVG and document title hydration guard detects mixed children and accepts normalized text",()=>{
+ assert.equal(titleHydrationIssues("const v=<svg><title>{label} · furniture</title></svg>","fixture.tsx").length,1);
+ assert.equal(titleHydrationIssues("const v=<svg><title>{label}{size}</title></svg>","fixture.tsx").length,1);
+ assert.equal(titleHydrationIssues("const v=<svg><title><b>Invalid</b></title></svg>","fixture.tsx").length,1);
+ assert.deepEqual(titleHydrationIssues("const v=<svg><title>{"+String.fromCharCode(96)+"${label} · furniture"+String.fromCharCode(96)+"}</title><title>Fixed label</title><title>{label}</title></svg>","fixture.tsx"),[]);
+});
+test("all application JSX title elements use hydration-safe single-child text",()=>{
+ const jsxFiles=files(resolve("src")).filter(file=>/\.[jt]sx$/.test(file));
+ assert.ok(jsxFiles.length>20,"JSX source inventory must not be empty");
+ const issues=jsxFiles.flatMap(file=>titleHydrationIssues(readFileSync(file,"utf8"),relative(resolve("."),file)));
+ assert.deepEqual(issues,[],"Normalize title labels at source; do not disable SSR or suppress hydration warnings");
 });
