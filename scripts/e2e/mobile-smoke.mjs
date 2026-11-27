@@ -64,6 +64,7 @@ async function main(){
         await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
         const info=await canvas.evaluate(el=>({width:el.width,height:el.height,boxes:Number(el.parentElement.dataset.sceneBoxes),tier:el.parentElement.dataset.renderTier}));
         assert.ok(info.width>0&&info.height>0&&info.boxes>0);
+        const viewer=studio.locator(".purpose-views [data-room-viewer]");assert.equal(await viewer.getAttribute("data-plan-id"),planId);assert.equal(await viewer.getAttribute("data-floor"),mode==="exterior"?"all":await plan.getAttribute("data-floor"));
         await canvas.screenshot({path:path.join("test-results/mobile",prefix+"-"+mode+".png"),animations:"disabled"});
         architectureReports.push({purpose,mode,renderer:"webgl",planId,elapsedMs:Date.now()-start,...info});
         return true;
@@ -74,6 +75,7 @@ async function main(){
        }
       };
       if(await capture("cutaway")){
+       if(purpose==="shops"){await studio.getByRole("button",{name:"Show space-use guidance",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Hide space-use guidance",exact:true}).click();}
        await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
        await capture("exterior");
        await studio.getByRole("button",{name:"Show selected floor",exact:true}).click();

@@ -66,3 +66,28 @@ test("commercial presentation site remains compact and all structural geometry s
   assert.ok(s.boxes.every(b=>b.hi.every((v,i)=>Number.isFinite(v)&&v>b.lo[i])));
  }
 });
+
+import {floorPreviewFixtures,portalClearance,commercialPortals} from "./commercial-detail.ts";
+import {commercialFixtureBoxes} from "./commercial-fixture-render.ts";
+import {overlapArea} from "./plan-model.ts";
+test("commercial furnished cutaways reuse exact selected-floor 2D footprints across five purposes and road directions",()=>{
+ for(const purpose of buildingPurposes)for(const roadSide of ["N","E","S","W"] as const){
+  const brief={...buildingStarter(purpose),roadSide},plan=generateBuildingConcepts(brief,1,"purpose-led").plans[0];assert.ok(plan);
+  const scheme=defaultFinishScheme({kind:"commercial",plan});
+  for(let floor=0;floor<brief.floors;floor++){
+   const fixtures=floorPreviewFixtures(plan,floor);assert.ok(fixtures.length<=48);
+   const plain=buildingFloorSnapshot(plan,floor,scheme),furnished=buildingFloorSnapshot(plan,floor,scheme,false,true);
+   assert.deepEqual(furnished.boxes.slice(0,plain.boxes.length),plain.boxes);
+   const expected=fixtures.flatMap(f=>commercialFixtureBoxes(f,brief.widthFt/2,brief.depthFt/2));
+   assert.deepEqual(furnished.boxes.slice(plain.boxes.length),expected);assert.ok(expected.length<=192);
+   for(const f of fixtures){
+    assert.equal(f.floor,floor);
+    for(const door of commercialPortals(plan).filter(p=>p.floor===floor&&(p.zoneId===f.zoneId||p.connectsTo===f.zoneId)))assert.ok(overlapArea(f,portalClearance(door))<1e-5);
+    for(const b of commercialFixtureBoxes(f,brief.widthFt/2,brief.depthFt/2)){
+     assert.ok(b.lo[0]>=(f.x-brief.widthFt/2)*.3048-1e-8&&b.hi[0]<=(f.x+f.w-brief.widthFt/2)*.3048+1e-8);
+     assert.ok(b.lo[2]>=(f.y-brief.depthFt/2)*.3048-1e-8&&b.hi[2]<=(f.y+f.d-brief.depthFt/2)*.3048+1e-8);
+    }
+   }
+  }
+ }
+});

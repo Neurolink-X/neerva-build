@@ -51,16 +51,27 @@ export function commercialFixtures(plan:BuildingConcept):CommercialFixture[]{
  for(const z of plan.zones.filter(z=>z.kind==="primary")){
   const school=plan.brief.purpose==="school",restaurant=plan.brief.purpose==="restaurant";
   const kind=school?"desk":restaurant?"table":"display",label=school?"Desk group":restaurant?"Table group":"Display island";
-  const w=school?4:restaurant?3:4,d=school?2:restaurant?3:2;
-  const reserved:Rect[]=portals.filter(p=>p.zoneId===z.id).map(portalClearance);
+  const mall=plan.brief.purpose==="mall";
+  const w=school?4:restaurant?4.5:mall?6:4,d=school?2:restaurant?4.5:mall?3:2;
+  // Classroom rows, restaurant tables, retail displays and shop shelving have distinct spatial rhythms.
+  const pitchX=w+(school?4:restaurant?4.5:mall?6:4),pitchY=d+(school?3:restaurant?4.5:mall?6:4);
+  const reserved:Rect[]=portals.filter(p=>p.floor===z.floor&&(p.zoneId===z.id||p.connectsTo===z.id)).map(portalClearance);
   let n=0;
-  for(let y=z.y+5;y+d<=z.y+z.d-4&&n<48;y+=d+4)for(let x=z.x+5;x+w<=z.x+z.w-4&&n<48;x+=w+4){
+  for(let y=z.y+5;y+d<=z.y+z.d-4&&n<48;y+=pitchY)for(let x=z.x+5;x+w<=z.x+z.w-4&&n<48;x+=pitchX){
    const r={x,y,w,d};
    if(reserved.some(a=>overlapArea(a,r)>EPS))continue;
    result.push({...r,id:z.id+"-fixture-"+n++,zoneId:z.id,floor:z.floor,label,kind});
   }
  }
  return result;
+}
+/** Bounded, round-robin selection for the overview. All three overview renderers
+ * use the exact same subset; room-specific inspection keeps the complete set. */
+export function floorPreviewFixtures(plan:BuildingConcept,floor:number,limit=48){
+ const groups=new Map<string,CommercialFixture[]>();for(const f of commercialFixtures(plan)){if(f.floor!==floor)continue;const row=groups.get(f.zoneId)??[];row.push(f);groups.set(f.zoneId,row);}
+ const cap=Math.max(0,Math.min(48,Number.isFinite(limit)?Math.floor(limit):48)),out:CommercialFixture[]=[];
+ const rows=[...groups.values()];for(let i=0;i<48&&out.length<cap;i++)for(const row of rows){if(row[i]&&out.length<cap)out.push(row[i]);}
+ return out;
 }
 export function portalClearance(p:ConceptPortal):Rect{
  return p.axis==="y"?{x:p.x-4,y:p.y-2,w:8,d:p.length+4}:{x:p.x-2,y:p.y-4,w:p.length+4,d:8};

@@ -3,7 +3,8 @@ import {shadeRgb,finishSpaces,wallFaceOwners,wallShade,type FinishScheme} from "
 import {finishRoughness} from "./commercial-interior-render.ts";
 import {commercialStairStudies,commercialInternalSpaces} from "./commercial-internal.ts";
 import {stairStepDepthFt} from "./stair-study.ts";
-import {commercialFrontPanels,commercialFacadeProfile} from "./commercial-detail.ts";
+import {commercialFixtureBoxes} from "./commercial-fixture-render.ts";
+import {floorPreviewFixtures,commercialFrontPanels,commercialFacadeProfile} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
 import {FEET_TO_METRES as ft,normalize,cross} from "./core/geometry-primitives.ts";
@@ -74,7 +75,7 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
 }
 
 /** Selected floor preview: keep the actual opening-aware wall/slab model, not the roof or adjacent storeys. */
-export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:FinishScheme,fullHeight=false):RenderSnapshot{
+export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:FinishScheme,fullHeight=false,showFurniture=false):RenderSnapshot{
  const {widthFt,depthFt}=plan.brief,boxes:RenderBox[]=[];
  const x=(v:number)=>(v-widthFt/2)*ft,z=(v:number)=>(v-depthFt/2)*ft;
  const add=(lo:Vec3,hi:Vec3,color:Vec3,rough=.82,opacity=1,finish?:FinishScheme["cladding"])=>{if(hi.every((v,i)=>Number.isFinite(v)&&Number.isFinite(lo[i])&&v>lo[i]))boxes.push({lo,hi,color,rough,metal:0,opacity,finish});};
@@ -127,6 +128,7 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
  for(const s of commercialStairStudies(plan).studies.filter(s=>s.floor===floor))for(const r of [...s.steps,...s.landings.filter(l=>l.topFt>0)]){
   if(r.topFt<=cut)add([x(r.x),Math.max(0,r.topFt-.45)*ft,z(r.y)],[x(r.x+r.w),r.topFt*ft,z(r.y+r.d)],shadeRgb("#b4a48d"));
  }
+ if(showFurniture)for(const item of floorPreviewFixtures(plan,floor))boxes.push(...commercialFixtureBoxes(item,widthFt/2,depthFt/2));
  const distance=Math.max(widthFt,depthFt)*ft,origin:Vec3=[distance*.8,distance*1.4,-distance*1.2];
  const forward=normalize([-origin[0],1-origin[1],-origin[2]]),right=normalize(cross(forward,[0,1,0])),up=normalize(cross(right,forward));
  return {boxes,camera:{origin,forward,right,up,fov:45,aspect:1.5},evening:false};
