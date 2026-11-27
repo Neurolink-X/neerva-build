@@ -44,7 +44,7 @@ function supportRooms(z:BuildingZone,hall:BuildingZone,purpose:BuildingConcept["
   school:z.label.startsWith("Administration")?["Administration","Staff room"]:["Reading room","Learning resources"],
   mall:z.label.startsWith("Anchor")?["Activity area","Support room"]:["Receiving","Storage"],
   shops:["Stock room","Packing / service"],rental:["Meter / utility reserve","Maintenance store"]};
- const right=Math.abs(z.x+z.w-hall.x)<EPS,access=variant===2?4:0,depth=z.d/2;
+ const right=Math.abs(z.x+z.w-hall.x)<EPS,access=variant>=2?4:0,depth=z.d/2;
  const add=(kind:string,label:string,x:number,y:number,w:number,d:number):InternalSpace=>({id:z.id+"-"+kind,parentId:z.id,floor:z.floor,kind,label,x:right?z.x+z.w-x-w:z.x+x,y:z.y+y,w,d});
  const names=labels[purpose],out=[add("service-a",names[0],access,0,z.w-access,depth),add("service-b",names[1],access,depth,z.w-access,z.d-depth)];
  if(access)out.push(add("lobby","Service passage",0,0,access,z.d));
