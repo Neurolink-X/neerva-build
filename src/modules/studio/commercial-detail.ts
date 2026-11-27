@@ -1,12 +1,14 @@
 import {overlapArea,type Rect} from "./plan-model.ts";
+import {commercialInternalSpaces,commercialInternalOpenings} from "./commercial-internal.ts";
 import {rentalLayouts} from "./rental-layout.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
 export type CommercialFixture=Rect&{id:string;zoneId:string;floor:number;label:string;kind:"desk"|"table"|"display"|"counter"};
-export type ConceptPortal={id:string;zoneId:string;floor:number;axis:"x"|"y";x:number;y:number;length:number;kind:"access"|"exterior-glazing";reviewRequired:true};
+export type ConceptPortal={id:string;zoneId:string;floor:number;axis:"x"|"y";x:number;y:number;length:number;kind:"access"|"exterior-glazing";reviewRequired:true;connectsTo?:string};
 const EPS=1e-5;
 export function commercialPortals(plan:BuildingConcept):ConceptPortal[]{
- const result:ConceptPortal[]=[],rentals=rentalLayouts(plan);
+ const result:ConceptPortal[]=[],rentals=rentalLayouts(plan),inside=commercialInternalSpaces(plan),partitioned=new Set(inside.map(r=>r.parentId));
  for(const z of plan.zones.filter(z=>!["parking","open","circulation"].includes(z.kind))){
+  if(partitioned.has(z.id))continue;
   const hall=plan.zones.find(h=>h.floor===z.floor&&h.kind==="circulation");if(!hall)continue;
   const right=Math.abs(z.x+z.w-hall.x)<EPS,left=Math.abs(z.x-hall.x-hall.w)<EPS;
   const lo=Math.max(z.y,hall.y),hi=Math.min(z.y+z.d,hall.y+hall.d);
@@ -24,11 +26,11 @@ export function commercialPortals(plan:BuildingConcept):ConceptPortal[]{
   if(p.w<8||p.y>plan.brief.frontFt+.01)continue;
   const entry=p.kind==="circulation"&&p.floor===0;
   if(!entry&&(p.kind!=="primary"&&p.kind!=="circulation"))continue;
-  if(plan.brief.purpose==="rental"&&!entry)continue;
+  if(partitioned.has(p.zoneId)||plan.brief.purpose==="rental"&&!entry)continue;
   const length=entry?Math.min(6,p.w-2):Math.min(8,p.w-2);
   result.push({id:p.zoneId+"-front-"+p.x,zoneId:p.zoneId,floor:p.floor,axis:"x",x:p.x+(p.w-length)/2,y:p.y,length,kind:entry?"access":"exterior-glazing",reviewRequired:true});
  }
- return result;
+ return [...result,...commercialInternalOpenings(plan)];
 }
  /** Indicative loose furniture, not seat capacity or compliant aisle design. */
 export function commercialFixtures(plan:BuildingConcept):CommercialFixture[]{
@@ -56,7 +58,8 @@ export function commercialGeometryIssues(plan:BuildingConcept):string[]{
  for(const f of fixtures){const z=plan.zones.find(z=>z.id===f.zoneId);if(!z||f.floor!==z.floor||Math.abs(overlapArea(f,z)-f.w*f.d)>EPS)issues.push("Fixture outside parent "+f.id);}
  const byZone=new Map<string,CommercialFixture[]>();for(const f of fixtures){const group=byZone.get(f.zoneId)??[];group.push(f);byZone.set(f.zoneId,group)}
  for(const group of byZone.values())for(let i=0;i<group.length;i++)for(let j=i+1;j<group.length;j++)if(overlapArea(group[i],group[j])>EPS)issues.push("Fixture overlap "+group[i].id);
- for(const p of portals){const z=plan.zones.find(z=>z.id===p.zoneId);if(!z||p.floor!==z.floor||(p.axis==="y"?p.y<z.y-EPS||p.y+p.length>z.y+z.d+EPS||Math.min(Math.abs(p.x-z.x),Math.abs(p.x-z.x-z.w))>EPS:p.x<z.x-EPS||p.x+p.length>z.x+z.w+EPS||Math.min(Math.abs(p.y-z.y),Math.abs(p.y-z.y-z.d))>EPS))issues.push("Portal outside wall "+p.id);}
+ const spaces=[...plan.zones,...commercialInternalSpaces(plan)];
+ for(const p of portals){const z=spaces.find(z=>z.id===p.zoneId);if(!z||p.floor!==z.floor||(p.axis==="y"?p.y<z.y-EPS||p.y+p.length>z.y+z.d+EPS||Math.min(Math.abs(p.x-z.x),Math.abs(p.x-z.x-z.w))>EPS:p.x<z.x-EPS||p.x+p.length>z.x+z.w+EPS||Math.min(Math.abs(p.y-z.y),Math.abs(p.y-z.y-z.d))>EPS))issues.push("Portal outside wall "+p.id);}
  return issues;
 }
 
