@@ -15,7 +15,21 @@ async function body(request:Request){
 export async function GET(request:Request){
  const auth=await requireAuth(request);if(auth instanceof Response)return auth;
  if(process.env.COMMERCIAL_PROJECT_STORAGE_ENABLED!=="true")return reply({enabled:false,projects:[],reason:"storage_not_enabled"});
- try{const {data,error}=await auth.client.from("studio_commercial_snapshots").select("id,title,purpose,created_at").eq("owner_id",auth.userId).order("created_at",{ascending:false}).limit(30);
+ try{
+ const id=new URL(request.url).searchParams.get("id");
+ if(id!==null){
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return reply({error:"Invalid project identifier."},400);
+  const {data,error}=await auth.client.from("studio_commercial_snapshots").select("id,title,idempotency_key,snapshot,snapshot_sha256").eq("owner_id",auth.userId).eq("id",id).maybeSingle();
+  if(error)return reply({error:"Private design unavailable."},503);
+  if(!data)return reply({error:"Private design not found."},404);
+  // Stored JSON is untrusted, including rows inserted through the authenticated data API.
+  const stored=data.snapshot;
+  const parsed=commercialSaveSchema.safeParse({idempotencyKey:data.idempotency_key,title:data.title,brief:stored?.plan?.brief,planId:stored?.plan?.id,signature:stored?.plan?.signature,finishes:stored?.finishes});
+  const rebuilt=parsed.success?rebuildCommercialSnapshot(parsed.data):null;
+  if(!rebuilt||createHash("sha256").update(JSON.stringify(rebuilt)).digest("hex")!==data.snapshot_sha256)return reply({error:"This design revision cannot be restored safely."},422);
+  return reply({project:{id:data.id,title:data.title,snapshot:rebuilt}});
+ }
+ const {data,error}=await auth.client.from("studio_commercial_snapshots").select("id,title,purpose,created_at").eq("owner_id",auth.userId).order("created_at",{ascending:false}).order("id",{ascending:false}).limit(30);
  return error?reply({error:"Private designs unavailable."},503):reply({enabled:true,projects:data??[]});}catch{return reply({error:"Private designs unavailable."},503);}
 }
 export async function POST(request:Request){
