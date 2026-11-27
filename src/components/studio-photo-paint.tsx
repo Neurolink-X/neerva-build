@@ -10,15 +10,14 @@ type Wall={mask?:PhotoMask;points:MaskCorner[];colour:string;accent:string;patte
 function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinted?:HTMLCanvasElement){
  const corners=wall.points.map(p=>({x:p.x*w,y:p.y*h}));
  ctx.save();
- ctx.beginPath();
- corners.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
- ctx.closePath();ctx.clip();
  if(wall.mask){
   const trace=(ring:number[][])=>{ring.forEach(([x,y],i)=>i?ctx.lineTo(x*w,y*h):ctx.moveTo(x*w,y*h));ctx.closePath();};
   // Clip the outline first, then subtract each exclusion separately. A hole
   // that touches an edge or overlaps another hole must not add paint back.
   ctx.beginPath();trace(wall.mask.outline);ctx.clip();
   for(const hole of wall.mask.holes??[]){ctx.beginPath();ctx.rect(0,0,w,h);trace(hole);ctx.clip("evenodd");}
+ }else{
+  ctx.beginPath();corners.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.clip();
  }
  // The tint already contains the selected RGB plus source luminance. Do not blend
  // the old wall hue back into a dark shade or apply a second darkening pass.
@@ -26,6 +25,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
  else{ctx.globalCompositeOperation="color";ctx.fillStyle=wall.colour;ctx.globalAlpha=1;ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation="multiply";ctx.globalAlpha=.35;ctx.fillRect(0,0,w,h);ctx.globalAlpha=1;}
 
  if(wall.pattern!=="plain"){
+  if(corners.length!==4){ctx.restore();return;}
   const [a,b,c,d]=corners;
   const at=(u:number,v:number)=>({
    x:(1-v)*(a.x+(b.x-a.x)*u)+v*(d.x+(c.x-d.x)*u),
