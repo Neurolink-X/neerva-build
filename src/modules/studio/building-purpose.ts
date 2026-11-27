@@ -6,7 +6,7 @@ export const buildingPurposes=["mall","school","restaurant","shops","rental"] as
 export type BuildingPurpose=typeof buildingPurposes[number];
 type ZoneKind="primary"|"support"|"toilet"|"circulation"|"core"|"service"|"parking"|"open";
 export type BuildingZone=Rect&{id:string;label:string;kind:ZoneKind;floor:number};
-export type BuildingBrief={purpose:BuildingPurpose;widthFt:number;depthFt:number;roadSide:RoadSide;floors:number;unitsPerFloor:number;parkingBays:number;frontFt:number;rearFt:number;sideFt:number;rentalBedrooms?:number;siteContext?:PlotContext};
+export type BuildingBrief={purpose:BuildingPurpose;widthFt:number;depthFt:number;roadSide:RoadSide;floors:number;unitsPerFloor:number;parkingBays:number;frontFt:number;rearFt:number;sideFt:number;rentalBedrooms?:number;reserveLift?:boolean;siteContext?:PlotContext};
 export type BuildingConcept={id:string;brief:BuildingBrief;zones:BuildingZone[];layout:string;signature:string;conceptOnly:true};
 const purpose={
  mall:{title:"Shopping mall",unit:"Retail unit",minW:12,minD:12,minArea:200,front:20,back:12,support:["Anchor retail / activity","Service & loading reserve"],checks:["Occupant load and exit capacity","Fire separation, smoke control and sprinklers","Accessible routes, lifts, loading, parking and traffic study"]},
@@ -46,6 +46,8 @@ export function validateBuildingBrief(b:BuildingBrief):string[]{
  const p=purpose[b.purpose];
  if(b.frontFt<p.front||b.rearFt<p.back)e.push("Allow at least "+p.front+" ft front and "+p.back+" ft rear open reservation for this concept family; legal requirements may be greater.");
  if(b.parkingBays>0&&(b.frontFt<36||b.parkingBays*9>b.widthFt-2*b.sideFt-12))e.push("Requested parking reserve does not fit: allow 36 ft front depth and 9 ft per reserved bay plus a 12 ft clear strip. Vehicle maneuvering still needs review.");
+ if(b.reserveLift!==undefined&&typeof b.reserveLift!=="boolean")e.push("Choose a valid lift preference.");
+ if(b.reserveLift===true&&b.floors===1)e.push("Lift provision is supported only for multiple levels in this planner.");
  if(b.siteContext){const issue=plotContextIssue(b.siteContext,b.widthFt,b.depthFt);if(issue)e.push(issue);}
  if(!e.length){
   const req=buildingInputRequirements(b)!;
@@ -80,7 +82,7 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
  if(b.purpose==="rental"&&rentalLayouts(c).length!==b.floors*b.unitsPerFloor)e.push("Every rental envelope must fit the requested internal BHK programme.");
  return [...new Set([...e,...internalGeometryIssues(c)])];
 }
-function siteIdentity(b:BuildingBrief){return b.siteContext?"-site-"+plotContextKey(b.siteContext):"";}
+function siteIdentity(b:BuildingBrief){return (b.siteContext?"-site-"+plotContextKey(b.siteContext):"")+(b.reserveLift===undefined?"":b.reserveLift?"-lift":"-stairs-only");}
 function buildingSignature(b:BuildingBrief,zones:BuildingZone[]){
  const geometry=zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort();
  return b.siteContext?JSON.stringify([geometry,b.siteContext.offsetXFt,b.siteContext.points.map(p=>[p.x,p.y])]):JSON.stringify(geometry);
