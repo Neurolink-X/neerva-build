@@ -75,8 +75,9 @@ function Massing({plan,floor,angle,scheme,showFurniture}:{plan:BuildingConcept;f
   {[...faces,...stairFaces,...wallFaces].sort((a,c)=>a.level-c.level||a.depth-c.depth).map(f=><polygon key={f.id} points={f.points} fill={f.fill} stroke="#536658" strokeWidth=".22"><title>{f.label}</title></polygon>)}
  </svg>;
 }
-export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolean}={}){
- const [draft,setDraft]=useState<BuildingBrief>(defaults),[brief,setBrief]=useState<BuildingBrief>(defaults),[selected,setSelected]=useState(0),[floor,setFloor]=useState(0),[full,setFull]=useState(false),[angle,setAngle]=useState(0);
+export function BuildingPurposeStudio({cloudEnabled=false,initialPurpose}:{cloudEnabled?:boolean;initialPurpose?:BuildingPurpose}={}){
+ const initial=initialPurpose?{...buildingStarter(initialPurpose),reserveLift:false}:defaults;
+ const [draft,setDraft]=useState<BuildingBrief>(initial),[brief,setBrief]=useState<BuildingBrief>(initial),[selected,setSelected]=useState(0),[floor,setFloor]=useState(0),[full,setFull]=useState(false),[angle,setAngle]=useState(0);
  const [comparison,setComparison]=useState<{key:string;result:ReturnType<typeof recommendBuildingConcepts>}|null>(null);
  const briefKey=JSON.stringify(brief),compared=comparison?.key===briefKey?comparison.result:null;
  const [family,setFamily]=useState<BuildingLayoutFamily>("purpose-led");
