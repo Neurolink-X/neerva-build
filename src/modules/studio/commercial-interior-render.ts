@@ -14,7 +14,7 @@ export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishSch
  const push=(lo:Vec3,hi:Vec3,color:Vec3,rough=.8,opacity=1,finish?:FinishMaterial)=>boxes.push({lo,hi,color,rough,metal:0,opacity,finish});
  push([0,-.12,0],[w,0,d],shadeRgb(f.floor),finishRoughness(f.materials?.floor),1,f.materials?.floor);
  push([0,h,0],[w,h+.12,d],shadeRgb(f.ceiling),finishRoughness(f.materials?.ceiling),1,f.materials?.ceiling);
- const portals=commercialPortals(plan).filter(p=>p.zoneId===r.id);
+ const portals=commercialPortals(plan).filter(p=>p.zoneId===r.id||p.connectsTo===r.id);
  for(const side of ["front","rear","left","right"] as Side[]){
   const vertical:boolean=side==="left"||side==="right";
   const plane:number=vertical?(side==="left"?r.x:r.x+r.w):(side==="front"?r.y:r.y+r.d);
