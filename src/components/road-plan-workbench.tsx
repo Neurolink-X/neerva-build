@@ -7,7 +7,7 @@ import {PlanFinishStudio} from "./plan-finish-studio";
 import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/studio/finish-model";
 import {StudioProjectExchange} from "./studio-project-exchange";
 import {StudioPremiumTools} from "./studio-premium-tools";
-import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
+import {generateSpatialPortfolio,generateStairReadyPortfolio} from "@/modules/studio/road-generator";
 import {planMetrics,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
 import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
@@ -35,7 +35,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const threeSection=useRef<HTMLDivElement>(null);
  const [saving,setSaving]=useState(false),[saveInfo,setSaveInfo]=useState("");
  const saveLock=useRef(false),retryKey=useRef<{fingerprint:string;key:string}|null>(null);
- const result=useMemo(()=>generateSpatialPortfolio(brief,24),[brief]);
+ const [stairReady,setStairReady]=useState(false);
+ const result=useMemo(()=>stairReady?generateStairReadyPortfolio(brief,24):generateSpatialPortfolio(brief,24),[brief,stairReady]);
  const facadeGroups=useMemo(()=>{const groups=new Map<string,number>();return result.plans.map(p=>{const sig=frontageSignature(p);if(!groups.has(sig))groups.set(sig,groups.size+1);return groups.get(sig)!})},[result]);
  const activeOption=result.plans[chosen]?chosen:0;
  const draft=result.plans[activeOption]??null;
@@ -73,7 +74,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
   const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();setThreeReady(true)}},{rootMargin:"120px"});
   observer.observe(node);return()=>observer.disconnect();
  },[hasPlan,threeReady]);
- function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setBrief(v=>({...v,[key]:value}));setChosen(0);setFloor(0);setKit(null);setSaveInfo("")}
+ function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setBrief(v=>({...v,[key]:value}));if(key==="floors"&&value!==2)setStairReady(false);setChosen(0);setFloor(0);setKit(null);setSaveInfo("")}
  function changeSetback(side:keyof PlanBrief["setbacks"],value:number){setBrief(v=>({...v,setbacks:{...v.setbacks,[side]:value}}));setChosen(0);setFloor(0);setKit(null)}
  async function saveDraft(){
   if(!draft||saveLock.current)return;
@@ -141,6 +142,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
        <input min="0" max="20" step=".5" type="number" value={brief.setbacks[side]} onChange={e=>changeSetback(side,Number(e.target.value))}/></label>)}
      </details>
     </form>
+    {brief.floors===2&&<label><input type="checkbox" checked={stairReady} onChange={e=>{setStairReady(e.target.checked);setChosen(0);setFloor(0);setKit(null);setSaveInfo("")}}/> {str("Show dog-leg stair footprint options","मुड़ने वाली सीढ़ी के विकल्प")}</label>}
+    {stairReady&&<p className="nroad-small">These concepts check the flight footprint and actual door landings. Headroom, railing and structural review remain required.</p>}
     <p className="nroad-disclaimer">0 ft setbacks are an input placeholder, NOT confirmed legal permission to build to a boundary. Verify all local regulations and car access.</p>
     <Link className="nroad-secondary-link" href="/design-studio/fit">{str("Check other plot sizes and browse existing concepts →","दूसरे प्लॉट आकार देखें →")}</Link>
    </aside>
