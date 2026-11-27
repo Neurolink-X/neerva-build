@@ -12,3 +12,12 @@ test("commercial snapshots are regenerated from bounded inputs and matched to fi
  assert.equal(commercialSaveSchema.safeParse({...input,owner_id:"attacker"}).success,false);
  assert.equal(commercialSaveSchema.safeParse({...input,brief:{...brief,floors:99}}).success,false);
 });
+
+test("new purpose-led snapshots coexist with old saved projects",()=>{
+ const brief=buildingStarter("restaurant");
+ for(const family of ["classic","purpose-led"] as const){
+  const plan=generateBuildingConcepts(brief,24,family).plans[0];assert.ok(plan);
+  const input=commercialSaveSchema.parse({idempotencyKey:"c71a9c10-4c52-4df4-85b7-04d0efbb181f",title:"Restaurant concept",brief,planId:plan.id,signature:plan.signature,finishes:defaultFinishScheme({kind:"commercial",plan})});
+  assert.equal(rebuildCommercialSnapshot(input)?.plan.signature,plan.signature);
+ }
+});
