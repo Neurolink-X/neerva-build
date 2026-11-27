@@ -36,6 +36,7 @@ async function main(){
     const studio=page.locator(".purpose-studio");
     await studio.getByRole("button",{name:"Purpose-led layout",exact:true}).waitFor();
     if(await studio.getByRole("button",{name:"Show 3D concept",exact:true}).count())await studio.getByRole("button",{name:"Show 3D concept",exact:true}).click();
+    const lightweight=studio.getByRole("button",{name:"Lightweight 3D",exact:true});if(await lightweight.count())await lightweight.click();
     await studio.getByLabel("Building purpose").selectOption("school");
     await studio.getByRole("img",{name:/Purpose-specific zoning/}).waitFor({state:"detached"});
     for(const purpose of ["mall","school","restaurant","shops","rental"]){
