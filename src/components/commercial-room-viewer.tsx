@@ -4,7 +4,7 @@ import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import type {RenderSnapshot,RenderFinish} from "../../public/studio-render-v1";
 type Viewer={update:(snapshot:RenderSnapshot)=>void;reset:()=>void};
-export default function CommercialRoomViewer({snapshot}:{snapshot:RenderSnapshot|null}){
+export default function CommercialRoomViewer({snapshot,exterior=false}:{snapshot:RenderSnapshot|null;exterior?:boolean}){
  const host=useRef<HTMLDivElement>(null),viewer=useRef<Viewer|null>(null);
  const [unavailable,setUnavailable]=useState(false);
  useEffect(()=>{
@@ -34,7 +34,18 @@ export default function CommercialRoomViewer({snapshot}:{snapshot:RenderSnapshot
   const reset=()=>{
    if(!current||!controls)return;
    const c=current.camera;camera.position.fromArray(c.origin);camera.fov=c.fov;camera.updateProjectionMatrix();
-   controls.target.copy(camera.position).add(new THREE.Vector3(...c.forward).multiplyScalar(2));controls.update();schedule();
+   if(exterior){
+    const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),dir=camera.position.clone().sub(center).normalize();
+    if(dir.lengthSq()<.1)dir.set(1,.6,-1).normalize();
+    const right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),dir).normalize(),up=new THREE.Vector3().crossVectors(dir,right).normalize();
+    const tanY=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+    let fit=1;
+    for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]){
+     const p=new THREE.Vector3(x,y,z).sub(center);fit=Math.max(fit,p.dot(dir)+1.16*Math.max(Math.abs(p.dot(right))/(tanY*Math.max(.1,camera.aspect)),Math.abs(p.dot(up))/tanY));
+    }
+    controls.target.copy(center);controls.maxDistance=Math.max(fit*3,50);camera.far=Math.max(2000,fit*5);camera.position.copy(center).addScaledVector(dir,fit);camera.updateProjectionMatrix();
+   }else controls.target.copy(camera.position).add(new THREE.Vector3(...c.forward).multiplyScalar(2));
+   controls.update();schedule();
   };
   try{
    renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
@@ -49,7 +60,7 @@ export default function CommercialRoomViewer({snapshot}:{snapshot:RenderSnapshot
    renderer.domElement.addEventListener("webglcontextlost",contextLost);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
    renderer.domElement.style.width="100%";renderer.domElement.style.height="100%";renderer.domElement.style.touchAction="none";target.appendChild(renderer.domElement);
    controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=false;controls.minDistance=.3;controls.maxDistance=50;controls.addEventListener("change",schedule);
-   const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();schedule()};
+   const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(exterior&&current)reset();schedule()};
    observer=new ResizeObserver(resize);observer.observe(target);resize();
    viewer.current={reset,update(next){
     if(next.boxes.length>2500||next.boxes.some(b=>b.hi.some((v,i)=>!Number.isFinite(v)||!Number.isFinite(b.lo[i])||v<=b.lo[i])))return;
@@ -75,7 +86,7 @@ export default function CommercialRoomViewer({snapshot}:{snapshot:RenderSnapshot
    document.addEventListener("visibilitychange",schedule);
   }catch{queueMicrotask(()=>{if(!disposed)setUnavailable(true)})}
   return()=>{disposed=true;viewer.current=null;cancelAnimationFrame(frame);document.removeEventListener("visibilitychange",schedule);observer?.disconnect();controls?.dispose();clear();geometry.dispose();for(const t of cache.values())t.dispose();environment?.dispose();renderer?.domElement.removeEventListener("webglcontextlost",contextLost);renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement);};
- },[]);
+ },[exterior]);
  useEffect(()=>{if(snapshot)viewer.current?.update(snapshot)},[snapshot]);
- return <section aria-label="Interactive commercial room" data-room-viewer><div ref={host} hidden={unavailable} style={{width:"100%",height:"clamp(240px,48vw,440px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>}</section>;
+ return <section aria-label={exterior?"Interactive commercial building":"Interactive commercial room"} data-room-viewer><div ref={host} hidden={unavailable} style={{width:"100%",height:"clamp(240px,48vw,440px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>}</section>;
 }
