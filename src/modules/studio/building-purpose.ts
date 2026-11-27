@@ -16,6 +16,22 @@ export const purposeDetails=purpose;
 const EPS=1e-6;
 const finite=(n:number)=>Number.isFinite(n);
 const fmt=(n:number)=>Math.round(n*1000)/1000;
+/** Necessary lower bounds for the supported two-wing generator, not legal
+ * minima. Actual feasibility is still checked against every candidate. */
+export function buildingInputRequirements(b:BuildingBrief){
+ const p=purpose[b.purpose];
+ if(!p)return null;
+ const count=Math.max(1,Math.ceil(b.unitsPerFloor/2)),front=Math.max(p.front,b.parkingBays>0?36:0);
+ const usableWidth=2*Math.max(10,p.minW)+8;
+ const usableDepth=Math.max(30,28+count*p.minD,(18+count*p.minD)/.85);
+ return {front,rear:p.back,usableWidth,usableDepth,minWidthFt:Math.ceil(Math.max(20,usableWidth+2*b.sideFt,b.parkingBays>0?b.parkingBays*9+12+2*b.sideFt:0)),minDepthFt:Math.ceil(Math.max(30,usableDepth+Math.max(b.frontFt,front)+Math.max(b.rearFt,p.back))),unitAreaSqFt:p.minArea,unitWidthFt:p.minW,unitDepthFt:p.minD};
+}
+/** Explicit example inputs, not plot recommendations or approved design. */
+export function buildingStarter(purpose:BuildingPurpose):BuildingBrief{
+ const dimensions={mall:[180,240,3,8,40,25,10],school:[150,200,2,4,40,35,10],restaurant:[80,120,1,2,10,12,5],shops:[80,100,1,4,10,10,5],rental:[90,130,2,2,10,10,5]} as const;
+ const [widthFt,depthFt,floors,unitsPerFloor,frontFt,rearFt,sideFt]=dimensions[purpose];
+ return {purpose,widthFt,depthFt,floors,unitsPerFloor,frontFt,rearFt,sideFt,roadSide:"N",parkingBays:0};
+}
 export function validateBuildingBrief(b:BuildingBrief):string[]{
  const e:string[]=[];
  if(!buildingPurposes.includes(b.purpose))return ["Choose a supported building purpose."];
@@ -23,8 +39,15 @@ export function validateBuildingBrief(b:BuildingBrief):string[]{
  if(!["N","E","S","W"].includes(b.roadSide))e.push("Choose a road direction.");
  if(!Number.isInteger(b.floors)||b.floors<1||b.floors>6||!Number.isInteger(b.unitsPerFloor)||b.unitsPerFloor<1||b.unitsPerFloor>24||!Number.isInteger(b.parkingBays)||b.parkingBays<0||b.parkingBays>40)e.push("Choose 1–6 floors, 1–24 primary zones per floor, and 0–40 parking reservations.");
  const p=purpose[b.purpose];
- if(b.frontFt<p.front||b.rearFt<p.back)e.push("Increase the front/rear open reservation to the concept minimum shown for this purpose; local legal requirements may be greater.");
+ if(b.frontFt<p.front||b.rearFt<p.back)e.push("Allow at least "+p.front+" ft front and "+p.back+" ft rear open reservation for this concept family; legal requirements may be greater.");
  if(b.parkingBays>0&&(b.frontFt<36||b.parkingBays*9>b.widthFt-2*b.sideFt-12))e.push("Requested parking reserve does not fit: allow 36 ft front depth and 9 ft per reserved bay plus a 12 ft clear strip. Vehicle maneuvering still needs review.");
+ if(!e.length){
+  const req=buildingInputRequirements(b)!;
+  const W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
+  if(W+EPS<req.usableWidth)e.push("Usable frontage is "+fmt(W)+" ft; this two-wing concept needs at least "+req.usableWidth+" ft before side margins. Increase plot width or revise measured margins with a professional.");
+  if(D+EPS<req.usableDepth)e.push("Usable depth is "+fmt(D)+" ft; "+b.unitsPerFloor+" primary zones per floor need at least "+Math.ceil(req.usableDepth)+" ft in this concept family. Reduce zone count or increase plot depth.");
+  if(W>0&&D>0&&b.unitsPerFloor*p.minArea>W*D+EPS)e.push("Primary zone area alone exceeds the usable footprint. Reduce requested units or use a larger plot.");
+ }
  return e;
 }
 export function validateBuildingConcept(c:BuildingConcept):string[]{
