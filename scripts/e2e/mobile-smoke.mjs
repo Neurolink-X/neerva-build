@@ -78,6 +78,7 @@ async function main(){
     assert.deepEqual(errors,[],"commercial studio hydration and browser errors at "+viewport.width+"px");
     await page.goto(base+"/build-iq",{waitUntil:"domcontentloaded"});
     assert.equal(await page.locator("#practical-start article").count(),6,"practical site knowledge is prominent");
+    assert.equal(await page.locator("#practical-start .learning-photo img[loading=lazy]").count(),3,"three lightweight material references");
    }finally{await ctx.close()}
   }
   const liteContext=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:"block"});
@@ -393,6 +394,7 @@ async function main(){
    const guide=page.locator("#family-guide");
    assert.equal(await page.locator("#family-budget,input[type=number]").count(),0,"no duplicated calculator on family page");
    assert.equal(await guide.locator(".family-editorial-body section").count(),4,"practical room and construction guidance");
+   assert.equal(await guide.locator(".learning-photo img[loading=lazy]").count(),2,"two local interior references");
    assert.equal(await page.locator(".family-stage-timeline li").count(),4,"construction stages remain connected");
    await guide.getByText("Protect essential spending",{exact:true}).click();
    assert.equal(await guide.locator("details[open]").count(),1);
@@ -402,7 +404,7 @@ async function main(){
    await page.locator(".property-guide").waitFor();
    assert.equal(await page.locator(".property-checks input[type=checkbox]").count(),12);
    assert.equal(await page.locator(".property-documents dt").count(),8);
-   for(const img of await page.locator(".property-chapter-intro img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());assert.ok(await img.evaluate(el=>el.naturalWidth>0&&el.getAttribute("src").startsWith("/images/knowledge/")));}
+   for(const img of await page.locator(".property-chapter-intro img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());assert.ok(await img.evaluate(el=>el.naturalWidth>0&&el.getAttribute("src").startsWith("/images/")&&el.loading==="lazy"));}
    assert.ok(await page.locator(".property-guide").evaluate(el=>el.scrollWidth<=el.clientWidth+1),"property guide remains responsive");
 
 
