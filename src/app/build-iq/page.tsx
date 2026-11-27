@@ -1,5 +1,5 @@
 import type {Metadata} from "next";
-import Link from "next/link";
+import Link from "@/components/intent-link";
 import {SiteHeader,SiteFooter} from "@/components/site-chrome";
 import {HandbookDirectory} from "@/components/handbook-directory";
 import {chapters} from "@/modules/home/handbook";
