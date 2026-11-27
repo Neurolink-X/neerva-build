@@ -1,6 +1,7 @@
 "use client";
 import {useMemo,useState,type FormEvent} from "react";
 import Link from "next/link";
+import {BuildingEngineeringPanel} from "./building-engineering-panel";
 import {buildingPurposes,purposeDetails,generateBuildingConcepts,type BuildingPurpose,type BuildingBrief,type BuildingConcept,type BuildingZone} from "@/modules/studio/building-purpose";
 import {roadRect,siteDimensions,roadSegment} from "@/modules/studio/plan-coordinate";
 const colors:Record<BuildingZone["kind"],string>={primary:"#aac5d3",support:"#d3c2a4",toilet:"#c8b9d9",circulation:"#e8e6d7",core:"#bdc5bb",service:"#d9bfaa",parking:"#b6bdc3",open:"#c5d7ac"};
@@ -20,7 +21,7 @@ function Massing({plan,floor,angle}:{plan:BuildingConcept;floor:number|null;angl
  const rotate=(x:number,y:number)=>{const X=x-dim.w/2,Y=y-dim.d/2,t=angle*Math.PI/2;return [X*Math.cos(t)-Y*Math.sin(t),X*Math.sin(t)+Y*Math.cos(t)]};
  const project=(x:number,y:number,z:number)=>{const [X,Y]=rotate(x,y);return [(X-Y)*.86,(X+Y)*.44-z].join(",")};
  const faces=plan.zones.filter(z=>floor===null||z.floor===floor).flatMap(z=>{
-  const r=roadRect(z,b.widthFt,b.depthFt,b.roadSide),base=(floor===null?z.floor:0)*13,h=["parking","open"].includes(z.kind) ? .25 : floor===null?11:3.5;
+  const r=roadRect(z,b.widthFt,b.depthFt,b.roadSide),base=(floor===null?z.floor:0)*13,h=["parking","open"].includes(z.kind) ? .25 : floor===null?13:3.5;
   const corners=[[r.x,r.y],[r.x+r.w,r.y],[r.x+r.w,r.y+r.d],[r.x,r.y+r.d]];
   const depth=corners.reduce((sum,[x,y])=>{const [X,Y]=rotate(x,y);return sum+X+Y},0)/4;
   return [{id:z.id+"-top",depth,level:z.floor,points:corners.map(([x,y])=>project(x,y,base+h)).join(" "),fill:colors[z.kind],label:z.label},...corners.map(([x,y],i)=>{const [nx,ny]=corners[(i+1)%4];return {id:z.id+"-"+i,depth:depth-.001,level:z.floor,points:[project(x,y,base),project(nx,ny,base),project(nx,ny,base+h),project(x,y,base+h)].join(" "),fill:colors[z.kind],label:z.label}})];
@@ -54,6 +55,7 @@ export function BuildingPurposeStudio(){
     <div className="purpose-tabs" role="group" aria-label="Floor selection">{Array.from({length:brief.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>{setFloor(i);setFull(false)}}>{i===0?"Ground":"Floor "+i}</button>)}</div>
     <div className="purpose-views"><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor}/></section><section><h3>3D massing · same zones</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle}/></section></div>
     <details><summary>Selected floor zone schedule</summary><div className="purpose-table"><table><thead><tr><th>Zone</th><th>Dimensions (ft)</th><th>Area (sq ft)</th></tr></thead><tbody>{plan.zones.filter(z=>z.floor===floor).map(z=><tr key={z.id}><td>{z.label}</td><td>{z.w.toFixed(1)} × {z.d.toFixed(1)}</td><td>{Math.round(z.w*z.d)}</td></tr>)}</tbody></table></div></details>
+    <BuildingEngineeringPanel plan={plan} floor={floor}/>
    </>}
   </section>
   <section className="purpose-warning"><h2>Professional review required</h2><ul>{active.checks.map(c=><li key={c}>{c}</li>)}</ul><p>Core and toilet zones reserve space only; stairs, lifts, doors, internal unit rooms, egress, fire services, structure, MEP and statutory approval are not engineered by this tool. Do not build from these zoning diagrams.</p><Link href="/support">Ask Neerva for planning support →</Link> · <Link href="/materials">Explore construction materials →</Link></section>
