@@ -43,9 +43,9 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
    if(!client){setSaveInfo("Account service is not configured. Your concept is not saved.");return;}
    const session=await client.auth.getSession(),token=session.data.session?.access_token;
    if(!token){setSaveInfo("Sign in to save this concept privately. No plan was saved.");return;}
-   const digest=await planGeometryDigest(draft),fingerprint=JSON.stringify([session.data.session?.user.id,brief,draft.id,digest,kit,shade.main,shade.accent]);
+   const digest=await planGeometryDigest(draft),fingerprint=JSON.stringify([session.data.session?.user.id,brief,draft.id,digest,kit,shade.main,shade.accent,scheme]);
    if(retryKey.current?.fingerprint!==fingerprint)retryKey.current={fingerprint,key:crypto.randomUUID()};
-   const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:retryKey.current.key,title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id,geometryDigest:digest,finish:{kit,main:shade.main,accent:shade.accent}}),cache:"no-store",signal:AbortSignal.timeout(20000)});
+   const response=await fetch("/api/studio/projects",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+token},body:JSON.stringify({idempotencyKey:retryKey.current.key,title:`${brief.widthFt} × ${brief.depthFt} · ${brief.bedrooms} BHK`,brief,variant:draft.variant,planId:draft.id,geometryDigest:digest,finishScheme:scheme??undefined,finish:{kit,main:shade.main,accent:shade.accent}}),cache:"no-store",signal:AbortSignal.timeout(20000)});
    const body=await response.json() as {project?:{id?:string};error?:string};
    setSaveInfo(response.ok&&body.project?.id?"Private concept saved. Not a construction-approved plan.":(body.error??"Project was not saved."));
   }catch{setSaveInfo("Network issue. Your concept was not confirmed saved.");}finally{saveLock.current=false;setSaving(false)}
@@ -88,7 +88,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
   const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();setThreeReady(true)}},{rootMargin:"120px"});
   observer.observe(node);return()=>observer.disconnect();
  },[hasPlan,threeReady]);
- function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setBrief(v=>({...v,[key]:value}));setChosen(0);setFloor(0);setKit(null)}
+ function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setBrief(v=>({...v,[key]:value}));setChosen(0);setFloor(0);setKit(null);setSaveInfo("")}
  function changeSetback(side:keyof PlanBrief["setbacks"],value:number){setBrief(v=>({...v,setbacks:{...v.setbacks,[side]:value}}));setChosen(0);setFloor(0);setKit(null)}
  const str=(en:string,hi:string)=>hindi?hi:en;
  return <main className="nroad">
@@ -156,7 +156,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <div className="nroad-head nroad-choices"><h2>{str("House layouts matching your requirements","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} distinct layouts · {new Set(facadeGroups).size} street-front geometries · {brief.bedrooms} BHK · {brief.floors} level(s)</span></div>
      <p className="nroad-small nroad-bhk-explanation">{str("BHK = bedrooms, hall (living room) and kitchen. "+brief.bedrooms+" BHK means "+brief.bedrooms+" bedrooms total across all selected floors, plus a living room and kitchen. B = bedroom, H = hall, K = kitchen, WC = bathroom, S = stairs.","BHK = बेडरूम, हॉल और किचन। चुनी गई सभी मंज़िलों में कुल "+brief.bedrooms+" बेडरूम, साथ में हॉल और किचन। B = बेडरूम, H = हॉल, K = किचन, WC = बाथरूम, S = सीढ़ी।")}</p>
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=>{const {widthFt:w,depthFt:d,roadSide:side}=v.plot;const dim=siteDimensions(w,d,side),road=roadSegment(w,d,side);const boundary=siteOutline(w,d,v.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,side));return <button key={v.id} type="button" aria-pressed={v.id===plan.id} data-plan-id={v.id}
-       onClick={()=>{setChosen(i);setKit(null)}}><div className="nroad-mini-wrap">{Array.from({length:v.floors},(_,level)=><div key={level}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} role="img" aria-label={`Floor ${level+1} layout preview ${i+1}: ${w} by ${d} feet, road ${side}`}>
+       onClick={()=>{setChosen(i);setKit(null);setSaveInfo("")}}><div className="nroad-mini-wrap">{Array.from({length:v.floors},(_,level)=><div key={level}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} role="img" aria-label={`Floor ${level+1} layout preview ${i+1}: ${w} by ${d} feet, road ${side}`}>
        <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#f7f5ec" stroke="#55765a" strokeWidth=".45"/>
        {v.rooms.filter(r=>r.floor===level).map(r=>{const box=roadRect(r,w,d,side),label=({parking:"P",verandah:"V",living:"H",dining:"D",kitchen:"K",bedroom:"B",bath:"WC",stairs:"S",corridor:"",utility:"U",lounge:"L",terrace:"T",balcony:""} as Record<string,string>)[r.kind]??"";return <g key={r.id}><rect x={box.x} y={box.y} width={box.w} height={box.d} fill={({parking:"#d4e6e0",verandah:"#fff3d9",living:"#e0ead9",dining:"#e8ebd7",kitchen:"#f0dfcc",bedroom:"#dce2f1",bath:"#c7e3f0",stairs:"#d4d4d4",corridor:"#f4efd9",utility:"#e5d5c4",lounge:"#d9e8cd",terrace:"#dce8df"} as Record<string,string>)[r.kind]??"#e7e4da"} stroke="#496452" strokeWidth=".18"/>{label&&<text x={box.x+box.w/2} y={box.y+box.d/2} dominantBaseline="central" textAnchor="middle" fontSize={Math.min(2,box.w/(label.length*.85),box.d*.55)} fill="#263e35" fontWeight="700">{label}</text>}</g>})}
        <line x1={road.start.x} x2={road.end.x} y1={road.start.y} y2={road.end.y} stroke="#be6740" strokeWidth="1.1"/>
@@ -182,7 +182,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <div className="nroad-exterior-workspace"><label>{str("Exterior finish style","बाहरी डिज़ाइन")}<select name="facadeKit" aria-label={str("Balcony front style","बालकनी का डिज़ाइन")} value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Minimal trim</option><option value="cladding-band">Broad cladding band</option><option value="stepped-band">Stepped facade band</option><option value="jali-screen">Vertical accents</option>{plan.rooms.some(r=>r.kind==="balcony")&&<option value="pergola">Pergola shade</option>}{kit==="cantilever"&&<option value="cantilever">Concept finish</option>}</select></label>
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent}/>
      <div className="nroad-palette"><h2>{str("House colour mood","घर की रंग योजना")}</h2>
-      <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>setPalette(x.id)}>
+      <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>{setPalette(x.id);setSaveInfo("")}}>
        <i style={{background:x.main}}/><span>{hindi?x.hi:x.en}</span></button>)}</div>
       <p className="nroad-small">Digital colours are approximate; check an actual shade card. Finishes and room paint are not physically simulated here.</p><Link href="/design-studio/visualizer" className="nroad-secondary-link">{str("Try paint on sample homes or your own photo →","सैंपल घर या अपनी फोटो पर रंग आज़माएँ →")}</Link>
      </div>
