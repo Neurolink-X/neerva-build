@@ -40,16 +40,16 @@ function refresh(force=false){
   const body=value as {prices:unknown[]};
   const next=new Map<string,Rate>(),now=Date.now();
   if(Array.isArray(body?.prices))for(const r of body.prices as unknown[]){
-   if(!validPublicRate(r,now))continue;
+   if(!validPublicRate(r,now)||(categoryScope&&r.category!==categoryScope))continue;
    for(const key of [rateKey(r.category,r.slug,r.sku),rateKey(r.category,r.slug),rateKey(r.category,r.slug,r.sku,r.unit),rateKey(r.category,r.slug,undefined,r.unit)])if(!next.has(key))next.set(key,r);
   }
   if(!invalidated){rates=next;lastLoaded=now;}
  }).catch(()=>{rates=new Map();lastLoaded=0}).finally(()=>{request=undefined;notifyRates();scheduleExpiry();if(invalidated)refresh()});
 }
-function onVisible(){if(document.visibilityState==="visible"){prune();scheduleExpiry();notifyRates();if(Date.now()-lastLoaded>=30000)refresh()}}
+function onVisible(){clearInterval(timer);timer=undefined;if(document.visibilityState==="visible"){prune();scheduleExpiry();notifyRates();if(Date.now()-lastLoaded>=30000)refresh();if(listeners.size)timer=setInterval(()=>refresh(),30000)}else clearTimeout(expiry)}
 function subscribe(notify:()=>void){
  listeners.add(notify);
- if(listeners.size===1){onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true));timer=setInterval(()=>refresh(),30000)}
+ if(listeners.size===1){lastAttempt=0;onVisible();document.addEventListener("visibilitychange",onVisible);stopSignal=subscribeCatalogPriceSignal(()=>refresh(true))}
  return ()=>{listeners.delete(notify);if(!listeners.size){clearInterval(timer);clearTimeout(expiry);timer=undefined;expiry=undefined;stopSignal?.();stopSignal=undefined;document.removeEventListener("visibilitychange",onVisible);}};
 }
 function currentRate(category:string,slug:string,sku?:string,unit?:string){
@@ -63,7 +63,7 @@ function priceStore(scope?:string){const key=scope??"all";let store=priceStores.
 const noRate=()=>undefined,skipSubscribe=()=>()=>{};
 const format=new Intl.NumberFormat("en-IN",{style:"currency",currency:"INR",maximumFractionDigits:2});
 export function ProductPrice({category,slug,sku,unit,quoteOnly}:{sku?:string;unit?:string;category:string;slug:string;quoteOnly?:boolean}){
- const path=usePathname(),scope=catalogFeedScope(path??""),store=priceStore(scope);
+ const path=usePathname(),scope=catalogFeedScope(path??""),store=priceStore(scope===category?scope:undefined);
  const rate=useSyncExternalStore(quoteOnly?skipSubscribe:store.subscribe,()=>quoteOnly?undefined:store.currentRate(category,slug,sku,unit),noRate);
  // A published exact SKU must not inherit a generic historical family price.
  if(sku&&!rate)return <span>{quoteOnly?"Private quotation":"Get today’s price"}</span>;

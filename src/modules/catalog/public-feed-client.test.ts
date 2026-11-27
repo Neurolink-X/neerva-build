@@ -53,3 +53,5 @@ test("category reads deduplicate only identical scopes and never share other cat
   await loadPublicFeed("prices");assert.deepEqual(calls,["cement","steel","all"]);
  }finally{globalThis.fetch=original;invalidatePublicFeeds()}
 });
+
+test("a scoped feed rejects leaked cross-category rows",async()=>{const original=globalThis.fetch;try{invalidatePublicFeeds();globalThis.fetch=async()=>Response.json({prices:[{category:"steel",paise:100}]});await assert.rejects(loadPublicFeed("prices","cement"),/another category/)}finally{globalThis.fetch=original;invalidatePublicFeeds()}});

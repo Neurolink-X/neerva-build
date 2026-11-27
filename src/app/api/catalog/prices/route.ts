@@ -24,7 +24,7 @@ export async function GET(request:Request){
    const v=Array.isArray(row.variant)?row.variant[0]:row.variant;
    const p=Array.isArray(v?.product)?v.product[0]:v?.product;
    const c=Array.isArray(p?.category)?p.category[0]:p?.category;
-   if(!c||!p||!v||v.unit!==row.unit||/^NEERVA-REF-/i.test(v.sku)||c.slug==="aggregates")continue;
+   if(!c||!p||!v||(category&&c.slug!==category)||v.unit!==row.unit||/^NEERVA-REF-/i.test(v.sku)||c.slug==="aggregates")continue;
    prices.push({slug:p.slug,category:c.slug,sku:v.sku,unit:row.unit,paise:row.amount_paise,city:row.city,prefix:row.pincode_prefix,min:row.minimum_quantity,until:row.valid_to});
   }
  }catch{return unavailable()}

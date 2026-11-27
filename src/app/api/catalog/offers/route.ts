@@ -25,7 +25,7 @@ export async function GET(request:Request){
   for(const row of slice.rows){
    const price=single(row.price) as Price|null;
    const variant=single(price?.variant),product=single(variant?.product),category=single(product?.category);
-   if(!price||!variant||!product||!category||/^NEERVA-REF-/i.test(variant.sku))continue;
+   if(!price||!variant||!product||!category||(scope&&category.slug!==scope)||/^NEERVA-REF-/i.test(variant.sku))continue;
    if(price.tenant_id!==null||price.currency!=="INR"||price.unit!==variant.unit||price.status!=="published"||price.visibility!=="public"||variant.status!=="published"||
     product.status!=="published"||category.status!=="published"||category.slug==="aggregates")continue;
    if(!hasRealActiveDiscount({

@@ -26,6 +26,7 @@ export function loadPublicFeed(kind:Feed,category?:string):Promise<unknown>{
    const value=await r.json();
    if(!value||!Array.isArray(value[kind])||value[kind].length>FEED_PAGE_SIZE)throw Error("Invalid "+kind+" response");
    if(entry.revision!==revision)throw Error("Public feed was revised");
+   if(category&&value[kind].some((row:unknown)=>!row||typeof row!=="object"||(row as {category?:unknown}).category!==category))throw Error("Public feed returned another category");
    rows.push(...value[kind]);
    if(value.nextCursor==null){
     if(kind==="prices")rows.sort((a,b)=>Number((a as {paise?:number})?.paise??Infinity)-Number((b as {paise?:number})?.paise??Infinity));
