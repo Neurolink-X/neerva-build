@@ -1,5 +1,6 @@
 "use client";
 import {useMemo,useState} from "react";
+import dynamic from "next/dynamic";
 import type {BuildingConcept} from "@/modules/studio/building-purpose";
 import {engineeringPreflight,jurisdictionSources,engineeringReferences,type Jurisdiction} from "@/modules/studio/building-engineering";
 import {finishSpaces,type FinishScheme} from "@/modules/studio/finish-model";
@@ -9,6 +10,7 @@ import {roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordin
 import {StudioProjectExchange} from "./studio-project-exchange";
 import {BuildingDemandWorksheet} from "./building-demand-worksheet";
 import {BrowserArchitectureRender} from "./browser-architecture-render";
+const CommercialRoomViewer=dynamic(()=>import("./commercial-room-viewer"),{ssr:false,loading:()=> <p role="status">Loading 3D preview…</p>});
 const display=(n:number|null)=>n===null?"Not available":n.toLocaleString("en-IN",{maximumFractionDigits:1});
 const xml=(s:string)=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[c]??c));
 function download(name:string,content:string,mime:string){
@@ -24,7 +26,7 @@ function floorSvg(plan:BuildingConcept,floor:number){
 }
 export function BuildingEngineeringPanel({plan,floor,scheme}:{plan:BuildingConcept;floor:number;scheme:FinishScheme}){
  const review=useMemo(()=>engineeringPreflight(plan),[plan]),selected=review.floors.find(f=>f.floor===floor);
- const [city,setCity]=useState<Jurisdiction>("Other"),[evening,setEvening]=useState(false),[view,setView]=useState<"front"|"rear">("front"),[scenario,setScenario]=useState(false),[roomChoice,setRoomChoice]=useState("");
+ const [city,setCity]=useState<Jurisdiction>("Other"),[evening,setEvening]=useState(false),[view,setView]=useState<"front"|"rear">("front"),[scenario,setScenario]=useState(false),[roomChoice,setRoomChoice]=useState(""),[showInteractive,setShowInteractive]=useState(false);
  const interiorRooms=finishSpaces({kind:"commercial",plan}).filter(r=>r.floor===floor&&r.w>=5&&r.d>=5),roomId=interiorRooms.some(r=>r.id===roomChoice)?roomChoice:interiorRooms[0]?.id;
  const authority=jurisdictionSources[city];
  return <section className="purpose-engineering" aria-label="Building engineering preflight">
@@ -39,7 +41,7 @@ export function BuildingEngineeringPanel({plan,floor,scheme}:{plan:BuildingConce
    <details><summary>Download concept drawings and review package</summary><p>Dimensioned zoning SVG for the selected floor, or the complete geometry and engineering review JSON. Neither is a signed construction drawing.</p><div className="purpose-tabs"><button type="button" onClick={()=>download("neerva-concept-floor-"+(floor+1)+".svg",floorSvg(plan,floor),"image/svg+xml")}>Download selected floor SVG</button><button type="button" onClick={()=>download("neerva-concept-review.json",JSON.stringify({notice:"CONCEPT ONLY — NOT FOR CONSTRUCTION",city,plan,review,authority,referenceSources:engineeringReferences},null,2),"application/json")}>Download full review JSON</button></div></details>
    </details>
    <details><summary>Exterior image preview</summary><p>Create an image of your selected concept, including proposed openings and finishes. Engineering approval is required.</p><div className="purpose-tabs"><label>View <select value={view} onChange={e=>setView(e.target.value as typeof view)}><option value="front">Road side</option><option value="rear">Rear side</option></select></label><label><input type="checkbox" checked={evening} onChange={e=>setEvening(e.target.checked)}/> Evening light</label></div><BrowserArchitectureRender key={JSON.stringify([plan.id,scheme.exterior,scheme.accent,scheme.glass,scheme.cladding,evening,view])} capture={()=>buildingRenderSnapshot(plan,"limestone",evening,view,scheme)}/></details>
-   {roomId&&<details><summary>Interior image preview</summary><label>Room <select value={roomId} onChange={e=>setRoomChoice(e.target.value)}>{interiorRooms.map(r=><option key={r.id} value={r.id}>{r.label}</option>)}</select></label><p>Concept preview using selected room geometry, proposed openings and colors. Textures and lighting are approximate.</p><BrowserArchitectureRender key={JSON.stringify([plan.id,roomId,scheme.rooms[roomId],scheme.glass,evening])} capture={()=>commercialInteriorSnapshot(plan,scheme,roomId,evening)}/></details>}
+   {roomId&&<details><summary>Interior preview</summary><label>Room <select value={roomId} onChange={e=>setRoomChoice(e.target.value)}>{interiorRooms.map(r=><option key={r.id} value={r.id}>{r.label}</option>)}</select></label><div className="purpose-tabs"><button type="button" aria-pressed={showInteractive} onClick={()=>setShowInteractive(v=>!v)}>{showInteractive?"Close interactive 3D":"Explore interactive 3D"}</button></div>{showInteractive&&<CommercialRoomViewer key={plan.id+":"+roomId} snapshot={commercialInteriorSnapshot(plan,scheme,roomId,evening)}/>}<BrowserArchitectureRender key={JSON.stringify([plan.id,roomId,scheme.rooms[roomId],scheme.glass,evening])} capture={()=>commercialInteriorSnapshot(plan,scheme,roomId,evening)}/></details>}
    <StudioProjectExchange key={plan.id} source={{kind:"commercial",plan}} scheme={scheme}/>
   </>}
  </section>;
