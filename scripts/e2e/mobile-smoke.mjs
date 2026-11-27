@@ -17,12 +17,15 @@ async function main(){
   // be parsed differently by the browser and cause a production hydration error.
   const noJs=await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});
   try{
-   const page=await noJs.newPage(),response=await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});
-   assert.equal(response?.status(),200);
-   const titles=page.locator(".purpose-studio svg title");
-   assert.ok(await titles.count()>0,"commercial plan geometry must be present in server HTML");
-   const malformed=await titles.evaluateAll(nodes=>nodes.filter(n=>n.childNodes.length!==1||n.firstChild?.nodeType!==3||!n.textContent?.trim()).map(n=>n.outerHTML.slice(0,300)));
-   assert.deepEqual(malformed,[],"SSR SVG titles must contain exactly one nonempty text node");
+   const page=await noJs.newPage();
+   for(const [route,selector] of [["/design-studio/buildings",".purpose-studio svg title"],["/design-studio/fit",".nroad-diagram svg title"]]){
+    const response=await page.goto(base+route,{waitUntil:"domcontentloaded"});
+    assert.equal(response?.status(),200);
+    const titles=page.locator(selector);
+    assert.ok(await titles.count()>0,route+" plan geometry must be present in server HTML");
+    const malformed=await titles.evaluateAll(nodes=>nodes.filter(n=>n.childNodes.length!==1||n.firstChild?.nodeType!==3||!n.textContent?.trim()).map(n=>n.outerHTML.slice(0,300)));
+    assert.deepEqual(malformed,[],route+" SSR SVG titles must contain exactly one nonempty text node");
+   }
   }finally{await noJs.close()}
   // Exercise every commercial purpose, not merely HTTP route availability.
   for(const viewport of [{width:390,height:844},{width:1440,height:900}]){
