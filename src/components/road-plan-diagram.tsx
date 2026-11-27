@@ -1,5 +1,6 @@
 "use client";
 import {useId} from "react";
+import {frontagePanels,frontageOpenings,facadeAccents,frontageSignature} from "@/modules/studio/frontage";
 import type {PlanModel,Room,Opening} from "@/modules/studio/plan-model";
 const labels:Record<string,string>={parking:"PARKING",verandah:"VERANDAH",living:"LIVING",dining:"DINING",kitchen:"KITCHEN",bedroom:"BEDROOM",bath:"BATH",stairs:"STAIRS",corridor:"PASSAGE",utility:"UTILITY",balcony:"BALCONY",lounge:"LOUNGE",terrace:"TERRACE"};
 const fills:Record<string,string>={parking:"#d0ded9",verandah:"#e6e4cd",living:"#d9ebe0",dining:"#e3e9d4",kitchen:"#f4e7d2",bedroom:"#e5e7f3",bath:"#d4e5ec",stairs:"#dcd9d3",corridor:"#f5f2e7",utility:"#ebe0d1",balcony:"#dbe6dd",lounge:"#e8ecd5",terrace:"#f0efe9"};
@@ -56,7 +57,7 @@ export function RoadElevation({plan,main,accent}:{plan:PlanModel;main:string;acc
  const openings=frontageOpenings(plan,frontRooms);
  const accents=facadeAccents(plan,frontRooms);
  const gates=[plan.gate,plan.pedestrianGate].filter(g=>g.widthFt>0);
- return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel" data-plan-id={plan.id}>
+ return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel" data-plan-id={plan.id} data-frontage-signature={frontageSignature(plan)}>
   <svg viewBox="0 0 700 420" role="img" aria-label={`Road-side elevation for ${widthFt} ft frontage, ${plan.floors} levels`}>
    <defs>
     <linearGradient id={id+"sky"} x2="0" y2="1"><stop stopColor="#cbdedc"/><stop offset="1" stopColor="#f6f4e9"/></linearGradient>
