@@ -20,6 +20,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteUrl}/design-studio`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/studio-pricing`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${siteUrl}/learn`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${siteUrl}/learn/property-guide`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${siteUrl}/learn/future-homes`, changeFrequency: "monthly", priority: 0.65 },
     {url:`${siteUrl}/build-iq`,changeFrequency:"monthly",priority:0.7},
     {url:`${siteUrl}/build-iq/material-atlas`,changeFrequency:"monthly",priority:0.65},
     {url:`${siteUrl}/build-iq/site-practice`,changeFrequency:"monthly",priority:0.65},

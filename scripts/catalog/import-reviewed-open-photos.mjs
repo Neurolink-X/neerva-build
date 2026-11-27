@@ -29,7 +29,7 @@ for(const r of reviewed){
  if(info.width<320||info.height<240||data.length>350000)throw Error("Image dimensions or size invalid: "+r.family);
  const sha256=createHash("sha256").update(data).digest("hex");if(rows.some(m=>m.sha256===sha256))throw Error("Duplicate image");
  const path="/images/catalog/approved/"+sha256.slice(0,24)+".webp";
- const {url,sha1,...metadata}=r;
+ const metadata={...r};delete metadata.url;delete metadata.sha1;
  rows.push({...metadata,scope:"family",sourceType:"curated",verified:true,primary:r.primary??true,path,width:info.width,height:info.height,bytes:data.length,sha256,sortOrder:r.sortOrder??0});
  await fs.mkdir("public/images/catalog/approved",{recursive:true});
  await fs.writeFile("public"+path,data);

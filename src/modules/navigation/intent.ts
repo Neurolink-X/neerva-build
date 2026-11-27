@@ -36,3 +36,11 @@ export function allowStudioWarmup(connection:NetworkHint|undefined,device:{cores
 export function studioWarmupDelay(connection:NetworkHint):number{
  return (connection.downlink??0)<2?1800:900;
 }
+
+/** Constrained connection is a hint, not a measured speed guarantee.
+ * Unknown browsers keep the standard lightweight preview; explicit choice wins. */
+export function preferLitePreview(connection:NetworkHint|undefined,online=true):boolean{
+ return !online||!!connection&&(connection.saveData===true||["slow-2g","2g","3g"].includes(connection.effectiveType??"")||
+ (typeof connection.downlink==="number"&&Number.isFinite(connection.downlink)&&connection.downlink<1)||
+ (typeof connection.rtt==="number"&&Number.isFinite(connection.rtt)&&connection.rtt>350));
+}

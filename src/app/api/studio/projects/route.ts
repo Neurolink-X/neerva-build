@@ -5,7 +5,7 @@ import {planBriefSchema as brief} from "@/modules/studio/plan-brief-schema";
 import {requireAuth} from "@/modules/identity/server-auth";
 import {validatePlan,planGeometryDigest} from "@/modules/studio/plan-model";
 import {finishSchemeSchema,validatedFinishScheme} from "@/modules/studio/finish-scheme-schema";
-import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
+import {portfolioForPlanId} from "@/modules/studio/road-generator";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
@@ -35,7 +35,7 @@ export async function POST(request:Request){
  const check=create.safeParse(await parseBounded(request));
  if(!check.success)return error(400,"Invalid plot, room or project inputs.");
  const input=check.data;
- const result=generateSpatialPortfolio(input.brief,24);
+ const result=portfolioForPlanId(input.brief,input.planId);
  const plan=result.plans.find(p=>p.id===input.planId&&p.variant===input.variant);
  if(!plan)return NextResponse.json({error:"No safe draft fits this plot and room request.",blockers:result.blockers.slice(0,6)},{status:422,headers});
  if(validatePlan(plan).length)return error(422,"Draft failed circulation or dimension checks.");

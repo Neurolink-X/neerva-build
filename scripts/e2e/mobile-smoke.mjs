@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import {assessPerformance} from "./performance-budget.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
-const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
+const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/learn/property-guide","/learn/future-homes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
 async function main(){
  fs.mkdirSync("test-results/mobile",{recursive:true});
  const browser=await chromium.launch({headless:true,args:["--disable-dev-shm-usage"]});
@@ -34,6 +34,10 @@ async function main(){
     const page=await ctx.newPage(),errors=[];page.on("pageerror",e=>errors.push(e.message));
     const response=await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});assert.equal(response?.status(),200);
     const studio=page.locator(".purpose-studio");
+    await studio.getByRole("button",{name:"Purpose-led layout",exact:true}).waitFor();
+    if(await studio.getByRole("button",{name:"Show 3D concept",exact:true}).count())await studio.getByRole("button",{name:"Show 3D concept",exact:true}).click();
+    await studio.getByLabel("Building purpose").selectOption("school");
+    await studio.getByRole("img",{name:/Purpose-specific zoning/}).waitFor({state:"detached"});
     for(const purpose of ["mall","school","restaurant","shops","rental"]){
      await studio.getByLabel("Building purpose").selectOption(purpose);
      await studio.getByRole("button",{name:/Load example inputs/}).click();
@@ -44,6 +48,11 @@ async function main(){
      assert.ok(planId?.startsWith(purpose+"-"),purpose+" selected geometry");
      const massing=studio.locator(".purpose-views svg").nth(1);
      assert.equal(await massing.getAttribute("data-plan-id"),planId);
+     assert.ok(await studio.locator(".purpose-views svg").nth(1).locator("polygon").count()>0,"3D view has actual geometry");
+     await studio.getByRole("button",{name:"Lite view · 2D only"}).click();
+     assert.equal(await studio.locator(".purpose-views svg").count(),1,"lite mode preserves only the selected 2D plan");
+     await studio.getByRole("button",{name:"Show 3D concept"}).click();
+     assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await plan.getAttribute("data-plan-id"));
      const choices=studio.getByRole("group",{name:"Choose zoning option"}).getByRole("button");
      assert.ok(await choices.count()>0);
      if(await choices.count()>1){await choices.nth(1).click();assert.notEqual(await plan.getAttribute("data-plan-id"),planId);assert.equal(await plan.getAttribute("data-plan-id"),await massing.getAttribute("data-plan-id"));}
@@ -67,8 +76,58 @@ async function main(){
     const anonymous=await page.request.get(base+"/api/studio/commercial-projects");
     assert.ok([401,503].includes(anonymous.status()),"anonymous commercial projects must not be disclosed");
     assert.deepEqual(errors,[],"commercial studio hydration and browser errors at "+viewport.width+"px");
+    await page.goto(base+"/build-iq",{waitUntil:"domcontentloaded"});
+    assert.equal(await page.locator("#practical-start article").count(),6,"practical site knowledge is prominent");
+    assert.equal(await page.locator("#practical-start .learning-photo img[loading=lazy]").count(),3,"three lightweight material references");
    }finally{await ctx.close()}
   }
+  const liteContext=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:"block"});
+  try{
+   await liteContext.addInitScript(()=>{const conn=new EventTarget();Object.assign(conn,{effectiveType:"3g",saveData:true,downlink:.5,rtt:400});Object.defineProperty(navigator,"connection",{value:conn,configurable:true});});
+   const page=await liteContext.newPage();await page.goto(base+"/design-studio/buildings",{waitUntil:"domcontentloaded"});
+   const studio=page.locator(".purpose-studio");
+   await studio.getByRole("button",{name:"Show 3D concept",exact:true}).waitFor();
+   assert.equal(await studio.locator(".purpose-views svg").count(),1);
+   assert.equal(await studio.locator("[data-room-viewer] canvas").count(),0,"automatic lite mode does not mount WebGL");
+   await studio.getByRole("button",{name:"Show 3D concept",exact:true}).click();
+   assert.equal(await studio.locator(".purpose-views svg").count(),2,"explicit user preference overrides lite hint");
+   await studio.getByRole("button",{name:"Classic access spine",exact:true}).click();
+   assert.ok(!(await studio.locator(".purpose-views svg").first().getAttribute("data-plan-id")).endsWith("-purpose-v2"));
+   // A small plot may not support side-gallery; provide a larger explicit brief.
+   await studio.getByLabel("Frontage (ft)").fill("180");
+   await studio.getByLabel("Depth (ft)",{exact:true}).fill("240");
+   await studio.getByRole("button",{name:/Generate distinct concepts/}).click();
+   await studio.getByRole("button",{name:"Side gallery",exact:true}).click();
+   const galleryPlan=studio.getByRole("img",{name:/Purpose-specific zoning/});
+   await galleryPlan.waitFor({state:"visible"});
+   assert.match(await galleryPlan.getAttribute("data-plan-id"),/-gallery-v1$/);
+   await studio.getByRole("button",{name:"Compare recommended designs",exact:true}).click();
+   const comparison=studio.getByRole("region",{name:"Recommended concept comparison"});await comparison.waitFor();
+   const options=comparison.getByRole("button");assert.ok(await options.count()>0&&await options.count()<=24);
+   await options.first().click();
+   assert.equal(await galleryPlan.getAttribute("data-plan-id"),await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"));
+   assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await galleryPlan.getAttribute("data-plan-id"));
+   await studio.getByLabel("Building purpose").selectOption("rental");
+   await studio.getByRole("button",{name:/Load example inputs for Rental property/}).click();
+   await studio.getByRole("button",{name:/Generate distinct concepts/}).click();
+   await studio.getByRole("button",{name:"Rooms & shared facilities",exact:true}).click();
+   const apartment=studio.getByRole("img",{name:/Purpose-specific zoning/});await apartment.waitFor({state:"visible"});
+   assert.match(await apartment.getAttribute("data-plan-id"),/-internal-v1-[023]$/);
+   assert.equal(await apartment.locator("text").filter({hasText:"Lift reserve"}).count(),0,"stairs-only is the new-project default");
+   assert.ok(await apartment.locator("text").filter({hasText:"Stair reserve"}).count()>0);
+   await studio.getByLabel("Lift provision",{exact:true}).selectOption("yes");
+   await studio.getByRole("button",{name:/Generate distinct concepts/}).click();
+   await apartment.locator("text").filter({hasText:"Lift reserve"}).first().waitFor({state:"visible"});
+   assert.ok(await apartment.locator("text").filter({hasText:"Bedroom 1"}).count()>0);
+   assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await apartment.getAttribute("data-plan-id"));
+   await page.goto(base+"/design-studio/road-planner",{waitUntil:"load"});
+   const slot=page.locator(".nroad-3d-slot");await slot.scrollIntoViewIfNeeded();
+   await slot.getByRole("button",{name:"Load interactive 3D",exact:true}).waitFor({state:"visible"});
+   assert.equal(await page.locator(".nbd-building").count(),0,"scrolling on data saver must leave the residential 3D viewer on demand");
+   assert.equal(await slot.getAttribute("data-warm-state"),"idle");
+   await slot.getByRole("button",{name:"Load interactive 3D",exact:true}).click();
+   await page.locator(".nbd-building").waitFor({state:"visible",timeout:30000});
+  }finally{await liteContext.close()}
   // Cold and repeat navigation on a constrained connection. Do not confuse
   // simulated local Chromium timings with field Web Vitals.
   for(const profile of [{name:"slow-3g",latency:400,download:400000/8,upload:200000/8},{name:"weak-4g",latency:150,download:1500000/8,upload:750000/8}]){
@@ -163,6 +222,11 @@ async function main(){
     else {await page.waitForTimeout(2200);assert.equal(await slot.getAttribute("data-warm-state"),"idle",profile.name+" must not warm");}
     assert.equal(await page.locator(".nbd-building").count(),0,profile.name+" must not mount offscreen");
     const requested=Date.now();await slot.scrollIntoViewIfNeeded();
+     if(profile.saveData||profile.downlink<1){
+      const action=slot.getByRole("button",{name:"Load interactive 3D",exact:true});await action.waitFor({state:"visible"});
+      assert.equal(await page.locator(".nbd-building").count(),0,profile.name+" scrolling must not mount WebGL");
+      await action.click();
+     }
     await page.getByRole("button",{name:"Selected floor cutaway",exact:true}).waitFor({timeout:30000});
     assert.equal(await page.locator(".nbd-building").getAttribute("data-plan-id"),await page.locator(".nroad-diagram").getAttribute("data-plan-id"));
     performanceReports.push({profile:profile.name,viewerRequestToControlsMs:Date.now()-requested,scope:"local browser interaction, includes scroll and automation; not field INP"});
@@ -297,7 +361,9 @@ async function main(){
     assert.match(await masonry.innerText(),/28 m²/);
     const global=page.locator("#global-construction");
     assert.equal(await global.locator(".global-methods article").count(),3);
-    assert.equal(await global.locator("img,iframe,video,canvas,svg").count(),0);
+    assert.equal(await global.locator("iframe,video,canvas,svg").count(),0,"no heavy embedded media in construction guide");
+    const methodPhoto=global.locator("img");assert.equal(await methodPhoto.count(),1,"one relevant construction reference");
+    assert.equal(await methodPhoto.getAttribute("src"),"/images/knowledge/future/precast-construction.webp");assert.equal(await methodPhoto.getAttribute("loading"),"lazy");
     const source=global.locator("a[href^='https://']").first();
     assert.equal(await source.getAttribute("rel"),"noopener noreferrer");
     assert.equal(await source.getAttribute("referrerpolicy"),"no-referrer");
@@ -327,6 +393,23 @@ async function main(){
    assert.equal(new Set(await familyPhotos.evaluateAll(imgs=>imgs.map(img=>img.getAttribute("src")))).size,3,"No repeated family visual");
    const familyLinks=await page.locator('.nbh-family-card a[href^="/design-studio/portfolio?"]').evaluateAll(links=>links.map(a=>{const q=new URL(a.href).searchParams;return ["width","depth","bedrooms","floors"].map(k=>q.get(k)).join("x");}));
    assert.deepEqual(familyLinks,["15x30x1x1","18x50x3x2","20x40x2x1"],"Family home cards use supported plot and room briefs");
+   const guide=page.locator("#family-guide");
+   assert.equal(await page.locator("#family-budget,input[type=number]").count(),0,"no duplicated calculator on family page");
+   assert.equal(await guide.locator(".family-editorial-body section").count(),4,"practical room and construction guidance");
+   assert.equal(await guide.locator(".learning-photo img[loading=lazy]").count(),2,"two local interior references");
+   assert.equal(await page.locator(".family-stage-timeline li").count(),4,"construction stages remain connected");
+   await guide.getByText("Protect essential spending",{exact:true}).click();
+   assert.equal(await guide.locator("details[open]").count(),1);
+   assert.ok(await guide.evaluate(el=>el.scrollWidth<=el.clientWidth+1),"family guide fits viewport");
+   assert.equal(await guide.locator('a[href="/my-project"]').count(),1,"reuse existing project workspace");
+   await guide.locator('a[href="/learn/property-guide"]').click();
+   await page.locator(".property-guide").waitFor();
+   assert.equal(await page.locator(".property-checks input[type=checkbox]").count(),12);
+   assert.equal(await page.locator(".property-documents dt").count(),8);
+   for(const img of await page.locator(".property-chapter-intro img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());assert.ok(await img.evaluate(el=>el.naturalWidth>0&&el.getAttribute("src").startsWith("/images/")&&el.loading==="lazy"));}
+   assert.ok(await page.locator(".property-guide").evaluate(el=>el.scrollWidth<=el.clientWidth+1),"property guide remains responsive");
+
+
    await page.goto(base+"/",{waitUntil:"load"});
    const categoryCards=page.locator(".nbh-material-card");
    assert.equal(await categoryCards.count(),9,"all home material categories");
@@ -918,7 +1001,7 @@ async function main(){
   assert.equal(await page.getByLabel("Your quoted rate (₹/sq ft)").inputValue(),"","no assumed market rate");
   await page.getByText("Budget is optional.",{exact:false}).waitFor();
   await page.getByRole("button",{name:"Brick wall",exact:true}).click();
-    const academyCount=await page.locator("#academy-lesson-list > article").count();
+    const academyCount=await page.locator("#academy-lesson-list > a").count();
     assert.ok(academyCount>=19,"construction and foundational knowledge lessons are available");
     await page.getByRole("searchbox",{name:"Search the construction handbook"}).fill("foundation");
     await page.getByRole("link",{name:"Soil, foundations & underground",exact:true}).click();
@@ -951,9 +1034,14 @@ async function main(){
     await page.getByText(/Supplier B is ₹500 lower/).waitFor();
     await page.getByLabel("Rejected or damaged units").fill("50");
     await page.getByText("Total accepted shortfall",{exact:true}).locator("..").getByText("100",{exact:true}).waitFor();
+    await page.goto(base+"/learn/future-homes",{waitUntil:"load"});
+    const future=page.locator(".future-architecture-item");
+    assert.equal(await future.count(),6,"six separate future architecture concepts");
+    for(const img of await future.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());assert.ok(await img.evaluate(el=>el.naturalWidth===600&&el.loading==="lazy"&&el.getAttribute("src").startsWith("/images/knowledge/future/")));}
+    assert.ok(await page.locator(".future-architecture").evaluate(el=>el.scrollWidth<=el.clientWidth+1),"future architecture fits the viewport");
     await page.goto(base+"/inspiration",{waitUntil:"load"});
     await page.getByRole("button",{name:"Interiors",exact:true}).click();
-    assert.equal(await page.locator(".inspiration-card").count(),3,"interior discovery filter");
+    assert.equal(await page.locator(".inspiration-card").count(),4,"interior discovery filter");
     await page.getByRole("button",{name:"Save An open and airy living room"}).click();
     await page.getByRole("button",{name:"Natural sage",exact:true}).click();
     await page.reload({waitUntil:"load"});

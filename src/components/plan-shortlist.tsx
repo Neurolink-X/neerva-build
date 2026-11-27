@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from "react";
 import type {PlanModel} from "@/modules/studio/plan-model";
-import {maxSaved,maxCompare,readShortlist,shortlistKey,toggleShortlist} from "@/modules/studio/plan-shortlist";
+import {maxCompare,readShortlist,shortlistKey,toggleShortlist} from "@/modules/studio/plan-shortlist";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 export function PlanShortlist({brief,plans,selected,floor,onChoose}:{brief:string;plans:readonly PlanModel[];selected:string;floor:number;onChoose:(id:string)=>void}){
  const [ids,setIds]=useState<string[]>([]),[open,setOpen]=useState(false),[compare,setCompare]=useState<string[]>([]),[notice,setNotice]=useState(""),[ready,setReady]=useState(false);

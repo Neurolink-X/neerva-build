@@ -1,6 +1,7 @@
 "use client";
 import type {FinishScheme} from "@/modules/studio/finish-model";
 import {useMemo,useState} from "react";
+import {residentialStairStudies,stairFloorPatches} from "@/modules/studio/stair-study";
 import {planFurniture} from "@/modules/studio/furniture";
 import type {Opening,PlanModel,Room} from "@/modules/studio/plan-model";
 import {roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
@@ -16,6 +17,7 @@ function ends(o:Opening,r:Room){
 export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?:number;scheme?:FinishScheme}){
  const [showFurniture,setShowFurniture]=useState(true);
  const furniture=useMemo(()=>planFurniture(plan),[plan]);
+ const stairs=useMemo(()=>residentialStairStudies(plan),[plan]);
  const {widthFt:w,depthFt:d,roadSide:side}=plan.plot,dim=siteDimensions(w,d,side);
  const rooms=plan.rooms.filter(r=>r.floor===floor),ids=new Set(rooms.map(r=>r.id));
  const seenOpenings=new Set<string>();
@@ -36,15 +38,17 @@ export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?
    <g><path d={`M ${dim.w-1.5} 3.5 V 1.6 l -.7 .9 M ${dim.w-1.5} 1.6 l .7 .9`} fill="none" stroke="#284735" strokeWidth=".3"/>
     <text x={dim.w-1.5} y=".9" textAnchor="middle" fontSize="1" fontWeight="800">N</text></g>
    {([["left",plan.setbacks.leftFt,plan.setbacks.leftFt/2,d/2],["right",plan.setbacks.rightFt,w-plan.setbacks.rightFt/2,d/2]] as const).filter(([,ft])=>ft>=2).map(([edge,ft,x,y])=>{const p=point(x,y);return <text key={edge} x={p.x} y={p.y} transform={`rotate(${side==="N"||side==="S"?-90:0} ${p.x} ${p.y})`} textAnchor="middle" fontSize=".85" fill="#526955">{ft.toFixed(1)} ft open strip</text>})}
-   {rooms.map(r=>{const rect=roadRect(r,w,d,side),cx=rect.x+rect.w/2,cy=rect.y+rect.d/2,small=Math.min(rect.w,rect.d)<5,label=r.kind==="bedroom"?r.label:(shortLabels[r.kind]??r.label),font=Math.min(small?.65:1.07,rect.w/(Math.max(label.length,1)*.64),rect.d*.20);
+   {rooms.map(r=>{const rect=roadRect(r,w,d,side),cx=rect.x+rect.w/2,cy=rect.y+rect.d/2,small=Math.min(rect.w,rect.d)<5,label=r.kind==="stairs"&&stairs.unresolved.includes(r.id)?"Stair reserve":r.kind==="bedroom"?r.label:(shortLabels[r.kind]??r.label),font=Math.min(small?.65:1.07,rect.w/(Math.max(label.length,1)*.64),rect.d*.20);
     return <g key={r.id} data-room-id={r.id} data-room-kind={r.kind}>
      <title>{r.label}</title>
      <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={(scheme?.planId===plan.id?scheme.rooms[r.id]?.floor:undefined)??colors[r.kind]??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
+     {r.kind==="stairs"&&stairs.studies.some(s=>s.upperRoomId===r.id)&&<><rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill="#faf9f6" stroke="#826b50" strokeDasharray=".3 .2" strokeWidth=".12"/>{stairFloorPatches(r,stairs.studies).map((patch,i)=>{const b=roadRect(patch,w,d,side);return <rect key={i} x={b.x} y={b.y} width={b.w} height={b.d} fill="#a9c4ab" stroke="#516b52" strokeWidth=".12"><title>Landing at selected floor</title></rect>})}</>}
      {showFurniture&&furniture.filter(p=>p.roomId===r.id).map(p=>{const b=roadRect(p,w,d,side);return <g key={p.id} data-furniture-id={p.id}><rect x={b.x} y={b.y} width={b.w} height={b.d} rx=".12" fill="#a38970" fillOpacity=".25" stroke="#806b58" strokeWidth=".09"/><title>{`${p.kind} · illustrative placement`}</title></g>})}
      <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font} data-room-label="true">{label.toUpperCase()}</text>
      <text x={cx} y={cy+(small?.6:.95)} textAnchor="middle" fill="#526955" fontSize={Math.min(small?.52:.84,rect.w*.1,rect.d*.18)}>{r.w.toFixed(1)} × {r.d.toFixed(1)} ft</text>
     </g>;
    })}
+   {stairs.studies.filter(s=>s.floor===floor).flatMap(s=>s.steps.map((step,i)=>{const r=roadRect(step,w,d,side);return <rect key={s.roomId+"-tread-"+i} x={r.x} y={r.y} width={r.w} height={r.d} fill="#d6c7ac" stroke="#826b50" strokeWidth=".09"><title>{`Stair tread ${i+1}`}</title></rect>}))}
    {openings.map(o=>{const r=rooms.find(r=>r.id===o.roomId)!;
     const e=ends(o,r).map(([x,y])=>point(x,y));
     return <g key={o.id} aria-label={o.kind==="door"?"Door opening":"Window opening"}>
@@ -59,6 +63,6 @@ export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?
   <div className="nroad-legend"><span>Road {side} · {plan.plot.siteShape&&plan.plot.siteShape.kind!=="rectangle"?"measured L-site outline, conservative no-build strip":"true compass orientation"}</span><span>{plan.parking?"Brown: doors & car gate":"Brown: doors"}</span><span>Blue: windows</span><span>Green: pedestrian gate</span></div>
   <p className="nroad-small">Open margins are unbuilt concept space, not extra rooms or confirmed legal setbacks. Front {plan.setbacks.frontFt.toFixed(1)} ft · rear {plan.setbacks.rearFt.toFixed(1)} ft · left {plan.setbacks.leftFt.toFixed(1)} ft · right {plan.setbacks.rightFt.toFixed(1)} ft.</p>
   <details><summary>Room dimensions & opening list</summary><ul>{rooms.map(r=><li key={r.id}><strong>{r.label}</strong> — {r.w.toFixed(1)} × {r.d.toFixed(1)} ft · {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="door").length} doors / {plan.openings.filter(o=>o.roomId===r.id&&o.kind==="window").length} windows</li>)}</ul></details>
-  <p className="nroad-small">Furniture is indicative; missing items did not fit the clearance check. Concept only. Verify with a licensed architect/engineer and local authority approval. Stairs, turning and legal setbacks remain unchecked.</p>
+  {rooms.some(r=>stairs.unresolved.includes(r.id))&&<p className="nroad-small" role="status"><strong>Stair reserve needs design:</strong> No supported flight and aligned landings were established. Stair layout and headroom need architectural review.</p>}<p className="nroad-small">Furniture is indicative; missing items did not fit the clearance check. Concept only. Verify with a licensed architect/engineer and local authority approval. Stair structural sizing, railings and legal setbacks remain unverified.</p>
  </section>;
 }

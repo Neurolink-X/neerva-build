@@ -2,25 +2,25 @@
 import {useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
-import type {RenderSnapshot,RenderFinish} from "../../public/studio-render-v1";
+import type {RenderSnapshot,RenderFinish,RenderBox} from "../../public/studio-render-v1";
 type Viewer={update:(snapshot:RenderSnapshot)=>void;reset:()=>void};
-export default function CommercialRoomViewer({snapshot}:{snapshot:RenderSnapshot|null}){
+export default function CommercialRoomViewer({snapshot,exterior=false}:{snapshot:RenderSnapshot|null;exterior?:boolean}){
  const host=useRef<HTMLDivElement>(null),viewer=useRef<Viewer|null>(null);
- const [unavailable,setUnavailable]=useState(false);
+ const [unavailable,setUnavailable]=useState(false),[sceneIssue,setSceneIssue]=useState("");
  useEffect(()=>{
   const target=host.current;if(!target)return;
   let renderer:THREE.WebGLRenderer|undefined,environment:THREE.WebGLRenderTarget|undefined,controls:OrbitControls|undefined,observer:ResizeObserver|undefined,frame=0,disposed=false;
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(65,1,.03,2000),group=new THREE.Group(),geometry=new THREE.BoxGeometry(1,1,1);
-  const meshes:THREE.Mesh<THREE.BoxGeometry,THREE.MeshStandardMaterial>[]=[];
+  const meshes:(THREE.Mesh<THREE.BoxGeometry,THREE.MeshStandardMaterial>|THREE.InstancedMesh<THREE.BoxGeometry,THREE.MeshStandardMaterial>)[]=[];
   const cache=new Map<RenderFinish,THREE.DataTexture>();
-  let geometryKey="",current:RenderSnapshot|null=null;
+  let geometryKey="",appearanceKey="",current:RenderSnapshot|null=null;
   const lamps:THREE.PointLight[]=[];
   const detailed=window.innerWidth>=768&&(navigator.hardwareConcurrency??4)>=6;
   const contextLost=(event:Event)=>{event.preventDefault();setUnavailable(true);};
   scene.add(group);
   const ambient=new THREE.HemisphereLight(0xeaf3ff,0xbcb5a8,2.1),sun=new THREE.DirectionalLight(0xfff3da,2.5);sun.position.set(4,9,2);scene.add(ambient,sun);
   const schedule=()=>{if(disposed||frame||document.hidden)return;frame=requestAnimationFrame(()=>{frame=0;if(!disposed&&renderer)renderer.render(scene,camera)})};
-  const clear=()=>{for(const m of meshes){group.remove(m);m.material.dispose()}meshes.length=0;};
+  const clear=()=>{for(const m of meshes){group.remove(m);if(m instanceof THREE.InstancedMesh)m.dispose();m.material.dispose()}meshes.length=0;};
   function texture(finish:RenderFinish){
    if(finish==="plain")return null;const existing=cache.get(finish);if(existing)return existing;
    const n=128,data=new Uint8Array(n*n*4);
@@ -34,7 +34,18 @@ export default function CommercialRoomViewer({snapshot}:{snapshot:RenderSnapshot
   const reset=()=>{
    if(!current||!controls)return;
    const c=current.camera;camera.position.fromArray(c.origin);camera.fov=c.fov;camera.updateProjectionMatrix();
-   controls.target.copy(camera.position).add(new THREE.Vector3(...c.forward).multiplyScalar(2));controls.update();schedule();
+   if(exterior){
+    const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),dir=camera.position.clone().sub(center).normalize();
+    if(dir.lengthSq()<.1)dir.set(1,.6,-1).normalize();
+    const right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),dir).normalize(),up=new THREE.Vector3().crossVectors(dir,right).normalize();
+    const tanY=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+    let fit=1;
+    for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]){
+     const p=new THREE.Vector3(x,y,z).sub(center);fit=Math.max(fit,p.dot(dir)+1.16*Math.max(Math.abs(p.dot(right))/(tanY*Math.max(.1,camera.aspect)),Math.abs(p.dot(up))/tanY));
+    }
+    controls.target.copy(center);controls.maxDistance=Math.max(fit*3,50);camera.far=Math.max(2000,fit*5);camera.position.copy(center).addScaledVector(dir,fit);camera.updateProjectionMatrix();
+   }else controls.target.copy(camera.position).add(new THREE.Vector3(...c.forward).multiplyScalar(2));
+   controls.update();schedule();
   };
   try{
    renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"low-power"});
@@ -49,24 +60,42 @@ export default function CommercialRoomViewer({snapshot}:{snapshot:RenderSnapshot
    renderer.domElement.addEventListener("webglcontextlost",contextLost);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
    renderer.domElement.style.width="100%";renderer.domElement.style.height="100%";renderer.domElement.style.touchAction="none";target.appendChild(renderer.domElement);
    controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=false;controls.minDistance=.3;controls.maxDistance=50;controls.addEventListener("change",schedule);
-   const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();schedule()};
+   const resize=()=>{if(!renderer)return;const w=Math.max(1,target.clientWidth),h=Math.max(1,target.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(exterior&&current)reset();schedule()};
    observer=new ResizeObserver(resize);observer.observe(target);resize();
    viewer.current={reset,update(next){
-    if(next.boxes.length>2500||next.boxes.some(b=>b.hi.some((v,i)=>!Number.isFinite(v)||!Number.isFinite(b.lo[i])||v<=b.lo[i])))return;
+    if(!next.boxes.length||next.boxes.length>2500||next.boxes.some(b=>b.hi.some((v,i)=>!Number.isFinite(v)||!Number.isFinite(b.lo[i])||v<=b.lo[i]))){
+     clear();current=null;geometryKey="";appearanceKey="";setSceneIssue("This scene exceeds the supported interactive detail budget or contains invalid geometry. Use the matched 2D or lightweight concept view.");schedule();return;
+    }
+    setSceneIssue("");
     current=next;
     const key=JSON.stringify(next.boxes.map(b=>[b.lo,b.hi]));
-    if(key!==geometryKey){
-     clear();geometryKey=key;
-     for(const b of next.boxes){const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial());mesh.castShadow=detailed;mesh.receiveShadow=detailed;mesh.position.set(...b.lo.map((v,i)=>(v+b.hi[i])/2) as [number,number,number]);mesh.scale.set(...b.lo.map((v,i)=>b.hi[i]-v) as [number,number,number]);group.add(mesh);meshes.push(mesh)}
-     const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
-     const extent=Math.max(2,size.length()*.65);sun.position.copy(center).add(new THREE.Vector3(extent,extent*1.5,extent));sun.target.position.copy(center);scene.add(sun.target);
-     const shadow=sun.shadow.camera;shadow.left=-extent;shadow.right=extent;shadow.top=extent;shadow.bottom=-extent;shadow.far=extent*5;shadow.updateProjectionMatrix();
-     reset();
-    }
-    for(let i=0;i<meshes.length;i++){
-     const m=meshes[i].material,b=next.boxes[i],map=texture(b.finish??"plain"),transparent=b.opacity<.98;
-     m.color.setRGB(...b.color,THREE.SRGBColorSpace);m.roughness=b.rough;m.metalness=b.metal;m.opacity=b.opacity;m.depthWrite=!transparent;meshes[i].castShadow=detailed&&!transparent;m.envMapIntensity=transparent?1.2:.55;
-     if(m.map!==map||m.transparent!==transparent){m.map=map;m.transparent=transparent;m.needsUpdate=true;}
+    const nextAppearance=JSON.stringify(next.boxes.map(b=>[b.color,b.rough,b.metal,b.opacity,b.finish??"plain"]));
+    if(key!==geometryKey||nextAppearance!==appearanceKey){
+     const geometryChanged=key!==geometryKey;
+     clear();geometryKey=key;appearanceKey=nextAppearance;
+     // Batch identical opaque surfaces, but leave glass separate for correct
+     // transparent sorting. Geometry is unchanged; camera remains on colour edits.
+     const batches=new Map<string,RenderBox[]>(),glass:RenderBox[]=[];
+     for(const b of next.boxes){
+      if(b.opacity<.98){glass.push(b);continue}
+      const k=JSON.stringify([b.color,b.rough,b.metal,b.opacity,b.finish??"plain"]);
+      const batch=batches.get(k)??[];batch.push(b);batches.set(k,batch);
+     }
+     const material=(b:RenderBox)=>{const transparent=b.opacity<.98,m=new THREE.MeshStandardMaterial({roughness:b.rough,metalness:b.metal,opacity:b.opacity,transparent,depthWrite:!transparent,map:texture(b.finish??"plain"),envMapIntensity:transparent?1.2:.55});m.color.setRGB(...b.color,THREE.SRGBColorSpace);return m;};
+     const dummy=new THREE.Object3D();
+     const transform=(b:RenderBox,obj:THREE.Object3D)=>{obj.position.set(...b.lo.map((v,i)=>(v+b.hi[i])/2) as [number,number,number]);obj.scale.set(...b.lo.map((v,i)=>b.hi[i]-v) as [number,number,number]);obj.updateMatrix();};
+     for(const batch of batches.values()){
+      const mesh=new THREE.InstancedMesh(geometry,material(batch[0]),batch.length);
+      batch.forEach((b,i)=>{transform(b,dummy);mesh.setMatrixAt(i,dummy.matrix)});
+      mesh.instanceMatrix.needsUpdate=true;mesh.computeBoundingBox();mesh.computeBoundingSphere();mesh.castShadow=detailed;mesh.receiveShadow=detailed;group.add(mesh);meshes.push(mesh);
+     }
+     for(const b of glass){const mesh=new THREE.Mesh(geometry,material(b));transform(b,mesh);mesh.receiveShadow=detailed;group.add(mesh);meshes.push(mesh);}
+     target.dataset.sceneBoxes=String(next.boxes.length);target.dataset.meshBatches=String(meshes.length);
+     if(geometryChanged){
+      const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
+      const extent=Math.max(2,size.length()*.65);sun.position.copy(center).add(new THREE.Vector3(extent,extent*1.5,extent));sun.target.position.copy(center);scene.add(sun.target);
+      const shadow=sun.shadow.camera;shadow.left=-extent;shadow.right=extent;shadow.top=extent;shadow.bottom=-extent;shadow.far=extent*5;shadow.updateProjectionMatrix();reset();
+     }
     }
     for(const lamp of lamps)scene.remove(lamp);lamps.length=0;
     for(const source of (next.lights??[]).slice(0,4)){if(!source.position.every(Number.isFinite)||!source.color.every(Number.isFinite)||!Number.isFinite(source.power)||source.power<0)continue;const lamp=new THREE.PointLight(new THREE.Color().setRGB(...source.color,THREE.SRGBColorSpace),Math.min(source.power,100),0,2);lamp.position.fromArray(source.position);scene.add(lamp);lamps.push(lamp);}
@@ -75,7 +104,7 @@ export default function CommercialRoomViewer({snapshot}:{snapshot:RenderSnapshot
    document.addEventListener("visibilitychange",schedule);
   }catch{queueMicrotask(()=>{if(!disposed)setUnavailable(true)})}
   return()=>{disposed=true;viewer.current=null;cancelAnimationFrame(frame);document.removeEventListener("visibilitychange",schedule);observer?.disconnect();controls?.dispose();clear();geometry.dispose();for(const t of cache.values())t.dispose();environment?.dispose();renderer?.domElement.removeEventListener("webglcontextlost",contextLost);renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement);};
- },[]);
+ },[exterior]);
  useEffect(()=>{if(snapshot)viewer.current?.update(snapshot)},[snapshot]);
- return <section aria-label="Interactive commercial room" data-room-viewer><div ref={host} hidden={unavailable} style={{width:"100%",height:"clamp(240px,48vw,440px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>}</section>;
+ return <section aria-label={exterior?"Interactive commercial building":"Interactive commercial room"} data-room-viewer><div ref={host} hidden={unavailable||!snapshot||!!sceneIssue} style={{width:"100%",height:"clamp(240px,48vw,440px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{!snapshot||sceneIssue?<p role="status">{sceneIssue||"No valid scene is available for the selected input."}</p>:unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>}</section>;
 }

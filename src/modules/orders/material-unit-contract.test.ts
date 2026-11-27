@@ -21,7 +21,7 @@ test("wrong units cannot survive cart sanitation, mutation or direct order valid
  assert.deepEqual(addDirectCart([brick],{...brick,unit:"kg"}),[brick]);
  assert.equal(changeDirectCartQuantity([brick],cartKey(brick),750)[0].quantity,750);
  assert.equal(changeDirectCartQuantity([brick],cartKey(brick),2.5)[0].quantity,100);
- const {productName:_,...line}=brick;
+ const line={category:brick.category,productSlug:brick.productSlug,unit:brick.unit,quantity:brick.quantity};
  assert.equal(directLine.safeParse(line).success,true);
  assert.equal(directLine.safeParse({...line,unit:"bag"}).success,false);
  assert.equal(directLine.safeParse({...line,quantity:1.5}).success,false);

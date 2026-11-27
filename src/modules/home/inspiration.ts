@@ -1,3 +1,4 @@
+import {futureArchitecture} from "./future-architecture.ts";
 import {familyHomeVisuals} from "./family-home-visuals.ts";
 export type IdeaKind="exterior"|"interior"|"finish";
 export type Idea={id:string;kind:IdeaKind;title:string;titleHi:string;src:string;alt:string;description:string;tip:string;href:string;action:string;source:"concept"|"reference"|"material"};
@@ -12,7 +13,8 @@ export const ideas:readonly Idea[]=[
  {id:"light",kind:"interior",title:"Natural light and calm interiors",titleHi:"प्राकृतिक रोशनी और शांत इंटीरियर",src:"/images/studio/house-5.webp",alt:"Bright living room with glazed doors",description:"A reference for balancing light, furnishings and visual calm.",tip:"Check physical paint samples in morning and evening light.",href:"/design-studio/visualizer",action:"Explore colour combinations",source:"reference"},
  {id:"kitchen",kind:"interior",title:"A social kitchen",titleHi:"परिवार के लिए रसोई",src:"/images/studio/house-6.webp",alt:"Kitchen with breakfast island",description:"An island-led kitchen inspiration for shared meals and conversation.",tip:"Check circulation space and appliance clearances before copying the layout.",href:"/design-studio",action:"Explore room layouts",source:"reference"},
  {id:"tiles",kind:"finish",title:"Choose a surface that suits the room",titleHi:"कमरे के लिए सही टाइल",src:"/images/catalog/reference/pexels-photo-40080972.webp",alt:"Representative tile surface",description:"Explore surface finishes, tone and texture together.",tip:"Verify slip resistance, dimensions and application before buying.",href:"/materials/tiles",action:"Explore tile options",source:"material"},
- {id:"paint",kind:"finish",title:"Build a colour story",titleHi:"रंगों का सुंदर मेल",src:"/images/catalog/reference/pexels-photo-6764238.webp",alt:"Representative painting materials",description:"Combine a main shade with a controlled accent.",tip:"Test a physical shade card; digital previews are approximate.",href:"/design-studio/visualizer",action:"Open paint studio",source:"material"}
+ {id:"paint",kind:"finish",title:"Build a colour story",titleHi:"रंगों का सुंदर मेल",src:"/images/catalog/reference/pexels-photo-6764238.webp",alt:"Representative painting materials",description:"Combine a main shade with a controlled accent.",tip:"Test a physical shade card; digital previews are approximate.",href:"/design-studio/visualizer",action:"Open paint studio",source:"material"},
+ ...futureArchitecture.filter(a=>a.kind!=="construction").map((a):Idea=>({id:a.id,kind:a.kind==="interior"?"interior":"exterior",title:a.title,titleHi:a.hi,src:a.src,alt:a.alt,description:a.summary,tip:a.check,href:a.href,action:a.action,source:"concept"}))
 ];
 export const palettes=[
  {id:"warm",name:"Warm minimal",colours:["#f1e7d5","#a68c70","#524639"]},

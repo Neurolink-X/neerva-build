@@ -1,10 +1,12 @@
 import {overlapArea,area,type Rect,type RoadSide} from "./plan-model.ts";
+import {plotContextIssue,plotContextKey,type PlotContext} from "./irregular-plot.ts";
+import {internalGeometryIssues,commercialInternalSpaces} from "./commercial-internal.ts";
 import {rentalLayouts} from "./rental-layout.ts";
 export const buildingPurposes=["mall","school","restaurant","shops","rental"] as const;
 export type BuildingPurpose=typeof buildingPurposes[number];
 type ZoneKind="primary"|"support"|"toilet"|"circulation"|"core"|"service"|"parking"|"open";
 export type BuildingZone=Rect&{id:string;label:string;kind:ZoneKind;floor:number};
-export type BuildingBrief={purpose:BuildingPurpose;widthFt:number;depthFt:number;roadSide:RoadSide;floors:number;unitsPerFloor:number;parkingBays:number;frontFt:number;rearFt:number;sideFt:number;rentalBedrooms?:number};
+export type BuildingBrief={purpose:BuildingPurpose;widthFt:number;depthFt:number;roadSide:RoadSide;floors:number;unitsPerFloor:number;parkingBays:number;frontFt:number;rearFt:number;sideFt:number;rentalBedrooms?:number;reserveLift?:boolean;siteContext?:PlotContext};
 export type BuildingConcept={id:string;brief:BuildingBrief;zones:BuildingZone[];layout:string;signature:string;conceptOnly:true};
 const purpose={
  mall:{title:"Shopping mall",unit:"Retail unit",minW:12,minD:12,minArea:200,front:20,back:12,support:["Anchor retail / activity","Service & loading reserve"],checks:["Occupant load and exit capacity","Fire separation, smoke control and sprinklers","Accessible routes, lifts, loading, parking and traffic study"]},
@@ -44,6 +46,9 @@ export function validateBuildingBrief(b:BuildingBrief):string[]{
  const p=purpose[b.purpose];
  if(b.frontFt<p.front||b.rearFt<p.back)e.push("Allow at least "+p.front+" ft front and "+p.back+" ft rear open reservation for this concept family; legal requirements may be greater.");
  if(b.parkingBays>0&&(b.frontFt<36||b.parkingBays*9>b.widthFt-2*b.sideFt-12))e.push("Requested parking reserve does not fit: allow 36 ft front depth and 9 ft per reserved bay plus a 12 ft clear strip. Vehicle maneuvering still needs review.");
+ if(b.reserveLift!==undefined&&typeof b.reserveLift!=="boolean")e.push("Choose a valid lift preference.");
+ if(b.reserveLift===true&&b.floors===1)e.push("Lift provision is supported only for multiple levels in this planner.");
+ if(b.siteContext){const issue=plotContextIssue(b.siteContext,b.widthFt,b.depthFt);if(issue)e.push(issue);}
  if(!e.length){
   const req=buildingInputRequirements(b)!;
   const W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
@@ -63,9 +68,10 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
   if(z.kind!=="open"&&z.kind!=="parking"&&(z.x<b.sideFt-EPS||z.x+z.w>b.widthFt-b.sideFt+EPS||z.y<b.frontFt-EPS||z.y+z.d>b.depthFt-b.rearFt+EPS))e.push("Building zone outside selected margins: "+z.id);
   if(z.kind==="primary"&&(z.w<p.minW-EPS||z.d<p.minD-EPS||area(z)<p.minArea-EPS))e.push("Primary zone below concept size: "+z.id);
  }
- for(let i=0;i<c.zones.length;i++)for(let j=i+1;j<c.zones.length;j++)if(c.zones[i].floor===c.zones[j].floor&&overlapArea(c.zones[i],c.zones[j])>EPS)e.push("Overlapping zones");
+
  for(let f=0;f<b.floors;f++){
   const zs=c.zones.filter(z=>z.floor===f),hall=zs.find(z=>z.kind==="circulation");
+  for(let i=0;i<zs.length;i++)for(let j=i+1;j<zs.length;j++)if(overlapArea(zs[i],zs[j])>EPS)e.push("Overlapping zones");
   if(zs.filter(z=>z.kind==="primary").length!==b.unitsPerFloor||zs.filter(z=>z.kind==="core").length!==2||zs.filter(z=>z.kind==="toilet").length!==2||!hall)e.push("Incomplete floor programme: "+f);
   if(hall)for(const z of zs.filter(z=>!["open","parking","circulation"].includes(z.kind))){
    const edge=Math.min(z.y+z.d,hall.y+hall.d)-Math.max(z.y,hall.y);
@@ -74,17 +80,26 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
  }
  if(c.zones.filter(z=>z.kind==="parking").length!==b.parkingBays)e.push("Parking reservation count mismatch");
  if(b.purpose==="rental"&&rentalLayouts(c).length!==b.floors*b.unitsPerFloor)e.push("Every rental envelope must fit the requested internal BHK programme.");
- return [...new Set(e)];
+ return [...new Set([...e,...internalGeometryIssues(c)])];
 }
-export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:BuildingConcept[];blockers:string[]}{
+function siteIdentity(b:BuildingBrief){return (b.siteContext?"-site-"+plotContextKey(b.siteContext):"")+(b.reserveLift===undefined?"":b.reserveLift?"-lift":"-stairs-only");}
+function buildingSignature(b:BuildingBrief,zones:BuildingZone[]){
+ const geometry=zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort();
+ return b.siteContext?JSON.stringify([geometry,b.siteContext.offsetXFt,b.siteContext.points.map(p=>[p.x,p.y])]):JSON.stringify(geometry);
+}
+export type BuildingLayoutFamily="classic"|"purpose-led"|"side-gallery"|"internal";
+export const buildingLayoutFamily=(id:string):BuildingLayoutFamily=>/-internal-v1-[0123]$/.test(id)?"internal":id.endsWith("-gallery-v1")?"side-gallery":id.endsWith("-purpose-v2")?"purpose-led":"classic";
+export function generateBuildingConcepts(b:BuildingBrief,limit=24,family:BuildingLayoutFamily="classic"):{plans:BuildingConcept[];blockers:string[]}{
  const blockers=validateBuildingBrief(b);if(blockers.length)return {plans:[],blockers};
  const p=purpose[b.purpose],W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
+ if(family==="internal")return internalConcepts(b,limit);
+ if(family==="side-gallery")return sideGalleryConcepts(b,limit);
  const out:BuildingConcept[]=[],seen=new Set<string>(),max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24;
  // Different circulation widths, asymmetric wings, unit allocation and service
  // locations. A fixed order makes the first preview independent of requested limit.
  for(let step=0;step<144&&out.length<max;step++){
   const recipe=step*37%144,coreFront=recipe%2===0,swapServices=Math.floor(recipe/2)%2===1;
-  const corridor=[8,10,12][Math.floor(recipe/4)%3];
+  const corridor=(family==="purpose-led"&&b.purpose==="mall"?[12,14,16]:family==="purpose-led"&&b.purpose==="school"?[10,12,14]:[8,10,12])[Math.floor(recipe/4)%3];
   const ratio=[.5,.42,.58][Math.floor(recipe/12)%3];
   const leftUnits=Math.max(0,Math.min(b.unitsPerFloor,Math.floor(b.unitsPerFloor/2)+[-1,0,1,2][Math.floor(recipe/36)%4]));
   const rightUnits=b.unitsPerFloor-leftUnits, left=(W-corridor)*ratio,right=W-corridor-left;
@@ -99,24 +114,88 @@ export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:Buildi
     const recess=Math.min(8,D*.06),recessWing=recipe%3!==0&&bank===Math.floor(recipe/2)%2;
     const frontRecess=recessWing&&recipe%3===1?recess:0,rearRecess=recessWing&&recipe%3===2?recess:0;
     const wingDepth=D-frontRecess-rearRecess;
-    const coreDepth=10,toiletDepth=8,supportDepth=Math.max(10,wingDepth*.15),unitDepth=(wingDepth-coreDepth-toiletDepth-supportDepth)/Math.max(1,count);
+    const coreDepth=family==="purpose-led"&&b.floors>1?12:10,toiletDepth=8,supportShare=family==="purpose-led"&&b.purpose==="restaurant"?.23:family==="purpose-led"&&b.purpose==="school"?.18:.15,supportDepth=Math.max(10,wingDepth*supportShare),unitDepth=(wingDepth-coreDepth-toiletDepth-supportDepth)/Math.max(1,count);
     if(unitDepth<=0)continue;
     const primary=Array.from({length:count},(_,i)=>({kind:"primary" as const,label:p.unit+" "+(bank===0?i+1:leftUnits+i+1),d:unitDepth}));
     const support={kind:"support" as const,label:p.support[swapServices?1-bank:bank],d:supportDepth+(count===0?wingDepth-coreDepth-toiletDepth-supportDepth:0)};
     const core={kind:"core" as const,label:"Vertical access / exit core reserve "+(bank+1),d:coreDepth};
     const toilet={kind:"toilet" as const,label:"Toilet / accessible WC reserve "+(bank+1),d:toiletDepth};
     const front=(bank===0)===coreFront;
-    const segments=front?[core,...primary,support,toilet]:[support,toilet,...primary,core];
+    const classic=front?[core,...primary,support,toilet]:[support,toilet,...primary,core];
+    // Occupancy programme changes actual zone locations and sizes; this is
+    // deliberately still a common-spine topology, not a compliant fire plan.
+    const segments=family==="classic"?classic:
+     b.purpose==="restaurant"?(front?[...primary,toilet,core,support]:[...primary,core,toilet,support]):
+     b.purpose==="shops"?(front?[...primary,core,toilet,support]:[...primary,toilet,support,core]):
+     b.purpose==="school"?(front?[support,core,...primary,toilet]:[core,...primary,toilet,support]):
+     b.purpose==="mall"?(front?[support,...primary,toilet,core]:[...primary,core,support,toilet]):
+     front?[core,...primary,toilet,support]:[core,support,toilet,...primary];
     let y=b.frontFt+frontRecess;for(const s of segments){add(f,s.kind,s.label,x,y,w,s.d);y+=s.d;}
    }
   }
   if(b.parkingBays){for(let i=0;i<b.parkingBays;i++)add(0,"parking","Reserved bay "+(i+1),b.sideFt+i*9,0,9,18);}
   if(b.rearFt>0)add(0,"open",b.purpose==="school"?"Open play / assembly reserve":"Rear open / service reserve",b.sideFt,b.depthFt-b.rearFt,W,b.rearFt);
-  const signature=JSON.stringify(zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort());
+  const signature=buildingSignature(b,zones);
   if(seen.has(signature))continue;
-  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-"),brief:b,zones,signature,layout:(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft spine · "+(recipe%3===1?"front recess":recipe%3===2?"rear recess":"flush wings"),conceptOnly:true};
+  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-")+siteIdentity(b)+(family==="purpose-led"?"-purpose-v2":""),brief:b,zones,signature,layout:(family==="purpose-led"?({mall:"Anchor & retail",school:"Learning & administration",restaurant:"Dining front / services rear",shops:"Retail front / support rear",rental:"Entry core / private homes"}[b.purpose])+" · ":"")+(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft spine · "+(recipe%3===1?"front recess":recipe%3===2?"rear recess":"flush wings"),conceptOnly:true};
   if(validateBuildingConcept(c).length)continue;
   seen.add(signature);out.push(c);
  }
  return {plans:out,blockers:out.length?[]:["No supported zoning arrangement fits these exact inputs. Increase usable dimensions, reduce primary zones, or ask a qualified architect to assess the site. No inputs were silently changed."]};
+}
+
+/** Single-loaded gallery: one access strip on the side, all functional rooms
+ * on the opposite side. A distinct topology using the existing access/portal
+ * contract, not a differently coloured double-loaded spine. */
+function sideGalleryConcepts(b:BuildingBrief,limit:number):{plans:BuildingConcept[];blockers:string[]}{
+ const p=purpose[b.purpose],W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
+ const plans:BuildingConcept[]=[],seen=new Set<string>(),max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24;
+ for(let recipe=0;recipe<72&&plans.length<max;recipe++){
+  const hallLeft=recipe%2===0,hallWidth=[8,10,12][Math.floor(recipe/2)%3],wingW=W-hallWidth;
+  if(wingW<Math.max(p.minW,b.purpose==="rental"?22:12))continue;
+  const coreD=b.floors>1?12:10,wcD=8,serviceD=Math.max(10,D*(b.purpose==="restaurant"?.12:.09));
+  const available=D-2*(coreD+wcD+serviceD);
+  if(available<=0)continue;
+  const variation=[0,.12,-.12][Math.floor(recipe/6)%3],mean=available/b.unitsPerFloor;
+  const primary=Array.from({length:b.unitsPerFloor},(_,i)=>({kind:"primary" as const,label:p.unit+" "+(i+1),d:mean*(1+(i===0&&b.unitsPerFloor>1?variation:i===b.unitsPerFloor-1&&b.unitsPerFloor>1?-variation:0))}));
+  const firstCore={kind:"core" as const,label:"Vertical access / exit core reserve 1",d:coreD},lastCore={...firstCore,label:"Vertical access / exit core reserve 2"};
+  const firstWc={kind:"toilet" as const,label:"Toilet / accessible WC reserve 1",d:wcD},lastWc={...firstWc,label:"Toilet / accessible WC reserve 2"};
+  const supports=p.support.map(label=>({kind:"support" as const,label,d:serviceD}));
+  const mode=Math.floor(recipe/18)%4,split=Math.ceil(primary.length/2);
+  const frontRetail=b.purpose==="shops"||b.purpose==="restaurant";
+  const sequence=frontRetail?
+    [...primary.slice(0,split),firstCore,firstWc,...primary.slice(split),...(mode%2?supports.slice().reverse():supports),lastWc,lastCore]:
+    mode%2?[supports[0],firstCore,...primary.slice(0,split),firstWc,...primary.slice(split),lastWc,supports[1],lastCore]:
+    [firstCore,firstWc,supports[0],...primary,lastCore,lastWc,supports[1]];
+  const zones:BuildingZone[]=[],add=(floor:number,kind:ZoneKind,label:string,x:number,y:number,w:number,d:number)=>zones.push({id:floor+"-"+zones.length,kind,label,floor,x,y,w,d});
+  for(let floor=0;floor<b.floors;floor++){
+   add(floor,"circulation","Single-loaded access gallery",b.sideFt+(hallLeft?0:wingW),b.frontFt,hallWidth,D);
+   let y=b.frontFt;for(const segment of sequence){add(floor,segment.kind,segment.label,b.sideFt+(hallLeft?hallWidth:0),y,wingW,segment.d);y+=segment.d;}
+  }
+  for(let i=0;i<b.parkingBays;i++)add(0,"parking","Reserved bay "+(i+1),b.sideFt+i*9,0,9,18);
+  if(b.rearFt>0)add(0,"open",b.purpose==="school"?"Open play / assembly reserve":"Rear open / service reserve",b.sideFt,b.depthFt-b.rearFt,W,b.rearFt);
+  const signature=buildingSignature(b,zones);
+  if(seen.has(signature))continue;
+  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,b.purpose==="rental"?b.rentalBedrooms??1:0,recipe].join("-")+siteIdentity(b)+"-gallery-v1",brief:b,zones,signature,layout:(hallLeft?"Left":"Right")+" side gallery · "+hallWidth+" ft access · "+(variation===0?"equal units":"varied unit depths"),conceptOnly:true};
+  if(validateBuildingConcept(c).length)continue;
+  seen.add(signature);plans.push(c);
+ }
+ return {plans,blockers:plans.length?[]:["A single-loaded gallery needs additional depth for the full programme and both core reserves. Select a different family or review the exact plot dimensions."]};
+}
+
+/** Versioned internal programme: keep the exact brief and select only
+ * candidates whose room and service reservations pass geometric access checks.
+ * Never change the saved legacy recipes or pretend to engineer the core. */
+function internalConcepts(b:BuildingBrief,limit:number){
+ const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,plans:BuildingConcept[]=[],seen=new Set<string>();
+ const candidates=generateBuildingConcepts(b,24,"purpose-led").plans;
+ // Try each internal variant across the same envelope before changing it.
+ for(const base of candidates)for(const variant of (b.purpose==="rental"?[2,0,3]:[2,0])){
+  const p:BuildingConcept={...base,id:base.id+"-internal-v1-"+variant,layout:b.purpose==="rental"?["Private passage","Rear living / entry","Living-first family flat","Living-first · exterior kitchen"][variant]:variant===2?"Shared service passage":"Independent service rooms"};
+  if(validateBuildingConcept(p).length)continue;
+  const internal=commercialInternalSpaces(p).map(r=>[r.floor,r.kind,fmt(r.x),fmt(r.y),fmt(r.w),fmt(r.d)]).sort();
+  p.signature=JSON.stringify([base.signature,internal]);if(seen.has(p.signature))continue;
+  seen.add(p.signature);if(plans.length<max)plans.push(p);if(plans.length>=max)return {plans,blockers:[]};
+ }
+ return {plans,blockers:plans.length?[]:["No detailed room and service-core layout fits this exact request. Try a different layout family or review the dimensions with an architect."]};
 }

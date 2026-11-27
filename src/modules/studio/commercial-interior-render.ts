@@ -14,7 +14,7 @@ export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishSch
  const push=(lo:Vec3,hi:Vec3,color:Vec3,rough=.8,opacity=1,finish?:FinishMaterial)=>boxes.push({lo,hi,color,rough,metal:0,opacity,finish});
  push([0,-.12,0],[w,0,d],shadeRgb(f.floor),finishRoughness(f.materials?.floor),1,f.materials?.floor);
  push([0,h,0],[w,h+.12,d],shadeRgb(f.ceiling),finishRoughness(f.materials?.ceiling),1,f.materials?.ceiling);
- const portals=commercialPortals(plan).filter(p=>p.zoneId===r.id);
+ const portals=commercialPortals(plan).filter(p=>p.zoneId===r.id||p.connectsTo===r.id);
  for(const side of ["front","rear","left","right"] as Side[]){
   const vertical:boolean=side==="left"||side==="right";
   const plane:number=vertical?(side==="left"?r.x:r.x+r.w):(side==="front"?r.y:r.y+r.d);
@@ -27,13 +27,41 @@ export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishSch
  }
  for(const item of commercialFixtures(plan).filter(z=>z.zoneId===r.id)){
   const x=(item.x-r.x)*FT,z=(item.y-r.y)*FT,fw=item.w*FT,fd=item.d*FT;
+  if(item.kind==="bed"){
+   push([x,0,z],[x+fw,.30,z+fd],[.45,.32,.23],.65,1,"wood");
+   push([x+.025,.30,z+.025],[x+fw-.025,.53,z+fd-.025],[.89,.86,.79],.8);
+   push([x,.30,z],[x+fw,.94,z+.09],[.42,.31,.24],.68,1,"wood");
+   for(const i of [0,1])push([x+fw*(.08+i*.48),.53,z+.13],[x+fw*(.44+i*.48),.65,z+fd*.24],[.93,.91,.86],.9);
+   continue;
+  }
+  if(item.kind==="sofa"){
+   push([x,0,z],[x+fw,.43,z+fd],[.34,.40,.36],.8);
+   push([x,.43,z],[x+fw,.90,z+fd*.20],[.34,.40,.36],.8);
+   for(const a of [x,x+fw-.12])push([a,.43,z],[a+.12,.65,z+fd],[.34,.40,.36],.8);
+   continue;
+  }
+  if(item.kind==="counter"){
+   push([x,0,z],[x+fw,.85,z+fd],[.63,.56,.46],.7,1,"wood");
+   push([x,.85,z],[x+fw,.90,z+fd],[.34,.36,.35],.35,1,"marble");continue;
+  }
   // Distinct tabletop and support geometry, kept within the existing furniture footprint.
   if(fw<.25||fd<.25){push([x,0,z],[x+fw,.76,z+fd],[.45,.32,.21],.65);continue;}
+  if(item.kind==="table"&&fw>=.8&&fd>=.8){
+   // Table and two compact seats share the reserved furniture footprint.
+   const top=.76,seat=.43,tw=fw*.8,td=fd*.43,tx=x+(fw-tw)/2,tz=z+(fd-td)/2;
+   push([tx,top-.045,tz],[tx+tw,top,tz+td],[.52,.37,.24],.48,1,"wood");
+   for(const lx of [tx+.035,tx+tw-.085])for(const lz of [tz+.035,tz+td-.085])push([lx,0,lz],[lx+.05,top-.045,lz+.05],[.20,.22,.23],.38);
+   const sw=fw*.55,sd=fd*.22,sx=x+(fw-sw)/2;
+   for(const side of [0,1]){const sz=side===0?z:z+fd-sd;push([sx,seat-.05,sz],[sx+sw,seat,sz+sd],[.28,.38,.33],.7);
+    const back=side===0?sz:sz+sd-.045;push([sx,seat,back],[sx+sw,.83,back+.045],[.28,.38,.33],.7);
+    for(const lx of [sx+.025,sx+sw-.065])for(const lz of [sz+.025,sz+sd-.065])push([lx,0,lz],[lx+.04,seat-.05,lz+.04],[.20,.22,.23],.4);
+   }continue;
+  }
   const top=item.kind==="display"?.95:.76,leg=Math.min(.065,fw*.14,fd*.14),inset=leg*.6;
   push([x,top-.045,z],[x+fw,top,z+fd],[.52,.37,.24],.48,1,"wood");
   for(const lx of [x+inset,x+fw-leg-inset])for(const lz of [z+inset,z+fd-leg-inset])push([lx,0,lz],[lx+leg,top-.045,lz+leg],[.20,.22,.23],.38);
   if(item.kind==="display")push([x+inset,.26,z+inset],[x+fw-inset,.30,z+fd-inset],[.52,.37,.24],.55,1,"wood");
  }
- const origin:Vec3=[w*.18,1.6,d*.16],forward=normalize([w*.64,0,d*.68]),right=normalize(cross(forward,[0,1,0])),up=normalize(cross(right,forward));
+ const origin:Vec3=[Math.min(.7,w*.18),1.6,Math.min(.7,d*.16)],forward=normalize([w*.64,0,d*.68]),right=normalize(cross(forward,[0,1,0])),up=normalize(cross(right,forward));
  return {boxes,camera:{origin,forward,right,up,fov:65,aspect:1.5},evening,lights:[{position:[w*.32,h-.2,d*.33],color:evening?[1,.78,.55]:[1,.94,.83],power:Math.min(100,w*d*.8)},{position:[w*.68,h-.2,d*.67],color:evening?[1,.78,.55]:[1,.94,.83],power:Math.min(100,w*d*.8)}]};
 }
