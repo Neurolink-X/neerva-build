@@ -75,7 +75,7 @@ async function main(){
        }
       };
       if(await capture("cutaway")){
-       if(purpose==="shops"){await studio.getByRole("button",{name:"Show space-use guidance",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Hide space-use guidance",exact:true}).click();}
+       if(purpose==="shops"){await studio.getByRole("button",{name:"Hide space-use guidance",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Show space-use guidance",exact:true}).click();}
        await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
        await capture("exterior");
        await studio.getByRole("button",{name:"Show selected floor",exact:true}).click();
@@ -309,6 +309,7 @@ async function main(){
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
      await pattern.locator("svg[data-surface-profile=marble] image").waitFor({state:"attached"});assert.match(await pattern.locator("svg image").getAttribute("href")??"",/^data:image\/png/,"preview uses the actual local material mask");
      const intensity=page.getByLabel(/Design intensity/);await intensity.fill("0.45");assert.equal(await pattern.locator("svg rect[mask]").getAttribute("opacity"),"0.45","texture swatch intensity matches the wall control");await intensity.press("End");assert.equal(await intensity.inputValue(),"1","keyboard reaches maximum intensity");await intensity.press("ArrowLeft");assert.equal(await intensity.inputValue(),"0.95","keyboard follows the declared step");
+     await page.getByRole("button",{name:"Geometry",exact:true}).click();const geo=page.getByRole("button",{name:"Chevron herringbone",exact:true});await geo.click();assert.equal(await geo.getAttribute("aria-pressed"),"true");
      const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
      assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");
     }
@@ -904,6 +905,7 @@ async function main(){
     assert.ok(await page.locator(".nstudio-landing").evaluate(el=>el.scrollWidth<=innerWidth+2),"studio landing must not overflow horizontally");
     assert.ok(await page.locator(".nstudio-landing figure figcaption").evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).position==="static")),"image text belongs below the image");
     await page.getByRole("button",{name:"150 gaj",exact:true}).click();assert.equal(await page.getByLabel("Plot width (feet)").inputValue(),"27");assert.equal(await page.getByLabel("Plot depth (feet)").inputValue(),"50");
+    await page.getByText("Smart plot calculator · find a missing side",{exact:true}).click();await page.getByLabel("Plot area",{exact:true}).fill("180");await page.getByRole("button",{name:"Apply depth",exact:true}).click();assert.equal(await page.getByLabel("Plot depth (feet)").inputValue(),"60");
     await page.locator(".nstudio-start-form input").nth(0).fill("18");
     await page.locator(".nstudio-start-form input").nth(1).fill("50");
     await page.getByRole("button",{name:/Create room layouts/}).click();
