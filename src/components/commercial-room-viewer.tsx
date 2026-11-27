@@ -7,7 +7,7 @@ import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import type {RenderSnapshot,RenderFinish,RenderBox} from "../../public/studio-render-v1";
 type CameraPreset="fit"|"front"|"rear"|"top";
 type Viewer={update:(snapshot:RenderSnapshot)=>void;reset:(preset?:CameraPreset)=>void};
-export default function CommercialRoomViewer({snapshot,exterior=false,onUnavailable,planIdentity,floorIdentity}:{snapshot:RenderSnapshot|null;exterior?:boolean;onUnavailable?:()=>void;planIdentity?:string;floorIdentity?:string}){
+export default function CommercialRoomViewer({snapshot,exterior=false,cutaway=false,onUnavailable,planIdentity,floorIdentity}:{snapshot:RenderSnapshot|null;exterior?:boolean;cutaway?:boolean;onUnavailable?:()=>void;planIdentity?:string;floorIdentity?:string}){
  const host=useRef<HTMLDivElement>(null),viewer=useRef<Viewer|null>(null);
  const [unavailable,setUnavailable]=useState(false),[sceneIssue,setSceneIssue]=useState("");
  useEffect(()=>{if(unavailable||sceneIssue)onUnavailable?.()},[unavailable,sceneIssue,onUnavailable]);
@@ -25,7 +25,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
   const lamps:THREE.PointLight[]=[];
   const {constrained,cores}=studioDevice();
   const detailed=!constrained&&window.innerWidth>=768&&cores>=6;
-  const shadows=!constrained&&(exterior||detailed);
+  const shadows=!constrained&&!cutaway&&(exterior||detailed);
   const contextLost=(event:Event)=>{event.preventDefault();setUnavailable(true);};
   scene.add(group);
   const ambient=new THREE.HemisphereLight(0xeaf3ff,0xbcb5a8,1.4),sun=new THREE.DirectionalLight(0xfff3da,2.5);sun.position.set(4,9,2);scene.add(ambient,sun);
@@ -41,7 +41,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
    const c=current.camera;camera.position.fromArray(c.origin);camera.fov=c.fov;camera.updateProjectionMatrix();
    if(exterior){
     const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),dir=camera.position.clone().sub(center).normalize();
-    if(preset==="front")dir.set(0,.08,-1).normalize();else if(preset==="rear")dir.set(0,.08,1).normalize();else if(preset==="top")dir.set(0,1,-.001).normalize();else if(dir.lengthSq()<.1)dir.set(1,.6,-1).normalize();
+    if(preset==="front")dir.set(0,.08,-1).normalize();else if(preset==="rear")dir.set(0,.08,1).normalize();else if(preset==="top")dir.set(0,1,-.001).normalize();else if(cutaway)dir.set(.78,1.35,-1).normalize();else if(dir.lengthSq()<.1)dir.set(1,.6,-1).normalize();
     const corners:THREE.Vector3[]=[];for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z])corners.push(new THREE.Vector3(x,y,z).sub(center));
     const fit=projectedFit(corners,dir,new THREE.Vector3(0,1,0),camera.fov,Math.max(.1,camera.aspect),1.12,1);
     // Fit the actual projected bounds, not an enclosing sphere: wide commercial sites otherwise shrink excessively on phones.
@@ -106,7 +106,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
    document.addEventListener("visibilitychange",scheduler.visibility);
   }catch{queueMicrotask(()=>{if(!disposed)setUnavailable(true)})}
   return()=>{disposed=true;viewer.current=null;scheduler.dispose();document.removeEventListener("visibilitychange",scheduler.visibility);observer?.disconnect();controls?.dispose();clear();geometry.dispose();for(const t of cache.values())t.dispose();plaster?.dispose();environment?.dispose();sun.shadow.dispose();releaseStudioRenderer(renderer,target,contextLost);};
- },[exterior]);
+ },[exterior,cutaway]);
  useEffect(()=>{if(snapshot)viewer.current?.update(snapshot)},[snapshot]);
- return <section aria-label={exterior?"Interactive commercial building":"Interactive commercial room"} data-room-viewer data-plan-id={planIdentity} data-floor={floorIdentity}><div ref={host} hidden={unavailable||!snapshot||!!sceneIssue} style={{width:"100%",height:"clamp(280px,57vw,480px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{!snapshot||sceneIssue?<p role="status">{sceneIssue||"No valid scene is available for the selected input."}</p>:unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<div className="commercial-camera-controls" role="group" aria-label="Commercial camera views"><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>{exterior&&<><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("front")}>Street view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("rear")}>Rear view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("top")}>Top view</button></>}</div>}</section>;
+ return <section aria-label={cutaway?"Interactive selected commercial floor":exterior?"Interactive commercial building":"Interactive commercial room"} data-room-viewer data-plan-id={planIdentity} data-floor={floorIdentity}><div ref={host} hidden={unavailable||!snapshot||!!sceneIssue} style={{width:"100%",height:"clamp(280px,57vw,480px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{!snapshot||sceneIssue?<p role="status">{sceneIssue||"No valid scene is available for the selected input."}</p>:unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<div className="commercial-camera-controls" role="group" aria-label="Commercial camera views"><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>{exterior&&<><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("front")}>Street view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("rear")}>Rear view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("top")}>Top view</button></>}</div>}</section>;
 }
