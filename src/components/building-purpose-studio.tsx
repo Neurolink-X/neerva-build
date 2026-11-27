@@ -1,6 +1,7 @@
 "use client";
 import {useMemo,useState,type FormEvent} from "react";
 import Link from "next/link";
+import {CommercialProjectSave} from "./commercial-project-save";
 import {PlanFinishStudio} from "./plan-finish-studio";
 import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/studio/finish-model";
 import {BuildingEngineeringPanel} from "./building-engineering-panel";
@@ -49,7 +50,7 @@ function CommercialFront({plan,scheme}:{plan:BuildingConcept;scheme:FinishScheme
  {portals.map(p=><rect key={p.id} x={p.x} y={h-p.floor*13-8} width={p.length} height={p.kind==="access"?8:5} fill={p.kind==="access"?"#4d5452":scheme.glass} stroke="#485b60" strokeWidth=".2"/>)}
  <line x1="0" y1={h} x2={w} y2={h} stroke="#354a3a" strokeWidth=".5"/></svg></section>
 }
-export function BuildingPurposeStudio(){
+export function BuildingPurposeStudio({cloudEnabled=false}:{cloudEnabled?:boolean}={}){
  const [draft,setDraft]=useState<BuildingBrief>(defaults),[brief,setBrief]=useState<BuildingBrief>(defaults),[selected,setSelected]=useState(0),[floor,setFloor]=useState(0),[full,setFull]=useState(false),[angle,setAngle]=useState(0);
  const result=useMemo(()=>generateBuildingConcepts(brief),[brief]),plan=result.plans[selected];
  const [finishHistory,setFinishHistory]=useState<Record<string,FinishScheme>>({});
@@ -84,6 +85,7 @@ export function BuildingPurposeStudio(){
     <div className="purpose-tabs" role="group" aria-label="Floor selection">{Array.from({length:brief.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>{setFloor(i);setFull(false)}}>{i===0?"Ground":"Floor "+i}</button>)}</div>
     <div className="purpose-views"><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor} scheme={scheme}/></section><section><h3>3D massing · same zones</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle} scheme={scheme}/></section></div>
     <CommercialFront plan={plan} scheme={scheme}/>
+    {cloudEnabled&&<CommercialProjectSave key={plan.id} plan={plan} scheme={scheme}/>}
     <PlanFinishStudio key={plan.id+":"+floor} source={{kind:"commercial",plan}} floor={floor} scheme={scheme} onChange={next=>setFinishHistory(h=>rememberFinish(h,plan.id,next))}/>
     <details><summary>Plan legend</summary><p>Brown: proposed entry. Blue: proposed glazing. Furniture and floor partitions are illustrative.</p></details>
     <details><summary>Selected floor zone schedule</summary><div className="purpose-table"><table><thead><tr><th>Zone</th><th>Dimensions (ft)</th><th>Area (sq ft)</th></tr></thead><tbody>{plan.zones.filter(z=>z.floor===floor).map(z=><tr key={z.id}><td>{z.label}</td><td>{z.w.toFixed(1)} × {z.d.toFixed(1)}</td><td>{Math.round(z.w*z.d)}</td></tr>)}</tbody></table></div></details>
