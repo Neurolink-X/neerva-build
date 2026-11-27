@@ -520,6 +520,8 @@ function prioritizeSpatialDiversity(plans:PlanModel[]):PlanModel[]{
  * compliance is manufactured to hit a marketing number.
  */
 export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResult{
+ // Bound all generator paths, including compact plans, for malformed caller input.
+ limit=Number.isFinite(limit)?Math.max(1,Math.min(24,Math.floor(limit))):24;
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
  if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,limit);
@@ -588,7 +590,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
 export function generateStairReadyPortfolio(b:PlanBrief,limit=24):PlanningResult{
  const blockers=explainImpossible(b);if(blockers.length)return {plans:[],blockers};
  if(b.floors!==2&&b.floors!==3)return {plans:[],blockers:["The dog-leg family requires two or three levels."]};
- const max=Math.max(1,Math.min(24,Math.floor(limit))),plans:PlanModel[]=[],seen=new Set<string>();
+ const max=Number.isFinite(limit)?Math.max(1,Math.min(24,Math.floor(limit))):24,plans:PlanModel[]=[],seen=new Set<string>();
  for(const base of widePortfolio(b,24)){
   for(const reverse of [false,true]){
    const openings=base.openings.map(o=>({...o}));
