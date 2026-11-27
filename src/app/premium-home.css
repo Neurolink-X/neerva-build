@@ -473,3 +473,5 @@
 .nbh .nbh-stage-switch button:focus-visible,.nbh .nbh-stage-materials a:focus-visible{outline:2px solid #356a50;outline-offset:2px}
 .nbh .nbh-stage-note{display:block;text-align:left}
 @media(max-width:340px){.nbh .nbh-stage-materials{grid-template-columns:1fr}}
+
+.nbh .home-stage-comparison[data-journey=premium] .nbh-compare-frame{aspect-ratio:2/1}
