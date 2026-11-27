@@ -18,6 +18,8 @@ test("new facade masks stay normalized and pair fits the local asset budget",()=
  assert.equal(new Set(s.zones.map(z=>z.id)).size,s.zones.length);
  for(const z of s.zones){assert.ok(validWallMask(z.points),z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1);}
  assert.ok(houseJourney.finished.bytes+houseJourney.shell.bytes<220000);
- const presence=[houseJourney.finished,houseJourney.shell].map(a=>existsSync(join(process.cwd(),"public",a.src.slice(1))));
- if(presence.some(Boolean))assert.ok(verifyHouseJourney(),"both reviewed image files must be present and match their digest");
+});
+test("release requires both reviewed local construction stages",()=>{
+ for(const a of [houseJourney.finished,houseJourney.shell])assert.ok(existsSync(join(process.cwd(),"public",a.src.slice(1))),"Missing required image: "+a.src);
+ assert.ok(verifyHouseJourney(),"Both reviewed image files must match their exact SHA-256 and dimensions.");
 });
