@@ -29,11 +29,22 @@ export function commercialInteriorSnapshot(plan:BuildingConcept,scheme:FinishSch
   const x=(item.x-r.x)*FT,z=(item.y-r.y)*FT,fw=item.w*FT,fd=item.d*FT;
   // Distinct tabletop and support geometry, kept within the existing furniture footprint.
   if(fw<.25||fd<.25){push([x,0,z],[x+fw,.76,z+fd],[.45,.32,.21],.65);continue;}
+  if(item.kind==="table"&&fw>=.8&&fd>=.8){
+   // Table and two compact seats share the reserved furniture footprint.
+   const top=.76,seat=.43,tw=fw*.8,td=fd*.43,tx=x+(fw-tw)/2,tz=z+(fd-td)/2;
+   push([tx,top-.045,tz],[tx+tw,top,tz+td],[.52,.37,.24],.48,1,"wood");
+   for(const lx of [tx+.035,tx+tw-.085])for(const lz of [tz+.035,tz+td-.085])push([lx,0,lz],[lx+.05,top-.045,lz+.05],[.20,.22,.23],.38);
+   const sw=fw*.55,sd=fd*.22,sx=x+(fw-sw)/2;
+   for(const side of [0,1]){const sz=side===0?z:z+fd-sd;push([sx,seat-.05,sz],[sx+sw,seat,sz+sd],[.28,.38,.33],.7);
+    const back=side===0?sz:sz+sd-.045;push([sx,seat,back],[sx+sw,.83,back+.045],[.28,.38,.33],.7);
+    for(const lx of [sx+.025,sx+sw-.065])for(const lz of [sz+.025,sz+sd-.065])push([lx,0,lz],[lx+.04,seat-.05,lz+.04],[.20,.22,.23],.4);
+   }continue;
+  }
   const top=item.kind==="display"?.95:.76,leg=Math.min(.065,fw*.14,fd*.14),inset=leg*.6;
   push([x,top-.045,z],[x+fw,top,z+fd],[.52,.37,.24],.48,1,"wood");
   for(const lx of [x+inset,x+fw-leg-inset])for(const lz of [z+inset,z+fd-leg-inset])push([lx,0,lz],[lx+leg,top-.045,lz+leg],[.20,.22,.23],.38);
   if(item.kind==="display")push([x+inset,.26,z+inset],[x+fw-inset,.30,z+fd-inset],[.52,.37,.24],.55,1,"wood");
  }
- const origin:Vec3=[w*.18,1.6,d*.16],forward=normalize([w*.64,0,d*.68]),right=normalize(cross(forward,[0,1,0])),up=normalize(cross(right,forward));
+ const origin:Vec3=[Math.min(.7,w*.18),1.6,Math.min(.7,d*.16)],forward=normalize([w*.64,0,d*.68]),right=normalize(cross(forward,[0,1,0])),up=normalize(cross(right,forward));
  return {boxes,camera:{origin,forward,right,up,fov:65,aspect:1.5},evening,lights:[{position:[w*.32,h-.2,d*.33],color:evening?[1,.78,.55]:[1,.94,.83],power:Math.min(100,w*d*.8)},{position:[w*.68,h-.2,d*.67],color:evening?[1,.78,.55]:[1,.94,.83],power:Math.min(100,w*d*.8)}]};
 }
