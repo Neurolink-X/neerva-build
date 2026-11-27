@@ -14,11 +14,14 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
   const snapshot=capture();if(!snapshot||!snapshot.boxes.length){setPhase("error");setMessage("Open your 3D model first, then try again.");return}
   if(typeof Worker==="undefined"){setPhase("error");setMessage("This browser does not support background rendering. Use the interactive 3D preview.");return}
   const aspect=Math.max(.5,Math.min(2,snapshot.camera.aspect??1.5));
-  const capable=navigator.hardwareConcurrency>=8&&window.innerWidth>=768;
-  const requested=quality==="fine"?(capable?720:560):320;
+  const device=navigator as Navigator&{deviceMemory?:number;connection?:{saveData?:boolean}};
+  const constrained=Boolean(device.connection?.saveData)||(device.deviceMemory!==undefined&&device.deviceMemory<=4)||window.innerWidth<768;
+  const capable=!constrained&&navigator.hardwareConcurrency>=8;
+  const requested=quality==="fine"?(capable?720:constrained?420:560):constrained?256:320;
   const longest=Math.min(requested,Math.floor(Math.sqrt(419000*Math.max(aspect,1/aspect))));
-  const width=aspect>=1?longest:Math.round(longest*aspect),height=aspect>=1?Math.round(longest/aspect):longest,samples=quality==="fine"?(capable?16:12):4;
+  const width=aspect>=1?longest:Math.round(longest*aspect),height=aspect>=1?Math.round(longest/aspect):longest,samples=quality==="fine"?(capable?16:constrained?8:12):4;
   const token=sequence.current;
+  let lastCompleted=0;
   const fail=(reason:string)=>{if(token!==sequence.current||!visible.current)return;stop();setPhase("error");setMessage(reason);};
   try{
    const instance=new Worker("/studio-render-v1.js",{type:"module"});worker.current=instance;
@@ -29,9 +32,10 @@ export function BrowserArchitectureRender({capture}:{capture:()=>RenderSnapshot|
    instance.onmessage=(event:MessageEvent<RenderFrame|{error:string}>)=>{
     if(token!==sequence.current||!visible.current)return;
     const frame=event.data;if("error" in frame){fail(frame.error);return;}
-    if(frame.width!==width||frame.height!==height||frame.samples!==samples||!Number.isInteger(frame.completed)||frame.completed<1||frame.completed>samples||!(frame.pixels instanceof Uint8ClampedArray)||frame.pixels.length!==width*height*4){fail("The renderer returned an invalid image.");return}
+    if(frame.width!==width||frame.height!==height||frame.samples!==samples||!Number.isInteger(frame.completed)||frame.completed<=lastCompleted||frame.completed>samples||!(frame.pixels instanceof Uint8ClampedArray)||frame.pixels.length!==width*height*4){fail("The renderer returned an invalid image.");return}
     const el=canvas.current,ctx=el?.getContext("2d");if(!el||!ctx){fail("Image preview is unavailable.");return}
-    el.width=width;el.height=height;ctx.putImageData(new ImageData(new Uint8ClampedArray(frame.pixels),width,height),0,0);
+    if(el.width!==width)el.width=width;if(el.height!==height)el.height=height;
+    ctx.putImageData(new ImageData(new Uint8ClampedArray(frame.pixels),width,height),0,0);lastCompleted=frame.completed;
     setHasFrame(true);setProgress(Math.round(frame.completed/samples*100));
     if(frame.completed===samples){stop();setPhase("done");setMessage(`Render ready · ${width} × ${height} pixels · ${samples} samples. Concept visualization of the selected geometry.`);}
    };
