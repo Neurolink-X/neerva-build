@@ -306,6 +306,7 @@ async function main(){
      await pattern.click();
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
      await pattern.locator("svg[data-surface-profile=marble] image").waitFor({state:"attached"});assert.match(await pattern.locator("svg image").getAttribute("href")??"",/^data:image\/png/,"preview uses the actual local material mask");
+     const intensity=page.getByLabel(/Design intensity/);await intensity.fill("0.45");assert.equal(await pattern.locator("svg rect[mask]").getAttribute("opacity"),"0.45","texture swatch intensity matches the wall control");await intensity.fill("0.78");
      const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
      assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");
     }

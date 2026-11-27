@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useRef,useState} from "react";
 import * as THREE from "three";
-import {studioDevice,configureStudioRenderer,releaseStudioRenderer,proceduralTexture,plasterTexture as makePlaster,projectedFit} from "@/modules/studio/core/render-core";
+import {studioDevice,configureStudioRenderer,releaseStudioRenderer,studioMaterialTexture,plasterTexture as makePlaster,projectedFit} from "@/modules/studio/core/render-core";
 import {browserFrameScheduler} from "@/modules/studio/core/frame-scheduler";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import type {RenderSnapshot,RenderFinish,RenderBox} from "../../public/studio-render-v1";
@@ -33,13 +33,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
   const clear=()=>{for(const m of meshes){group.remove(m);if(m instanceof THREE.InstancedMesh)m.dispose();m.material.dispose()}meshes.length=0;};
   function texture(finish:RenderFinish){
    if(finish==="plain")return null;const existing=cache.get(finish);if(existing)return existing;
-   const n=128,data=new Uint8Array(n*n*4);
-   for(let y=0;y<n;y++)for(let x=0;x<n;x++){
-    const a=x/n,b=y/n,vein=Math.abs(Math.sin(a*16+b*6+1.8*Math.sin(b*10)+.6*Math.sin(a*38)));
-    const v=finish==="tile"?(x%64<2||y%64<2?158:247):finish==="marble"?Math.round(255*(.79+.21*Math.min(1,vein*4))):finish==="wood"?Math.round(255*(.87+.11*Math.sin(a*190+2*Math.sin(b*6)))):x%32<2||finish==="acp"&&y%64<2?145:245;
-    const i=(y*n+x)*4;data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;
-   }
-   const t=proceduralTexture(data,n,true);cache.set(finish,t);return t;
+   const t=studioMaterialTexture(finish,"commercial");cache.set(finish,t);return t;
   }
   const reset=(preset:CameraPreset="fit")=>{
    if(!current||!controls)return;

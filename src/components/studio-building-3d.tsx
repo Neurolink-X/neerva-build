@@ -18,7 +18,7 @@ import {planFurniture} from "@/modules/studio/furniture";
 import {facadeAccents,frontageSignature} from "@/modules/studio/frontage";
 import {exposedRoofPatches} from "@/modules/studio/plan-surfaces";
 import {nonRoadBoundaryEdges} from "@/modules/studio/site-shape";
-import {studioDevice,configureStudioRenderer,releaseStudioRenderer,proceduralTexture,plasterTexture,projectedFit} from "@/modules/studio/core/render-core";
+import {studioDevice,configureStudioRenderer,releaseStudioRenderer,studioMaterialTexture,plasterTexture,projectedFit} from "@/modules/studio/core/render-core";
 import {browserFrameScheduler} from "@/modules/studio/core/frame-scheduler";
 import {FEET_TO_METRES as FT} from "@/modules/studio/core/geometry-primitives";
 type Mode="exterior"|"dollhouse"|"floor"|"walkthrough";
@@ -70,13 +70,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    function texture(kind:FinishMaterial){
     if(kind==="plain")return null;
     const cached=textureCache.get(kind);if(cached)return cached;
-    const n=128,bytes=new Uint8Array(n*n*4);
-    for(let y=0;y<n;y++)for(let x=0;x<n;x++){
-     const grain=Math.sin(x*.47+y*.12)*Math.sin(y*.53+x*.19),vein=Math.sin(x*.14+y*.07+2*Math.sin(y*.065)),noise=((x*73+y*151)%19)-9;
-     const v=kind==="tile"?(x%64<2||y%64<2?120:238+noise):kind==="marble"?(Math.abs(vein)<.13?158:235+grain*14):kind==="wood"?205+Math.sin(x*.7+3*Math.sin(y*.04))*22+noise:kind==="panel"?(x%32<2?135:230+noise):(x%64<2||y%64<2?130:230+noise);
-     const i=(y*n+x)*4;bytes[i]=bytes[i+1]=bytes[i+2]=Math.max(0,Math.min(255,v));bytes[i+3]=255;
-    }
-    const t=proceduralTexture(bytes,n,true);textures.push(t);textureCache.set(kind,t);return t;
+    const t=studioMaterialTexture(kind,"residential");textures.push(t);textureCache.set(kind,t);return t;
    }
    function bindFinish(id:string,surface:FinishSurface,fallback:string,side?:Side){
     const key=[id,surface,side??""].join(":");const existing=finishMaterialCache.get(key);if(existing)return existing;

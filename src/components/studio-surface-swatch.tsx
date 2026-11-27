@@ -13,11 +13,11 @@ export function surfaceCanvas(profile:SurfaceProfile){
  if(cache.size>=12){const first=cache.keys().next().value;if(first!==undefined)cache.delete(first);}
  cache.set(profile,{canvas});return canvas;
 }
-export function StudioSurfaceSwatch({profile,base,accent}:{profile:SurfaceProfile;base:string;accent:string}){
+export function StudioSurfaceSwatch({profile,base,accent,intensity}:{profile:SurfaceProfile;base:string;accent:string;intensity:number}){
  const id=useId(),image=useRef<SVGImageElement>(null);
  useLayoutEffect(()=>{const tile=surfaceCanvas(profile),cached=cache.get(profile);if(!tile||!cached||!image.current)return;cached.url??=tile.toDataURL("image/png");image.current.setAttribute("href",cached.url);},[profile]);
  return <svg viewBox="0 0 150 100" aria-hidden="true" className="paint-surface-swatch" data-surface-profile={profile}>
   <defs><mask id={id} maskUnits="userSpaceOnUse" x="0" y="0" width="150" height="100" style={{maskType:"alpha"}}><image ref={image} x="0" y="0" width="150" height="100" preserveAspectRatio="none"/></mask></defs>
-  <rect width="150" height="100" fill={base}/><rect width="150" height="100" fill={accent} mask={"url(#"+id+")"}/>
+  <rect width="150" height="100" fill={base}/><rect width="150" height="100" fill={accent} opacity={intensity} mask={"url(#"+id+")"}/>
  </svg>;
 }

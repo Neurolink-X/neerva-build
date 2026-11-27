@@ -206,3 +206,8 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 .visualizer-app .wall-pattern-options button{overflow:hidden;min-width:0}
 .visualizer-app .wall-pattern-options svg{overflow:hidden;flex-shrink:0}
 @media(max-width:600px){.visualizer-app .wall-pattern-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.visualizer-app .paint-collection-intro{margin:12px 0 6px;min-width:0;color:#254738}.visualizer-app .paint-collection-intro strong{font-size:15px;line-height:1.4}.visualizer-app .paint-collection-intro p,.visualizer-app .paint-collection-tip{font-size:12px;line-height:1.55;color:#52665a;margin:4px 0 8px;overflow-wrap:anywhere}
+.visualizer-app .paint-collection-tip{padding:10px 12px;border-inline-start:2px solid #b8cbb9;background:#f5f8f4;border-radius:0 6px 6px 0}
+.visualizer-app .visualizer-topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;min-width:0}.visualizer-app .visualizer-topbar a{min-height:44px;display:inline-flex;align-items:center}.visualizer-app .visualizer-heading h1{overflow-wrap:anywhere;font-size:clamp(30px,4.2vw,50px);line-height:1.13}
+@media(max-width:600px){.visualizer-app .paint-pattern-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.visualizer-app .paint-pattern-groups button:last-child{grid-column:1/-1}.visualizer-app .wall-pattern-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
