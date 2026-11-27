@@ -3,7 +3,8 @@ import {useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import type {RenderSnapshot,RenderFinish,RenderBox} from "../../public/studio-render-v1";
-type Viewer={update:(snapshot:RenderSnapshot)=>void;reset:()=>void};
+type CameraPreset="fit"|"front"|"rear"|"top";
+type Viewer={update:(snapshot:RenderSnapshot)=>void;reset:(preset?:CameraPreset)=>void};
 export default function CommercialRoomViewer({snapshot,exterior=false,onUnavailable}:{snapshot:RenderSnapshot|null;exterior?:boolean;onUnavailable?:()=>void}){
  const host=useRef<HTMLDivElement>(null),viewer=useRef<Viewer|null>(null);
  const [unavailable,setUnavailable]=useState(false),[sceneIssue,setSceneIssue]=useState("");
@@ -14,6 +15,8 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
   const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(65,1,.03,2000),group=new THREE.Group(),geometry=new THREE.BoxGeometry(1,1,1);
   const meshes:(THREE.Mesh<THREE.BoxGeometry,THREE.MeshStandardMaterial>|THREE.InstancedMesh<THREE.BoxGeometry,THREE.MeshStandardMaterial>)[]=[];
   const cache=new Map<RenderFinish,THREE.DataTexture>();
+  let plaster:THREE.DataTexture|undefined;
+  function plasterTexture(){if(plaster)return plaster;const n=64,data=new Uint8Array(n*n*4);let seed=3107;for(let i=0;i<data.length;i+=4){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const v=110+(seed>>>24)%35;data[i]=data[i+1]=data[i+2]=v;data[i+3]=255;}plaster=new THREE.DataTexture(data,n,n);plaster.magFilter=THREE.LinearFilter;plaster.minFilter=THREE.LinearMipmapLinearFilter;plaster.generateMipmaps=true;plaster.needsUpdate=true;return plaster;}
   let geometryKey="",appearanceKey="",current:RenderSnapshot|null=null;
   const lamps:THREE.PointLight[]=[];
   const detailed=window.innerWidth>=768&&(navigator.hardwareConcurrency??4)>=6;
@@ -33,18 +36,19 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
    }
    const t=new THREE.DataTexture(data,n,n);t.colorSpace=THREE.SRGBColorSpace;t.magFilter=THREE.LinearFilter;t.minFilter=THREE.LinearMipmapLinearFilter;t.generateMipmaps=true;t.needsUpdate=true;cache.set(finish,t);return t;
   }
-  const reset=()=>{
+  const reset=(preset:CameraPreset="fit")=>{
    if(!current||!controls)return;
    const c=current.camera;camera.position.fromArray(c.origin);camera.fov=c.fov;camera.updateProjectionMatrix();
    if(exterior){
     const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),dir=camera.position.clone().sub(center).normalize();
-    if(dir.lengthSq()<.1)dir.set(1,.6,-1).normalize();
+    if(preset==="front")dir.set(0,.08,-1).normalize();else if(preset==="rear")dir.set(0,.08,1).normalize();else if(preset==="top")dir.set(0,1,-.001).normalize();else if(dir.lengthSq()<.1)dir.set(1,.6,-1).normalize();
     const right=new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),dir).normalize(),up=new THREE.Vector3().crossVectors(dir,right).normalize();
     const tanY=Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
-    let fit=1;
+    let fit=1;const radius=bounds.getSize(new THREE.Vector3()).length()/2;
     for(const x of [bounds.min.x,bounds.max.x])for(const y of [bounds.min.y,bounds.max.y])for(const z of [bounds.min.z,bounds.max.z]){
-     const p=new THREE.Vector3(x,y,z).sub(center);fit=Math.max(fit,p.dot(dir)+1.16*Math.max(Math.abs(p.dot(right))/(tanY*Math.max(.1,camera.aspect)),Math.abs(p.dot(up))/tanY));
+     const p=new THREE.Vector3(x,y,z).sub(center);fit=Math.max(fit,p.dot(dir)+1.22*Math.max(Math.abs(p.dot(right))/(tanY*Math.max(.1,camera.aspect)),Math.abs(p.dot(up))/tanY));
     }
+    if(preset==="fit"){const halfY=THREE.MathUtils.degToRad(camera.fov/2),halfX=Math.atan(Math.tan(halfY)*camera.aspect);fit=Math.max(fit,radius/Math.sin(Math.min(halfX,halfY))*1.06);}
     controls.target.copy(center);controls.maxDistance=Math.max(fit*3,50);camera.far=Math.max(2000,fit*5);camera.position.copy(center).addScaledVector(dir,fit);camera.updateProjectionMatrix();
    }else controls.target.copy(camera.position).add(new THREE.Vector3(...c.forward).multiplyScalar(2));
    controls.update();schedule();
@@ -83,7 +87,7 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
       const k=JSON.stringify([b.color,b.rough,b.metal,b.opacity,b.finish??"plain"]);
       const batch=batches.get(k)??[];batch.push(b);batches.set(k,batch);
      }
-     const material=(b:RenderBox)=>{const transparent=b.opacity<.98,m=new THREE.MeshStandardMaterial({roughness:b.rough,metalness:b.metal,opacity:b.opacity,transparent,depthWrite:!transparent,map:texture(b.finish??"plain"),envMapIntensity:transparent?1.2:.55});m.color.setRGB(...b.color,THREE.SRGBColorSpace);return m;};
+     const material=(b:RenderBox)=>{const transparent=b.opacity<.98,m=new THREE.MeshStandardMaterial({roughness:b.rough,metalness:b.metal,opacity:b.opacity,transparent,depthWrite:!transparent,map:texture(b.finish??"plain"),envMapIntensity:transparent?1.2:.55});m.color.setRGB(...b.color,THREE.SRGBColorSpace);if(!transparent&&b.rough>=.75&&b.metal<.1&&(!b.finish||b.finish==="plain")){m.bumpMap=plasterTexture();m.bumpScale=.008;}return m;};
      const dummy=new THREE.Object3D();
      const transform=(b:RenderBox,obj:THREE.Object3D)=>{obj.position.set(...b.lo.map((v,i)=>(v+b.hi[i])/2) as [number,number,number]);obj.scale.set(...b.lo.map((v,i)=>b.hi[i]-v) as [number,number,number]);obj.updateMatrix();};
      for(const batch of batches.values()){
@@ -105,8 +109,8 @@ export default function CommercialRoomViewer({snapshot,exterior=false,onUnavaila
    }};
    document.addEventListener("visibilitychange",schedule);
   }catch{queueMicrotask(()=>{if(!disposed)setUnavailable(true)})}
-  return()=>{disposed=true;viewer.current=null;cancelAnimationFrame(frame);document.removeEventListener("visibilitychange",schedule);observer?.disconnect();controls?.dispose();clear();geometry.dispose();for(const t of cache.values())t.dispose();environment?.dispose();renderer?.domElement.removeEventListener("webglcontextlost",contextLost);renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement);};
+  return()=>{disposed=true;viewer.current=null;cancelAnimationFrame(frame);document.removeEventListener("visibilitychange",schedule);observer?.disconnect();controls?.dispose();clear();geometry.dispose();for(const t of cache.values())t.dispose();plaster?.dispose();environment?.dispose();renderer?.domElement.removeEventListener("webglcontextlost",contextLost);renderer?.dispose();renderer?.forceContextLoss();if(renderer?.domElement.parentElement===target)target.removeChild(renderer.domElement);};
  },[exterior]);
  useEffect(()=>{if(snapshot)viewer.current?.update(snapshot)},[snapshot]);
- return <section aria-label={exterior?"Interactive commercial building":"Interactive commercial room"} data-room-viewer><div ref={host} hidden={unavailable||!snapshot||!!sceneIssue} style={{width:"100%",height:"clamp(240px,48vw,440px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{!snapshot||sceneIssue?<p role="status">{sceneIssue||"No valid scene is available for the selected input."}</p>:unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>}</section>;
+ return <section aria-label={exterior?"Interactive commercial building":"Interactive commercial room"} data-room-viewer><div ref={host} hidden={unavailable||!snapshot||!!sceneIssue} style={{width:"100%",height:"clamp(240px,48vw,440px)",borderRadius:10,overflow:"hidden",background:"#e1e8ec"}}/>{!snapshot||sceneIssue?<p role="status">{sceneIssue||"No valid scene is available for the selected input."}</p>:unavailable?<p role="status">Interactive 3D is unavailable on this device. Use the image preview below.</p>:<div className="commercial-camera-controls" role="group" aria-label="Commercial camera views"><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset()}>Reset view</button>{exterior&&<><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("front")}>Street view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("rear")}>Rear view</button><button type="button" className="button button-outline" onClick={()=>viewer.current?.reset("top")}>Top view</button></>}</div>}</section>;
 }
