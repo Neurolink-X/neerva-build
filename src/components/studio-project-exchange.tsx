@@ -1,6 +1,7 @@
 "use client";
 import {useMemo,useState} from "react";
 import Link from "next/link";
+import type {FinishScheme} from "@/modules/studio/finish-model";
 import {conceptTakeoff,createProjectExchange,reviewedQuoteHref,projectErrors,type ProjectSource} from "@/modules/studio/project-exchange";
 import {categoryUnits,categoryMaterialHints,defaultCategoryUnit,quantityPrecision,quantityUnitLabels,type MaterialCategory,type MaterialQuantityUnit} from "@/modules/catalog/category-units";
 const categories=Object.keys(categoryMaterialHints) as MaterialCategory[];
