@@ -1,4 +1,4 @@
-import test from "node:test";import assert from "node:assert/strict";import {navigationPath,prefetchPath,takePrefetch,allowSpeculativeNetwork,allowStudioWarmup,studioWarmupDelay,preferLitePreview} from "./intent.ts";
+import test from "node:test";import assert from "node:assert/strict";import {navigationPath,prefetchPath,takePrefetch,allowSpeculativeNetwork,allowStudioWarmup,studioWarmupDelay,preferLitePreview,preferLiteDevice} from "./intent.ts";
 const here="https://example.org/materials";
 test("navigation ignores fragments, external links, downloads handled by caller, and same URL",()=>{assert.equal(navigationPath("#catalog-results",here),null);assert.equal(navigationPath("/materials",here),null);assert.equal(navigationPath("https://other.org/materials",here),null);assert.equal(navigationPath("/materials?category=electrical#catalog-results",here),"/materials?category=electrical");assert.equal(prefetchPath("/materials/electrical/example",here),"/materials/electrical/example");for(const path of ["/admin","/account/orders","/checkout","/quotes","/materials?category=electrical","/api/catalog","/design-studio/portfolio","/blog/editorial","/blog/editorial/example"])assert.equal(prefetchPath(path,here),null)});
 test("prefetch is deduplicated, bounded and expires",()=>{const recent=new Map<string,number>();for(let i=0;i<6;i++)assert.equal(takePrefetch(recent,"/materials/"+i,100),true);assert.equal(takePrefetch(recent,"/materials/new",100),false);assert.equal(takePrefetch(recent,"/materials/0",100),false);assert.equal(takePrefetch(recent,"/materials/new",60100),true);assert.equal(recent.size,1)});
@@ -23,3 +23,8 @@ test("3D background warming uses a 1 Mbps threshold plus latency and device gate
 });
 
 test("lite preview is recommended only by explicit constrained network hints",()=>{assert.equal(preferLitePreview(undefined),false);assert.equal(preferLitePreview(undefined,false),true);assert.equal(preferLitePreview({effectiveType:"4g",downlink:8,rtt:50}),false);for(const hint of [{saveData:true},{effectiveType:"3g"},{effectiveType:"4g",downlink:.5},{rtt:500}])assert.equal(preferLitePreview(hint),true);});
+
+test("explicit low resource devices use lightweight previews without disabling user choice",()=>{
+ for(const device of [{cores:2},{memory:2},{cores:8,memory:1}])assert.equal(preferLiteDevice(device),true);
+ for(const device of [{},{cores:4,memory:4},{cores:NaN,memory:Infinity},{cores:0,memory:0}])assert.equal(preferLiteDevice(device),false);
+});
