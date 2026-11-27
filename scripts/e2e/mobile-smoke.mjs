@@ -87,11 +87,20 @@ async function main(){
    const studio=page.locator(".purpose-studio");
    await studio.getByRole("button",{name:"Show 3D concept",exact:true}).waitFor();
    assert.equal(await studio.locator(".purpose-views svg").count(),1);
-   assert.equal(await studio.locator("canvas").count(),0,"automatic lite mode does not mount WebGL");
+   assert.equal(await studio.locator("[data-room-viewer] canvas").count(),0,"automatic lite mode does not mount WebGL");
    await studio.getByRole("button",{name:"Show 3D concept",exact:true}).click();
    assert.equal(await studio.locator(".purpose-views svg").count(),2,"explicit user preference overrides lite hint");
    await studio.getByRole("button",{name:"Classic access spine",exact:true}).click();
    assert.ok(!(await studio.locator(".purpose-views svg").first().getAttribute("data-plan-id")).endsWith("-purpose-v2"));
+   // A small plot may not support side-gallery; provide a larger explicit brief.
+   await studio.getByLabel("Frontage (ft)").fill("180");
+   await studio.getByLabel("Depth (ft)").fill("240");
+   await studio.getByRole("button",{name:/Generate distinct concepts/}).click();
+   await studio.getByRole("button",{name:"Side gallery",exact:true}).click();
+   const galleryPlan=studio.getByRole("img",{name:/Purpose-specific zoning/});
+   await galleryPlan.waitFor({state:"visible"});
+   assert.match(await galleryPlan.getAttribute("data-plan-id"),/-gallery-v1$/);
+   assert.equal(await studio.locator(".purpose-views svg").nth(1).getAttribute("data-plan-id"),await galleryPlan.getAttribute("data-plan-id"));
   }finally{await liteContext.close()}
   // Cold and repeat navigation on a constrained connection. Do not confuse
   // simulated local Chromium timings with field Web Vitals.
