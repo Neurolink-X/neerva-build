@@ -15,7 +15,7 @@ export function rentalLayout(unit:BuildingZone,hall:BuildingZone,bedrooms:number
  function add(kind:RentalRoom["kind"],label:string,x:number,y:number,w:number,d:number){
   rooms.push({id:unit.id+"-"+rooms.length,unitId:unit.id,floor:unit.floor,kind,label,x:unit.x+(hallOnRight?x:unit.w-x-w),y:unit.y+y,w,d});
  }
- const kitchenDepth=Math.max(8,Math.min(12,unit.d/(bedrooms+1))),bedDepth=(unit.d-kitchenDepth)/bedrooms;
+ const kitchenDepth=Math.max(8,Math.min(12,unit.d-bedrooms*10)),bedDepth=(unit.d-kitchenDepth)/bedrooms;
  if(bedDepth<10-EPS)return null;
  for(let i=0;i<bedrooms;i++)add("bedroom","Bedroom "+(i+1),0,i*bedDepth,outer,bedDepth);
  add("kitchen","Kitchen",0,unit.d-kitchenDepth,outer,kitchenDepth);
