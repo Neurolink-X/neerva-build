@@ -1,5 +1,6 @@
 import type {RenderBox,RenderSnapshot,Vec3} from "../../../public/studio-render-v1";
 import {shadeRgb,type FinishScheme} from "./finish-model.ts";
+import {finishRoughness} from "./commercial-interior-render.ts";
 import {commercialElements} from "./commercial-elements.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
 const ft=.3048;
@@ -24,7 +25,7 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
   const low=(a.floor*13+a.bottom)*ft,high=(a.floor*13+a.top)*ft,t=a.thickness/2;
   const core=plan.zones.some(r=>r.floor===a.floor&&r.kind==="core"&&(a.axis==="x"?(Math.abs(r.y-a.plane)<1e-5||Math.abs(r.y+r.d-a.plane)<1e-5)&&a.start>=r.x-1e-5&&a.end<=r.x+r.w+1e-5:(Math.abs(r.x-a.plane)<1e-5||Math.abs(r.x+r.w-a.plane)<1e-5)&&a.start>=r.y-1e-5&&a.end<=r.y+r.d+1e-5));
   const tone=selected&&core?shadeRgb(selected.accent):wall;
-  if(a.axis==="x")push([x(a.start),low,z(a.plane-t)],[x(a.end),high,z(a.plane+t)],tone);
+  if(a.axis==="x")push([x(a.start),low,z(a.plane-t)],[x(a.end),high,z(a.plane+t)],tone,finishRoughness(selected?.cladding));
   else push([x(a.plane-t),low,z(a.start)],[x(a.plane+t),high,z(a.end)],tone);
  }
  for(const p of elements.portals.filter(p=>p.kind==="exterior-glazing")){
