@@ -1,8 +1,6 @@
 "use client";
 
 import {useState} from "react";
-import dynamic from "next/dynamic";
-const CommercialColourPreview=dynamic(()=>import("./commercial-colour-preview"),{loading:()=> <p role="status">Loading commercial colour preview…</p>});
 import Link from "next/link";
 import {StudioPhotoPaint} from "@/components/studio-photo-paint";
 import {StudioPremiumTools} from "@/components/studio-premium-tools";
@@ -12,22 +10,30 @@ const families = {
   Greens: ["#edf2db","#d5e1c6","#b6c7a3","#9caf91","#7a917f","#547463","#385446","#293f36"],
   Blues: ["#e0edf1","#c7dce7","#a4c5d0","#86a9c1","#698fa5","#536d8a","#35586d","#263c55"],
   Earth: ["#f5e8cf","#edd2ac","#dfb88d","#ca986f","#b97654","#ad634b","#895644","#704438"],
-  Rose: ["#f8ebe7","#ecd3cf","#dcb8b2","#c89999","#b17d86","#946477","#755264","#5c4354"]
+  Rose: ["#f8ebe7","#ecd3cf","#dcb8b2","#c89999","#b17d86","#946477","#755264","#5c4354"],
+  "Warm whites":["#ffffff","#fdfbf5","#f7f1e5","#f0e8d8","#ede4d3","#e8dfcf","#e3d8c7","#d9cdb9"],
+  "Greige & taupe":["#f1ede7","#e3dcd3","#d0c6b9","#bfb3a6","#a99b8e","#928376","#74695f","#514944"],
+  "Sage & olive":["#e5eadc","#cbd6bf","#abb99e","#8d9d7c","#738360","#606e4e","#4d593d","#333f2e"],
+  "Teal & ocean":["#e0efed","#bfdbd8","#9cc8c5","#6fa9aa","#448d90","#337377","#285b65","#193e49"],
+  "Clay & terracotta":["#f4e2d7","#e5c5b5","#d4a18a","#c48164","#ad694f","#95513e","#794435","#563229"],
+  "Lavender & plum":["#f0ebf6","#ded4e8","#c9b8db","#b39ac9","#987eae","#78628f","#604c73","#44324f"],
+  "Charcoal & ink":["#e3e5e6","#c6c9cb","#a6aaad","#848a8f","#656d73","#48515a","#333b43","#222a31"],
+  "Ochre & gold tones":["#fbefd1","#f0deae","#e4c77e","#d3ad55","#b9903c","#9b7434","#79592d","#554021"],
+  "Dusty pastels":["#f1e7dc","#e5dce9","#d8e5e0","#d6e3ef","#e8d6d0","#d9d5c0","#c2cedb","#c3c8b4"],
+  "Jewel tones":["#244c44","#2f6258","#254c73","#384071","#633b61","#783d4c","#85562e","#3c424e"]
 };
 
 export function ExteriorVisualizer(){
- const [studio,setStudio]=useState<"home"|"commercial">("home");
  const [colour,setColour]=useState("#b6c7a3");
  const [family,setFamily]=useState<keyof typeof families>("Greens");
  return <main className="visualizer-app">
   <header className="visualizer-topbar"><Link href="/design-studio">← Design Studio</Link><strong>Paint studio</strong></header>
   <div className="visualizer-heading"><h1>Find your building’s next colour.</h1><p>Preview plain paint or add a wall design. Try an entire sample exterior, a selected facade section, or a private photo of your own building.</p></div>
-  <div className="commercial-colour-switch" role="group" aria-label="Colour studio type"><button type="button" aria-pressed={studio==="home"} onClick={()=>setStudio("home")}>Home & room colours</button><button type="button" aria-pressed={studio==="commercial"} onClick={()=>setStudio("commercial")}>Commercial & rental</button></div>
- {studio==="commercial"?<CommercialColourPreview/>:<><div className="visualizer-layout"><section className="elevation-stage neerva-photo-stage"><StudioPhotoPaint colour={colour} onColourChange={setColour} colourControls={<aside className="visualizer-controls paint-adjacent-controls" aria-label="Live colour controls"><section>
-   <h2>Choose a colour</h2><label>Colour family <select value={family} onChange={e=>setFamily(e.target.value as keyof typeof families)}>{Object.keys(families).map(name=><option key={name}>{name}</option>)}</select></label>
+  <div className="visualizer-layout"><section className="elevation-stage neerva-photo-stage"><StudioPhotoPaint colour={colour} onColourChange={setColour} colourControls={<aside className="visualizer-controls paint-adjacent-controls" aria-label="Live colour controls"><section>
+   <h2>Choose a colour</h2><p className="paint-pattern-current">15 curated families · 120 digital shades</p><label>Colour family <select value={family} onChange={e=>setFamily(e.target.value as keyof typeof families)}>{Object.keys(families).map(name=><option key={name}>{name}</option>)}</select></label>
    <div style={{display:"grid",gridTemplateColumns:"repeat(4,minmax(0,1fr))",gap:8,margin:"12px 0"}}>{families[family].map(hex=><button type="button" key={hex} aria-label={"Select "+hex} aria-pressed={colour===hex} style={{background:hex,minHeight:44,border:colour===hex?"3px solid #254e3d":"1px solid #aaa",borderRadius:8}} onClick={()=>setColour(hex)}/>)}</div>
    <label className="paint-custom-shade">Custom shade <span><input type="color" value={colour} onChange={e=>setColour(e.target.value)}/><output>{colour.toUpperCase()}</output></span></label>
    <label className="paint-quality">Paint quality <select defaultValue="Emulsion"><option>Distemper</option><option>Emulsion</option><option>Premium emulsion</option></select></label><p className="neerva-tier-note">Paint quality is a buying preference; digital colour is a shade preview, not a verified product finish.</p>
-  </section></aside>}/></section></div><section className="paint-next"><div><h2>Ready to compare paint?</h2><p>Explore paint options and request dealer-confirmed pricing and coverage.</p></div><Link href="/materials/paint">Explore paints →</Link></section><StudioPremiumTools product="colour_studio" base={colour} accent="#c4925f" room="Home colour concept"/></>}
+  </section></aside>}/></section></div><section className="paint-next"><div><h2>Ready to compare paint?</h2><p>Explore paint options and request dealer-confirmed pricing and coverage.</p></div><Link href="/materials/paint">Explore paints →</Link></section><StudioPremiumTools product="colour_studio" base={colour} accent="#c4925f" room="Home colour concept"/><section className="paint-next"><div><h2>Planning a commercial building?</h2><p>Choose finishes on your actual generated shop, restaurant, school, mall or rental plan.</p></div><Link href="/design-studio/buildings" prefetch={false}>Building Studio →</Link></section>
  </main>;
 }
