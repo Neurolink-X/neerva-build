@@ -16,7 +16,7 @@ function PlanDrawing({plan,floor}:{plan:BuildingConcept;floor:number}){
   {plan.zones.filter(z=>z.floor===floor).map(z=>{const r=roadRect(z,b.widthFt,b.depthFt,b.roadSide);return <g key={z.id}><title>{z.label}: {z.w.toFixed(1)} × {z.d.toFixed(1)} ft</title><rect x={r.x} y={r.y} width={r.w} height={r.d} fill={colors[z.kind]} stroke="#54665a" strokeWidth=".25"/><text x={r.x+r.w/2} y={r.y+r.d/2} textAnchor="middle" fontSize={Math.min(2.3,r.w/(z.label.length*.65),r.d*.21)} fill="#263d35">{z.label}</text></g>})}
   {rentalLayouts(plan).filter(u=>u.floor===floor).flatMap(u=>u.rooms.map(room=>{const r=roadRect(room,b.widthFt,b.depthFt,b.roadSide);return <g key={room.id}><title>{room.label} · {room.w.toFixed(1)} × {room.d.toFixed(1)} ft</title><rect x={r.x} y={r.y} width={r.w} height={r.d} fill={room.kind==="bedroom"?"#cad0e6":room.kind==="kitchen"?"#e8d6ba":room.kind==="bath"?"#b8dce0":"#e2e8d9"} stroke="#54665a" strokeWidth=".15"/><text x={r.x+r.w/2} y={r.y+r.d/2} textAnchor="middle" fontSize={Math.min(1.8,r.w/(room.label.length*.65),r.d*.2)}>{room.label}</text></g>}))}
   {commercialFixtures(plan).filter(p=>p.floor===floor).map(p=>{const r=roadRect(p,b.widthFt,b.depthFt,b.roadSide);return <rect key={p.id} x={r.x} y={r.y} width={r.w} height={r.d} fill="#8a735c" fillOpacity=".5" stroke="#675a4a" strokeWidth=".12"><title>{p.label} · indicative furniture</title></rect>})}
-  {commercialPortals(plan).filter(p=>p.floor===floor).map(p=>{const a=roadPoint(p,b.widthFt,b.depthFt,b.roadSide),end=roadPoint({x:p.x,y:p.y+p.length},b.widthFt,b.depthFt,b.roadSide);return <line key={p.id} x1={a.x} y1={a.y} x2={end.x} y2={end.y} stroke={p.kind==="access"?"#926036":"#24788a"} strokeWidth=".65"><title>{p.kind} candidate — review required</title></line>})}
+  {commercialPortals(plan).filter(p=>p.floor===floor).map(p=>{const a=roadPoint(p,b.widthFt,b.depthFt,b.roadSide),end=roadPoint({x:p.x+(p.axis==="x"?p.length:0),y:p.y+(p.axis==="y"?p.length:0)},b.widthFt,b.depthFt,b.roadSide);return <line key={p.id} x1={a.x} y1={a.y} x2={end.x} y2={end.y} stroke={p.kind==="access"?"#926036":"#24788a"} strokeWidth=".65"><title>{p.kind} candidate — review required</title></line>})}
   <text x={w/2} y={-3} textAnchor="middle" fontSize="2.5" fill="#344d40">North ↑ · Road {b.roadSide}</text>
   <text x={w/2} y={d+5} textAnchor="middle" fontSize="2.5" fill="#344d40">{w} × {d} ft · oriented plot</text>
  </svg>;
@@ -41,9 +41,10 @@ function Massing({plan,floor,angle}:{plan:BuildingConcept;floor:number|null;angl
  </svg>;
 }
 function CommercialFront({plan}:{plan:BuildingConcept}){
- const panels=commercialFrontPanels(plan),w=plan.brief.widthFt,h=plan.brief.floors*13;
- return <section className="purpose-front"><h3>Street-facing elevation study</h3><p>Actual visible zone widths and setbacks. Darker panels are recessed. No unmodelled facade openings are drawn.</p><svg viewBox={[-4,-6,w+8,h+12].join(" ")} role="img" aria-label="Street-facing conceptual elevation" data-plan-id={plan.id}>
+ const panels=commercialFrontPanels(plan),portals=commercialPortals(plan).filter(p=>p.axis==="x"),w=plan.brief.widthFt,h=plan.brief.floors*13;
+ return <section className="purpose-front"><h3>Street-facing elevation study</h3><p>Front elevation of your selected layout.</p><svg viewBox={[-4,-6,w+8,h+12].join(" ")} role="img" aria-label="Street-facing conceptual elevation" data-plan-id={plan.id}>
  {panels.map((p,i)=><g key={i}><rect x={p.x} y={h-(p.floor+1)*13} width={p.w} height="13" fill={p.kind==="core"?"#b5aaa0":p.y>plan.brief.frontFt+.1?"#c2c4ba":"#e0d8c6"} stroke="#58685b" strokeWidth=".3"/><path d={"M"+p.x+" "+(h-(p.floor+1)*13+.5)+"h"+p.w} stroke="#746b5e" strokeWidth=".35"/><title>Level {p.floor+1} · {p.w.toFixed(1)} ft width · {p.y.toFixed(1)} ft from road</title></g>)}
+ {portals.map(p=><rect key={p.id} x={p.x} y={h-p.floor*13-8} width={p.length} height={p.kind==="access"?8:5} fill={p.kind==="access"?"#4d5452":"#789ba9"} stroke="#485b60" strokeWidth=".2"/>)}
  <line x1="0" y1={h} x2={w} y2={h} stroke="#354a3a" strokeWidth=".5"/></svg></section>
 }
 export function BuildingPurposeStudio(){
@@ -79,12 +80,12 @@ export function BuildingPurposeStudio(){
     <div className="purpose-tabs" role="group" aria-label="Floor selection">{Array.from({length:brief.floors},(_,i)=><button type="button" key={i} aria-pressed={floor===i} onClick={()=>{setFloor(i);setFull(false)}}>{i===0?"Ground":"Floor "+i}</button>)}</div>
     <div className="purpose-views"><section><h3>2D zoning plan</h3><PlanDrawing plan={plan} floor={floor}/></section><section><h3>3D massing · same zones</h3><div className="purpose-tabs"><button type="button" onClick={()=>setAngle(a=>(a+1)%4)}>Rotate 90°</button><button type="button" aria-pressed={full} onClick={()=>setFull(f=>!f)}>{full?"Show selected floor":"Show all floors"}</button></div><Massing plan={plan} floor={full?null:floor} angle={angle}/></section></div>
     <CommercialFront plan={plan}/>
-    <p className="purpose-warning">Brown lines indicate candidate access openings; blue lines indicate candidate exterior glazing. Furniture is illustrative, not seating capacity or code-approved aisle design. The cutaway is a floor-space diagram, not a wall model.</p>
+    <details><summary>Plan legend</summary><p>Brown: proposed entry. Blue: proposed glazing. Furniture and floor partitions are illustrative.</p></details>
     <details><summary>Selected floor zone schedule</summary><div className="purpose-table"><table><thead><tr><th>Zone</th><th>Dimensions (ft)</th><th>Area (sq ft)</th></tr></thead><tbody>{plan.zones.filter(z=>z.floor===floor).map(z=><tr key={z.id}><td>{z.label}</td><td>{z.w.toFixed(1)} × {z.d.toFixed(1)}</td><td>{Math.round(z.w*z.d)}</td></tr>)}</tbody></table></div></details>
     {brief.purpose==="rental"&&<details><summary>Rental room schedules · {brief.rentalBedrooms??1} BHK per unit</summary>{rentalLayouts(plan).filter(u=>u.floor===floor).map((u,i)=><div key={u.unitId}><h4>Unit {i+1}</h4><ul>{u.rooms.map(r=><li key={r.id}>{r.label} · {r.w.toFixed(1)} × {r.d.toFixed(1)} ft</li>)}</ul></div>)}<p>Indicative room extents only; doors, windows, wall thickness and independent utility connections need professional design.</p></details>}
     <BuildingEngineeringPanel plan={plan} floor={floor}/>
    </>}
   </section>
-  <section className="purpose-warning"><h2>Professional review required</h2><ul>{active.checks.map(c=><li key={c}>{c}</li>)}</ul><p>Core and toilet zones reserve space only; stairs, lifts, doors, wall thickness, egress, fire services, structure, MEP and statutory approval are not engineered by this tool. Do not build from these zoning diagrams.</p><Link href="/support">Ask Neerva for planning support →</Link> · <Link href="/materials">Explore construction materials →</Link></section>
+  <section className="purpose-warning"><strong>Concept only — professional approval required before construction.</strong><details><summary>What needs professional review?</summary><ul>{active.checks.map(c=><li key={c}>{c}</li>)}</ul><p>Structural, fire, accessibility, MEP and local approval remain unverified.</p></details><Link href="/support">Planning support →</Link></section>
  </div>;
 }
