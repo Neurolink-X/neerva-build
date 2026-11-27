@@ -100,16 +100,29 @@ async function main(){
    const ctx=await browser.newContext({viewport:{width:v.w,height:v.h}});
    try{const page=await ctx.newPage();await page.goto(base+"/",{waitUntil:"load"});
     const footer=page.locator("footer.unified-footer");
-    for(const lang of ["en","hi"]){
-     if(lang==="hi")await page.locator(".nbh-language").click();
-     await footer.locator(".unified-footer-app button").waitFor({state:"visible"});
+    const action=footer.locator(".unified-footer-app > .unified-footer-app-link");
+    async function verifyFooter(lang,variant){
+     if(await footer.getAttribute("lang")!==lang)await page.locator(".nbh-language").click();
+     await action.waitFor({state:"visible"});
+     assert.equal(await action.count(),1,"exactly one app action");
      assert.equal(await footer.getAttribute("lang"),lang,"footer language matches selected home language");
-     const metrics=await footer.evaluate(el=>{const frame=el.getBoundingClientRect(),button=el.querySelector(".unified-footer-app button"),copy=el.querySelector(".unified-footer-app-copy"),icon=button.querySelector("svg"),b=button.getBoundingClientRect(),c=copy.getBoundingClientRect();const fits=node=>{const r=node.getBoundingClientRect();return r.left>=frame.left-1&&r.right<=frame.right+1&&node.scrollWidth<=node.clientWidth+2};return {fits:[...el.querySelectorAll(".unified-footer-groups nav,.unified-footer-actions a,.unified-footer-legal a,.unified-footer-app-copy,.unified-footer-app button")].every(fits),iconFits:icon.getBoundingClientRect().width>=20,buttonHeight:b.height,overlap:Math.min(b.right,c.right)-Math.max(b.left,c.left)>1&&Math.min(b.bottom,c.bottom)-Math.max(b.top,c.top)>1,links:el.querySelectorAll(".unified-footer-groups a").length,overflow:el.scrollWidth>el.clientWidth+2,stacked:b.top>=c.bottom-1};});
-     assert.ok(metrics.fits&&metrics.iconFits&&!metrics.overlap&&!metrics.overflow&&metrics.buttonHeight>=43,`${v.w}px ${lang} footer fit: ${JSON.stringify(metrics)}`);
+     const metrics=await footer.evaluate(el=>{
+      const frame=el.getBoundingClientRect(),action=el.querySelector(".unified-footer-app > .unified-footer-app-link"),copy=el.querySelector(".unified-footer-app-copy"),icon=action.querySelector("svg"),b=action.getBoundingClientRect(),c=copy.getBoundingClientRect();
+      const fits=node=>{const r=node.getBoundingClientRect();return r.left>=frame.left-1&&r.right<=frame.right+1&&node.scrollWidth<=node.clientWidth+2};
+      return {tag:action.tagName,href:action.getAttribute("href"),fits:[...el.querySelectorAll(".unified-footer-groups nav,.unified-footer-actions a,.unified-footer-legal a,.unified-footer-app-copy,.unified-footer-app > .unified-footer-app-link")].every(fits),iconFits:action.tagName==="BUTTON"?!!icon&&icon.getBoundingClientRect().width>=20:true,actionHeight:b.height,overlap:Math.min(b.right,c.right)-Math.max(b.left,c.left)>1&&Math.min(b.bottom,c.bottom)-Math.max(b.top,c.top)>1,links:el.querySelectorAll(".unified-footer-groups a").length,overflow:el.scrollWidth>el.clientWidth+2,stacked:b.top>=c.bottom-1};
+     });
+     assert.ok(metrics.fits&&metrics.iconFits&&!metrics.overlap&&!metrics.overflow&&metrics.actionHeight>=43,`${v.w}px ${lang} ${variant} footer fit: ${JSON.stringify(metrics)}`);
      assert.equal(metrics.links,22,"all footer navigation links remain");
-     if(v.w<=340)assert.ok(metrics.stacked,"narrow screen app button stacks under copy");
-     await footer.screenshot({path:path.join("test-results/mobile",`${v.w}-${lang}-footer-responsive.png`),animations:"disabled"});
+     if(variant==="native")assert.equal(metrics.tag,"BUTTON","captured native event must expose direct installation");
+     else if(metrics.tag==="A")assert.equal(metrics.href,"/install","fallback opens setup guide");
+     else assert.equal(metrics.tag,"BUTTON","browser may already expose a real installation event");
+     if(v.w<=340)assert.ok(metrics.stacked,"narrow screen app action stacks under copy");
+     await footer.screenshot({path:path.join("test-results/mobile",`${v.w}-${lang}-${variant}-footer-responsive.png`),animations:"disabled"});
     }
+    for(const lang of ["en","hi"])await verifyFooter(lang,"default");
+    await page.evaluate(()=>{const event=new Event("beforeinstallprompt",{cancelable:true});Object.assign(event,{prompt:async()=>undefined,userChoice:Promise.resolve({outcome:"dismissed"})});window.dispatchEvent(event);});
+    await footer.locator(".unified-footer-app > button").waitFor({state:"visible"});
+    for(const lang of ["en","hi"])await verifyFooter(lang,"native");
    }finally{await ctx.close()}
   }
   // Paint catalogue stays readable and bounded on phones and desktop.
