@@ -3,14 +3,15 @@ import {NextResponse} from "next/server";
 import {z} from "zod";
 import {planBriefSchema as brief} from "@/modules/studio/plan-brief-schema";
 import {requireAuth} from "@/modules/identity/server-auth";
-import {validatePlan,planGeometryDigest,type PlanModel} from "@/modules/studio/plan-model";
+import {validatePlan,planGeometryDigest} from "@/modules/studio/plan-model";
+import {finishSchemeSchema,validatedFinishScheme} from "@/modules/studio/finish-scheme-schema";
 import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 const headers={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const error=(status:number,message:string)=>NextResponse.json({error:message},{status,headers});
 const create=z.object({idempotencyKey:z.string().uuid(),title:z.string().trim().min(3).max(120),
- brief,finish:z.object({kit:z.enum(["simple-parapet","stepped-band","jali-screen","pergola","cantilever","cladding-band"]),main:z.string().regex(/^#[0-9a-f]{6}$/i),accent:z.string().regex(/^#[0-9a-f]{6}$/i)}).strict().optional(),variant:z.enum(["parking-left","parking-right"]),planId:z.string().min(5).max(200),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
+ brief,finishScheme:finishSchemeSchema.optional(),finish:z.object({kit:z.enum(["simple-parapet","stepped-band","jali-screen","pergola","cantilever","cladding-band"]),main:z.string().regex(/^#[0-9a-f]{6}$/i),accent:z.string().regex(/^#[0-9a-f]{6}$/i)}).strict().optional(),variant:z.enum(["parking-left","parking-right"]),planId:z.string().min(5).max(200),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
 async function parseBounded(request:Request){if(!request.headers.get("content-type")?.toLowerCase().includes("application/json")||!request.body)return null;
  const size=Number(request.headers.get("content-length")??0);if(!Number.isFinite(size)||size<0||size>12000)return null;
  const reader=request.body.getReader(),decoder=new TextDecoder();let total=0,text="";
@@ -40,14 +41,17 @@ export async function POST(request:Request){
  if(validatePlan(plan).length)return error(422,"Draft failed circulation or dimension checks.");
  if(input.geometryDigest&&input.geometryDigest!==await planGeometryDigest(plan))return error(409,"The selected geometry has changed. Reopen the plan before saving.");
  if(input.finish)plan.facade={...plan.facade,...input.finish};
- const geometry=JSON.stringify(plan);
+ const scheme=input.finishScheme?validatedFinishScheme({kind:"residential",plan},input.finishScheme):null;
+ if(input.finishScheme&&!scheme)return error(422,"Finish selection does not match this plan.");
+ const savedPlan=scheme?{...plan,finishScheme:scheme}:plan;
+ const geometry=JSON.stringify(savedPlan);
  const sha=createHash("sha256").update(geometry).digest("hex");
  try{
   const {data:saved,error:failure}=await auth.client.from("studio_customer_projects").insert({
    owner_id:auth.userId,idempotency_key:input.idempotencyKey,title:input.title,
    plot_width_ft:input.brief.widthFt,plot_depth_ft:input.brief.depthFt,road_side:input.brief.roadSide,
    floors:input.brief.floors,bedrooms:input.brief.bedrooms,parking:input.brief.parking,
-   plan_json:plan as PlanModel,plan_sha256:sha,status:"draft"
+   plan_json:savedPlan,plan_sha256:sha,status:"draft"
   }).select("id,title,plan_sha256,status,created_at").single();
   if(failure?.code==="23505"){
    const {data:previous,error:readError}=await auth.client.from("studio_customer_projects")
