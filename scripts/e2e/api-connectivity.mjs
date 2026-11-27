@@ -84,3 +84,24 @@ assert.ifError(rejected.error);assert.equal(rejected.count,0,"quote-only rejecti
 for(const row of results)console.log(JSON.stringify(row));
 assert.deepEqual(results.filter(r=>!r.ok),[],"API connectivity or authorization failure");
 console.log(JSON.stringify({routes:manifest.length,methods:manifest.reduce((n,r)=>n+r.methods.length,0),checks:results.length,status:"passed"}));
+
+// Bounded concurrent read smoke on the disposable stack only. No production traffic or writes.
+const readPaths=["/api/catalog?limit=24","/api/catalog/prices?limit=250","/api/catalog/offers?limit=250","/api/direct-orders","/api/orders"];
+for(const concurrency of [4,8]){
+ const jobs=Array.from({length:concurrency*3},(_,i)=>readPaths[i%readPaths.length]);
+ const times=[];let next=0;
+ const started=performance.now();
+ await Promise.all(Array.from({length:concurrency},async()=>{
+  while(next<jobs.length){
+   const path=jobs[next++],privateRead=path==="/api/direct-orders"||path==="/api/orders",t=performance.now();
+   const r=await fetch("http://127.0.0.1:3000"+path,{signal:AbortSignal.timeout(15000),redirect:"error",headers:{Accept:"application/json",...(privateRead?{Authorization:"Bearer "+customer}:{})}});
+   assert.equal(r.status,200,"concurrent "+path);
+   assert.match(r.headers.get("content-type")??"",/application\/json/);
+   if(privateRead)assert.match(r.headers.get("cache-control")??"",/no-store/);
+   const body=await r.json();assert.ok(body&&typeof body==="object");
+   times.push(performance.now()-t);
+  }
+ }));
+ times.sort((a,b)=>a-b);
+ console.log(JSON.stringify({scope:"local disposable read-load smoke, not production capacity",concurrency,requests:times.length,wallMs:Math.round(performance.now()-started),p50Ms:Math.round(times[Math.ceil(times.length*.5)-1]),p95Ms:Math.round(times[Math.ceil(times.length*.95)-1]),maxMs:Math.round(times.at(-1))}));
+}
