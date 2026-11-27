@@ -67,22 +67,27 @@ export function generateBuildingConcepts(b:BuildingBrief,limit=24):{plans:Buildi
   for(let f=0;f<b.floors;f++){
    add(f,"circulation","Common access spine",b.sideFt+left,b.frontFt,corridor,D);
    for(const [bank,x,w,count] of [[0,b.sideFt,left,leftUnits],[1,b.sideFt+left+corridor,right,rightUnits]] as const){
-    const coreDepth=10,toiletDepth=8,supportDepth=Math.max(10,D*.15),unitDepth=(D-coreDepth-toiletDepth-supportDepth)/Math.max(1,count);
+    // Actual recessed wing massing, not cosmetic colour variation. The central
+    // access spine remains continuous; no zone enters the requested margins.
+    const recess=Math.min(8,D*.06),recessWing=recipe%3!==0&&bank===Math.floor(recipe/2)%2;
+    const frontRecess=recessWing&&recipe%3===1?recess:0,rearRecess=recessWing&&recipe%3===2?recess:0;
+    const wingDepth=D-frontRecess-rearRecess;
+    const coreDepth=10,toiletDepth=8,supportDepth=Math.max(10,wingDepth*.15),unitDepth=(wingDepth-coreDepth-toiletDepth-supportDepth)/Math.max(1,count);
     if(unitDepth<=0)continue;
     const primary=Array.from({length:count},(_,i)=>({kind:"primary" as const,label:p.unit+" "+(bank===0?i+1:leftUnits+i+1),d:unitDepth}));
-    const support={kind:"support" as const,label:p.support[swapServices?1-bank:bank],d:supportDepth+(count===0?D-coreDepth-toiletDepth-supportDepth:0)};
+    const support={kind:"support" as const,label:p.support[swapServices?1-bank:bank],d:supportDepth+(count===0?wingDepth-coreDepth-toiletDepth-supportDepth:0)};
     const core={kind:"core" as const,label:"Vertical access / exit core reserve "+(bank+1),d:coreDepth};
     const toilet={kind:"toilet" as const,label:"Toilet / accessible WC reserve "+(bank+1),d:toiletDepth};
     const front=(bank===0)===coreFront;
     const segments=front?[core,...primary,support,toilet]:[support,toilet,...primary,core];
-    let y=b.frontFt;for(const s of segments){add(f,s.kind,s.label,x,y,w,s.d);y+=s.d;}
+    let y=b.frontFt+frontRecess;for(const s of segments){add(f,s.kind,s.label,x,y,w,s.d);y+=s.d;}
    }
   }
   if(b.parkingBays){for(let i=0;i<b.parkingBays;i++)add(0,"parking","Reserved bay "+(i+1),b.sideFt+i*9,0,9,18);}
   if(b.rearFt>0)add(0,"open",b.purpose==="school"?"Open play / assembly reserve":"Rear open / service reserve",b.sideFt,b.depthFt-b.rearFt,W,b.rearFt);
   const signature=JSON.stringify(zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort());
   if(seen.has(signature))continue;
-  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,recipe].join("-"),brief:b,zones,signature,layout:(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft concept spine",conceptOnly:true};
+  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,recipe].join("-"),brief:b,zones,signature,layout:(leftUnits===rightUnits?"Balanced":leftUnits>rightUnits?"Left-heavy":"Right-heavy")+" wings · "+corridor+" ft spine · "+(recipe%3===1?"front recess":recipe%3===2?"rear recess":"flush wings"),conceptOnly:true};
   if(validateBuildingConcept(c).length)continue;
   seen.add(signature);out.push(c);
  }
