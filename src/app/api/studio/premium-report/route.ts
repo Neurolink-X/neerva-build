@@ -1,7 +1,7 @@
 import {z} from "zod";
 import {planBriefSchema as brief} from "@/modules/studio/plan-brief-schema";
 import {requireAuth,apiFailed} from "@/modules/identity/server-auth";
-import {generateSpatialPortfolio} from "@/modules/studio/road-generator";
+import {portfolioForPlanId} from "@/modules/studio/road-generator";
 import {planMetrics,planGeometryDigest} from "@/modules/studio/plan-model";
 import {parseStudioConfig,permittedStudioReport} from "@/modules/studio/studio-config";
 export const runtime="nodejs";export const dynamic="force-dynamic";
@@ -42,7 +42,7 @@ export async function POST(req:Request){
   return Response.json({product:p.product,room:p.room,swatches:palette(p.base,p.accent),
    disclaimer:"Digital shades are approximate. Compare real manufacturer shade cards and lighting before purchase."},{headers:hdr});
  }
- const plans=generateSpatialPortfolio(p.brief,24).plans;
+ const plans=portfolioForPlanId(p.brief,p.planId??'').plans;
  const plan=plans[p.option];if(!plan||(p.planId&&plan.id!==p.planId))return fail(409,"The selected plan no longer fits this plot. Select a valid configuration.");
  if(p.geometryDigest&&p.geometryDigest!==await planGeometryDigest(plan))return fail(409,"Plan geometry changed. Reopen the selected layout before exporting.");
  const metrics=planMetrics(plan);
