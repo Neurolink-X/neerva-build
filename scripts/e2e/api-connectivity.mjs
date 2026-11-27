@@ -67,6 +67,13 @@ if(savedProjectId){
  const body=await detail.json();assert.equal(body.project.id,savedProjectId);assert.equal(body.project.plan.conceptOnly,true);
  assert.equal(body.project.plan.plot.widthFt,18);assert.equal(body.project.plan.floors,2);
 }
+// A feature intentionally disabled in this disposable environment must expose
+// explicit availability and still reject writes, not masquerade as an empty live store.
+const commercial=await fetch("http://127.0.0.1:3000/api/studio/commercial-projects",{headers:{Authorization:"Bearer "+customer},signal:AbortSignal.timeout(10000)});
+assert.equal(commercial.status,200);assert.match(commercial.headers.get("cache-control")??"",/private, no-store/);
+const availability=await commercial.json();
+assert.equal(availability.enabled,false);assert.deepEqual(availability.projects,[]);assert.equal(availability.reason,"storage_not_enabled");
+await check("/api/studio/commercial-projects","POST",customer,[503],"rollout_disabled");
 for(const row of results)console.log(JSON.stringify(row));
 assert.deepEqual(results.filter(r=>!r.ok),[],"API connectivity or authorization failure");
 console.log(JSON.stringify({routes:manifest.length,methods:manifest.reduce((n,r)=>n+r.methods.length,0),checks:results.length,status:"passed"}));
