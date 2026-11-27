@@ -1,3 +1,4 @@
+import {houseJourney} from "./house-journey.ts";
 import type {MaskCorner} from "./mask-editor.ts";
 import type {Pattern} from "./wall-patterns.ts";
 export type PhotoMask={outline:number[][];holes?:number[][][]};
@@ -72,6 +73,19 @@ export const facadeSamples=[
  {id:"villa",label:"Premium villa",description:"Modern facade with terraces",src:"/images/studio/house-2.webp",zones:villaZones},
  {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 photorealistic concept",src:"/images/studio/family/neerva-100gaj-photorealistic.webp",zones:compactFamilyZones}
 ] as const;
+// Exact 1200×600 source. Conservative flat plaster regions; timber, stone,
+ // railing, window glass, lamps, gates and foliage remain untouched.
+export const journeyFacadeZones=[
+ zone("roof","Roof plaster band",[[243,37],[575,51],[575,84],[243,72]],[],undefined,1200,600),
+ zone("right","Right facade frame",[[926,18],[1063,24],[1063,267],[1031,267],[1031,43],[926,37]],[],undefined,1200,600),
+ zone("left","Left upper column",rect(243,96,27,105),[],undefined,1200,600),
+ zone("upper-recess","Centre balcony column",rect(551,122,28,88),[],undefined,1200,600),
+ zone("balcony","Front balcony plaster",rect(239,265,614,41),[],undefined,1200,600),
+ zone("entry","Ground floor centre column",rect(551,315,28,70),[],undefined,1200,600),
+ zone("lower-recess","Ground floor right wall",rect(1030,324,28,78),[],undefined,1200,600),
+ zone("boundary","Left boundary plaster",rect(80,410,124,21),[],undefined,1200,600)
+] as const;
+export const journeyFacadeSamples=[{...facadeSamples[0],description:"Premium two-storey family residence",src:houseJourney.finished.src,zones:journeyFacadeZones},facadeSamples[1],facadeSamples[2],facadeSamples[3]] as const;
 export type FacadeSampleId=typeof facadeSamples[number]["id"];
 export type FacadeZone=typeof facadeZones[number];
 export type FacadeStyles=Partial<Record<Exclude<FacadeTarget,"all">,PaintStyle>>;
