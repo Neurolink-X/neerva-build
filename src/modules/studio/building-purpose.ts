@@ -188,9 +188,9 @@ function internalConcepts(b:BuildingBrief,limit:number){
  const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,plans:BuildingConcept[]=[],seen=new Set<string>();
  const candidates=generateBuildingConcepts(b,24,"purpose-led").plans;
  // Try each internal variant across the same envelope before changing it.
- for(const base of candidates)for(const variant of (b.purpose==="rental"?[2,0,1]:[0])){
-  const p:BuildingConcept={...base,id:base.id+"-internal-v1-"+variant,layout:b.purpose==="rental"?["Private passage","Rear living / entry","Living-first family flat"][variant]:"Shared lobby & service core"};
-  if(validateBuildingConcept(p).length||internalGeometryIssues(p).length)continue;
+ for(const base of candidates)for(const variant of [2,0]){
+  const p:BuildingConcept={...base,id:base.id+"-internal-v1-"+variant,layout:b.purpose==="rental"?["Private passage","Rear living / entry","Living-first family flat"][variant]:variant===2?"Shared service passage":"Independent service rooms"};
+  if(validateBuildingConcept(p).length)continue;
   const internal=commercialInternalSpaces(p).map(r=>[r.floor,r.kind,fmt(r.x),fmt(r.y),fmt(r.w),fmt(r.d)]).sort();
   p.signature=JSON.stringify([base.signature,internal]);if(seen.has(p.signature))continue;
   seen.add(p.signature);if(plans.length<max)plans.push(p);if(plans.length>=max)return {plans,blockers:[]};
