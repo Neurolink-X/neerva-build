@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {buildingStarter,generateBuildingConcepts,validateBuildingConcept,buildingPurposes} from "./building-purpose.ts";
-import {recommendBuildingConcepts,visibleInteriorSignature} from "./building-recommendations.ts";
+import {recommendBuildingConcepts,visibleInteriorSignature,commercialTopology} from "./building-recommendations.ts";
 import {roadEnvelopeChoices,envelopeFits,parsePlot} from "./irregular-plot.ts";
 import {commercialSaveSchema,rebuildCommercialSnapshot} from "./commercial-save.ts";
 import {defaultFinishScheme} from "./finish-model.ts";
@@ -46,4 +46,10 @@ test("commercial comparison matrix respects exact input, direction, parking and 
   assert.equal(r.options.length,Math.min(24,r.distinct));
   console.log("architecture-coverage "+JSON.stringify({kind:"commercial",purpose,roadSide,unique:r.distinct,shown:r.options.length,detailed:r.detailedCount}));
  }
+});
+
+test("commercial zoning groups are deterministic and independent of decorative names",()=>{
+ const p=generateBuildingConcepts(buildingStarter("shops"),24,"purpose-led").plans[0];assert.ok(p);
+ assert.equal(commercialTopology(p),commercialTopology({...p,id:"renamed",layout:"Renamed"}));
+ assert.equal(commercialTopology(p),commercialTopology({...p,zones:p.zones.map(z=>({...z,id:z.id+"-other",label:"Other"}))}));
 });

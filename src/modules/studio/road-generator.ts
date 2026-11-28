@@ -5,6 +5,7 @@ import {buildingWallCells} from "./geometry.ts";
 import {frontagePanels,frontageSignature} from "./frontage.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {residentialStairStudies} from "./stair-study.ts";
+import {architectureTopology,entranceArrangement} from "./architecture-profile.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;
@@ -221,12 +222,13 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  */
 function buildArchitecturalFamily(
  b:PlanBrief,variant:"parking-left"|"parking-right",
- family:"front-stair"|"front-bedroom",rearProgramme:SpatialProgramme
+ family:"front-stair"|"front-bedroom",rearProgramme:SpatialProgramme,variation=0
 ):PlanModel{
  if(!b.parking)throw new Error("Pedestrian variants are handled separately");
  const sb=houseEnvelope(b),U={x:sb.leftFt,y:sb.frontFt,
   w:b.widthFt-sb.leftFt-sb.rightFt,d:b.depthFt-sb.frontFt-sb.rearFt};
- const W=U.w,D=U.d,parkW=8.5;
+ const W=U.w,D=U.d,parkW=family==="front-stair"&&variation===2?9:8.5;
+ const stairW=variation===1?4.75:5,stairD=variation===1?9:variation===2?11:10;
  if(D<47||W<(family==="front-bedroom"?20:17.5)||b.bedrooms<b.floors||
     (b.floors===1&&b.bedrooms!==1))throw new Error("Footprint cannot fit this circulation family");
  const rooms:Room[]=[],openings:Opening[]=[];
@@ -236,9 +238,9 @@ function buildArchitecturalFamily(
   rearProgramme==="rear-baranda"?"verandah":"utility";
  add("parking","Car parking","parking",0,0,0,parkW,16);
  if(family==="front-stair"){
-  add("stairs-g","Street-side stair bay","stairs",0,parkW,0,5,10);
-  add("verandah","Front pedestrian verandah","verandah",0,parkW+5,0,W-parkW-5,10);
-  add("living","Living / drawing","living",0,parkW,10,W-parkW,16);
+  add("stairs-g","Street-side stair bay","stairs",0,parkW,0,stairW,stairD);
+  add("verandah","Front pedestrian verandah","verandah",0,parkW+stairW,0,W-parkW-stairW,stairD);
+  add("living","Living / drawing","living",0,parkW,stairD,W-parkW,26-stairD);
   add("kitchen","Kitchen","kitchen",0,0,16,parkW,10);
   add("dining","Dining / family hall","dining",0,parkW,26,W-parkW,8);
   add("bath-g","Bath / WC","bath",0,0,26,5,8);
@@ -248,11 +250,11 @@ function buildArchitecturalFamily(
   add("bed-g","Ground bedroom","bedroom",0,0,37,rearBed,D-37);
   add("utility-g",rearProgramme.replace(/-/g," "),"utility"===rearKind?"utility":rearKind,0,rearBed,37,W-rearBed,D-37);
   for(let level=1;level<b.floors;level++){
-   add("stairs-"+level,"Stairs / landing","stairs",level,parkW,0,5,10);
-   add("balcony-"+level,"Street balcony","balcony",level,parkW+5,0,W-parkW-5,10);
-   add("bath-"+level,"Bath / WC","bath",level,0,10,5,10);
-   add("corridor-"+level,"Bedroom corridor","corridor",level,5,10,parkW-5,10);
-   add("lounge-"+level,"Family landing","lounge",level,parkW,10,W-parkW,10);
+   add("stairs-"+level,"Stairs / landing","stairs",level,parkW,0,stairW,stairD);
+   add("balcony-"+level,"Street balcony","balcony",level,parkW+stairW,0,W-parkW-stairW,stairD);
+   add("bath-"+level,"Bath / WC","bath",level,0,stairD,5,20-stairD);
+   add("corridor-"+level,"Bedroom corridor","corridor",level,5,stairD,parkW-5,20-stairD);
+   add("lounge-"+level,"Family landing","lounge",level,parkW,stairD,W-parkW,20-stairD);
    const doubleBeds=level===1&&b.bedrooms>b.floors;
    if(doubleBeds){
     add("bed-"+level+"a","Bedroom "+(level+1),"bedroom",level,0,20,W/2,17);
@@ -314,7 +316,7 @@ function buildArchitecturalFamily(
  openings.push({id:"pedestrian-entry",roomId:porch.id,side:"front",
   atFt:round((porch.w-3)/2),widthFt:3,sillFt:0,heightFt:7,kind:"door"});
  const p:PlanModel={
-  version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,variant,family,rearProgramme,...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.kind,b.siteShape.notchWidthFt+"x"+b.siteShape.notchDepthFt]:[])].join("-"),
+  version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,variant,family,rearProgramme,...(variation?["bay-v2",variation]:[]),...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.kind,b.siteShape.notchWidthFt+"x"+b.siteShape.notchDepthFt]:[])].join("-"),
   variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},
   setbacks:{...sb,verified:false},walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},
   floors:b.floors,rooms,openings,gate:{side:"front",xFt:round(park.x+.25),widthFt:8},
@@ -520,7 +522,7 @@ function prioritizeSpatialDiversity(plans:PlanModel[]):PlanModel[]{
  * Smaller or awkward plots may return fewer than 24; no fake room or local-law
  * compliance is manufactured to hit a marketing number.
  */
-export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResult{
+export function generateSpatialPortfolio(brief:PlanBrief,limit=24,legacy=false):PlanningResult{
  // Bound all generator paths, including compact plans, for malformed caller input.
  limit=Number.isFinite(limit)?Math.max(1,Math.min(24,Math.floor(limit))):24;
  const blockers=explainImpossible(brief);
@@ -579,7 +581,20 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
    seen.add(signature);seenMeshes.add(mesh);ordered.push(p);
   }
  }
- return {plans:prioritizeSpatialDiversity(ordered).slice(0,normalized),
+ const original=prioritizeSpatialDiversity(ordered).slice(0,normalized);
+ if(!legacy&&normalized>1&&brief.parking&&brief.floors>1&&brief.bedrooms>=brief.floors){
+  // Add real aligned front stair bays, not relabelled rear stairs. Keep
+  // baseline options accessible by persisted ID via the legacy resolver.
+  for(const variant of ["parking-left","parking-right"] as const)for(const variation of [1,2])for(const programme of ["wash","rear-courtyard"] as const){
+   try{const p=buildArchitecturalFamily(brief,variant,"front-stair",programme,variation);
+    if(validateRequestedProgramme(p,brief).length)continue;
+    const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
+    if(!mesh||seen.has(signature)||seenMeshes.has(mesh))continue;
+    seen.add(signature);seenMeshes.add(mesh);ordered.push(p);
+   }catch{/* Invalid bay geometry remains excluded. */}
+  }
+ }
+ return {plans:legacy?original:prioritizeArchitecturalOptions(original,ordered,normalized),
   blockers:ordered.length?[]:["No validated distinct spatial layout fits these dimensions, rooms, parking and setbacks."]};
 }
 
@@ -620,5 +635,31 @@ export function generateStairReadyPortfolio(b:PlanBrief,limit=24):PlanningResult
  return {plans,blockers:plans.length?[]:["No dog-leg stair candidate fits the exact requested programme and door alignment. Try the standard concepts or review usable frontage with an architect."]};
 }
 export function portfolioForPlanId(b:PlanBrief,planId:string):PlanningResult{
- return /-stair-v1-[01]$/.test(planId)?generateStairReadyPortfolio(b,24):generateSpatialPortfolio(b,24);
+ if(/-stair-v1-[01]$/.test(planId))return generateStairReadyPortfolio(b,24);
+ const current=generateSpatialPortfolio(b,24);return current.plans.some(p=>p.id===planId)?current:generateSpatialPortfolio(b,24,true);
+}
+
+/** First show meaningful entrance/room-programme alternatives; dimensional
+ * variants remain selectable, with balanced parking sides when possible. */
+function prioritizeArchitecturalOptions(original:PlanModel[],pool:PlanModel[],limit:number){
+ if(original.length<2)return original;
+ const result=[original[0]],used=new Set([original[0].id]),topologies=new Set([architectureTopology(original[0])]);
+ const arrangementCounts=new Map<string,number>([[entranceArrangement(original[0]),1]]);
+ const sideCounts=new Map<string,number>([[original[0].variant,1]]);
+ const candidates=[...new Map([...original,...pool].map(p=>[p.id,p])).values()];
+ while(result.length<limit){
+  const side=result.length%2===1?(original[0].variant==="parking-left"?"parking-right":"parking-left"):original[0].variant;
+  const remaining=candidates.filter(p=>!used.has(p.id));
+  if(!remaining.length)break;
+  const sidePool=remaining.filter(p=>p.variant===side);
+  const eligible=sidePool.length?sidePool:remaining;
+  const score=(p:PlanModel)=>{
+   const arrangement=entranceArrangement(p),count=arrangementCounts.get(arrangement)??0;
+   return (count===0?100:arrangement==="front-stair"&&count<4?45:0)+(!topologies.has(architectureTopology(p))?20:0)+(original.some(o=>o.id===p.id)?1:0)-(sideCounts.get(p.variant)??0)*.01;
+  };
+  const next=eligible.reduce((a,b)=>score(b)>score(a)?b:a);
+  result.push(next);used.add(next.id);topologies.add(architectureTopology(next));
+  const k=entranceArrangement(next);arrangementCounts.set(k,(arrangementCounts.get(k)??0)+1);sideCounts.set(next.variant,(sideCounts.get(next.variant)??0)+1);
+ }
+ return result;
 }

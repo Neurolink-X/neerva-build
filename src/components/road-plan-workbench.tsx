@@ -13,6 +13,7 @@ import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
 import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {siteOutline} from "@/modules/studio/site-shape";
 import {frontageSignature} from "@/modules/studio/frontage";
+import {entranceArrangement,architectureTopology} from "@/modules/studio/architecture-profile";
 import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 import {PlanShortlist} from "./plan-shortlist";
@@ -38,6 +39,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const [stairReady,setStairReady]=useState(false);
  const result=useMemo(()=>stairReady?generateStairReadyPortfolio(brief,24):generateSpatialPortfolio(brief,24),[brief,stairReady]);
  const facadeGroups=useMemo(()=>{const groups=new Map<string,number>();return result.plans.map(p=>{const sig=frontageSignature(p);if(!groups.has(sig))groups.set(sig,groups.size+1);return groups.get(sig)!})},[result]);
+ const [entranceFilter,setEntranceFilter]=useState<"all"|ReturnType<typeof entranceArrangement>>("all");
+ const filtered=result.plans.map((p,i)=>({p,i})).filter(({p})=>entranceFilter==="all"||entranceArrangement(p)===entranceFilter);
  const activeOption=result.plans[chosen]?chosen:0;
  const draft=result.plans[activeOption]??null;
  const kit=kitOverride??draft?.facade.kit??"simple-parapet";
@@ -161,9 +164,10 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
        "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>}
     </section>:<>
      <p className="nroad-jump"><a href="#selected-plan-drawing">Jump to the selected exact 2D + 3D plan ↓</a></p>
-     <div className="nroad-head nroad-choices"><h2>{str("House layouts matching your requirements","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} distinct layouts · {new Set(facadeGroups).size} street-front geometries · {brief.bedrooms} BHK · {brief.floors} level(s)</span></div>
+     <div className="nroad-head nroad-choices"><h2>{str("House layouts matching your requirements","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} distinct layouts · {new Set(result.plans.map(architectureTopology)).size} room programmes · {new Set(facadeGroups).size} front geometries · {brief.bedrooms} BHK · {brief.floors} level(s)</span></div>
      <p className="nroad-small nroad-bhk-explanation">{str("BHK = bedrooms, hall (living room) and kitchen. "+brief.bedrooms+" BHK means "+brief.bedrooms+" bedrooms total across all selected floors, plus a living room and kitchen. B = bedroom, H = hall, K = kitchen, WC = bathroom, S = stairs.","BHK = बेडरूम, हॉल और किचन। चुनी गई सभी मंज़िलों में कुल "+brief.bedrooms+" बेडरूम, साथ में हॉल और किचन। B = बेडरूम, H = हॉल, K = किचन, WC = बाथरूम, S = सीढ़ी।")}</p>
-     <div className="nroad-variants" role="group" aria-label="Choose plan layout">{result.plans.map((v,i)=>{const {widthFt:w,depthFt:d,roadSide:side}=v.plot;const dim=siteDimensions(w,d,side),road=roadSegment(w,d,side);const boundary=siteOutline(w,d,v.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,side));return <button key={v.id} type="button" aria-pressed={v.id===plan.id} data-plan-id={v.id}
+     <label className="nroad-small">Entrance arrangement <select aria-label="Filter entrance arrangement" value={entranceFilter} onChange={e=>setEntranceFilter(e.target.value as typeof entranceFilter)}><option value="all">All layouts ({result.plans.length})</option>{(["front-stair","front-bedroom","front-verandah","pedestrian"] as const).map(k=>{const count=result.plans.filter(p=>entranceArrangement(p)===k).length;return <option key={k} value={k} disabled={!count}>{({ "front-stair":"Stairs beside parking","front-bedroom":"Bedroom beside parking","front-verandah":"Verandah / other entry","pedestrian":"Pedestrian only"} as const)[k]} ({count})</option>})}</select></label>{filtered.length===0&&<p role="status">No layout matches this entrance filter. Select All layouts.</p>}
+     <div className="nroad-variants" role="group" aria-label="Choose plan layout">{filtered.map(({p:v,i})=>{const {widthFt:w,depthFt:d,roadSide:side}=v.plot;const dim=siteDimensions(w,d,side),road=roadSegment(w,d,side);const boundary=siteOutline(w,d,v.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,side));return <button key={v.id} type="button" aria-pressed={v.id===plan.id} data-plan-id={v.id}
        onClick={()=>{setChosen(i);setKit(null);setSaveInfo("")}}><div className="nroad-mini-wrap">{Array.from({length:v.floors},(_,level)=><div key={level}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} role="img" aria-label={`Floor ${level+1} layout preview ${i+1}: ${w} by ${d} feet, road ${side}`}>
        <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#f7f5ec" stroke="#55765a" strokeWidth=".45"/>
        {v.rooms.filter(r=>r.floor===level).map(r=>{const box=roadRect(r,w,d,side),label=({parking:"P",verandah:"V",living:"H",dining:"D",kitchen:"K",bedroom:"B",bath:"WC",stairs:"S",corridor:"",utility:"U",lounge:"L",terrace:"T",balcony:""} as Record<string,string>)[r.kind]??"";return <g key={r.id}><rect x={box.x} y={box.y} width={box.w} height={box.d} fill={({parking:"#d4e6e0",verandah:"#fff3d9",living:"#e0ead9",dining:"#e8ebd7",kitchen:"#f0dfcc",bedroom:"#dce2f1",bath:"#c7e3f0",stairs:"#d4d4d4",corridor:"#f4efd9",utility:"#e5d5c4",lounge:"#d9e8cd",terrace:"#dce8df"} as Record<string,string>)[r.kind]??"#e7e4da"} stroke="#496452" strokeWidth=".18"/>{label&&<text x={box.x+box.w/2} y={box.y+box.d/2} dominantBaseline="central" textAnchor="middle" fontSize={Math.min(2,box.w/(label.length*.85),box.d*.55)} fill="#263e35" fontWeight="700">{label}</text>}</g>})}

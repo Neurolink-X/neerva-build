@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {generateSpatialPortfolio} from "./road-generator.ts";
+import {generateSpatialPortfolio,portfolioForPlanId} from "./road-generator.ts";
+import {entranceArrangement,architectureTopology} from "./architecture-profile.ts";
 import {validatePlan,type PlanBrief} from "./plan-model.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {buildingWallCells} from "./geometry.ts";
@@ -182,4 +183,12 @@ test("large 4–6 BHK requests preserve exact inputs and unique wall geometry",(
 test("small plot never silently downgrades requested 6 BHK",()=>{
  const {plans,blockers}=generateSpatialPortfolio({...standard,widthFt:18,depthFt:30,bedrooms:6});
  assert.equal(plans.length,0);assert.ok(blockers.length);
+});
+
+test("front stair alternatives are discoverable early and saved legacy layouts remain resolvable",()=>{
+ const {plans}=generateSpatialPortfolio(standard,24),legacy=generateSpatialPortfolio(standard,24,true).plans;
+ assert.equal(plans.length,24);assert.ok(plans.slice(0,6).some(p=>entranceArrangement(p)==="front-stair"));
+ assert.ok(new Set(plans.map(architectureTopology)).size>=2);
+ for(const p of plans)assert.deepEqual(validatePlan(p),[]);
+ for(const p of legacy){const restored=portfolioForPlanId(standard,p.id).plans.find(v=>v.id===p.id);assert.ok(restored,p.id);assert.equal(geometrySignature(restored),geometrySignature(p));}
 });

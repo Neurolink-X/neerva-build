@@ -25,22 +25,22 @@ function landscape(seed:number){
 }
 function inlay(seed:number){
  const cols=4+seed%3,rows=3+seed%2;
- return seq(cols*rows,i=>{const x=(i%cols+.5)/cols,y=(Math.floor(i/cols)+.5)/rows,r=.34/cols;
+ return seq(cols*rows,i=>{const x=(i%cols+.5)/cols,y=(Math.floor(i/cols)+.5)/rows,r=(.30+seed*.011)/cols;
  const shape=seed%3===0?blossom(x,y,r,8):seed%3===1?[petal([x-r,y+r],[x+r,y-r],r*.42,-.24),petal([x-r,y-r],[x+r,y+r],r*.33,.35)]:[arc(x,y,r,r*1.4,0,2*Math.PI,.85,1.4,-.34),arc(x,y,r*.7,r,0,2*Math.PI,.7,.8,.65)];
  return [...shape,oval(x,y,r*.08,r*.1,.9,.64),...seq(4,k=>{const a=k*Math.PI/2;return oval(x+Math.cos(a)*r*1.3,y+Math.sin(a)*r*1.6,r*.06,r*.08,.7,-.2)})];
  }).flat();
 }
 function panel(seed:number){
  const n=3+seed%3;
- return seq(n,i=>{const x=.025+i*.95/n,w=.95/n-.018,y=.07+(i%2)*(seed%2?.13:0),h=.86-(y-.07);
+ return seq(n,i=>{const x=.025+i*.95/n,w=.95/n-.012-seed*.0015,y=.06+seed*.004+(i%2)*(seed%2?.13:0),h=.86-(y-.07);
  return [rect(x+.012,y+.014,w,h,.36,-.7),rect(x,y,w,h,.63,-.18),box(x+.008,y+.008,w-.016,h-.016,.8,1.5,.65),box(x+.027,y+.034,w-.054,h-.068,.85,1.3,-.48),box(x+.039,y+.05,w-.078,h-.10,.6,.8,.42),...(seed%2?[arc(x+w/2,y+h*.39,w*.35,h*.24,Math.PI,2*Math.PI,.85,1.4,.6)]:seq(4,k=>stroke([[x+w*(k+1)/5,y+.07],[x+w*(k+1)/5,y+h-.07]],.38,.8,k%2?.45:-.4)))];
  }).flat();
 }
 function sculpt(seed:number){
- if(seed===0||seed===4)return seq(9,i=>{const x=i/9,w=1/9;return [rect(x,0,w,1,.78,-.36),...seq(8,j=>rect(x+j*w/8,0,w/8,1,.75,.58*Math.sin((j+.5)*Math.PI/8)-.28)),stroke([[x+w*.93,0],[x+w*.93,1]],.9,1,-.65)]}).flat();
+ if(seed===0||seed===4)return seq(seed===0?9:15,i=>{const count=seed===0?9:15,x=i/count,w=1/count;return [rect(x,0,w,1,.78,-.36),...seq(8,j=>rect(x+j*w/8,0,w/8,1,.75,.58*Math.sin((j+.5)*Math.PI/8)-.28)),stroke([[x+w*.93,0],[x+w*.93,1]],.9,1,-.65)]}).flat();
  if(seed===1||seed===5)return seq(8,i=>[ribbon(-.08,.06+i*.12,1.16,.19,(seed===1?i*.28:-i*.36),.85,-.46),ribbon(-.08,.038+i*.12,1.16,.15,(seed===1?i*.28:-i*.36),.93,.24),ribbon(-.08,.025+i*.12,1.16,.055,(seed===1?i*.28:-i*.36),.86,.65)]).flat();
  const cols=seed===2||seed===6?5:4,rows=seed===2||seed===6?3:4;
- return seq(cols*rows,i=>{const x=(i%cols)/cols,y=Math.floor(i/cols)/rows,w=1/cols,h=1/rows,c:P=[x+w*.5,y+h*.5];
+ return seq(cols*rows,i=>{const x=(i%cols)/cols,y=Math.floor(i/cols)/rows,w=1/cols,h=1/rows,c:P=[x+w*(seed>=6?.37:.5),y+h*(seed>=6?.62:.5)];
  return [fill([[x,y],[x+w,y],c],.92,.63),fill([[x+w,y],[x+w,y+h],c],.92,-.18),fill([[x+w,y+h],[x,y+h],c],.94,-.62),fill([[x,y+h],[x,y],c],.92,.13),box(x+.008,y+.008,w-.016,h-.016,.55,.7,.4),stroke([[x,y],c,[x+w,y+h]],.5,.7,seed%2?.5:-.5)];
  }).flat();
 }
