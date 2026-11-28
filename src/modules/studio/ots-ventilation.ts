@@ -74,7 +74,7 @@ function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):Pla
  const shape=p.plot.siteShape??{kind:"rectangle"} as const,sb=p.setbacks;
  const W=p.plot.widthFt-sb.rightFt,D=p.plot.depthFt-sb.rearFt;
  const seen=new Set<string>(),pool:{r:Rect;score:number}[]=[];
- for(const target of p.rooms.filter(wet))for(const [w,d] of sizes){
+ for(const target of p.rooms.filter(wet))for(const [w,d] of [...sizes,...(target.floor===0&&target.w>=3&&target.w<=9?[[target.w,3],[target.w,4]]:[]),...(target.floor===0&&target.d>=3&&target.d<=9?[[3,target.d],[4,target.d]]:[])]){
   const x=[target.x-w,target.x+target.w,target.x,target.x+target.w-w,target.x+(target.w-w)/2];
   const y=[target.y-d,target.y+target.d,target.y,target.y+target.d-d,target.y+(target.d-d)/2];
   for(const a of x)for(const b of y){
@@ -89,7 +89,7 @@ function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):Pla
  pool.sort((a,b)=>b.score-a.score||a.r.x-b.r.x||a.r.y-b.r.y||a.r.w-b.r.w||a.r.d-b.r.d);
  const before=interiorFitReport(p);
  let best:PlanModel|null=null,bestScore=-Infinity;
- for(const {r,score} of pool.slice(0,96)){
+ for(const {r,score} of pool.slice(0,replaceBlockedWindows?192:96)){
   const candidate=shaftCandidate(p,r,replaceBlockedWindows);if(!candidate)continue;
   const report=ventilationReport(candidate);
   const rank=report.rows.filter(q=>q.openings.some(o=>o.exposure==="ots")).length*100+report.score*30+score;

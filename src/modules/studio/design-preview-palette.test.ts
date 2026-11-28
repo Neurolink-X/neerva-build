@@ -1,0 +1,2 @@
+import test from "node:test";import assert from "node:assert/strict";import {designPreviewPalette} from "./design-preview-palette.ts";import {patternGroups} from "./wall-patterns.ts";
+test("artwork cards have intentionally different readable palettes",()=>{for(const keys of Object.values(patternGroups)){const pairs=keys.map(designPreviewPalette);assert.ok(new Set(pairs.map(p=>p.join())).size>=3);for(const [a,b] of pairs){assert.match(a,/^#[0-9a-f]{6}$/i);assert.match(b,/^#[0-9a-f]{6}$/i);assert.notEqual(a,b);}}});

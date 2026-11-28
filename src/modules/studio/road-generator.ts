@@ -88,7 +88,9 @@ function addWindow(p:Pick<PlanModel,"rooms"|"openings"|"plot"|"setbacks">){
  }
 }
 export type SpatialProgramme="wash"|"family-gallery"|"rear-courtyard"|"rear-baranda";
-type SpatialRecipe={reverseService?:boolean;reverseRear?:boolean;parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
+/** Road-relative depth, not compass coordinates or left/right mirror. */
+export function kitchenZone(p:PlanModel):"front"|"middle"|"rear"{const k=p.rooms.find(r=>r.kind==="kitchen"&&r.floor===0)??p.rooms.find(r=>r.kind==="kitchen");if(!k)return "middle";const t=(k.y+k.d/2-p.setbacks.frontFt)/(p.plot.depthFt-p.setbacks.frontFt-p.setbacks.rearFt);return t<1/3?"front":t>=2/3?"rear":"middle";}
+type SpatialRecipe={rearKitchen?:boolean;reverseService?:boolean;reverseRear?:boolean;parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
  rearBedWidthFt?:number;upperBedRatio?:number;rearProgramme?:SpatialProgramme;frontProgramme?:"dining"|"family-hall"|"family-lounge";familyLabel?:string;};
 function houseEnvelope(b:PlanBrief){
  const envelope=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
@@ -119,12 +121,12 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  put("living","Living / drawing","living",0,parkW,entryDepth,W-parkW,16-entryDepth);
  put("stairs-g","Stairs","stairs",0,0,16,stairW,10);
  put("dining",recipe.frontProgramme==="family-hall"?"Family hall / meeting space":recipe.frontProgramme==="family-lounge"?"Family lounge / drawing":"Dining / family hall",recipe.frontProgramme==="family-hall"?"living":recipe.frontProgramme==="family-lounge"?"lounge":"dining",0,stairW,16,W-stairW,10);
- put("kitchen","Kitchen","kitchen",0,0,26,kitchenW,8);
+ put("kitchen",recipe.rearKitchen?"Mid-house utility / wash":"Kitchen",recipe.rearKitchen?"utility":"kitchen",0,0,26,kitchenW,8);
  put("bath-g","Bath / WC","bath",0,kitchenW,26,bathW,8);
  put("corridor-g","Passage","corridor",0,kitchenW+bathW,26,W-kitchenW-bathW,8);
  put("hall-g","Rear access hall","corridor",0,0,34,W,3);
  put("bed-g","Bedroom 1","bedroom",0,0,37,rearBedW,D-37);
- put(twinRear?"bed-g2":"utility-g",twinRear?"Bedroom 2":rearLabel,twinRear?"bedroom":rearKind,0,rearBedW,37,W-rearBedW,D-37);
+ put(twinRear?"bed-g2":"utility-g",twinRear?"Bedroom 2":recipe.rearKitchen?"Rear kitchen":rearLabel,twinRear?"bedroom":recipe.rearKitchen?"kitchen":rearKind,0,rearBedW,37,W-rearBedW,D-37);
  for(let level=1;level<b.floors;level++){
   const upper=b.bedrooms<b.floors?(level<b.bedrooms?1:0):b.bedrooms-b.floors+1;
   put(`balcony-${level}`,"Street balcony","balcony",level,0,0,W,4);
@@ -777,6 +779,16 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24,legacy=false):
   }
  }
  const original=prioritizeSpatialDiversity(ordered).slice(0,normalized);
+ if(!legacy&&normalized>1&&!(brief.floors===1&&brief.bedrooms===2)){
+  // Dedicated rear kitchen: actual rear room use, independently sized sleeping wing and service partition, never a label-only variant.
+  for(const variant of ["parking-left","parking-right"] as const)for(const delta of [0,.25,.5,.75]){
+   try{const p=build(brief,variant,{rearKitchen:true,rearBedWidthFt:Math.max(8,Math.min(W-6.25,11-delta)),kitchenWidthFt:8.5+delta*.25,entryDepthFt:4.75+delta*.25,frontProgramme:"dining",rearProgramme:"wash",familyLabel:"rear-kitchen-v1-"+delta});
+    if(kitchenZone(p)!=="rear"||validateRequestedProgramme(p,brief).length)continue;
+    const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
+    if(!mesh||seen.has(signature)||seenMeshes.has(mesh))continue;seen.add(signature);seenMeshes.add(mesh);ordered.push(p);
+   }catch{/* No rear kitchen is offered unless it fits the requested brief. */}
+  }
+ }
  if(!legacy&&normalized>1&&brief.floors>1&&brief.bedrooms>=brief.floors){
   // Add real aligned front stair bays, not relabelled rear stairs. Keep
   // baseline options accessible by persisted ID via the legacy resolver.
@@ -846,6 +858,7 @@ function prioritizeArchitecturalOptions(original:PlanModel[],pool:PlanModel[],li
  const sideCounts=new Map<string,number>([[original[0].variant,1]]);
  const candidates=[...new Map([...original,...pool].map(p=>[p.id,p])).values()];
  const profiles=new Map(candidates.map(p=>[p.id,{topology:architectureTopology(p),front:frontageComposition(p),arrangement:entranceArrangement(p)}]));
+ const kitchenZones=new Set([kitchenZone(original[0])]);
  const fronts=new Set([profiles.get(original[0].id)!.front]),baseline=new Set(original.map(p=>p.id));
  while(result.length<limit){
   const side=result.length%2===1?(original[0].variant==="parking-left"?"parking-right":"parking-left"):original[0].variant;
@@ -855,10 +868,10 @@ function prioritizeArchitecturalOptions(original:PlanModel[],pool:PlanModel[],li
   const eligible=sidePool.length?sidePool:remaining;
   const score=(p:PlanModel)=>{
    const profile=profiles.get(p.id)!,arrangement=profile.arrangement,count=arrangementCounts.get(arrangement)??0;
-   return (count===0?100:arrangement==="front-bedroom"&&count<2?65:arrangement==="front-stair"&&count<4?45:0)+(!topologies.has(profile.topology)?30:0)+(!fronts.has(profile.front)?15:0)+(baseline.has(p.id)?1:0)-(sideCounts.get(p.variant)??0)*.01;
+   return (!kitchenZones.has(kitchenZone(p))?85:0)+(count===0?100:arrangement==="front-bedroom"&&count<2?65:arrangement==="front-stair"&&count<4?45:0)+(!topologies.has(profile.topology)?30:0)+(!fronts.has(profile.front)?15:0)+(baseline.has(p.id)?1:0)-(sideCounts.get(p.variant)??0)*.01;
   };
   const next=eligible.reduce((a,b)=>score(b)>score(a)?b:a);
-  result.push(next);used.add(next.id);topologies.add(profiles.get(next.id)!.topology);fronts.add(profiles.get(next.id)!.front);
+  result.push(next);kitchenZones.add(kitchenZone(next));used.add(next.id);topologies.add(profiles.get(next.id)!.topology);fronts.add(profiles.get(next.id)!.front);
   const k=entranceArrangement(next);arrangementCounts.set(k,(arrangementCounts.get(k)??0)+1);sideCounts.set(next.variant,(sideCounts.get(next.variant)??0)+1);
  }
  return result;

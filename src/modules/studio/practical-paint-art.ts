@@ -39,12 +39,12 @@ export function practicalPaintShade(key:Key,x:number,y:number){
  case "steppedColourBlock":{const a=x+.33*y,b=y-.12*Math.floor(x*4);v=b>.52?.35:a>.67?.58:.44;v+=wash;v=Math.max(v,.34+.42*g((b-.52)/.008),.34+.40*g((a-.67)/.006));break;}
  case "modernRibbons":{const t=y-.30-.23*Math.sin(x*4.7+.4),u=y-.76+.18*Math.cos(x*4);v=.33+wash+.28*g(t/.11)+.18*g(u/.13)+.025*Math.cos(t*190+x*13)*g(t/.12);v=Math.max(v,.33+.49*g((t-.085)/.007),.33+.45*g((u+.09)/.007));break;}
  case "offsetCircles":{const a=Math.hypot((x-.27)*1.5,y-.40),b=Math.hypot((x-.74)*1.5,y-.57),d=x+.64*y;v=.33+wash+(a<.39?.17:0)+(b<.36?.13:0);v=Math.max(v,.34+.48*g((a-.39)/.007),.34+.44*g((b-.36)/.007),.34+.39*g((d-.79)/.006));break;}
- case "facets":{const a=x+.75*y,b=x-.85*y,r=Math.hypot((x-.67)*1.5,y-.49);v=(a<.62?.34:b>.28?.57:.43)+wash;if(r<.36)v+=.08;v=Math.max(v,.33+.49*g((a-.62)/.006),.33+.47*g((b-.28)/.006),.33+.48*g((r-.36)/.007),.33+.39*g((x-.78)/.004));break;}
+ case "facets":{const a=x+.75*y,b=x-.85*y,r=Math.hypot((x-.67)*1.5,y-.49);v=(a<.62?.28:b>.28?.65:.40)+wash;if(r<.36)v+=.12;v=Math.max(v,.32+.55*g((a-.62)/.006),.32+.52*g((b-.28)/.006),.32+.54*g((r-.36)/.007),.32+.45*g((x-.78)/.004));v+=.035*Math.sin(x*180+y*65)*g((a-.62)/.12);break;}
  case "grid":{v=.35+wash;for(const [cx,cy,w,h] of [[.22,.29,.38,.49],[.62,.57,.49,.65],[.82,.23,.25,.37]])v=Math.max(v,.34+.48*g(rectLine(x,y,cx,cy,w,h)/.005));v+=.035*g((x-.48)/.23);break;}
  case "diagonal":{const t=x+.72*y;v=.35+wash+.21*g((t-.47)/.11)+.25*g((t-1.18)/.12);v=Math.max(v,.34+.48*g((t-.36)/.006),.34+.45*g((t-.59)/.006),.34+.46*g((t-1.30)/.006));break;}
  case "panels":{v=.35+wash;for(const [cx,w,h] of [[.22,.32,.76],[.67,.47,.61],[.84,.19,.85]])v=Math.max(v,.33+.48*g(rectLine(x,y,cx,.49,w,h)/.005));break;}
  case "bands":{v=.35+.18*g((x-.28)/.20)+.13*g((x-.75)/.17)+wash;for(const a of [.13,.16,.19,.70,.73,.76])v=Math.max(v,.33+.42*g((x-a)/.004));break;}
- case "herringbone":{const t=y-.65*Math.abs(x-.5);v=.35+wash+.055*Math.cos(t*10);for(let i=-2;i<6;i++)v=Math.max(v,.34+.46*g((t-i*.21)/.006));break;}
+ case "herringbone":{const t=y-.65*Math.abs(x-.5);v=.32+wash;for(let i=-2;i<7;i++){const band=t-i*.18;v=Math.max(v,.32+.50*g(band/.006),.32+.27*g((band-.034)/.012));}break;}
  case "hexGrid":
  case "angularWeave":{const cube=key==="angularWeave",r=cube?.114:.092,xx=x*1.5,yy=y,row=Math.round(yy/(1.5*r));v=.34+wash;let dist=1;for(let j=row-1;j<=row+1;j++){const cy=j*1.5*r,step=Math.sqrt(3)*r,cx0=(j%2)*step/2,col=Math.round((xx-cx0)/step);for(let i=col-1;i<=col+1;i++){const cx=cx0+i*step,dx=Math.abs(xx-cx),dy=Math.abs(yy-cy);dist=Math.min(dist,Math.abs(Math.max(dx*Math.sqrt(3)/2+dy*.5,dy)-r));if(cube&&dx<step*.50&&dy<r)dist=Math.min(dist,line(xx,yy,cx,cy,cx,cy+r),line(xx,yy,cx,cy,cx-step/2,cy-r/2),line(xx,yy,cx,cy,cx+step/2,cy-r/2));}}v=Math.max(v,.33+.47*g(dist/.0045));break;}
  case "sculptDiamond":{const fold=x+.18*Math.sin(y*4);v=.48+.25*Math.sin(fold*19)+.08*Math.sin(fold*38+.5);break;}
