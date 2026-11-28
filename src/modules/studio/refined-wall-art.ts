@@ -34,11 +34,11 @@ function arch(x:number,w:number,top:number,bottom:number){const r=w/2,cy=top+r*1
 function panels(arched:boolean,ornament:boolean){return [...[[.035,.23],[.285,.43],[.735,.23]].flatMap(([x,w])=>arched?[fill(arch(x+w/2,w,.075,.94),-.16,.76),line(arch(x+w/2,w-.02,.095,.925),.62,1.3),line(arch(x+w/2,w-.05,.135,.91),-.46,.8)]:frame(x,.06,w,.86)),...(ornament?vine([.34,.78],[.44,.61],[.56,.46],[.67,.25],false):[])];}
 function spiral(){return seq(180,i=>{const t=i/179,a=i*2.399963,r=.29*Math.sqrt(t);return ellipse(.5+r*Math.cos(a),.42+r*1.5*Math.sin(a),.003+t*.011,.004+t*.016,.12+t*.42);});}
 /** Original layered pigment studies, not copied wallpaper or physical relief. */
-export const refinedArtwork:Partial<Record<string,Motif[]>>={
- orbit:spiral(),riverSunset:river(),lotusPond:lotus(),flyingBirds:[ellipse(.73,.24,.12,.18,.45),...seq(9,i=>bird(.16+i*.084,.31+(i%3)*.09,.023+(i%4)*.008)),ridge(.76,.07,2,-.12),ridge(.88,.04,-1,-.34)],
- gardenTree:[...vine([.05,1],[.08,.65],[.42,.54],[.78,.14],true),...vine([.20,.75],[.26,.42],[.43,.26],[.49,.10],false),...vine([.33,.58],[.50,.52],[.65,.45],[.91,.30],true)],
- floralScroll:[...vine([.04,.94],[.15,.53],[.61,.44],[.94,.12],true),...vine([.10,.73],[.22,.47],[.26,.22],[.39,.12],true)],
- blossomBranch:[...vine([.01,.21],[.30,.32],[.46,.32],[.84,.18],true),...vine([.23,.29],[.40,.48],[.52,.58],[.76,.64],true),...flower(.86,.30,.06,5)],
- forest:forest(),aurora:wave(2),sculptWave:wave(0),sculptRibbon:wave(1),sculptFold:petals(),sculptStone:stone(),
- atelierPanel:panels(false,true),regencyPanel:panels(true,false),grandSalon:panels(false,false),archGallery:panels(true,true)
+export const refinedArtwork:Partial<Record<string,()=>Motif[]>>={
+ orbit:()=>spiral(),riverSunset:()=>river(),lotusPond:()=>lotus(),flyingBirds:()=>[ellipse(.73,.24,.12,.18,.45),...seq(9,i=>bird(.16+i*.084,.31+(i%3)*.09,.023+(i%4)*.008)),ridge(.76,.07,2,-.12),ridge(.88,.04,-1,-.34)],
+ gardenTree:()=>[...vine([.05,1],[.08,.65],[.42,.54],[.78,.14],true),...vine([.20,.75],[.26,.42],[.43,.26],[.49,.10],false),...vine([.33,.58],[.50,.52],[.65,.45],[.91,.30],true)],
+ floralScroll:()=>[...vine([.04,.94],[.15,.53],[.61,.44],[.94,.12],true),...vine([.10,.73],[.22,.47],[.26,.22],[.39,.12],true)],
+ blossomBranch:()=>[...vine([.01,.21],[.30,.32],[.46,.32],[.84,.18],true),...vine([.23,.29],[.40,.48],[.52,.58],[.76,.64],true),...flower(.86,.30,.06,5)],
+ forest:()=>forest(),aurora:()=>wave(2),sculptWave:()=>wave(0),sculptRibbon:()=>wave(1),sculptFold:()=>petals(),sculptStone:()=>stone(),
+ atelierPanel:()=>panels(false,true),regencyPanel:()=>panels(true,false),grandSalon:()=>panels(false,false),archGallery:()=>panels(true,true)
 };

@@ -10,11 +10,12 @@ import {isSurfaceProfile} from "@/modules/studio/surface-texture";
 import {surfaceCanvas,StudioSurfaceSwatch} from "./studio-surface-swatch";
 import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide";
 import {artworkFrame} from "@/modules/studio/wall-design-layout";
+import {shadeArtworkPixels} from "@/modules/studio/artwork-lighting";
 import {colourPairings} from "@/modules/studio/colour-families";
 import {facadeSamples,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
 type Wall={mask?:PhotoMask;points:MaskCorner[];colour:string;accent:string;pattern:Pattern;opacity?:number};
-function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinted?:HTMLCanvasElement,patternSurface?:HTMLCanvasElement,accentTint?:HTMLCanvasElement){
+function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinted?:HTMLCanvasElement,patternSurface?:HTMLCanvasElement,accentTint?:HTMLCanvasElement,sourceLuma?:Uint8Array|null){
  const corners=wall.points.map(p=>({x:p.x*w,y:p.y*h}));
  ctx.save();
  if(wall.mask){
@@ -34,15 +35,14 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
  if(wall.pattern!=="plain"){
   if(corners.length!==4){ctx.restore();return;}
   const [a,b,c,d]=corners;
-  const fitted=artworkFrame(corners,isFeatureWall(wall.pattern));
-  const frame=wall.mask===roomMask&&isFeatureWall(wall.pattern)?{...fitted,v:0,h:Math.min(fitted.h,.70)}:fitted;
+  const frame=artworkFrame(corners,isFeatureWall(wall.pattern),wall.mask===roomMask?.70:1);
   const at=(x:number,y:number)=>{const u=frame.u+x*frame.w,v=frame.v+y*frame.h;return {
    x:(1-v)*(a.x+(b.x-a.x)*u)+v*(d.x+(c.x-d.x)*u),
    y:(1-v)*(a.y+(b.y-a.y)*u)+v*(d.y+(c.y-d.y)*u)
   };};
   // Mask an accent tint with the motif: the design inherits the same photographic
   // highlights and shadows as the base paint. One reusable scratch canvas, only for patterns.
-  const layer=patternSurface&&accentTint?patternSurface.getContext("2d"):null;
+  const layer=patternSurface&&accentTint?patternSurface.getContext("2d",{willReadFrequently:true}):null;
   if(layer&&patternSurface){if(patternSurface.width!==w)patternSurface.width=w;if(patternSurface.height!==h)patternSurface.height=h;layer.clearRect(0,0,w,h);}
   const brush=layer??ctx;brush.save();
   brush.globalCompositeOperation="source-over";brush.globalAlpha=wall.opacity??.78;
@@ -54,24 +54,23 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
    brush.save();brush.beginPath();corners.forEach((p,i)=>i?brush.lineTo(p.x,p.y):brush.moveTo(p.x,p.y));brush.closePath();brush.clip();
    brush.globalAlpha=wall.opacity??.78;brush.drawImage(tile,left,top,right-left,bottom-top);brush.restore();
   }else{  for(const motif of artworkMotifs(wall.pattern)){
-   brush.globalAlpha=(wall.opacity??.78)*(motif.alpha??1);brush.lineWidth=weight*(motif.weight??1);brush.beginPath();
+   brush.globalAlpha=layer?(motif.alpha??1):(wall.opacity??.78)*(motif.alpha??1);brush.strokeStyle=brush.fillStyle=artworkShade(wall.accent,motifTone(motif));brush.lineWidth=weight*(motif.weight??1);brush.beginPath();
    motif.points.forEach(([u,v],i)=>{const p=at(u,v);if(i===0)brush.moveTo(p.x,p.y);else brush.lineTo(p.x,p.y)});
    if(motif.filled){brush.closePath();brush.fill()}else brush.stroke();
   }
   }
-  if(layer&&patternSurface&&accentTint){brush.globalCompositeOperation="source-in";brush.globalAlpha=1;brush.drawImage(accentTint,0,0,w,h);}
+  if(layer&&patternSurface&&accentTint){
+   if(tile){brush.globalCompositeOperation="source-in";brush.globalAlpha=1;brush.drawImage(accentTint,0,0,w,h);}
+   else if(sourceLuma?.length===w*h){
+    // Apply the original photo luminance once to the finished artwork. Bound
+    // readback to the selected wall; leave transparent/protected pixels intact.
+    const left=Math.max(0,Math.floor(Math.min(...corners.map(p=>p.x)))),top=Math.max(0,Math.floor(Math.min(...corners.map(p=>p.y))));
+    const right=Math.min(w,Math.ceil(Math.max(...corners.map(p=>p.x)))),bottom=Math.min(h,Math.ceil(Math.max(...corners.map(p=>p.y))));
+    if(right>left&&bottom>top){const pixels=layer.getImageData(left,top,right-left,bottom-top);shadeArtworkPixels(pixels.data,sourceLuma,w,left,top,pixels.width);layer.putImageData(pixels,left,top);}
+   }
+  }
   brush.restore();
-  if(layer&&patternSurface){ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;ctx.drawImage(patternSurface,0,0,w,h);}
-  // A second clipped pass restores directional light/dark pigment values.
-  // Screen/multiply preserve the source photo's luminance and existing masking.
-  if(!tile){ctx.lineCap="round";ctx.lineJoin="round";for(const motif of artworkMotifs(wall.pattern)){
-   const tone=motifTone(motif);if(!tone)continue;
-   ctx.globalCompositeOperation=tone<0?"multiply":"screen";
-   ctx.strokeStyle=ctx.fillStyle=tone<0?"#000000":"#ffffff";
-   ctx.globalAlpha=Math.abs(tone)*(wall.opacity??.78)*(motif.alpha??1);ctx.lineWidth=weight*(motif.weight??1);
-   ctx.beginPath();motif.points.forEach(([u,v],i)=>{const p=at(u,v);if(i===0)ctx.moveTo(p.x,p.y);else ctx.lineTo(p.x,p.y)});
-   if(motif.filled){ctx.closePath();ctx.fill()}else ctx.stroke();
-  }}
+  if(layer&&patternSurface){ctx.globalCompositeOperation="source-over";ctx.globalAlpha=tile?1:wall.opacity??.78;ctx.drawImage(patternSurface,0,0,w,h);}
 
  }
  ctx.restore();
@@ -136,7 +135,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    const tinted=tint(wall.colour);
    if(wall.pattern==="plain"){drawWall(ctx!,wall,w,h,tinted);return;}
    const accentTint=tint(wall.accent);patternScratch.current??=document.createElement("canvas");
-   drawWall(ctx!,wall,w,h,tinted,patternScratch.current,accentTint);
+   drawWall(ctx!,wall,w,h,tinted,patternScratch.current,accentTint,sourceLuma.current);
   }
   if(!originalVisible){
    if(scene==="facade"){
@@ -272,7 +271,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><details className="paint-more"><summary>Curated colour combinations</summary><div className="paint-pairings">{colourPairings.map(pair=><button key={pair.id} type="button" aria-pressed={base===pair.base&&accent===pair.accent} onClick={()=>{if(onColourChange){onColourChange(pair.base);setOverride(null)}else setOverride({source:colour,value:pair.base});setAccent(pair.accent);setShowOriginal(false)}}><span aria-hidden="true"><i style={{background:pair.base}}/><i style={{background:pair.accent}}/></span>{pair.label}</button>)}</div><small>Digital base and pattern colours, not physical shade samples.</small></details><h3 className="paint-pattern-title">Wall Design Collections</h3><p className="paint-design-hint">Choose one feature-wall design. Furniture and openings stay protected in sample photos.</p><div className="paint-pattern-groups" role="group" aria-label="Design collections">{(Object.keys(patternGroups) as PatternGroup[]).map(group=><button type="button" key={group} aria-pressed={patternGroup===group} onClick={()=>setPatternGroup(group)}>{group}</button>)}</div><div className="paint-collection-intro"><strong>{collectionGuide[patternGroup].title}</strong><p>{collectionGuide[patternGroup].description}</p></div><p className="paint-pattern-current" role="status">Selected: {finishes[pattern].name}{isRetiredPattern(pattern)?" · previous design preserved":""}</p><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
    {([...(patternGroups[patternGroup] as readonly Pattern[]),...(isRetiredPattern(pattern)&&patternGroup===groupForPattern(pattern)?[pattern]:[])]).map(key=><button type="button" key={key} aria-pressed={pattern===key} onClick={()=>{setPattern(key);setShowOriginal(false)}}>
     {isSurfaceProfile(key)?<StudioSurfaceSwatch profile={key} base={base} accent={accent} intensity={opacity}/>:<svg viewBox="0 0 150 100" aria-hidden="true" style={{background:base}}>
-     {artworkMotifs(key).map((motif,i)=><polyline key={i} points={motif.points.map(([x,y])=>[x*150,y*100].join(",")).join(" ")} fill={motif.filled?artworkShade(accent,motifTone(motif)):"none"} stroke={motif.filled?"none":artworkShade(accent,motifTone(motif))} opacity={(motif.alpha??1)*opacity} strokeWidth={.9*(motif.weight??1)} strokeLinecap="round" strokeLinejoin="round"/>)}
+     <g opacity={opacity}>{artworkMotifs(key).map((motif,i)=><polyline key={i} points={motif.points.map(([x,y])=>[x*150,y*100].join(",")).join(" ")} fill={motif.filled?artworkShade(accent,motifTone(motif)):"none"} stroke={motif.filled?"none":artworkShade(accent,motifTone(motif))} opacity={motif.alpha??1} strokeWidth={.9*(motif.weight??1)} strokeLinecap="round" strokeLinejoin="round"/>)}</g>
     </svg>}<span>{finishes[key].name}</span>
    </button>)}
   </div><p className="paint-collection-tip">{collectionGuide[patternGroup].tip}</p><label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
