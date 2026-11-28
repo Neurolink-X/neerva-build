@@ -8,7 +8,10 @@ let revision=0;
 export function invalidatePublicFeeds(){revision++;for(const entry of entries.values())entry.controller?.abort();entries.clear();}
 export function loadPublicFeed(kind:Feed,category?:string):Promise<unknown>{
  const key=kind+":"+(category??"all");
- const now=Date.now(),existing=entries.get(key);
+ const now=Date.now();
+ // Drop expired settled entries on subsequent reads; never evict active work.
+ for(const [k,v] of entries)if(!v.pending&&now-v.at>=10000)entries.delete(k);
+ const existing=entries.get(key);
  if(existing?.revision===revision){
   if(existing.pending)return existing.pending;
   if(existing.data!==undefined&&now-existing.at<10000)return Promise.resolve(existing.data);
@@ -26,6 +29,7 @@ export function loadPublicFeed(kind:Feed,category?:string):Promise<unknown>{
    const value=await r.json();
    if(!value||!Array.isArray(value[kind])||value[kind].length>FEED_PAGE_SIZE)throw Error("Invalid "+kind+" response");
    if(entry.revision!==revision)throw Error("Public feed was revised");
+   if(controller.signal.aborted)throw Error("Public feed deadline exceeded");
    if(category&&value[kind].some((row:unknown)=>!row||typeof row!=="object"||(row as {category?:unknown}).category!==category))throw Error("Public feed returned another category");
    rows.push(...value[kind]);
    if(value.nextCursor==null){
