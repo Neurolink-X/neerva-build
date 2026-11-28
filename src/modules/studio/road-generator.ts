@@ -414,7 +414,7 @@ function compactPedestrianPlans(b:PlanBrief,limit:number,legacy=false):PlanningR
 /** Never display a valid geometry that silently changes the customer's room programme. */
 
 // A wider access-spine family for larger homes. No candidate bypasses the PlanModel validator.
-function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
+function widePortfolio(b:PlanBrief,limit:number,frontCore=false):PlanModel[]{
  const base=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
  const aw=b.widthFt-base.leftFt-base.rightFt,ad=b.depthFt-base.frontFt-base.rearFt;
  if(aw<26||ad<40)return [];
@@ -436,11 +436,13 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
   }
   for(let floor=0;floor<b.floors;floor++){
    const hall="wide-hall-"+floor;
-   add(hall,"Access passage","corridor",floor,left,floor===0?16:0,spine,D-(floor===0?16:0));
+   const hallStart=frontCore?10:floor===0?16:0;
+   add(hall,"Access passage","corridor",floor,left,hallStart,spine,D-hallStart);
    if(floor===0){
     add("wide-front",b.parking?"Car parking":"Front garden",b.parking?"parking":"terrace",0,0,0,left,16);
-    add("wide-entry","Front verandah","verandah",0,left,0,W-left,entryDepth);
-    add("wide-living","Living room","living",0,left,entryDepth,W-left,16-entryDepth);
+    const entryX=frontCore?left+spine:left,entryW=frontCore?right:W-left;
+    add("wide-entry","Front verandah","verandah",0,entryX,0,entryW,entryDepth);
+    add("wide-living","Living room","living",0,entryX,entryDepth,entryW,16-entryDepth);
     joins.push(["wide-entry","wide-living"],["wide-living",hall]);
     add("wide-kitchen","Kitchen","kitchen",0,left+spine,16,right,kitchenDepth);
     add("wide-bath-0","Bath / WC","bath",0,left+spine,16+kitchenDepth,right,6);
@@ -452,8 +454,9 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
     slot(floor,left+spine,24,right,D-24,"right-rear");
    }
    const stair="wide-stair-"+floor;
-   add(stair,"Stairs / landing","stairs",floor,0,16,left,stairDepth);joins.push([hall,stair]);
-   slot(floor,0,16+stairDepth,left,D-16-stairDepth,"left-rear");
+   add(stair,frontCore?"Street-side stair bay":"Stairs / landing","stairs",floor,frontCore?left:0,frontCore?0:16,frontCore?spine:left,frontCore?10:stairDepth);joins.push([hall,stair]);
+   const leftRear=frontCore?16:16+stairDepth;
+   slot(floor,0,leftRear,left,D-leftRear,"left-rear");
   }
   const order=slots.filter(s=>s.capacity>0).sort((a,z)=>{
    const mode=Math.floor(recipe/4)%4;
@@ -477,7 +480,7 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
   try{
    for(const [a,z] of joins)connect(rooms,openings,a,z);
    openings.push({id:"wide-entry-door",roomId:entry.id,side:"front",atFt:round((entry.w-3)/2),widthFt:3,sillFt:0,heightFt:7,kind:"door"});
-   const p:PlanModel={version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,b.parking?"car":"garden",b.siteShape?.kind??"rectangle",...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.notchWidthFt,b.siteShape.notchDepthFt]:[]),"wide",recipe].join("-"),variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},setbacks:sb,walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},floors:b.floors,rooms,openings,gate:{side:"front",xFt:round(park.x+.25),widthFt:b.parking?8:0},pedestrianGate:{side:"front",xFt:round(entry.x+(entry.w-3)/2),widthFt:3},parking:b.parking?{roomId:park.id,clearWidthFt:park.w,clearDepthFt:park.d}:null,stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),note:"Concept stairs; tread, headroom and fire safety unverified."},balcony:null,facade:{kit:recipe%3===0?"stepped-band":recipe%3===1?"jali-screen":"simple-parapet",massing:"box",main:"#e9e2d4",accent:"#8e755b"},score:80,notes:["Wide circulation layout · "+(mirror?"right":"left")+" entry court","City rules, setbacks, structural design, stairs, parking and ventilation require professional review.","Open areas are intentionally unbuilt; not a certified floor plan."],conceptOnly:true};
+   const p:PlanModel={version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,b.parking?"car":"garden",b.siteShape?.kind??"rectangle",...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.notchWidthFt,b.siteShape.notchDepthFt]:[]),"wide",recipe,...(frontCore?["front-core-v1"]:[])].join("-"),variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},setbacks:sb,walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},floors:b.floors,rooms,openings,gate:{side:"front",xFt:round(park.x+.25),widthFt:b.parking?8:0},pedestrianGate:{side:"front",xFt:round(entry.x+(entry.w-3)/2),widthFt:3},parking:b.parking?{roomId:park.id,clearWidthFt:park.w,clearDepthFt:park.d}:null,stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),note:"Concept stairs; tread, headroom and fire safety unverified."},balcony:null,facade:{kit:recipe%3===0?"stepped-band":recipe%3===1?"jali-screen":"simple-parapet",massing:"box",main:"#e9e2d4",accent:"#8e755b"},score:80,notes:[(frontCore?"Street-side aligned stair and independent entry":"Wide circulation layout")+" · "+(mirror?"right":"left")+" entry court","City rules, setbacks, structural design, stairs, parking and ventilation require professional review.","Open areas are intentionally unbuilt; not a certified floor plan."],conceptOnly:true};
    addWindow(p);if(validateRequestedProgramme(p,b).length)continue;
    const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
    if(seen.has(signature)||!mesh||meshes.has(mesh))continue;
@@ -486,8 +489,11 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
  }
  return plans;
 }
-function wideResult(b:PlanBrief,limit:number):PlanningResult{
- const plans=widePortfolio(b,Math.max(1,Math.min(24,Math.floor(limit))));
+function wideResult(b:PlanBrief,limit:number,legacy=false):PlanningResult{
+ const max=Math.max(1,Math.min(24,Math.floor(limit))),baseline=widePortfolio(b,max);
+ const alternatives=legacy||(!b.parking&&b.floors===1)||max===1&&baseline.length?[]:widePortfolio(b,max,true);
+ const pool=uniquePlanGeometry([...baseline,...alternatives]);
+ const plans=legacy?baseline:prioritizeArchitecturalOptions(baseline,pool,max);
  return {plans,blockers:plans.length?[]:["No geometry-checked "+b.bedrooms+" BHK concept fits your selected "+b.widthFt+" × "+b.depthFt+" ft plot, levels and parking. Try more usable space or floors, or fewer bedrooms. Your input has not been changed."]};
 }
 
@@ -500,6 +506,14 @@ export function validateRequestedProgramme(p:PlanModel,b:PlanBrief):string[]{
  for(const side of ["frontFt","rearFt","leftFt","rightFt"] as const)if(p.setbacks[side]+.00001<b.setbacks[side])errors.push("Plan encroaches on requested "+side+" setback.");
  for(let floor=0;floor<b.floors;floor++)if(!p.rooms.some(r=>r.floor===floor&&!["parking","terrace","balcony","verandah"].includes(r.kind)))errors.push("Requested floor has no enclosed room or circulation.");
  return errors;
+}
+function uniquePlanGeometry(plans:readonly PlanModel[]):PlanModel[]{
+ const geometry=new Set<string>(),meshes=new Set<string>();
+ return plans.filter(p=>{
+  const key=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
+  if(!mesh||geometry.has(key)||meshes.has(mesh))return false;
+  geometry.add(key);meshes.add(mesh);return true;
+ });
 }
 export function planSignature(p:PlanModel):string{
  // IDs, labels, room names and exterior finishes cannot manufacture a new floor plan.
@@ -514,7 +528,7 @@ export function pickDiverse(plans:readonly PlanModel[],limit=3):PlanModel[]{
 export function generateRoadPlans(brief:PlanBrief):PlanningResult{
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
- if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,3);
+ if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,3,true);
  const compact=compactPedestrianPlans(brief,2);if(compact)return compact;
  const candidates:PlanModel[]=[];
  for(const variant of ["parking-left","parking-right"] as const){
@@ -563,8 +577,8 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24,legacy=false):
  limit=Number.isFinite(limit)?Math.max(1,Math.min(24,Math.floor(limit))):24;
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
- if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,limit);
- if(brief.bedrooms===1&&brief.widthFt>=26&&brief.depthFt>=40){const wide=wideResult(brief,limit);if(wide.plans.length)return wide;}
+ if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,limit,legacy);
+ if(brief.bedrooms===1&&brief.widthFt>=26&&brief.depthFt>=40){const wide=wideResult(brief,limit,legacy);if(wide.plans.length)return wide;}
  const compact=compactPedestrianPlans(brief,Math.max(1,Math.floor(limit)),legacy);if(compact)return compact;
  const envelope=houseEnvelope(brief);
  const W=brief.widthFt-envelope.leftFt-envelope.rightFt;
@@ -611,7 +625,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24,legacy=false):
  }
  // Larger 2–3 BHK plots also deserve actual central-spine architecture, not only mirrored narrow-house recipes.
  if(brief.bedrooms>=2&&brief.floors>1){
-  for(const p of widePortfolio(brief,normalized)){
+  for(const p of [...widePortfolio(brief,normalized),...(!legacy&&normalized>1?widePortfolio(brief,normalized,true):[])]){
    const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
    if(!mesh||seen.has(signature)||seenMeshes.has(mesh)||validateRequestedProgramme(p,brief).length)continue;
    seen.add(signature);seenMeshes.add(mesh);ordered.push(p);
@@ -678,7 +692,8 @@ export function portfolioForPlanId(b:PlanBrief,planId:string):PlanningResult{
 /** First show meaningful entrance/room-programme alternatives; dimensional
  * variants remain selectable, with balanced parking sides when possible. */
 function prioritizeArchitecturalOptions(original:PlanModel[],pool:PlanModel[],limit:number){
- if(original.length<2)return original;
+ if(!original.length){if(!pool.length)return [];original=pool.slice(0,1);}
+ if(limit===1)return original.slice(0,1);
  const result=[original[0]],used=new Set([original[0].id]),topologies=new Set([architectureTopology(original[0])]);
  const arrangementCounts=new Map<string,number>([[entranceArrangement(original[0]),1]]);
  const sideCounts=new Map<string,number>([[original[0].variant,1]]);

@@ -26,3 +26,7 @@ This is an implementation checklist, not a certificate of design quality or stat
 - Isolated capacity rehearsal covers twelve public/API routes at 5/15/30 workers; per-route latency and failures are included. Sequential read benchmark covers additional Studio and knowledge pages. Neither simulates signed-in production traffic or measures real-user field INP.
 
 - Browser artwork checks moved to a dedicated regression module; existing reviewed source-size budget unchanged.
+
+## All-input coverage expansion
+- Wide/high-BHK plans now include a second actual circulation architecture: vertically aligned street-side stair, independent pedestrian entrance and rear bedroom allocation, passed through the same validators and geometry/mesh deduplication. Earlier wide plan identities remain available through the legacy resolver.
+- Added a 72-brief deterministic input matrix across 18 scenarios and all four road directions, including custom dimensions, 1–6 BHK, 1–3 levels, parking on/off, setbacks and L-plot orientations. It records validated counts, programme groups, facade groups and feasible/blocked cases. This is representative coverage, not proof for every continuous dimension or municipal compliance.
