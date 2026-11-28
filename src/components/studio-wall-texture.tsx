@@ -80,12 +80,16 @@ export function colouredTexture(texture:Texture,base:string,accent:string,maxSid
  ctx.putImageData(img,0,0);return canvas;
 }
 export const WallTextureSwatch=memo(function WallTextureSwatch({texture,base,accent,intensity,detail=false,preserveComposition=false}:{texture:Texture;base:string;accent:string;intensity:number;detail?:boolean;preserveComposition?:boolean}){
- const ref=useRef<SVGImageElement>(null);
- useLayoutEffect(()=>{const c=colouredTexture(texture,base,accent,detail?960:220);
- // Only pigment changes regenerate the small swatch; intensity is SVG opacity.
- const target=ref.current;let cancelled=false,uri:string|undefined; c.toBlob(blob=>{c.width=0;c.height=0;if(cancelled||!blob||!target)return;uri=URL.createObjectURL(blob);target.setAttribute("href",uri);},"image/webp",.82);
- return()=>{cancelled=true;if(uri)URL.revokeObjectURL(uri);};
+ const ref=useRef<SVGImageElement>(null),lastUrl=useRef<string|null>(null);
+ // Retain the previous visible image until the new encoded bitmap is ready.
+ // The tiny first preview is synchronous so there is no blank frame.
+ useLayoutEffect(()=>{const c=colouredTexture(texture,base,accent,detail?960:220),target=ref.current;
+ if(!target){c.width=0;c.height=0;return;}
+ if(!target.getAttribute("href")&&!detail){target.setAttribute("href",c.toDataURL("image/webp",.82));c.width=0;c.height=0;return;}
+ let cancelled=false;c.toBlob(blob=>{c.width=0;c.height=0;if(cancelled||!blob||!target.isConnected)return;const next=URL.createObjectURL(blob),previous=lastUrl.current;target.setAttribute("href",next);lastUrl.current=next;if(previous)URL.revokeObjectURL(previous);},"image/webp",.82);
+ return()=>{cancelled=true;};
  },[texture,base,accent,detail]);
+ useEffect(()=>()=>{if(lastUrl.current)URL.revokeObjectURL(lastUrl.current);lastUrl.current=null;ref.current?.removeAttribute("href");},[]);
  return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio={texture.paintPigments||detail||preserveComposition?"none":"xMidYMid slice"} opacity={intensity}/></svg>;
 });
 type Point={x:number;y:number};

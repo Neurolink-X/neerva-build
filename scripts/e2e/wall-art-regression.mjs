@@ -72,6 +72,10 @@ export async function verifyWallArtwork(page){
       await canvas.screenshot({path:path.join("test-results/mobile","wall-art-"+group.toLowerCase().replaceAll(" ","-")+"-"+(i+1)+".png"),animations:"disabled"});
      }
     }
+    // Explicitly exercise artwork against matching light and dark pigments.
+    await page.getByRole("button",{name:"Geometry",exact:true}).click();await page.getByRole("button",{name:"Metallic architectural geometry",exact:true}).click();
+    const customBase=page.locator(".paint-custom-shade input[type=color]");
+    for(const tone of ["#f7f5ef","#20242b"]){await customBase.fill(tone);await page.getByLabel("Pattern colour").fill(tone);await page.getByText("Contrast-adjusted preview pigment:",{exact:false}).waitFor({state:"visible"});await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");const painted=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"Plain paint",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),painted,"artwork stays distinct on "+tone);await page.getByRole("button",{name:"Paint + design",exact:true}).click();}
     await page.getByRole("button",{name:"3D effects",exact:true}).click();await page.getByRole("button",{name:"Sculptural wave relief",exact:true}).click();await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");
     const before=await canvas.evaluate(c=>c.toDataURL());await page.getByLabel("Pattern colour").fill("#305c80");await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,before);const recoloured=await canvas.evaluate(c=>c.toDataURL());await page.getByLabel(/Design intensity/).fill("0.25");await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,recoloured);
     // Exercise multi-wall independently on a synthetic two-plane fixture. This

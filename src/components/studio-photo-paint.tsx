@@ -119,6 +119,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  const photoTimer=useRef<number|null>(null);
  const tintCache=useRef(new Map<string,HTMLCanvasElement>()),patternScratch=useRef<HTMLCanvasElement|null>(null);
  const sourceLuma=useRef<Uint8Array|null>(null),tintPixels=useRef<ImageData|null>(null);
+ const paintedTextureCache=useRef(new Map<string,{source:NonNullable<ReturnType<typeof useWallTextures>[Pattern]>;canvas:HTMLCanvasElement}>());
  const [history,setHistory]=useState(emptyMaskHistory),[ready,setReady]=useState(false);
  const [closeUp,setCloseUp]=useState(false);
  const [keepShades,setKeepShades]=useState(false);
@@ -199,9 +200,13 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
    const accentTint=!flat&&isSurfaceProfile(wall.pattern)?tint(wall.accent):undefined;patternScratch.current??=document.createElement("canvas");
    const raw=activeTextures[wall.pattern],xs=wall.points.map(p=>p.x*w),ys=wall.points.map(p=>p.y*h);
    const visibleSide=Math.min(960,Math.max(160,Math.ceil(Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys)))));
-   const texture=raw?colouredTexture(raw,wall.colour,wall.accent,visibleSide):undefined;
+   let texture:HTMLCanvasElement|undefined;
+   if(raw){const cache=paintedTextureCache.current,key=[wall.pattern,wall.colour,wall.accent,visibleSide].join("|"),hit=cache.get(key);
+    if(hit?.source===raw){texture=hit.canvas;cache.delete(key);cache.set(key,hit);}
+    else{if(hit){hit.canvas.width=0;hit.canvas.height=0;cache.delete(key);}texture=colouredTexture(raw,wall.colour,wall.accent,visibleSide);cache.set(key,{source:raw,canvas:texture});
+     while(cache.size>3){const oldest=cache.keys().next().value;if(oldest===undefined)break;const entry=cache.get(oldest);if(entry){entry.canvas.width=0;entry.canvas.height=0;}cache.delete(oldest);}}
+   }
    drawWall(ctx!,wall,w,h,tinted,patternScratch.current,accentTint,flat?undefined:sourceLuma.current,texture,flat);
-   if(texture){texture.width=0;texture.height=0;}
   }
   if(interiorDetail){
    ctx.fillStyle="#e8e5df";ctx.fillRect(0,0,w,h);
@@ -239,6 +244,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   ++uploadGeneration.current;setUploadError("");
   const ticket=++generation.current;
   if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}
+  for(const entry of paintedTextureCache.current.values()){entry.canvas.width=0;entry.canvas.height=0;}paintedTextureCache.current.clear();
   for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;tintPixels.current=null;if(patternScratch.current){patternScratch.current.width=0;patternScratch.current.height=0;patternScratch.current=null;}
   if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}
   if(image.current){image.current.width=0;image.current.height=0;}
@@ -333,7 +339,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  }
  function toggleOriginal(){setOriginalKey(styleKey);setShowOriginal(!originalVisible);}
 
- useEffect(()=>{const frame=requestAnimationFrame(()=>openRoom()),shades=tintCache.current;const invalidate=()=>{++generation.current;++uploadGeneration.current;};return ()=>{invalidate();cancelAnimationFrame(frame);if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of shades.values()){surface.width=0;surface.height=0;}shades.clear();sourceLuma.current=null;tintPixels.current=null;if(patternScratch.current){patternScratch.current.width=0;patternScratch.current.height=0;patternScratch.current=null;}if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
+ useEffect(()=>{const frame=requestAnimationFrame(()=>openRoom()),shades=tintCache.current,painted=paintedTextureCache.current;const invalidate=()=>{++generation.current;++uploadGeneration.current;};return ()=>{invalidate();cancelAnimationFrame(frame);if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of shades.values()){surface.width=0;surface.height=0;}shades.clear();for(const entry of painted.values()){entry.canvas.width=0;entry.canvas.height=0;}painted.clear();sourceLuma.current=null;tintPixels.current=null;if(patternScratch.current){patternScratch.current.width=0;patternScratch.current.height=0;patternScratch.current=null;}if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
  async function load(e:ChangeEvent<HTMLInputElement>){
   const f=e.target.files?.[0];e.target.value="";if(!f)return;setUploadError("");
   if(!["image/jpeg","image/png","image/webp"].includes(f.type)||f.size>10*1024*1024){
