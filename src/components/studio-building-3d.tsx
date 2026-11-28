@@ -38,6 +38,8 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
  const [lighting,setLighting]=useState<"day"|"evening">("day");
  const [quality,setQuality]=useState<"balanced"|"detail">("balanced");
  const [mode,setMode]=useState<Mode>(selectedFloor===undefined?"exterior":"dollhouse"),[fallback,setFallback]=useState(false);
+ const [previousFloor,setPreviousFloor]=useState(selectedFloor);
+ if(previousFloor!==selectedFloor){setPreviousFloor(selectedFloor);if(selectedFloor!==undefined&&mode==="exterior")setMode("dollhouse");}
  // The same wall cells feed the WebGL meshes and the cross-view regression contract.
  const stairReview=useMemo(()=>planModel?residentialStairStudies(planModel):null,[planModel]);
  const wallCells=useMemo(()=>visibleWallCells(design,mode==="exterior"?undefined:selectedFloor,mode==="dollhouse"),[design,mode,selectedFloor]);
@@ -341,7 +343,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
      const append=(matrix:THREE.Matrix4)=>{
       const b=bounds.clone().applyMatrix4(matrix);
       if(b.isEmpty()||!Number.isFinite(b.min.x+b.min.y+b.min.z+b.max.x+b.max.y+b.max.z))return;
-      boxes.push({lo:b.min.toArray(),hi:b.max.toArray(),color:[mat.color.r,mat.color.g,mat.color.b],opacity:mat.transparent?mat.opacity:1,metal:mat.metalness,rough:mat.roughness});
+      boxes.push({lo:b.min.toArray(),hi:b.max.toArray(),color:mat.color.clone().convertLinearToSRGB().toArray(),opacity:mat.transparent?mat.opacity:1,metal:mat.metalness,rough:mat.roughness});
      };
      transform.multiplyMatrices(inverse,object.matrixWorld);
      if(object instanceof THREE.InstancedMesh){for(let i=0;i<object.count;i++){object.getMatrixAt(i,instance);append(transform.clone().multiply(instance));}}
