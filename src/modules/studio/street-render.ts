@@ -27,7 +27,8 @@ export function streetRenderSnapshot(p:PlanModel,glass="#94b6c5",view:"front"|"c
  // Context only: pavement and public street outside the measured plot.
  put(-W,-.32,-10,W*3,.22,10,"#777d7c");put(-W,-.1,-2.5,W*3,.08,2.5,"#c9c5b9",.9);
  for(const c of buildingWallCells(studioDesignFromPlan(p))){
-  const t=p.walls.internalFt,y=c.floorIndex*H+c.bottomFt,h=c.topFt-c.bottomFt,len=c.endFt-c.startFt;
+  const external=c.axis==="x"?Math.abs(c.planeFt-p.setbacks.leftFt)<.02||Math.abs(c.planeFt-(W-p.setbacks.rightFt))<.02:Math.abs(c.planeFt-p.setbacks.frontFt)<.02||Math.abs(c.planeFt-(D-p.setbacks.rearFt))<.02;
+  const t=external?p.walls.externalFt:p.walls.internalFt,y=c.floorIndex*H+c.bottomFt,h=c.topFt-c.bottomFt,len=c.endFt-c.startFt;
   if(c.axis==="x")put(c.planeFt-t/2,y,c.startFt,t,h,len,p.facade.main);
   else put(c.startFt,y,c.planeFt-t/2,len,h,t,p.facade.main);
  }
@@ -50,7 +51,7 @@ export function streetRenderSnapshot(p:PlanModel,glass="#94b6c5",view:"front"|"c
  const grille=otsGrilleLevel(p);if(grille!==null)for(const bar of otsGrilleBars(p))put(bar.x,grille*H+.12,bar.y,bar.w,.12,bar.d,"#37443e",.35,.5);
  for(const o of p.openings){
   const r=p.rooms.find(r=>r.id===o.roomId);if(!r||!isEnclosedRoom(r))continue;
-  if(o.kind==="door"&&o.connectsTo)continue;
+  if(o.kind==="door"&&o.connectsTo&&p.rooms.some(other=>other.id===o.connectsTo&&isEnclosedRoom(other)))continue;
   const vertical=o.side==="left"||o.side==="right",plane=vertical?r.x+(o.side==="right"?r.w:0):r.y+(o.side==="rear"?r.d:0);
   const start=(vertical?r.y:r.x)+o.atFt,y=r.floor*H+o.sillFt,t=.12;
   const panel=(a:number,b:number,w:number,h:number,shade:string,rough:number,metal:number,opacity=1,finish:RenderBox["finish"]="plain")=>vertical?put(plane-t/2,b,a,t,h,w,shade,rough,metal,opacity,finish):put(a,b,plane-t/2,w,h,t,shade,rough,metal,opacity,finish);
