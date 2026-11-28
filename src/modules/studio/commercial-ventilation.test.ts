@@ -17,3 +17,23 @@ test("commercial air candidates belong to actual rooms, stay on walls and have s
  const blocked={...plan,zones:[...plan.zones,{id:"front",floor:0,kind:"primary" as const,label:"Block",x:5,y:0,w:10,d:10}]};
  const opening=additionalCommercialGlazing(plan,[])[0];assert.equal(commercialExposure(blocked,plan.zones[0],opening),"review");
 });
+
+import {buildingFloorSnapshot} from "./building-render.ts";
+import {defaultFinishScheme,shadeRgb} from "./finish-model.ts";
+test("commercial 3D inspection changes actual aperture frame colors without changing the geometry",()=>{
+ let checked=0;
+ for(const purpose of ["shops","mall","school","restaurant","rental"] as const){
+  const p=generateBuildingConcepts(buildingStarter(purpose),1,"purpose-led").plans[0];assert.ok(p);
+  const scheme=defaultFinishScheme({kind:"commercial",plan:p});
+  for(let floor=0;floor<p.brief.floors;floor++){
+   const rows=commercialAirReport(p,commercialPortals(p),floor);
+   const normal=buildingFloorSnapshot(p,floor,scheme,true,false,false),highlighted=buildingFloorSnapshot(p,floor,scheme,true,false,true);
+   assert.deepEqual(highlighted.boxes.slice(0,normal.boxes.length).map(b=>[b.lo,b.hi]),normal.boxes.map(b=>[b.lo,b.hi]));
+   if(rows.some(r=>r.glazing.length)){
+    const expected=rows.flatMap(r=>r.glazing).map(g=>shadeRgb(g.exposure==="review"?"#b47825":"#16865d").join(","));
+    assert.ok(highlighted.boxes.some(b=>expected.includes(b.color.join(","))),purpose+" "+floor);checked++;
+   }
+  }
+ }
+ assert.ok(checked>0);
+});
