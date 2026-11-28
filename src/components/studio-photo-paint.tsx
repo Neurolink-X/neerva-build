@@ -20,6 +20,7 @@ import {textureFor,appliedWallTextureKeys} from "@/modules/studio/wall-textures"
 import {fitFacadeArtwork,managedFacadeStyles,recommendedFacadeZone} from "@/modules/studio/facade-design-management";
 import {useWallTextures,colouredTexture,WallTextureSwatch,drawTextureQuad} from "./studio-wall-texture";
 import {colourPairings} from "@/modules/studio/colour-families";
+import {ShadeReferenceCard} from "./shade-reference-card";
 import {facadeSamples,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomPhotos={feature:"/images/studio/paint-room.webp",daylight:"/images/studio/daylight-living-room.webp"} as const;
 type RoomPhoto=keyof typeof roomPhotos;
@@ -135,6 +136,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  const currentStyle:PaintStyle={colour:base,accent,pattern:effectivePattern,opacity};
  const styleKey=JSON.stringify([base,accent,effectivePattern,opacity,target,sampleId,extraPaintAreas,patchMode,wholeShade,walls,editing,points,facadeStyles,allInterior,interiorWholeShade,interiorDetail]);
  const originalVisible=showOriginal&&originalKey===styleKey;
+ const shadeEntries=[{label:allInterior?"All walls · base":scene==="facade"?"Exterior base":"Wall base",value:base},...(mode==="design"?[{label:"Design accent",value:accent}]:[])];
  const focusPoints=scene==="facade"?facadeZones.find(z=>z.id===target)?.points??[]:points;
  const canInspect=focusPoints.length===4&& (scene==="facade"||valid);
  const wallCentre=canInspect?`${focusPoints.reduce((sum,p)=>sum+p.x,0)*25}% ${focusPoints.reduce((sum,p)=>sum+p.y,0)*25}%`:undefined;
@@ -351,6 +353,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   </div>{designRecipe?<p className="paint-collection-tip"><strong>{designRecipe[1]}:</strong> {designRecipe[2]}</p>:<p className="paint-collection-tip">{guide.tip}</p>}<label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
   </>}
 </div></div>
+  <ShadeReferenceCard entries={shadeEntries} compact/>
   {ready&&scene==="facade"&&<div className="paint-actions paint-compact-actions" role="group" aria-label="Exterior editing options"><details className="paint-more"><summary>More exterior options</summary><button type="button" onClick={()=>{if(target!=="all")chooseTarget("all");setMode("paint");setCloseUp(false);setHistory(emptyMaskHistory());setShowOriginal(false);setPatchMode(v=>!v)}}>{patchMode?"Cancel wall correction":"Correct a missed wall area"}</button>{patchMode&&<><p role="status">Tap four corners of the exposed wall clockwise. Avoid windows, doors and plants.</p><button type="button" disabled={!valid||extraPaintAreas.length>=8} onClick={()=>{setExtraPaintAreas(a=>[...a,points]);setHistory(emptyMaskHistory());setPatchMode(false)}}>Apply wall correction</button><button type="button" onClick={()=>setHistory(undoCorner)}>Undo corner</button></>}{extraPaintAreas.length>0&&<button type="button" onClick={()=>setExtraPaintAreas(a=>a.slice(0,-1))}>Undo last wall correction</button>}<button type="button" onClick={()=>{setFacadeStyles({});setTarget("all");setMode("paint");setCloseUp(false);setShowOriginal(false);setPatchMode(false);setExtraPaintAreas([]);setHistory(emptyMaskHistory())}}>Reset exterior sections</button></details></div>}
   {ready&&scene!=="facade"&&!allInterior&&<div className="paint-actions paint-wall-actions paint-compact-actions" role="group" aria-label="Wall preview actions">
       <button className="paint-quiet" type="button" disabled={!valid||originalVisible} onClick={()=>{
