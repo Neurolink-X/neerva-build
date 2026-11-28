@@ -60,6 +60,7 @@ function RoofJaalPlan({plan}:{plan:PlanModel}){
  </svg><p className="nroad-small">Grey: slab · cream: open terrace / balcony · green grid: actual modeled shaft. Concept only; engineered grille and drainage require professional review.</p>
  </section>;
 }
+function terraceShare(p:PlanModel){const upper=p.rooms.filter(r=>r.floor>0&&!isOtsRoom(r));const total=upper.reduce((n,r)=>n+r.w*r.d,0);return total?upper.filter(r=>r.kind==="terrace").reduce((n,r)=>n+r.w*r.d,0)/total:0;}
 export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?:PlanBrief;initialOption?:number}={}){
  const [brief,setBrief]=useState<PlanBrief>(()=>initialBrief??initial),[chosen,setChosen]=useState(Number.isInteger(initialOption)&&initialOption>=0&&initialOption<38?initialOption:-1);
  const [floor,setFloor]=useState(0),[roofView,setRoofView]=useState(false),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
@@ -79,13 +80,15 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
  const [representativesOnly,setRepresentativesOnly]=useState(false);
  const [kitchenFilter,setKitchenFilter]=useState<"all"|"front"|"middle"|"rear">("all");
  const [preferCovered,setPreferCovered]=useState(true);
+ const [terracePreference,setTerracePreference]=useState<"all"|"compact"|"large">("all");
+ 
  const matching=useMemo(()=>result.plans.map((p,i)=>({p,i})).filter(({p})=>(entranceFilter==="all"||entranceArrangement(p)===entranceFilter)&&(kitchenFilter==="all"||kitchenZone(p)===kitchenFilter)),[result,entranceFilter,kitchenFilter]);
  const representativeSet=useMemo(()=>new Set(representativeIndices(matching,({p})=>architectureTopology(p))),[matching]);
  const filtered=useMemo(()=>{
-  const choices=matching.filter((_,i)=>!representativesOnly||representativeSet.has(i));
+  const choices=matching.filter((_,i)=>!representativesOnly||representativeSet.has(i)).filter(({p})=>terracePreference==="all"||(terracePreference==="compact"?terraceShare(p)<=.2:terraceShare(p)>.2));
   const openArea=(p:PlanModel)=>p.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0);
   return preferCovered?[...choices].sort((a,b)=>openArea(a.p)-openArea(b.p)||a.i-b.i):choices;
- },[matching,representativesOnly,representativeSet,preferCovered]);
+ },[matching,representativesOnly,representativeSet,preferCovered,terracePreference]);
  const activeOption=filtered.some(({i})=>i===chosen)?chosen:filtered[0]?.i??(result.plans[chosen]?chosen:0);
  const baseDraft=result.plans[activeOption]??null;
  const attachedSite=brief.setbacks.leftFt<3&&brief.setbacks.rightFt<3;
@@ -93,7 +96,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
  const enhanceVentilation=windowPreference??attachedSite,includeOts=shaftPreference??attachedSite;
  const [airFeedback,setAirFeedback]=useState<{scope:string;message:string}|null>(null),[airBusy,setAirBusy]=useState(false);
  const airLock=useRef(false),airScopeRef=useRef("");
- const airScope=JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,includeOts,enhanceVentilation,activeOption]);
+ const airScope=JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,terracePreference,includeOts,enhanceVentilation,activeOption]);
  useLayoutEffect(()=>{airScopeRef.current=airScope;return()=>{airScopeRef.current="";}},[airScope]);
  const draft=useMemo(()=>baseDraft?airOptimizedPlan(baseDraft,includeOts,enhanceVentilation):null,[baseDraft,includeOts,enhanceVentilation]);
  const addedWindows=draft?.openings.filter(o=>o.id.startsWith("vent-v1-")||o.id.startsWith("ots-v1-window-")).length??0;
@@ -112,10 +115,10 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
     if(!requireShaft||shaft)ranked.push({i,shaft,score:ventilationReport(candidate).score});
    }
    if(airScopeRef.current!==scope)return;
-   ranked.sort((a,b)=>Number(b.shaft)-Number(a.shaft)||b.score-a.score||a.i-b.i);
+   ranked.sort((a,b)=>Number(b.shaft)-Number(a.shaft)||b.score-a.score||terraceShare(result.plans[a.i])-terraceShare(result.plans[b.i])||a.i-b.i);
    if(!ranked.length){setAirFeedback({scope,message:requireShaft?"No feasible aligned roof-jaal reserve in the displayed layouts. Change filters, plot clearance or room requirements.":"No layout available to compare."});return;}
    const next=ranked[0];setEnhanceVentilation(true);if(requireShaft)setIncludeOts(true);setChosen(next.i);setKit(null);setSaveInfo("");
-   setAirFeedback({scope:JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,requireShaft||includeOts,true,next.i]),message:"Selected layout "+(next.i+1)+" with screened ventilation"+(next.shaft?" and modeled roof-jaal reserve.":"; shaft is not modeled.")});
+   setAirFeedback({scope:JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,terracePreference,requireShaft||includeOts,true,next.i]),message:"Selected layout "+(next.i+1)+" with screened ventilation"+(next.shaft?" and modeled roof-jaal reserve.":"; shaft is not modeled.")});
   }finally{airLock.current=false;setAirBusy(false);}
  }
 
@@ -162,7 +165,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
   },{rootMargin:"120px"});
   observer.observe(node);return()=>observer.disconnect();
  },[hasPlan,threeReady]);
- function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setEntranceFilter("all");setKitchenFilter("all");setBrief(v=>({...v,[key]:value}));if(key==="floors"&&value===1)setStairReady(false);setChosen(-1);setFloor(0);setRoofView(false);setKit(null);setSaveInfo("")}
+ function update<K extends keyof PlanBrief>(key:K,value:PlanBrief[K]){setEntranceFilter("all");setKitchenFilter("all");setBrief(v=>({...v,[key]:value}));if(key==="floors"&&value===1)setStairReady(false);setChosen(-1);setTerracePreference("all");setFloor(0);setRoofView(false);setKit(null);setSaveInfo("")}
  function changeSetback(side:keyof PlanBrief["setbacks"],value:number){setEntranceFilter("all");setKitchenFilter("all");setBrief(v=>({...v,setbacks:{...v.setbacks,[side]:value}}));setChosen(-1);setFloor(0);setRoofView(false);setKit(null)}
  async function saveDraft(){
   if(!draft||saveLock.current)return;
@@ -248,12 +251,12 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
      <div className="nroad-head nroad-choices"><h2>{str("House layouts matching your requirements","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} layouts · {brief.bedrooms} BHK · {brief.floors} level(s)</span></div>
      <p className="nroad-small nroad-bhk-explanation">{str("BHK = bedrooms, hall and kitchen. Bedrooms are counted across all floors.","BHK = बेडरूम, हॉल और किचन। बेडरूम सभी मंज़िलों के मिलाकर गिने जाते हैं।")}</p>
      <details className="nroad-advanced nroad-filter-panel"><summary>{str("Filter layouts","नक्शे फ़िल्टर करें")}</summary><div className="nroad-layout-filters"><label>Entrance arrangement <select aria-label="Filter entrance arrangement" value={entranceFilter} onChange={e=>{setEntranceFilter(e.target.value as typeof entranceFilter);setKit(null);setSaveInfo("")}}><option value="all">All layouts ({result.plans.length})</option>{(["front-stair","front-bedroom","front-verandah","pedestrian"] as const).map(k=>{const count=result.plans.filter(p=>entranceArrangement(p)===k).length;return <option key={k} value={k} disabled={!count}>{({ "front-stair":"Stairs beside parking","front-bedroom":"Street-facing bedroom","front-verandah":"Verandah / other entry","pedestrian":"Pedestrian only"} as const)[k]} ({count})</option>})}</select></label><label>Kitchen position <select aria-label="Filter kitchen position" value={kitchenFilter} onChange={e=>{setKitchenFilter(e.target.value as typeof kitchenFilter);setKit(null);setSaveInfo("")}}><option value="all">All positions</option>{(["front","middle","rear"] as const).map(zone=>{const count=result.plans.filter(p=>kitchenZone(p)===zone).length;return <option key={zone} value={zone} disabled={!count}>{zone==="rear"?"Rear kitchen":zone==="front"?"Front kitchen":"Middle kitchen"} ({count})</option>})}</select></label><label className="nroad-representative-toggle"><input type="checkbox" checked={representativesOnly} onChange={e=>{setRepresentativesOnly(e.target.checked);setKit(null);setSaveInfo("")}}/> Show different room programmes only ({representativeSet.size})</label></div></details>{filtered.length===0&&<p role="status">No layout matches these filters. Change entrance or kitchen position.</p>}
-     {brief.floors>1&&<div className="nroad-advanced"><label><input type="checkbox" checked={preferCovered} onChange={e=>{const enabled=e.target.checked;setPreferCovered(enabled);if(enabled&&filtered.length){const openArea=(p:PlanModel)=>p.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0);const best=[...filtered].sort((a,b)=>openArea(a.p)-openArea(b.p)||a.i-b.i)[0];setChosen(best.i);setKit(null);setSaveInfo("");}}}/> Prefer more enclosed upper-floor space (less terrace)</label><p className="nroad-small">Ranks validated layouts by upper-floor terrace area; full-covered, compact rear terrace and front terrace options are ranked first when the plot fits. Requested bedroom count stays fixed; necessary open space and roof ventilation are not converted into rooms automatically.</p></div>}
+     {brief.floors>1&&<div className="nroad-advanced"><label><input type="checkbox" checked={preferCovered} onChange={e=>{const enabled=e.target.checked;setPreferCovered(enabled);if(enabled&&filtered.length){const openArea=(p:PlanModel)=>p.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0);const best=[...filtered].sort((a,b)=>openArea(a.p)-openArea(b.p)||a.i-b.i)[0];setChosen(best.i);setKit(null);setSaveInfo("");}}}/> Prefer more enclosed upper-floor space (less terrace)</label><label>Upper-floor open space <select aria-label="Terrace preference" value={terracePreference} onChange={e=>{setTerracePreference(e.target.value as typeof terracePreference);setChosen(-1);setKit(null);setSaveInfo("");}}><option value="all">All options · covered first</option><option value="compact">Covered / compact terrace (up to 20%)</option><option value="large">Larger terrace (over 20%)</option></select></label><p className="nroad-small">Ranks validated layouts by upper-floor terrace area; full-covered, compact rear terrace and front terrace options are ranked first when the plot fits. Requested bedroom count stays fixed; necessary open space and roof ventilation are not converted into rooms automatically.</p></div>}
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{filtered.map(({p:v,i})=>{return <button key={v.id} type="button" aria-pressed={i===activeOption} data-plan-id={v.id}
        onClick={()=>{if(i!==activeOption){setChosen(i);setKit(null);setSaveInfo("")}}}><PlanMiniPreview v={v} i={i}/>
       <strong>{i+1}. {v.rooms.filter(r=>r.kind==="bedroom").length} BHK · {v.floors===1?"Ground":`G+${v.floors-1}`}</strong>
       <span>{!v.parking?str("No car parking","बिना पार्किंग"):v.variant==="parking-left"?str("Parking left","बाईं पार्किंग"):str("Parking right","दाईं पार्किंग")} · {v.rooms.some(r=>r.kind==="stairs"&&r.floor===0&&Math.abs(r.y-v.setbacks.frontFt)<.01)?str("Front stairs","सामने सीढ़ी"):v.rooms.some(r=>r.kind==="bedroom"&&r.floor===0&&Math.abs(r.y-v.setbacks.frontFt)<.01)?str("Front bedroom","सामने बेडरूम"):str("Shared home entry","घर का प्रवेश")}</span>
-      {v.floors>1&&<small>Upper-floor terrace · {Math.round(v.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0))} sq ft</small>}
+      {v.floors>1&&<small>{terraceShare(v)>.2?"Large terrace":"Covered / compact"} · {Math.round(terraceShare(v)*100)}% terrace · {Math.round(v.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0))} sq ft</small>}
       <small>{str("Kitchen","किचन")} · {kitchenZone(v)} · {v.rooms.some(r=>r.kind==="kitchen"&&r.floor===0&&r.x+r.w/2<v.plot.widthFt/2)?str("left","बाएँ"):str("right","दाएँ")}</small></button>})}</div>
      <p className="nroad-small nroad-selection-feedback" role="status">{str("Layout "+(activeOption+1)+" of "+result.plans.length+" selected. Your matching 2D and 3D views are below.","नक्शा "+(activeOption+1)+" / "+result.plans.length+" चुना गया। नीचे इसी नक्शे के 2D और 3D व्यू हैं।")} <a href="#selected-plan-drawing">{str("View selected plan ↓","चुना नक्शा देखें ↓")}</a></p>
      {result.plans.length<24&&<p className="nroad-small">{str("Only "+result.plans.length+" of the target 24 distinct concepts fit this exact request. We will not duplicate a plan or change your bedroom count to fill the gallery.","इस प्लॉट के लिए 24 के लक्ष्य में से "+result.plans.length+" अलग नक्शे मिले। संख्या पूरी करने के लिए नक्शे दोहराए नहीं जाएंगे।")}</p>}
@@ -270,7 +273,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
      <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={plan.id} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Open interactive 3D when needed.","ज़रूरत होने पर 3D व्यू खोलें।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
      <VentilationPanel plan={plan} floor={floor} enhanced={enhanceVentilation} ots={includeOts} onOts={v=>changeAir("shaft",v)} onEnhance={v=>changeAir("windows",v)} onBest={()=>void bestAir()} onFindShaft={()=>void bestAir(true)} searching={airBusy} addedWindows={addedWindows}/>
      <details className="nroad-advanced nroad-shortlist-panel"><summary>{str("Compare or shortlist layouts","नक्शों की तुलना करें")}</summary>
-     <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={baseDraft?.id??plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0){setEntranceFilter("all");setKitchenFilter("all");setRepresentativesOnly(false);setChosen(i);setKit(null)}}}/>
+     <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={baseDraft?.id??plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0){setEntranceFilter("all");setKitchenFilter("all");setRepresentativesOnly(false);setTerracePreference("all");setChosen(i);setKit(null)}}}/>
      </details>
 
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
