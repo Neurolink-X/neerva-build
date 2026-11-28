@@ -75,3 +75,27 @@ test("shared upper-floor upgrade applies across supported widths, depths, 1–6 
  assert.equal(checked,84);assert.ok(sizes.size>=2,"upgrade cannot be confined to one plot");
  console.log(JSON.stringify({suite:"all-residential-upper",checked,upgraded,plotSizes:[...sizes],bedroomCounts:[...counts]}));
 });
+
+test("non-preset and fractional plot inputs use exact measured geometry, not nearest presets",{timeout:180000},()=>{
+ const custom=[[20,45],[17.75,43.5],[21.5,48.25],[27,53],[32.5,67.25],[14.5,33.5],[38,72]] as const;
+ let checked=0,feasible=0,alternatives=0;
+ for(const [widthFt,depthFt] of custom)for(const roadSide of directions)for(const floors of [1,2,3] as const){
+  const bedrooms=floors===1?1:floors===2?3:widthFt>=26?5:3;
+  const b:PlanBrief={widthFt,depthFt,roadSide,floors,bedrooms,parking:widthFt>=18,setbacks:{frontFt:0,rearFt:checked%2?1:0,leftFt:0,rightFt:0}};
+  const base=generateSpatialPortfolio(b,24);checked++;
+  if(!base.plans.length){assert.ok(base.blockers.length);continue;}
+  feasible++;
+  const all=[...base.plans,...generateEnclosedUpperPortfolio(b),...generateUsableUpperPortfolio(b,base.plans,4)];
+  for(const p of all){
+   assert.deepEqual(validateRequestedProgramme(p,b),[],p.id);
+   assert.equal(p.plot.widthFt,widthFt);assert.equal(p.plot.depthFt,depthFt);
+   assert.equal(p.plot.roadSide,roadSide);assert.equal(p.floors,floors);
+  }
+  alternatives+=all.length-base.plans.length;
+ }
+ assert.equal(checked,84);assert.ok(feasible>0);assert.ok(alternatives>0);
+ const example:PlanBrief={widthFt:20,depthFt:45,roadSide:"N",floors:2,bedrooms:3,parking:true,setbacks};
+ const layouts=generateEnclosedUpperPortfolio(example);
+ assert.ok(layouts.some(p=>!p.rooms.some(r=>r.floor>0&&r.kind==="terrace")),"20x45 needs a genuine enclosed upper-floor option");
+ console.log(JSON.stringify({suite:"custom-dimensions",checked,feasible,alternatives,exampleLayouts:layouts.length}));
+});
