@@ -7,7 +7,7 @@ import {parseStudioConfig,permittedStudioReport} from "@/modules/studio/studio-c
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const hdr={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const fail=(code:number,error:string)=>Response.json({error},{status:code,headers:hdr});
-const home=z.object({product:z.literal("home_studio"),brief,option:z.number().int().min(0).max(23),planId:z.string().min(5).max(200).optional(),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
+const home=z.object({product:z.literal("home_studio"),brief,option:z.number().int().min(0).max(25),planId:z.string().min(5).max(200).optional(),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
 const colour=z.object({product:z.literal("colour_studio"),
  base:z.string().regex(/^#[0-9a-fA-F]{6}$/),accent:z.string().regex(/^#[0-9a-fA-F]{6}$/),
  room:z.string().trim().min(3).max(60)}).strict();
@@ -43,7 +43,8 @@ export async function POST(req:Request){
    disclaimer:"Digital shades are approximate. Compare real manufacturer shade cards and lighting before purchase."},{headers:hdr});
  }
  const plans=portfolioForPlanId(p.brief,p.planId??'').plans;
- const plan=plans[p.option];if(!plan||(p.planId&&plan.id!==p.planId))return fail(409,"The selected plan no longer fits this plot. Select a valid configuration.");
+ // A saved ID is authoritative: versioned alternatives may resolve in a smaller portfolio.
+ const plan=p.planId?plans.find(candidate=>candidate.id===p.planId):plans[p.option];if(!plan)return fail(409,"The selected plan no longer fits this plot. Select a valid configuration.");
  if(p.geometryDigest&&p.geometryDigest!==await planGeometryDigest(plan))return fail(409,"Plan geometry changed. Reopen the selected layout before exporting.");
  const metrics=planMetrics(plan);
  return Response.json({product:p.product,planId:plan.id,plot:plan.plot,floors:plan.floors,variant:plan.variant,
