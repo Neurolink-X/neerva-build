@@ -11,6 +11,13 @@ export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;
 const round=(n:number)=>Math.round(n*1e6)/1e6;
 const valid=(v:number)=>Number.isFinite(v)&&v>=0;
+/** Additional concept families for genuinely narrow plots. The original
+ * wider-house criteria still apply outside these specific geometries. */
+function microFamily(b:PlanBrief,W:number,D:number):"pedestrian"|"parking-duplex"|null{
+ if(b.parking)return W>=14.75&&W<17.5&&D>=30&&D<40&&b.floors>=2&&b.bedrooms<=2*(b.floors-1)?"parking-duplex":null;
+ if(W>=10&&W<20&&D>=24&&(W<15||D<30||((W<17.5||D<40)&&!(b.floors===1&&b.bedrooms===1))||(b.floors===1&&b.bedrooms>1&&W<20)))return "pedestrian";
+ return null;
+}
 export function explainImpossible(b:PlanBrief):string[]{
  const x:string[]=[];
  if(!valid(b.widthFt)||!valid(b.depthFt)||b.widthFt<10||b.depthFt<15||b.widthFt>200||b.depthFt>250)x.push("Plot dimensions outside supported input range.");
@@ -22,6 +29,7 @@ export function explainImpossible(b:PlanBrief):string[]{
  const safe=conservativeEnvelope(b.widthFt,b.depthFt,shape,b.setbacks);
  const W=b.widthFt-safe.leftFt-safe.rightFt;
  const D=b.depthFt-safe.frontFt-safe.rearFt;
+ if(!x.length&&microFamily(b,W,D))return [];
  if(b.parking&&W<17.5)x.push("Parking + pedestrian entry + stairs needs at least 17.5 ft clear frontage in this layout family.");
  if(!b.parking&&(W<17.5||D<40)){
   if(W<15||D<30||b.floors!==1||b.bedrooms!==1)x.push("Compact pedestrian layouts need 15 × 30 ft usable area, one floor and one bedroom.");
@@ -346,6 +354,116 @@ function buildArchitecturalFamily(
  return p;
 }
 
+/** Narrow-plot generator. Different room sequences, wet-core orientations
+ * and sleeping allocations are actual geometry; no dimension is relaxed. */
+function microPortfolio(b:PlanBrief,limit:number):PlanningResult|null{
+ const sb=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks),W=b.widthFt-sb.leftFt-sb.rightFt,D=b.depthFt-sb.frontFt-sb.rearFt,mode=microFamily(b,W,D);
+ if(!mode)return null;
+ const plans:PlanModel[]=[];
+ const up=(v:number)=>Math.ceil(v*10000)/10000;
+ const hab=(w:number,d:number)=>w>=8&&d>=8&&w*d>=95-1e-6&&Math.max(w,d)/Math.min(w,d)<=2.5;
+ const roomDepth=(w:number)=>up(Math.max(8,95/w,w/2.5));
+ const sideSetbacks={...sb,verified:false as const};
+ function candidate(mirror:boolean,recipe:string,layout:(add:(id:string,label:string,kind:RoomKind,floor:number,x:number,y:number,w:number,d:number)=>void,join:(a:string,z:string)=>void)=>boolean){
+  const rooms:Room[]=[],openings:Opening[]=[],joins:[string,string][]=[];
+  const add=(id:string,label:string,kind:RoomKind,floor:number,x:number,y:number,w:number,d:number)=>rooms.push(room(id,label,kind,floor,sb.leftFt+(mirror?W-x-w:x),sb.frontFt+y,w,d));
+  try{
+   if(!layout(add,(a,z)=>joins.push([a,z])))return;
+   for(const [a,z] of joins)connect(rooms,openings,a,z);
+   const porch=rooms.find(r=>r.id==="micro-entry")!,park=rooms.find(r=>r.kind==="parking"),entry=round(porch.x+(porch.w-3)/2);
+   openings.push({id:"micro-street-entry",roomId:porch.id,side:"front",atFt:round(entry-porch.x),widthFt:3,sillFt:0,heightFt:7,kind:"door"});
+   const p:PlanModel={version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,mode,"micro-v1",recipe,mirror?"right":"left",b.siteShape?.kind??"rectangle",...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.notchWidthFt,b.siteShape.notchDepthFt]:[])].join("-"),variant:mirror?"parking-right":"parking-left",plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},setbacks:sideSetbacks,walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},floors:b.floors,rooms,openings,gate:{side:"front",xFt:park?round(park.x+.25):porch.x,widthFt:park?8:0},pedestrianGate:{side:"front",xFt:entry,widthFt:3},parking:park?{roomId:park.id,clearWidthFt:park.w,clearDepthFt:park.d}:null,stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),note:"Compact stair reserve only; actual flights, landings, headroom and egress require review."},balcony:null,facade:{kit:recipe.includes("service-first")?"cladding-band":recipe.includes("parallel")?"stepped-band":recipe.includes("rear")?"jali-screen":"simple-parapet",massing:"box",main:"#e9e2d4",accent:"#8e755b"},score:80,notes:["Compact home · "+recipe.replaceAll("-"," "),"City rules, setbacks, legal daylight, finished clear room widths, structure and stairs require professional review.","Nominal concept geometry is not finished carpet area. Tight plots may require a different programme after wall thickness and local requirements are checked.",...(b.siteShape&&b.siteShape.kind!=="rectangle"?["Conservative L-plot envelope; a cadastral site survey must verify the boundary."]:[])],conceptOnly:true};
+   addWindow(p);if(!validateRequestedProgramme(p,b).length)plans.push(p);
+  }catch{/* No fabricated fit. */}
+ }
+ for(const mirror of [false,true]){
+  if(mode==="pedestrian"&&b.floors===1){
+   for(const porch of [2.5,2.25,3])for(const parallel of [false,true])for(const frontService of [false,true])for(const split of [.5,.43,.57]){
+    candidate(mirror,[frontService?"service-first":"living-first",parallel?"parallel":"serial",porch,split].join("-"),(add,join)=>{
+     const passage=3,kW=parallel?W-6:W-passage,bathW=parallel?3:kW;
+     if(kW<6)return false;
+     const kD=up(Math.max(6,48/kW)),bathD=up(Math.max(3,20/bathW)),service=parallel?Math.max(kD,bathD):kD+bathD;
+     const bedrooms=b.bedrooms,bedW=bedrooms===1?W:W-passage,bedMin=roomDepth(bedW),liveMin=roomDepth(W);
+     if(bedW<8)return false;
+     const slack=D-porch-service-liveMin-bedrooms*bedMin;if(slack<-1e-6)return false;
+     const live=liveMin+Math.max(0,slack)*split,bedD=(D-porch-service-live)/bedrooms;
+     if(!hab(W,live)||!hab(bedW,bedD))return false;
+     const serviceY=frontService?porch:porch+live,livingY=frontService?porch+service:porch,rearY=porch+service+live;
+     add("micro-entry","Front porch","verandah",0,0,0,W,porch);
+     add("micro-living","Living and dining","living",0,0,livingY,W,live);
+     if(parallel){add("micro-kitchen","Kitchen","kitchen",0,0,serviceY,kW,service);add("micro-hall","Service passage","corridor",0,kW,serviceY,3,service);add("micro-bath","Bath / WC","bath",0,kW+3,serviceY,3,service);}
+     else{add("micro-kitchen","Kitchen","kitchen",0,0,serviceY,kW,kD);add("micro-bath","Bath / WC","bath",0,0,serviceY+kD,bathW,bathD);add("micro-hall","Service passage","corridor",0,kW,serviceY,3,service);}
+     join("micro-entry",frontService?"micro-hall":"micro-living");join("micro-hall","micro-living");join("micro-hall","micro-kitchen");join("micro-hall","micro-bath");
+     if(bedrooms>1)add("micro-rear-hall","Private bedroom access","corridor",0,bedW,rearY,3,D-rearY);
+     for(let i=0;i<bedrooms;i++){const id="micro-bed-"+i;add(id,"Bedroom "+(i+1),"bedroom",0,0,rearY+i*bedD,bedW,bedD);join(bedrooms>1?"micro-rear-hall":frontService?"micro-living":"micro-hall",id);}
+     if(bedrooms>1)join(frontService?"micro-living":"micro-hall","micro-rear-hall");
+     return true;
+    });
+   }
+  }else if(mode==="pedestrian"){
+   for(const porch of [2.5,3])for(const stairW of [3.5,4])for(const coreD of [10,12])for(const allocation of [0,1,2]){
+    candidate(mirror,["stacked",porch,stairW,coreD,allocation].join("-"),(add,join)=>{
+     const wetW=W-stairW,kD=up(Math.max(6,48/wetW)),bathD=coreD-kD,front=porch+roomDepth(W),rear=D-front-coreD;
+     if(wetW<6||bathD<3||wetW*bathD<20||rear<0||!hab(W,front-porch))return false;
+     const slots:{floor:number;front:boolean;depth:number}[]=[];
+     if(hab(W,rear))slots.push({floor:0,front:false,depth:rear});
+     for(let level=1;level<b.floors;level++){if(hab(W,front))slots.push({floor:level,front:true,depth:front});if(hab(W,rear))slots.push({floor:level,front:false,depth:rear});}
+     if(slots.length<b.bedrooms)return false;
+     const sorted=[...slots].sort((a,z)=>allocation===0?z.floor-a.floor||Number(z.front)-Number(a.front):allocation===1?a.floor-z.floor||Number(z.front)-Number(a.front):Number(z.front)-Number(a.front)||a.floor-z.floor);
+     const selected=new Set(sorted.slice(0,b.bedrooms).map(s=>s.floor+":"+s.front));
+     let n=0;
+     add("micro-entry","Front porch","verandah",0,0,0,W,porch);
+     add("micro-living","Living and dining","living",0,0,porch,W,front-porch);join("micro-entry","micro-living");
+     for(let level=0;level<b.floors;level++){
+      const stair="micro-stair-"+level,wet="micro-wet-"+level,bath="micro-bath-"+level;
+      add(stair,"Aligned stair reserve","stairs",level,0,front,stairW,coreD);
+      add(wet,level===0?"Kitchen":"Utility / landing",level===0?"kitchen":"utility",level,stairW,front,wetW,kD);
+      add(bath,"Bath / WC","bath",level,stairW,front+kD,wetW,bathD);join(stair,bath);join(stair,wet);
+      if(level===0){join("micro-living",stair);join("micro-living",wet);}
+      else{const frontId="micro-front-"+level,bed=selected.has(level+":true");add(frontId,bed?"Bedroom "+(++n):"Family room",bed?"bedroom":"lounge",level,0,0,W,front);join(stair,frontId);}
+      if(rear>=.1){const id="micro-rear-"+level,bed=selected.has(level+":false");add(id,bed?"Bedroom "+(++n):"Open rear court / terrace",bed?"bedroom":"terrace",level,0,front+coreD,W,rear);if(bed)join(stair,id);}
+     }
+     return true;
+    });
+   }
+  }else{
+   for(const porch of [3,3.5,4])for(const parkW of [8.5,8.75])for(const allocation of [0,1,2]){
+    candidate(mirror,["duplex",porch,parkW,allocation].join("-"),(add,join)=>{
+     const stairW=W-parkW-3,live=roomDepth(W),service=D-16-live,bedW=W-3;
+     if(stairW<3.25||service<6||!hab(W,live)||W-4<6||(W-4)*service<48||!hab(parkW,16))return false;
+     const slots:{level:number;front:boolean}[]=[];
+     for(let level=1;level<b.floors;level++){slots.push({level,front:true});if(hab(bedW,live))slots.push({level,front:false});}
+     if(slots.length<b.bedrooms)return false;
+     const ordered=[...slots].sort((a,z)=>allocation===0?a.level-z.level||Number(z.front)-Number(a.front):allocation===1?Number(a.front)-Number(z.front)||a.level-z.level:z.level-a.level||Number(z.front)-Number(a.front));
+     const selected=new Set(ordered.slice(0,b.bedrooms).map(s=>s.level+":"+s.front));let n=0;
+     add("micro-car","Car parking","parking",0,0,0,parkW,16);
+     add("micro-entry","Independent front porch","verandah",0,parkW,0,W-parkW,porch);
+     add("micro-living","Living and dining","living",0,0,16,W,live);
+     add("micro-kitchen","Kitchen","kitchen",0,0,16+live,W-4,service);
+     add("micro-bath-0","Bath / WC","bath",0,W-4,16+live,4,service);
+     join("micro-living","micro-kitchen");join("micro-living","micro-bath-0");
+     for(let level=0;level<b.floors;level++){
+      const stair="micro-stair-"+level,hall="micro-hall-"+level;
+      add(stair,"Aligned side stair","stairs",level,parkW,porch,stairW,16-porch);
+      add(hall,"Independent pedestrian passage","corridor",level,W-3,porch,3,16-porch);join(stair,hall);
+      if(!level){join("micro-entry",hall);join(hall,"micro-living");continue;}
+      const frontId="micro-front-"+level,rearId="micro-rear-"+level,rearHall="micro-rear-hall-"+level,bath="micro-bath-"+level,utility="micro-utility-"+level;
+      const frontBed=selected.has(level+":true"),rearBed=selected.has(level+":false");
+      add(frontId,frontBed?"Bedroom "+(++n):"Family lounge",frontBed?"bedroom":"lounge",level,0,0,parkW,16);join(stair,frontId);
+      add(rearId,rearBed?"Bedroom "+(++n):"Family room",rearBed?"bedroom":"lounge",level,0,16,bedW,live);
+      add(rearHall,"Private access passage","corridor",level,bedW,16,3,live);join(hall,rearHall);join(rearHall,rearId);
+      add(bath,"Shared bath / WC","bath",level,W-4,16+live,4,service);join(rearHall,bath);
+      add(utility,"Utility / wash","utility",level,0,16+live,W-4,service);join(rearId,utility);
+     }
+     return true;
+    });
+   }
+  }
+ }
+ const unique=uniquePlanGeometry(plans),selected=prioritizeArchitecturalOptions(unique.slice(0,1),unique,limit);
+ return {plans:selected,blockers:selected.length?[]:["No compact layout passes the exact room sizes, independent access, requested floors, setbacks and parking. Increase usable dimensions or explicitly revise the programme; no inputs have been changed."]};
+}
+
 function compactPedestrianPlans(b:PlanBrief,limit:number,legacy=false):PlanningResult|null{
  const sb=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
  const width=b.widthFt-sb.leftFt-sb.rightFt,depth=b.depthFt-sb.frontFt-sb.rearFt;
@@ -551,6 +669,7 @@ export function pickDiverse(plans:readonly PlanModel[],limit=3):PlanModel[]{
 export function generateRoadPlans(brief:PlanBrief):PlanningResult{
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
+ const micro=microPortfolio(brief,3);if(micro)return micro;
  if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,3,true);
  const compact=compactPedestrianPlans(brief,2);if(compact)return compact;
  const candidates:PlanModel[]=[];
@@ -600,6 +719,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24,legacy=false):
  limit=Number.isFinite(limit)?Math.max(1,Math.min(24,Math.floor(limit))):24;
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
+ const micro=microPortfolio(brief,limit);if(micro)return micro;
  if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,limit,legacy);
  if(brief.bedrooms===1&&brief.widthFt>=26&&brief.depthFt>=40){const wide=wideResult(brief,limit,legacy);if(wide.plans.length)return wide;}
  const compact=compactPedestrianPlans(brief,Math.max(1,Math.floor(limit)),legacy);if(compact)return compact;

@@ -40,3 +40,7 @@ This is an implementation checklist, not a certificate of design quality or stat
 ## Regression corrections
 - Preserve every prior compact footprint in the full gallery and append new geometry within the existing 24-option maximum, instead of replacing older choices. Tests assert preserved IDs and signatures and increased counts.
 - Recognize a street-facing bedroom separated from a car bay by an independent entry verandah, so both front-bedroom and stair alternatives are prioritized without implying direct adjacency.
+
+## Micro-home expansion (35–100 gaj)
+- Added deterministic narrow-home service-first / living-first plans, parallel and serial wet cores, multi-level stair reserves and a separate compact parking duplex family. Gaj is area only; actual frontage, depth, setbacks, floors and parking remain authoritative. Shared PlanModel and exact geometry/mesh deduplication are mandatory.
+- New 40-case matrix exercises 35, 40, 50, 60, 80 and 100 gaj examples, alternate proportions, G+1 and compact parking; impossible inputs remain explicit. Nominal modeled room minima are not reduced. Wall-finish clearance, ventilation, stair flights and turning remain site-specific review items.

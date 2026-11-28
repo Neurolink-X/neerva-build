@@ -11,7 +11,7 @@ import {generateSpatialPortfolio,generateStairReadyPortfolio} from "@/modules/st
 import {planMetrics,planSiteReview,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
 import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
-import {siteOutline} from "@/modules/studio/site-shape";
+import {siteOutline,siteAreaSqFt} from "@/modules/studio/site-shape";
 import {frontageComposition} from "@/modules/studio/frontage";
 import {entranceArrangement,architectureTopology,representativeIndices} from "@/modules/studio/architecture-profile";
 import {RoadElevation} from "./road-plan-diagram";
@@ -115,7 +115,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
   </header>
   <div className="nroad-main">
    <aside className="nroad-controls">
-    <div className="nroad-head"><h2>{str("Your plot","आपका प्लॉट")}</h2><span>{brief.widthFt} × {brief.depthFt} ft · live geometry</span></div>
+    <div className="nroad-head"><h2>{str("Your plot","आपका प्लॉट")}</h2><span>{brief.widthFt} × {brief.depthFt} ft · {(siteAreaSqFt(brief.widthFt,brief.depthFt,brief.siteShape??{kind:"rectangle"})/9).toFixed(1)} gaj</span></div>
     <form onSubmit={e=>e.preventDefault()} className="nroad-form">
      <label>{str("Frontage / width (ft)","चौड़ाई (फीट)")}<input type="number" min="10" max="200" step="any" value={brief.widthFt} onChange={e=>update("widthFt",Number(e.target.value))}/></label>
      <label>{str("Plot depth (ft)","लंबाई (फीट)")}<input type="number" min="15" max="250" step="any" value={brief.depthFt} onChange={e=>update("depthFt",Number(e.target.value))}/></label>
