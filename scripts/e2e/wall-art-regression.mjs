@@ -21,6 +21,7 @@ export async function verifyWallArtwork(page){
       if(await card.locator(".paint-texture-swatch").count())assert.equal(await canvas.getAttribute("data-wall-texture"),"ready");
       const pixels=await canvas.evaluate(c=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(c.toDataURL())))));
       const digest=createHash("sha256").update(pixels).digest("hex");
+      if(group==="Geometry"){const shade=page.getByLabel("Pattern colour");const prior=await shade.inputValue();await shade.fill(prior==="#305c80"?"#c4925f":"#305c80");await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,pixels);await shade.fill(prior);await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()===old,pixels);}
       wallEvidence.push({group,name,digest,automationMs:Date.now()-start});pixelDigests.add(digest);
       if(i===0)await canvas.screenshot({path:path.join("test-results/mobile","wall-art-"+group.toLowerCase().replaceAll(" ","-")+".png"),animations:"disabled"});
      }

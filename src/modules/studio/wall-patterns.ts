@@ -1,9 +1,10 @@
 import {decorativeArt,luxuryLattice} from "./decorative-wall-art.ts";
 import {premiumArt,enrichArtwork} from "./premium-wall-art.ts";
 import {refinedArtwork} from "./refined-wall-art.ts";
+import {finishWallArt} from "./wall-material-art.ts";
 // Coordinates are fractions of the selected wall, clockwise from its top-left corner.
 type Point = [number, number];
-export type Motif = {points: Point[]; filled?: boolean; alpha?: number; weight?: number; tone?:number};
+export type Motif = {points: Point[]; filled?: boolean; alpha?: number; weight?: number; tone?:number;pigment?:number;finish?:"matte"|"bevel"|"metal"};
 const line = (...points: Point[]): Motif => ({points});
 const box = (x:number,y:number,w:number,h:number) => line([x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]);
 const repeat = (count:number,make:(i:number)=>Motif) => Array.from({length:count},(_,i)=>make(i));
@@ -169,7 +170,8 @@ export function isRetiredPattern(pattern:Pattern){return (retiredPatterns as rea
 const motifCache=new Map<Pattern,Motif[]>();
 export function artworkMotifs(key:Pattern):Motif[]{
  const cached=motifCache.get(key);if(cached)return cached;
- const motifs=refinedArtwork[key]?.()??((Object.hasOwn(premiumArt,key)||isRetiredPattern(key)||key==="plain")?finishes[key].motifs:enrichArtwork(key,finishes[key].motifs));
+ const original=refinedArtwork[key]?.()??((Object.hasOwn(premiumArt,key)||isRetiredPattern(key)||key==="plain")?finishes[key].motifs:enrichArtwork(key,finishes[key].motifs));
+ const motifs=key==="plain"||isRetiredPattern(key)?original:finishWallArt(key,original);
  if(motifCache.size>=16){const first=motifCache.keys().next().value;if(first!==undefined)motifCache.delete(first);}
  motifCache.set(key,motifs);return motifs;
 }

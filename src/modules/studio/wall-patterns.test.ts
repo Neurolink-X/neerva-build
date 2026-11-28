@@ -48,3 +48,5 @@ test("artwork is generated on demand, reused and deterministic after cache evict
  assert.deepEqual(artworkMotifs("aurora"),first);
 });
 test("distinct full wall relief and original nature compositions",()=>{for(const key of ["riverSunset","lotusPond","gardenTree","blossomBranch","sculptWave","sculptRibbon","sculptFold","sculptStone"] as const)assert.ok(artworkMotifs(key).length>20,key);assert.notDeepEqual(artworkMotifs("gardenTree"),artworkMotifs("blossomBranch"));assert.notDeepEqual(artworkMotifs("sculptWave"),artworkMotifs("sculptRibbon"));});
+
+test("all active patterns use a bounded material and pigment recipe",()=>{for(const key of Object.values(patternGroups).flat()){const motifs=artworkMotifs(key);assert.ok(motifs.length<=600,key);assert.ok(motifs.every(m=>m.finish&&m.pigment!==undefined&&m.pigment>=0&&m.pigment<=1),key);}});
