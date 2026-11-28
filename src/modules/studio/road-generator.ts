@@ -142,7 +142,11 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   put(`stairs-${level}`,"Stairs / landing","stairs",level,0,16,stairW,10);
   put(`lounge-${level}`,"Family lounge","lounge",level,stairW,16,W-stairW,10);
   put(`bath-${level}`,"Bath / WC","bath",level,0,26,stairW,8);
-  if(recipe.upperProgramme&&D>=47&&W-stairW>=9&&D-34>=8&&W/(D-34)<=2.5){
+  // For short/custom plots, assess the actual compressed service bands rather
+  // than a 47-ft threshold. Geometry and room constraints still gate publication.
+  const mappedRearStart=D<47?16+Math.max(7,10-(47-D)*.6)+Math.max(6,8-(47-D)*.4):34;
+  const rearDepth=D-mappedRearStart;
+  if(recipe.upperProgramme&&W-stairW>=9&&rearDepth>=8&&W/rearDepth<=2.5){
    const passage=3.5,serviceWidth=W-stairW-passage;
    put(`utility-${level}`,"Wash / service","utility",level,stairW,26,serviceWidth,8);
    put(`rear-passage-${level}`,"Private rear access","corridor",level,W-passage,26,passage,8);
