@@ -685,6 +685,8 @@ function uniquePlanGeometry(plans:readonly PlanModel[]):PlanModel[]{
   geometry.add(key);meshes.add(mesh);return true;
  });
 }
+/** Real wall geometry distinguishes a covered room from an open terrace even when the footprint is identical. */
+export function physicalPlanSignature(p:PlanModel):string{return planSignature(p)+"#"+buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");}
 export function planSignature(p:PlanModel):string{
  // IDs, labels, room names and exterior finishes cannot manufacture a new floor plan.
  return p.rooms.map(r=>[r.floor,r.x,r.y,r.w,r.d].join(":")).sort().join("|");
