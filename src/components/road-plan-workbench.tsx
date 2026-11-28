@@ -15,6 +15,7 @@ import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/
 import {siteOutline,siteAreaSqFt} from "@/modules/studio/site-shape";
 import {entranceArrangement,architectureTopology,representativeIndices} from "@/modules/studio/architecture-profile";
 import {RoadElevation} from "./road-plan-diagram";
+const StreetRender=dynamic(()=>import("./street-architecture-render").then(m=>m.StreetArchitectureRender),{ssr:false,loading:()=> <p role="status">Preparing street render controls…</p>});
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
 import {ventilationReport} from "@/modules/studio/ventilation";
 import {airOptimizedPlan} from "@/modules/studio/ots-ventilation";
@@ -36,7 +37,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const [brief,setBrief]=useState<PlanBrief>(()=>initialBrief??initial),[chosen,setChosen]=useState(Number.isInteger(initialOption)&&initialOption>=0&&initialOption<26?initialOption:0);
  const [floor,setFloor]=useState(0),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
  const [kitOverride,setKit]=useState<PlanModel["facade"]["kit"]|null>(null);
- const [threeReady,setThreeReady]=useState(false);
+ const [threeReady,setThreeReady]=useState(false),[streetReady,setStreetReady]=useState(false);
  const threeSection=useRef<HTMLDivElement>(null);
  const [saving,setSaving]=useState(false),[saveInfo,setSaveInfo]=useState("");
  const saveLock=useRef(false),retryKey=useRef<{fingerprint:string;key:string}|null>(null);
@@ -250,7 +251,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
 
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
      <div className="nroad-exterior-workspace"><label>{str("Exterior finish style","बाहरी डिज़ाइन")}<select name="facadeKit" aria-label={str("Balcony front style","बालकनी का डिज़ाइन")} value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Minimal trim</option><option value="cladding-band">Broad cladding band</option><option value="stepped-band">Stepped facade band</option><option value="jali-screen">Vertical accents</option>{plan.rooms.some(r=>r.kind==="balcony")&&<option value="pergola">Pergola shade</option>}{kit==="cantilever"&&<option value="cantilever">Concept finish</option>}</select></label>
-     <RoadElevation plan={plan} main={shade.main} accent={shade.accent} glass={scheme?.glass}/>
+     <div className="nroad-street-render"><RoadElevation plan={plan} main={shade.main} accent={shade.accent} glass={scheme?.glass}/>{streetReady?<StreetRender key={JSON.stringify([plan.id,plan.facade,scheme?.glass])} plan={plan} glass={scheme?.glass}/>:<button type="button" className="nroad-recovery-action" onClick={()=>setStreetReady(true)}>Open realistic street render</button>}</div>
      <div className="nroad-palette"><h2>{str("House colour mood","घर की रंग योजना")}</h2>
       <div role="group" aria-label="Choose a named exterior colour palette">{colours.map(x=><button key={x.id} type="button" aria-pressed={palette===x.id} onClick={()=>{setPalette(x.id);setSaveInfo("")}}>
        <i style={{background:x.main}}/><span>{hindi?x.hi:x.en}</span></button>)}</div>
