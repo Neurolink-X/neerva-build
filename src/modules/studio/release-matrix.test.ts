@@ -61,7 +61,7 @@ test("shared upper-floor upgrade applies across supported widths, depths, 1–6 
  for(const [widthFt,depthFt] of [[15,30],[18,50],[20,40],[25,40],[30,50],[40,60],[36,65]] as const)
  for(const floors of [2,3] as const)for(let bedrooms=1;bedrooms<=6;bedrooms++){
   const brief:PlanBrief={widthFt,depthFt,floors,bedrooms,parking:widthFt>=18,roadSide:directions[checked%4],setbacks};
-  const base=generateSpatialPortfolio(brief,3).plans;
+  const base=generateSpatialPortfolio(brief,24).plans;
   const specific=generateEnclosedUpperPortfolio(brief);
   const generic=generateUsableUpperPortfolio(brief,base,2);
   const all=[...specific,...generic];checked++;
