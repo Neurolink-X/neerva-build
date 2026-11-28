@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {isOtsRoom,overlapArea,validatePlan,type PlanBrief,type PlanModel} from "./plan-model.ts";
-import {generateSpatialPortfolio,portfolioForPlanId,validateRequestedProgramme} from "./road-generator.ts";
+import {generateSpatialPortfolio,generateCoveredUpperPortfolio,portfolioForPlanId,validateRequestedProgramme} from "./road-generator.ts";
 import {otsVariant,otsGrilleBars,otsGrilleLevel,airOptimizedPlan} from "./ots-ventilation.ts";
 import {exposedRoofPatches} from "./plan-surfaces.ts";
 import {windowExposure} from "./ventilation.ts";
@@ -76,4 +76,17 @@ test("roof grille uses the adjacent terrace level instead of floating at full ro
  assert.ok(otsGrilleBars(fixture).length>0);
  assert.equal(airOptimizedPlan(p,false,false),p);
  assert.equal(airOptimizedPlan(p,true,true),airOptimizedPlan(p,true,true));
+});
+
+test("18x50 G+1 3BHK includes covered family space with compact terrace and restorable ID",()=>{
+ const b={...brief,widthFt:18,depthFt:50,bedrooms:3};
+ const variants=generateCoveredUpperPortfolio(b);
+ assert.ok(variants.length>0);
+ for(const p of variants){
+  assert.deepEqual(validateRequestedProgramme(p,b),[]);
+  assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,3);
+  assert.ok(p.rooms.some(r=>r.kind==="lounge"&&r.id.startsWith("rear-family-")&&r.floor===1));
+  assert.ok(p.rooms.filter(r=>r.floor===1&&r.kind==="terrace").every(r=>r.d<=5));
+  assert.ok(portfolioForPlanId(b,p.id).plans.some(q=>q.id===p.id));
+ }
 });
