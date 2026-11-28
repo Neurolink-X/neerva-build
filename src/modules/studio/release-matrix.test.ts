@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {generateSpatialPortfolio,generateCoveredUpperPortfolio,planSignature,validateRequestedProgramme} from "./road-generator.ts";
+import {generateSpatialPortfolio,generateCoveredUpperPortfolio,generateEnclosedUpperPortfolio,generateUsableUpperPortfolio,physicalPlanSignature,portfolioForPlanId,planSignature,validateRequestedProgramme} from "./road-generator.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {buildingWallCells} from "./geometry.ts";
 import {streetRenderSnapshot} from "./street-render.ts";
@@ -54,4 +54,24 @@ test("actual street ray tracer returns complete nonblank opaque pixels with diff
   return frame.pixels;
  }
  assert.notDeepEqual(image(false),image(true));
+});
+
+test("shared upper-floor upgrade applies across supported widths, depths, 1–6 BHK and floors", {timeout:180000},()=>{
+ let checked=0,upgraded=0;const sizes=new Set<string>(),counts=new Set<number>();
+ for(const [widthFt,depthFt] of [[15,30],[18,50],[20,40],[25,40],[30,50],[40,60],[36,65]] as const)
+ for(const floors of [2,3] as const)for(let bedrooms=1;bedrooms<=6;bedrooms++){
+  const brief:PlanBrief={widthFt,depthFt,floors,bedrooms,parking:widthFt>=18,roadSide:directions[checked%4],setbacks};
+  const base=generateSpatialPortfolio(brief,3).plans;
+  const specific=generateEnclosedUpperPortfolio(brief);
+  const generic=generateUsableUpperPortfolio(brief,base,2);
+  const all=[...specific,...generic];checked++;
+  for(const p of all){
+   assert.deepEqual(validateRequestedProgramme(p,brief),[],p.id);
+   assert.ok(p.rooms.filter(r=>r.kind==="bedroom").length===bedrooms);
+   assert.ok(portfolioForPlanId(brief,p.id).plans.some(q=>q.id===p.id&&physicalPlanSignature(q)===physicalPlanSignature(p)),p.id+" restores exact geometry");
+   sizes.add(widthFt+"x"+depthFt);counts.add(bedrooms);upgraded++;
+  }
+ }
+ assert.equal(checked,84);assert.ok(sizes.size>=2,"upgrade cannot be confined to one plot");
+ console.log(JSON.stringify({suite:"all-residential-upper",checked,upgraded,plotSizes:[...sizes],bedroomCounts:[...counts]}));
 });
