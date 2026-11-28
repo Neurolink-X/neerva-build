@@ -34,20 +34,23 @@ const contemporaryZones=[
 const compactFamilyZones=[
  zone("left","Left facade wall",[[383,105],[423,105],[423,543],[622,543],[622,576],[383,576]],[],undefined,1536,1024),
  zone("roof","Roof and upper trim",[[383,95],[1116,95],[1116,52],[1178,52],[1178,185],[631,185],[631,129],[423,129],[423,105],[383,105]],[],undefined,1536,1024),
- zone("right","Right balcony wall",[[831,278],[1116,278],[1158,219],[1158,349],[1137,349],[1125,346],[1109,350],[1090,343],[1064,350],[1046,369],[1037,399],[831,399]],[rect(869,332,204,67),rect(843,333,15,24)],undefined,1536,1024),
- zone("upper-recess","Left balcony recess",rect(650,270,162,130),[rect(648,313,123,90)],undefined,1536,1024),
+ zone("right","Right balcony wall",[[635,210],[875,210],[907,176],[907,397],[635,397]],[rect(678,259,158,138),rect(653,260,15,21),rect(635,313,272,6),rect(635,392,272,5),rect(635,313,4,84),[[835,396],[835,336],[841,321],[846,305],[837,292],[847,279],[863,284],[870,274],[879,283],[884,295],[901,291],[905,305],[892,318],[905,337],[900,350],[907,375],[907,396]]],undefined,1200,800),
+ zone("upper-recess","Left balcony recess",rect(500,210,135,187),[rect(506,244,96,153),rect(500,313,135,6),rect(500,392,135,5),rect(500,313,4,84),[[500,396],[500,338],[512,331],[519,320],[539,324],[554,339],[559,356],[549,370],[550,396]]],undefined,1200,800),
  zone("balcony","Balcony slab",rect(642,510,524,66),[],undefined,1536,1024),
  zone("entry","Ground floor entrance wall",[[380,580],[421,580],[421,601],[500,655],[640,655],[640,650],[760,650],[760,781],[408,781],[408,755],[380,755]],[rect(506,701,109,82),rect(639,691,126,93)],undefined,1536,1024),
  zone("lower-recess","Right ground floor wall",[[767,609],[1115,609],[1152,581],[1152,770],[1059,770],[1059,673],[861,673],[861,770],[828,770],[828,755],[777,755],[767,770]],[rect(815,679,16,25)],undefined,1536,1024),
  zone("boundary","Left boundary wall",[[200,775],[355,775],[355,765],[402,765],[402,968],[200,968]],[rect(255,804,63,132),[[200,832],[230,828],[276,835],[310,860],[332,920],[335,968],[200,968]],rect(362,785,31,30)],undefined,1536,1024),
  zone("boundary-right","Right boundary wall",[[784,767],[823,767],[823,775],[1265,775],[1265,974],[784,974]],[rect(790,786,27,30),rect(864,804,55,140),rect(1050,805,169,136),[[850,912],[865,861],[885,824],[888,790],[902,770],[927,764],[950,755],[986,754],[1017,770],[1048,801],[1050,862],[1036,911],[1020,974],[850,974]],[[1017,940],[1060,932],[1120,921],[1170,922],[1225,913],[1250,937],[1250,974],[1017,974]]],undefined,1536,1024)
 ] as const;
+// The railing is a foreground occluder, not the whole lower wall. Protect
+// metal bars and posts individually while including visible plaster behind them.
+const railingHoles=(x:number,w:number)=>[...[[136,4],[149,3],[160,6],[173,3],[184,4]].map(([y,h])=>rect(x,y,w,h)),...[158,218,353,430,445,474,490,550,668,755,789,799,864,991].filter(v=>v>=x&&v<x+w).map(v=>rect(v,136,3,52))];
 // Dedicated 1200×400 paint geometry for the replacement comparison pair.
 export const facadeZones=[
  zone("roof","Upper plaster band",[[83,22],[434,22],[434,12],[795,12],[795,23],[1111,23],[1111,45],[83,45]],[],undefined,1200,400),
- zone("left","Upper left wall",rect(160,56,273,78),[rect(223,79,133,55)],undefined,1200,400),
- zone("right","Upper right wall",rect(799,56,277,78),[rect(864,79,130,55)],undefined,1200,400),
- zone("upper-recess","Upper central wall",rect(479,59,277,75),[rect(551,98,125,36),rect(510,105,15,17),rect(698,105,15,17)],undefined,1200,400),
+ zone("left","Upper left wall",rect(160,56,273,132),[rect(223,79,133,109),...railingHoles(160,273)],undefined,1200,400),
+ zone("right","Upper right wall",rect(799,56,277,132),[rect(864,79,130,109),...railingHoles(799,277)],undefined,1200,400),
+ zone("upper-recess","Upper central wall",rect(479,59,277,129),[rect(551,98,125,90),rect(510,105,15,17),rect(698,105,15,17),...railingHoles(479,277)],undefined,1200,400),
  zone("balcony","Balcony slab",rect(64,193,1067,21),[],undefined,1200,400),
  zone("entry","Entrance wall",rect(480,223,276,69),[rect(550,248,127,44),rect(510,259,15,17),rect(698,259,15,17)],undefined,1200,400),
  zone("lower-recess","Ground right wall",rect(812,225,261,72),[rect(874,244,129,53)],undefined,1200,400),

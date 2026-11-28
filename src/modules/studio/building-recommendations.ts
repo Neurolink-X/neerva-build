@@ -16,7 +16,7 @@ export function visibleInteriorSignature(plan:BuildingConcept){
  ]);
  const a=signature(false),b=signature(true);return a<b?a:b;
 }
-export const layoutFamilies=["internal","purpose-led","classic","side-gallery"] as const;
+export const layoutFamilies=["internal","cross-gallery","purpose-led","classic","side-gallery"] as const;
 export type BuildingRecommendation={id:string;family:BuildingLayoutFamily;index:number;label:string;primaryAreaShare:number;accessAreaShare:number;coreSeparationFt:number;interiorRoomCount:number;detailed:boolean};
 function summarize(plan:BuildingConcept,index:number):BuildingRecommendation{
  const zones=plan.zones.filter(z=>z.floor===0&&!["open","parking"].includes(z.kind)),total=zones.reduce((s,z)=>s+z.w*z.d,0);
@@ -29,7 +29,7 @@ function summarize(plan:BuildingConcept,index:number):BuildingRecommendation{
  * Primary-area share is an indicator, not compliance, occupancy or quality certification.
  * Round-robin across families ensures the shortlist is not one repeated topology. */
 export function recommendBuildingConcepts(brief:BuildingBrief,limit=24){
- const seen=new Set<string>(),groups:BuildingRecommendation[][]=[],counts:Record<BuildingLayoutFamily,number>={"purpose-led":0,classic:0,"side-gallery":0,internal:0};
+ const seen=new Set<string>(),groups:BuildingRecommendation[][]=[],counts:Record<BuildingLayoutFamily,number>={"purpose-led":0,classic:0,"side-gallery":0,"cross-gallery":0,internal:0};
  for(const family of layoutFamilies){
   const {plans}=generateBuildingConcepts(brief,24,family);counts[family]=plans.length;
   const group:BuildingRecommendation[]=[];

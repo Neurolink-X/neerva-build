@@ -86,3 +86,10 @@ test("mall margin repair preserves the measured plot and programme without reduc
 });
 
 test("retail purpose-led starts with balanced shop wings on a feasible four-unit plot",()=>{const b:BuildingBrief={...buildingStarter("shops"),widthFt:80,depthFt:100,unitsPerFloor:4,parkingBays:0,floors:1,frontFt:10,rearFt:10,sideFt:5};const first=generateBuildingConcepts(b,1,"purpose-led").plans[0];assert.ok(first);assert.deepEqual(validateBuildingConcept(first),[]);const shops=first.zones.filter(z=>z.kind==="primary");assert.equal(shops.length,4);assert.ok(Math.max(...shops.map(z=>z.w*z.d))/Math.min(...shops.map(z=>z.w*z.d))<1.1);});
+
+test("cross-gallery creates street-facing shops and transverse access without changing the plot",()=>{
+ const b=buildingStarter("shops"),result=generateBuildingConcepts(b,24,"cross-gallery");assert.ok(result.plans.length>1);assert.equal(new Set(result.plans.map(p=>p.signature)).size,result.plans.length);
+ for(const plan of result.plans){assert.deepEqual(validateBuildingConcept(plan),[]);assert.deepEqual(plan.brief,b);assert.equal(buildingLayoutFamily(plan.id),"cross-gallery");const hall=plan.zones.find(z=>z.kind==="circulation")!;assert.equal(hall.w,b.widthFt-2*b.sideFt);assert.ok(plan.zones.filter(z=>z.kind==="primary").every(z=>Math.abs(z.y+z.d-hall.y)<1e-6||Math.abs(z.y-hall.y-hall.d)<1e-6));}
+ assert.equal(generateBuildingConcepts({...b,sideFt:2},24,"cross-gallery").plans.length,0);
+ assert.equal(generateBuildingConcepts(buildingStarter("rental"),24,"cross-gallery").plans.length,0);
+});

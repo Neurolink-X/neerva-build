@@ -24,3 +24,8 @@ test("purpose furniture and candidate openings are contained in actual selected 
   }
  }
 });
+
+test("transverse gallery has connected room entrances and two modeled side approaches",()=>{
+ const plans=generateBuildingConcepts(buildingStarter("shops"),24,"cross-gallery").plans;assert.ok(plans.length);
+ for(const plan of plans){const hall=plan.zones.find(z=>z.kind==="circulation")!;const openings=commercialPortals(plan);assert.deepEqual(commercialGeometryIssues(plan),[]);assert.equal(openings.filter(p=>p.zoneId===hall.id&&p.kind==="access"&&p.axis==="y").length,2);for(const z of plan.zones.filter(z=>!["open","parking","circulation"].includes(z.kind)))assert.ok(openings.some(p=>p.zoneId===z.id&&p.connectsTo===hall.id&&p.axis==="x"&&p.kind==="access"),z.id);}
+});

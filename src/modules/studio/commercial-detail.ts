@@ -18,10 +18,16 @@ export function commercialPortals(plan:BuildingConcept):ConceptPortal[]{
    const center=living?living.y+living.d/2:(lo+hi)/2;
    result.push({id:z.id+"-access",zoneId:z.id,floor:z.floor,axis:"y",x:right?z.x+z.w:z.x,y:center-1.5,length:3,kind:"access",reviewRequired:true});
   }
+  const above=Math.abs(z.y+z.d-hall.y)<EPS,below=Math.abs(z.y-hall.y-hall.d)<EPS;
+  const xlo=Math.max(z.x,hall.x),xhi=Math.min(z.x+z.w,hall.x+hall.w);
+  if((above||below)&&xhi-xlo>=4)result.push({id:z.id+"-access",zoneId:z.id,floor:z.floor,axis:"x",x:(xlo+xhi)/2-1.5,y:above?z.y+z.d:z.y,length:3,kind:"access",reviewRequired:true,connectsTo:hall.id});
   if(z.kind!=="primary"||plan.brief.purpose==="rental"||plan.brief.sideFt<3||z.d<8)continue;
   const x=right?z.x:z.x+z.w;
   const occupied=plan.zones.some(a=>a.id!==z.id&&a.floor===z.floor&&!["open","parking"].includes(a.kind)&&Math.abs((right?a.x+a.w:a.x)-x)<EPS&&Math.min(a.y+a.d,z.y+z.d)-Math.max(a.y,z.y)>EPS);
   if(!occupied)result.push({id:z.id+"-glazing",zoneId:z.id,floor:z.floor,axis:"y",x,y:z.y+z.d/2-2,length:4,kind:"exterior-glazing",reviewRequired:true});
+ }
+ if(plan.id.endsWith("-cross-v1"))for(const hall of plan.zones.filter(z=>z.kind==="circulation"&&z.floor===0)){
+  for(const [side,x] of [["left",hall.x],["right",hall.x+hall.w]] as const)result.push({id:hall.id+"-side-entry-"+side,zoneId:hall.id,floor:hall.floor,axis:"y",x,y:hall.y+(hall.d-4)/2,length:4,kind:"access",reviewRequired:true});
  }
  for(const p of commercialFrontPanels(plan)){
   if(p.w<8)continue;

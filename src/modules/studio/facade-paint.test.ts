@@ -96,3 +96,12 @@ test("modern accent residence local bytes, zones and protected points",()=>{
  for(const [x,y] of [[400,260],[320,375],[900,300],[695,400],[480,585],[647,660],[900,720],[230,850],[1150,850],[450,210],[600,510],[650,520],[835,530]])assert.equal(hits(x,y),1,"paintable "+x+","+y);
  for(const [x,y] of [[450,400],[1100,400],[750,430],[750,720],[400,720],[1100,720],[1220,300],[945,420],[750,900],[250,935],[50,200],[260,440],[400,473]])assert.equal(hits(x,y),0,"protected "+x+","+y);
 });
+
+test("transparent railings preserve bars, glass openings and foreground plants while repainting exposed plaster",()=>{
+ const inside=(ring:number[][],x:number,y:number)=>{let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [a,b]=ring[i],[c,d]=ring[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;};
+ const hit=(id:string,x:number,y:number,w:number,h:number)=>facadeSamples.find(s=>s.id===id)!.zones.some(z=>inside(z.mask.outline,x/w,y/h)&&!z.mask.holes.some(r=>inside(r,x/w,y/h)));
+ for(const [x,y] of [[190,144],[390,155],[520,170],[700,180],[1030,170]])assert.ok(hit("family",x,y,1200,400),"visible plaster "+x+","+y);
+ for(const [x,y] of [[300,144],[400,164],[600,180],[930,170]])assert.equal(hit("family",x,y,1200,400),false,"protected window or railing");
+ for(const [x,y] of [[616,340],[655,350],[670,375]])assert.ok(hit("compact-family",x,y,1200,800),"wall behind clear railing");
+ for(const [x,y] of [[548,350],[740,350],[616,315],[872,340]])assert.equal(hit("compact-family",x,y,1200,800),false,"protected opening, rail or foliage");
+});
