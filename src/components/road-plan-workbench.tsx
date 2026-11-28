@@ -52,7 +52,7 @@ function RoofJaalPlan({plan}:{plan:PlanModel}){
  <h3>Roof / ventilation plan</h3><p>{shaft?("Open-to-sky shaft · "+shaft.w.toFixed(1)+" × "+shaft.d.toFixed(1)+" ft · grille at "+(level===plan.floors?"roof":"terrace")+" level"):"No aligned roof shaft is modeled. Select a feasible ventilation layout below."}</p>
  <svg role="img" aria-label="Roof slabs, terraces and roof jaal" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} style={{width:"100%",maxHeight:460}}>
  <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#faf7ed" stroke="#536859" strokeWidth=".2"/>
- {exposedRoofPatches(plan).map((p,i)=>{const r=rect(p);return <rect key={i} x={r.x} y={r.y} width={r.w} height={r.d} fill="#ded9cd" stroke="#8b877b" strokeWidth=".12"><title>Roof slab level {p.floor}</title></rect>})}
+ {exposedRoofPatches(plan).map((p,i)=>{const r=rect(p);return <rect key={i} x={r.x} y={r.y} width={r.w} height={r.d} fill="#ded9cd" stroke="#8b877b" strokeWidth=".12"><title>{`Roof slab level ${p.floor}`}</title></rect>})}
  {plan.rooms.filter(r=>r.floor===plan.floors-1&&!["terrace","balcony","parking","verandah"].includes(r.kind)).map(p=>{const r=rect(p);return <rect key={p.id} x={r.x} y={r.y} width={r.w} height={r.d} fill="#ded9cd" stroke="#8b877b" strokeWidth=".12"/>})}
  {plan.rooms.filter(r=>r.floor===plan.floors-1&&(r.kind==="terrace"||r.kind==="balcony")&&!isOtsRoom(r)).map(p=>{const r=rect(p);return <rect key={p.id} x={r.x} y={r.y} width={r.w} height={r.d} fill="#f3e9cf" stroke="#8b877b" strokeWidth=".12"><title>{p.label}</title></rect>})}
  {shaft&&(()=>{const r=rect(shaft);return <rect x={r.x} y={r.y} width={r.w} height={r.d} fill="#b2e1d6" stroke="#08766c" strokeWidth=".24"/>})()}
