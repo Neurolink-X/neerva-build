@@ -19,3 +19,8 @@ This is an implementation checklist, not a certificate of design quality or stat
 - Added compact private-bedroom / side-passage candidates, additional commercial service-room programmes, six bespoke mural compositions, a 16-entry derived artwork cache and plan-aware commercial frontage rhythm.
 - Legacy commercial snapshot reconstruction and UI restore use exact saved identities.
 - Remaining release evidence: latest CI and authenticated E2E, mobile/browser screenshot inspection, user-perceived artwork quality, full-platform field metrics and load testing. These changes are not proof of ultra-photorealism or universal 24-family coverage.
+
+## Verification expansion
+- Browser gate exercises all 72 actual full-wall canvas renders, hashes each image and records nine representative screenshots; distinctness is a mechanical check, not aesthetic approval.
+- Responsive entrance filters now share the same frontage-composition grouping as the count, and shortlist selection resets incompatible filters.
+- Isolated capacity rehearsal covers twelve public/API routes at 5/15/30 workers; per-route latency and failures are included. Sequential read benchmark covers additional Studio and knowledge pages. Neither simulates signed-in production traffic or measures real-user field INP.
