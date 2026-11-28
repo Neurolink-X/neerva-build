@@ -20,3 +20,8 @@ export function architectureTopology(plan:PlanModel){
  const links=new Set(plan.openings.filter(o=>o.connectsTo&&o.kind==="door").map(o=>{const a=byId.get(o.roomId),b=byId.get(o.connectsTo!);return a&&b?[a.floor,...[a.kind,b.kind].sort()].join(":"):""}).filter(Boolean));
  return JSON.stringify([entranceArrangement(plan),roles,[...links].sort()]);
 }
+
+/** Return representative indices without changing saved IDs or option indices. */
+export function representativeIndices<T>(items:readonly T[],signature:(item:T)=>string){
+ const seen=new Set<string>();return items.flatMap((item,i)=>{const key=signature(item);if(seen.has(key))return [];seen.add(key);return [i];});
+}

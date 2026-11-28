@@ -56,5 +56,5 @@ export function recommendBuildingConcepts(brief:BuildingBrief,limit=24){
    options.push(option);topologies.add(key);
   }
  }
- return {counts,distinct:seen.size,options,detailedCount:options.filter(o=>o.detailed).length};
+ return {counts,distinct:seen.size,options,detailedCount:options.filter(o=>o.detailed).length,topologyCount:new Set(options.map(o=>topologyById.get(o.id))).size};
 }

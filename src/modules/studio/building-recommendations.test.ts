@@ -53,3 +53,10 @@ test("commercial zoning groups are deterministic and independent of decorative n
  assert.equal(commercialTopology(p),commercialTopology({...p,id:"renamed",layout:"Renamed"}));
  assert.equal(commercialTopology(p),commercialTopology({...p,zones:p.zones.map(z=>({...z,id:z.id+"-other",label:"Other"}))}));
 });
+
+test("commercial recommendations report functional zoning groups separately from exact geometry",()=>{
+ const b=buildingStarter("shops"),r=recommendBuildingConcepts(b);
+ const selected=r.options.map(o=>generateBuildingConcepts(b,24,o.family).plans[o.index]);
+ assert.equal(r.topologyCount,new Set(selected.map(commercialTopology)).size);
+ assert.ok(r.topologyCount>0&&r.topologyCount<=r.options.length);
+});

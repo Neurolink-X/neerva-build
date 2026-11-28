@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {generateSpatialPortfolio,portfolioForPlanId} from "./road-generator.ts";
-import {entranceArrangement,architectureTopology} from "./architecture-profile.ts";
+import {entranceArrangement,architectureTopology,representativeIndices} from "./architecture-profile.ts";
+import {frontageComposition} from "./frontage.ts";
 import {validatePlan,type PlanBrief} from "./plan-model.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {buildingWallCells} from "./geometry.ts";
@@ -191,4 +192,16 @@ test("front stair alternatives are discoverable early and saved legacy layouts r
  assert.ok(new Set(plans.map(architectureTopology)).size>=2);
  for(const p of plans)assert.deepEqual(validatePlan(p),[]);
  for(const p of legacy){const restored=portfolioForPlanId(standard,p.id).plans.find(v=>v.id===p.id);assert.ok(restored,p.id);assert.equal(geometrySignature(restored),geometrySignature(p));}
+});
+
+test("separate exact plans, meaningful room programmes and street compositions",()=>{
+ for(const roadSide of ["N","E","S","W"] as const){
+  const brief={...standard,roadSide},plans=generateSpatialPortfolio(brief,24).plans;
+  const groups=representativeIndices(plans,architectureTopology),fronts=representativeIndices(plans,frontageComposition);
+  assert.ok(groups.length>=2&&groups.length<=plans.length);assert.ok(fronts.length>=2&&fronts.length<=plans.length);
+  assert.equal(new Set(groups.map(i=>architectureTopology(plans[i]))).size,groups.length);
+  assert.ok(plans.some(p=>entranceArrangement(p)==="front-stair"));
+  for(const p of plans){assert.deepEqual(validatePlan(p),[]);assert.equal(p.plot.roadSide,roadSide);}
+  console.log("architecture-coverage "+JSON.stringify({kind:"residential",roadSide,checked:plans.length,programmes:groups.length,frontCompositions:fronts.length,frontStairs:plans.filter(p=>entranceArrangement(p)==="front-stair").length}));
+ }
 });

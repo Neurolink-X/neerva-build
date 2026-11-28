@@ -73,3 +73,16 @@ export function frontageSignature(plan:PlanModel):string{
  const panels=frontagePanels(plan);
  return JSON.stringify([panels.map(p=>[p.floor,round(p.x),round(p.w),round(p.y)]),frontageOpenings(plan,panels).map(({o,r,a,w})=>[r.floor,o.kind,round(a),round(w),o.sillFt,o.heightFt]).sort(),plan.rooms.filter(r=>r.kind==="balcony").map(r=>[r.floor,round(r.x),round(r.y),round(r.w),round(r.d)]).sort(),[plan.gate.xFt,plan.gate.widthFt,plan.pedestrianGate.xFt,plan.pedestrianGate.widthFt]]);
 }
+
+/** Visible architectural composition groups, not a count of millimetre changes.
+ * Ignore palette, tiny dimension variations and left/right reflection. */
+export function frontageComposition(plan:PlanModel){
+ const W=plan.plot.widthFt,D=plan.plot.depthFt,panels=frontagePanels(plan);
+ const bucket=(n:number)=>Math.max(0,Math.min(4,Math.floor(n*5)));
+ const signature=(mirror:boolean)=>JSON.stringify([
+  panels.map(p=>[p.floor,p.kind,bucket((mirror?W-p.x-p.w/2:p.x+p.w/2)/W),bucket(p.y/D)]).sort(),
+  frontageOpenings(plan,panels).map(({o,r,a,w})=>[r.floor,o.kind,bucket((mirror?W-a-w/2:a+w/2)/W),bucket(o.sillFt/plan.walls.heightFt)]).sort(),
+  plan.rooms.filter(r=>r.kind==="balcony").map(r=>[r.floor,bucket((mirror?W-r.x-r.w/2:r.x+r.w/2)/W),bucket(r.w/W),bucket(r.d/D)]).sort()
+ ]);
+ const a=signature(false),b=signature(true);return a<b?a:b;
+}
