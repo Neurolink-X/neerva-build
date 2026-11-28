@@ -31,6 +31,7 @@ export async function verifyWallArtwork(page){
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="feature");
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const premium=page.getByRole("button",{name:"Image-based premium finishes · 8 designs",exact:true});await premium.click();assert.equal(await page.locator(".wall-pattern-options button").count(),8);await page.waitForFunction(()=>document.querySelectorAll(".wall-pattern-options .paint-texture-swatch").length===8);await page.getByRole("button",{name:"Signature",exact:true}).click();
+    await page.getByRole("button",{name:"3D effects",exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll(".wall-pattern-options .paint-texture-swatch").length===8);await page.getByRole("button",{name:"Signature",exact:true}).click();
     const wallEvidence=[],pixelDigests=new Set();
     const fullRoom=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"Wall Detail",exact:true}).click();assert.equal(await canvas.getAttribute("data-interior-view"),"detail");assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),fullRoom);await page.getByRole("button",{name:"Full Room",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),fullRoom);
     // Capture the baseline on the same masked wall, then check every artwork

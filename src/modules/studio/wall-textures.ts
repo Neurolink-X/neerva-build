@@ -1,4 +1,5 @@
 import type {Pattern} from "./wall-patterns.ts";
+import {isGeneratedWallPattern} from "./generated-wall-raster.ts";
 import type {FacadeStyles,FacadeTarget} from "./facade-paint.ts";
 export type WallTexture={src:string;width:number;height:number;bytes:number;sha256:string;crop?:readonly [number,number,number,number]};
 export const wallTextures:Partial<Record<Pattern,WallTexture>>={
@@ -73,6 +74,7 @@ export const wallTextures:Partial<Record<Pattern,WallTexture>>={
 };
 export const imageBasedWallPatterns=Object.keys(wallTextures) as Pattern[];
 export function textureFor(pattern:Pattern){return wallTextures[pattern];}
+export function hasWallRaster(pattern:Pattern){return !!textureFor(pattern)||isGeneratedWallPattern(pattern);}
 /** Crop without squeezing the selected artwork to the photographed plane. */
 export function wallTextureCrop(width:number,height:number,aspect:number){
  const ratio=width/height;if(!(width>0&&height>0&&aspect>0&&Number.isFinite(aspect)))return [0,0,1,1] as const;
@@ -94,5 +96,5 @@ export function texturePalette(base:string,accent:string){
 export function appliedWallTextureKeys({scene,target,facadeStyles,walls,editing,valid,effectivePattern}:{scene:"room"|"facade"|"custom";target:FacadeTarget;facadeStyles:FacadeStyles;walls:readonly {pattern:Pattern}[];editing:number|null;valid:boolean;effectivePattern:Pattern}):Pattern[]{
  const keys=scene==="facade"?Object.entries(facadeStyles).filter(([id])=>id!==target).map(([,style])=>style.pattern):walls.filter((_,i)=>i!==editing).map(w=>w.pattern);
  if(scene==="facade"?target!=="all":valid)keys.push(effectivePattern);
- return [...new Set(keys)].filter(key=>textureFor(key));
+ return [...new Set(keys)].filter(hasWallRaster);
 }

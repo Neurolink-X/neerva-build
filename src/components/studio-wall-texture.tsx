@@ -1,12 +1,14 @@
 "use client";
 import {memo,useEffect,useLayoutEffect,useRef,useState} from "react";
-import {textureFor,texturePalette,wallTextureCrop} from "@/modules/studio/wall-textures";
+import {textureFor,texturePalette,wallTextureCrop,hasWallRaster} from "@/modules/studio/wall-textures";
 import type {Pattern} from "@/modules/studio/wall-patterns";
+import {generateWallRaster,isGeneratedWallPattern} from "@/modules/studio/generated-wall-raster";
 type Texture={width:number;height:number;values:Uint8Array};
 type TextureState=Partial<Record<Pattern,Texture|null>>;
 const pending=new Map<Pattern,Promise<Texture|null>>();
 function loadTexture(key:Pattern){
  const old=pending.get(key);if(old)return old;
+ if(isGeneratedWallPattern(key)){const promise=Promise.resolve().then(()=>generateWallRaster(key));pending.set(key,promise);return promise;}
  const meta=textureFor(key);if(!meta)return Promise.resolve(null);
  const promise=new Promise<Texture|null>(resolve=>{
   const img=new Image();let settled=false;
@@ -26,11 +28,11 @@ function loadTexture(key:Pattern){
  });
  pending.set(key,promise);void promise.then(value=>{if(!value&&pending.get(key)===promise)pending.delete(key);});return promise;
 }
-/** Only current collection and already applied designs are requested. Eight
- * fixed local assets bound the cache; no stale photo or user data is stored. */
+/** Only current collection and already applied designs are requested. Eight image assets and eight bounded
+ * procedural rasters limit the cache; no stale photo or user data is stored. */
 export function useWallTextures(keys:string){
  const [textures,setTextures]=useState<TextureState>({});
- useEffect(()=>{let cancelled=false;for(const key of keys.split(",") as Pattern[]){if(!textureFor(key))continue;void loadTexture(key).then(value=>{if(!cancelled)setTextures(old=>old[key]===value?old:{...old,[key]:value});});}return()=>{cancelled=true};},[keys]);
+ useEffect(()=>{let cancelled=false;for(const key of keys.split(",") as Pattern[]){if(!hasWallRaster(key))continue;void loadTexture(key).then(value=>{if(!cancelled)setTextures(old=>old[key]===value?old:{...old,[key]:value});});}return()=>{cancelled=true};},[keys]);
  return textures;
 }
 export function colouredTexture(texture:Texture,base:string,accent:string,maxSide=960){
