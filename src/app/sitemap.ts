@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${siteUrl}/family-homes`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/design-studio`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${siteUrl}/design-studio/portfolio`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteUrl}/design-studio/visualizer`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${siteUrl}/design-studio/buildings`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/studio-pricing`, changeFrequency: "monthly", priority: 0.6 },

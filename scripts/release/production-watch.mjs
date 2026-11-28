@@ -1,6 +1,6 @@
 // Read-only fixed-origin production smoke. No credentials, no mutations, no arbitrary targets.
-const origins=new Set(["https://neerva-build.vercel.app","https://neerva.in"]);
-const paths=["/","/materials","/build-iq","/calculators","/design-studio","/design-studio/buildings","/design-studio/visualizer","/api/catalog?limit=1","/api/studio/config"];
+const origins=new Set(["https://neerva-build.vercel.app","https://neerva.in","https://www.neerva.in"]);
+const paths=["/","/materials","/build-iq","/calculators","/design-studio","/design-studio/buildings","/design-studio/visualizer","/design-studio/portfolio","/api/catalog?limit=1","/api/studio/config"];
 async function get(origin,path){
  let url=new URL(path,origin);
  for(let redirect=0;redirect<=2;redirect++){
@@ -33,6 +33,7 @@ async function probe(origin,path){
     if(path==="/api/studio/config"&&(body.ready!==true||body.unavailable===true))return {origin,path,status:"degraded",detail:"Live studio configuration unavailable"};
    }else{
     if(!content.includes("text/html"))throw Error("Unexpected page content type");
+    if(new URL(response.url).origin!=="https://www.neerva.in")throw Error("Canonical production hostname mismatch");
     if(response.headers.get("x-content-type-options")!=="nosniff"||response.headers.get("x-frame-options")!=="DENY")throw Error("Security headers missing");
     await response.body?.cancel();
    }

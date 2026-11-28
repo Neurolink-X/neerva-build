@@ -1,17 +1,25 @@
 import type {Metadata} from "next";
 import Link from "next/link";
+import {publicIndexingEnabled} from "@/modules/seo/indexing";
 import {parseSiteShape,shapeErrors} from "@/modules/studio/site-shape";
 import {RoadPlanClient} from "@/components/road-plan-client";
 import type {PlanBrief,RoadSide} from "@/modules/studio/plan-model";
 import "../studio.css";
 import "../road-planner/road-planner.css";
 export const dynamic="force-dynamic";
-export const metadata:Metadata={
- title:"24 Plot-Specific Room Plans, Parking & Real 3D | NEERVA BUILD",
+const portfolioMetadata:Metadata={
+ title:"House Plan Generator & 2D to 3D Layouts",
  description:"Generate up to 24 geometry-validated room arrangements for one measured rectangular or supported L-shaped plot, keeping car parking and road direction consistent in 2D and 3D. Draft concepts only.",
- robots:{index:false,follow:true}
+ alternates:{canonical:"/design-studio/portfolio"}
 };
 type Props={searchParams:Promise<Record<string,string|string[]|undefined>>};
+export async function generateMetadata({searchParams}:Props):Promise<Metadata>{
+ const params=await searchParams;
+ // Only the public landing page is indexable. Personalized plot URLs remain
+ // non-indexable and canonicalized, even when production indexing is enabled.
+ const index=publicIndexingEnabled(process.env)&&Object.keys(params).length===0;
+ return {...portfolioMetadata,robots:{index,follow:publicIndexingEnabled(process.env)}};
+}
 const safe=(x:string|string[]|undefined,min:number,max:number,fallback:number)=>{
  const value=typeof x==="string"?Number(x):NaN;
  return Number.isFinite(value)&&value>=min&&value<=max?value:fallback;
