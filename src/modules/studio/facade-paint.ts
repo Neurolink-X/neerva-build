@@ -58,9 +58,9 @@ export const facadeZones=[
 // Dedicated geometry for the 1408×1056 source, resized proportionally to 1200×900.
 const courtyardZones=[
  zone("roof","Upper plaster band",rect(110,244,758,50),[],undefined,1408,1056),
- zone("left","Upper left wall",rect(209,330,467,137),[rect(329,349,269,119),rect(211,405,105,63)],undefined,1408,1056),
+ zone("left","Upper left wall",rect(175,280,405,188),[rect(282,301,225,167),rect(175,399,405,6),[[185,369],[196,368],[208,382],[200,359],[220,372],[224,354],[242,349],[251,356],[245,374],[267,375],[248,394],[265,407],[250,416],[238,420],[240,439],[247,440],[247,468],[207,468],[207,440],[218,437],[213,420],[195,407],[210,398]]],undefined,1200,900),
  zone("right","Tall accent wall",rect(874,70,313,569),[rect(986,195,201,51),rect(1009,244,178,361),rect(937,403,19,34)],undefined,1408,1056),
- zone("upper-recess","Balcony recess",rect(683,331,168,136),[rect(713,373,119,94)],undefined,1408,1056),
+ zone("upper-recess","Balcony recess",rect(580,280,148,188),[rect(609,320,97,148),rect(580,399,148,6)],undefined,1200,900),
  zone("balcony","Balcony plaster",rect(119,556,749,65),[],undefined,1408,1056),
  zone("entry","Ground entrance wall",rect(641,646,211,146),[rect(657,674,158,118)],undefined,1408,1056),
  zone("lower-recess","Ground right wall",rect(859,650,327,119),[rect(943,668,225,101)],undefined,1408,1056),

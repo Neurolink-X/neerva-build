@@ -104,7 +104,7 @@ export function generateBuildingConcepts(b:BuildingBrief,limit=24,family:Buildin
  // Different circulation widths, asymmetric wings, unit allocation and service
  // locations. A fixed order makes the first preview independent of requested limit.
  for(let step=0;step<144&&out.length<max;step++){
-  const recipe=step*37%144,coreFront=recipe%2===0,swapServices=Math.floor(recipe/2)%2===1;
+  const recipe=(step*37+(family==="purpose-led"&&b.purpose==="shops"?36:0))%144,coreFront=recipe%2===0,swapServices=Math.floor(recipe/2)%2===1;
   const corridor=(family==="purpose-led"&&b.purpose==="mall"?[12,14,16]:family==="purpose-led"&&b.purpose==="school"?[10,12,14]:[8,10,12])[Math.floor(recipe/4)%3];
   const ratio=[.5,.42,.58][Math.floor(recipe/12)%3];
   const leftUnits=Math.max(0,Math.min(b.unitsPerFloor,Math.floor(b.unitsPerFloor/2)+[-1,0,1,2][Math.floor(recipe/36)%4]));

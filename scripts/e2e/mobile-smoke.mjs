@@ -297,7 +297,7 @@ async function main(){
     assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
     assert.ok(await gallery.evaluate(el=>{const active=el.querySelector("button[aria-pressed=true]"),other=el.querySelector("button[aria-pressed=false]");return active&&other&&getComputedStyle(active).borderColor!==getComputedStyle(other).borderColor}),"active house is visually distinguishable without a badge");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
-    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-(b.dataset.facadeSample==="family"?3:b.dataset.facadeSample==="compact-family"?1.5:4/3))<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="contain";})};});
+    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-(b.dataset.facadeSample==="compact-family"?1.5:4/3))<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="contain";})};});
     assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=1100?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
     await page.getByRole("button",{name:/100 gaj family home/}).click();
     assert.match(await page.locator(".paint-sample-feedback").innerText(),/100 gaj family home/);
@@ -1254,11 +1254,10 @@ async function main(){
  await page.getByRole("button",{name:"Signature",exact:true}).click();await page.getByRole("button",{name:"Luxury orbit rings",exact:true}).click();
  const orbit=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(orbit,plainBeforePattern,"circular mural must alter actual canvas pixels");
  await page.getByRole("button",{name:"Nature",exact:true}).click();await page.getByRole("button",{name:"Floral vine feature wall",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),orbit,"floral artwork differs from the circle mural");
- let visibleDesigns=0;for(const group of ["Signature","Nature","Murals","Classic","Modern","Textures","Artisan","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,41,"curated collection must not contain retired filler designs");
- await page.getByRole("button",{name:"Artisan",exact:true}).click();
- const artisan=page.getByRole("button",{name:"Venetian polished plaster",exact:true});await artisan.click();
- const venetian=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(venetian,plainBeforePattern,"continuous texture changes actual wall pixels");
- await page.getByRole("button",{name:"Honed onyx veining",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),venetian,"two artisan materials produce different wall pixels");
+ let visibleDesigns=0;for(const group of ["Signature","Nature","Murals","Classic","Modern","Geometry","Printed","3D effects","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,72,"curated collection must not contain retired filler designs");
+ await page.getByRole("button",{name:"3D effects",exact:true}).click();
+ await page.getByRole("button",{name:"3D isometric cube",exact:true}).click();const relief=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(relief,plainBeforePattern);
+ await page.getByRole("button",{name:"Printed",exact:true}).click();await page.getByRole("button",{name:"Printed lotus repeat",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),relief);
  await page.getByRole("button",{name:"Classic",exact:true}).click();await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();

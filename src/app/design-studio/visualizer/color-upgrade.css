@@ -241,3 +241,11 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 
 /* Five designs: one featured sample + four compact alternatives. */
 .visualizer-app .paint-sample-gallery{grid-template-columns:repeat(4,minmax(0,1fr))}.visualizer-app .paint-sample-gallery button:last-child{grid-column:auto}.visualizer-app .paint-sample-gallery button[data-facade-sample=modern-courtyard] .paint-sample-photo{aspect-ratio:4/3}@media(max-width:1100px){.visualizer-app .paint-sample-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:900px){.visualizer-app .paint-sample-gallery button:last-child .paint-sample-photo{aspect-ratio:4/3}}
+
+/* Keep every sample in the same bounded card; the full preview stays uncropped. */
+.visualizer-app .paint-sample-gallery{align-items:start}
+.visualizer-app .paint-sample-gallery button{height:auto;align-self:stretch;justify-content:flex-start}
+.visualizer-app .paint-sample-gallery button:not([data-facade-sample=compact-family]) .paint-sample-photo{aspect-ratio:4/3}
+.visualizer-app .paint-sample-gallery button .paint-sample-photo{flex:0 0 auto;min-width:0}
+.visualizer-app .paint-targets,.visualizer-app .paint-mode{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.visualizer-app .paint-preview-status,.visualizer-app .paint-reference-note{overflow-wrap:anywhere;white-space:normal}

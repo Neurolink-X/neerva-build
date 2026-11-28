@@ -93,6 +93,6 @@ test("modern accent residence local bytes, zones and protected points",()=>{
  assert.equal(sample.zones.length,11);assert.equal(new Set(sample.zones.map(z=>z.id)).size,11);
  const inside=(ring:number[][],x:number,y:number)=>{let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [a,b]=ring[i],[c,d]=ring[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;};
  const hits=(x:number,y:number)=>sample.zones.filter(z=>inside(z.mask.outline,x/1408,y/1056)&&!z.mask.holes.some(h=>inside(h,x/1408,y/1056))).length;
- for(const [x,y] of [[400,260],[320,375],[900,300],[695,400],[480,585],[647,660],[900,720],[230,850],[1150,850],[450,210]])assert.equal(hits(x,y),1,"paintable "+x+","+y);
- for(const [x,y] of [[450,400],[1100,400],[750,430],[750,720],[400,720],[1100,720],[1220,300],[945,420],[750,900],[250,935],[50,200],[260,440],[600,510]])assert.equal(hits(x,y),0,"protected "+x+","+y);
+ for(const [x,y] of [[400,260],[320,375],[900,300],[695,400],[480,585],[647,660],[900,720],[230,850],[1150,850],[450,210],[600,510],[650,520],[835,530]])assert.equal(hits(x,y),1,"paintable "+x+","+y);
+ for(const [x,y] of [[450,400],[1100,400],[750,430],[750,720],[400,720],[1100,720],[1220,300],[945,420],[750,900],[250,935],[50,200],[260,440],[400,473]])assert.equal(hits(x,y),0,"protected "+x+","+y);
 });

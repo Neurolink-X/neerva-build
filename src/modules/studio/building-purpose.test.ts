@@ -84,3 +84,5 @@ test("mall margin repair preserves the measured plot and programme without reduc
  const generous={...repaired,frontFt:45,rearFt:30};assert.deepEqual(applyBuildingConceptMargins(generous),generous);
  assert.equal(applyBuildingConceptMargins({...original,parkingBays:2}).frontFt,36);
 });
+
+test("retail purpose-led starts with balanced shop wings on a feasible four-unit plot",()=>{const b:BuildingBrief={...buildingStarter("shops"),widthFt:80,depthFt:100,unitsPerFloor:4,parkingBays:0,floors:1,frontFt:10,rearFt:10,sideFt:5};const first=generateBuildingConcepts(b,1,"purpose-led").plans[0];assert.ok(first);assert.deepEqual(validateBuildingConcept(first),[]);const shops=first.zones.filter(z=>z.kind==="primary");assert.equal(shops.length,4);assert.ok(Math.max(...shops.map(z=>z.w*z.d))/Math.min(...shops.map(z=>z.w*z.d))<1.1);});
