@@ -57,3 +57,6 @@ This is an implementation checklist, not a certificate of design quality or stat
 ## Interior / floor-plan integration
 - Bounded deterministic furniture search considers actual standard and compact furniture footprints, rotated positions, door/window buffers and item separation. Explicitly report missing essential furniture rather than imply all rooms are furnished.
 - OTS and combined window options retain previously feasible essential furniture per room; selection highlights remain tied to the base gallery card and finish choices carry over only for matching room IDs on the same base plan. Added dimensional detail to actual 3D furniture and a compact selected-floor interior review next to the drawing. This is not an accessibility or finished-clearance certification.
+
+## Clean architectural drawings
+- Remove furniture overlays from residential and commercial 2D floor plans. Keep dimensions, room boundaries, openings, stairs, parking and ventilation information intact. Furniture is an optional 3D interior feature only; commercial generation no longer forces it on. Move the indicative interior fit report alongside the interior finish section.
