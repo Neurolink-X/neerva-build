@@ -13,7 +13,8 @@ import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide"
 import {exteriorCollections,exteriorGuide,exteriorGroupFor,isExteriorPattern} from "@/modules/studio/exterior-wall-art";
 import {artworkFrame} from "@/modules/studio/wall-design-layout";
 import {shadeArtworkPixels} from "@/modules/studio/artwork-lighting";
-import {detailedWallRecipe,wallFinishStrength} from "@/modules/studio/detailed-wall-recipes";
+import {detailedWallRecipe,wallMaterialDetail} from "@/modules/studio/detailed-wall-recipes";
+import {applyMaterialDetail} from "@/modules/studio/material-detail";
 import {textureFor,appliedWallTextureKeys} from "@/modules/studio/wall-textures";
 import {fitFacadeArtwork,managedFacadeStyles,recommendedFacadeZone} from "@/modules/studio/facade-design-management";
 import {useWallTextures,colouredTexture,WallTextureSwatch,drawTextureQuad} from "./studio-wall-texture";
@@ -75,7 +76,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
     // readback to the selected wall; leave transparent/protected pixels intact.
     const left=Math.max(0,Math.floor(Math.min(...corners.map(p=>p.x)))),top=Math.max(0,Math.floor(Math.min(...corners.map(p=>p.y))));
     const right=Math.min(w,Math.ceil(Math.max(...corners.map(p=>p.x)))),bottom=Math.min(h,Math.ceil(Math.max(...corners.map(p=>p.y))));
-    if(right>left&&bottom>top){const pixels=layer.getImageData(left,top,right-left,bottom-top);shadeArtworkPixels(pixels.data,sourceLuma,w,left,top,pixels.width,texture?0:wallFinishStrength(wall.pattern));layer.putImageData(pixels,left,top);}
+    if(right>left&&bottom>top){const pixels=layer.getImageData(left,top,right-left,bottom-top);const material=texture?undefined:wallMaterialDetail(wall.pattern);if(material)applyMaterialDetail(pixels.data,pixels.width,pixels.height,material,left,top);shadeArtworkPixels(pixels.data,sourceLuma,w,left,top,pixels.width);layer.putImageData(pixels,left,top);}
    }
   }
   brush.restore();

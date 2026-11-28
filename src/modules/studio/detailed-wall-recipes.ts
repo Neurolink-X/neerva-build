@@ -1,4 +1,5 @@
 import type {Pattern} from "./wall-patterns.ts";
+import type {MaterialDetail} from "./material-detail.ts";
 type Material="pigment"|"wash"|"stencil"|"inlay"|"relief"|"panel";
 type Recipe=readonly [Material,string,string];
 /** Individually authored finish and placement guidance. No new artwork IDs or
@@ -71,3 +72,21 @@ export const detailedWallRecipes={
 } as const satisfies Partial<Record<Pattern,Recipe>>;
 export function detailedWallRecipe(key:Pattern):Recipe|undefined{return (detailedWallRecipes as Partial<Record<Pattern,Recipe>>)[key];}
 export function wallFinishStrength(key:Pattern){const recipe=detailedWallRecipe(key);return recipe?{pigment:.016,wash:.035,stencil:.021,inlay:.013,relief:.028,panel:.022}[recipe[0]]:0;}
+
+/** Different finish families require different texture frequency and depth.
+ * Keep amplitudes small enough for realistic paint, not noisy wallpaper. */
+const materialProfiles:Record<Material,MaterialDetail>={
+ pigment:{grain:.012,wash:.016,ridge:0,edge:0,axis:"diagonal"},
+ wash:{grain:.022,wash:.065,ridge:0,edge:0,axis:"diagonal"},
+ stencil:{grain:.015,wash:.018,ridge:.006,edge:.035,axis:"vertical"},
+ inlay:{grain:.009,wash:.025,ridge:.016,edge:.10,axis:"diagonal"},
+ relief:{grain:.018,wash:.025,ridge:.018,edge:.15,axis:"vertical"},
+ panel:{grain:.012,wash:.020,ridge:.012,edge:.11,axis:"vertical"}
+};
+export function wallMaterialDetail(key:Pattern):MaterialDetail|undefined{
+ const recipe=detailedWallRecipe(key);if(!recipe)return;
+ const profile=materialProfiles[recipe[0]];
+ if(key==="herringbone"||key==="sculptDiamond"||key==="sculptPrism")return {...profile,axis:"diagonal"};
+ if(key==="split"||key==="heritage"||key==="royalRosette")return {...profile,axis:"horizontal"};
+ return profile;
+}

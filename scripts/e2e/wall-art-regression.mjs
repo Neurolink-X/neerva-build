@@ -11,6 +11,11 @@ export async function verifyWallArtwork(page){
     await page.locator(".paint-canvas-frame[aria-busy=false] canvas").waitFor({state:"visible"});
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const wallEvidence=[],pixelDigests=new Set();
+    // Capture the baseline on the same masked wall, then check every artwork
+    // changes painted pixels without touching a known protected sofa pixel.
+    await page.getByRole("button",{name:"Plain paint",exact:true}).click();
+    const baseline=await canvas.evaluate(c=>{const ctx=c.getContext("2d");return {digest:c.toDataURL(),protected:[...ctx.getImageData(Math.floor(c.width*.5),Math.floor(c.height*.72),1,1).data]};});
+    await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     for(const group of ["Signature","Murals","Nature","Classic","Modern","Geometry","Printed","3D effects","Architectural"]){
      await page.getByRole("button",{name:group,exact:true}).click();
      const cards=page.locator(".wall-pattern-options button");assert.equal(await cards.count(),8);
@@ -21,9 +26,11 @@ export async function verifyWallArtwork(page){
       if(await card.locator(".paint-texture-swatch").count())assert.equal(await canvas.getAttribute("data-wall-texture"),"ready");
       const pixels=await canvas.evaluate(c=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(c.toDataURL())))));
       const digest=createHash("sha256").update(pixels).digest("hex");
+      assert.notEqual(pixels,baseline.digest,name+" must visibly change the wall");
+      assert.deepEqual(await canvas.evaluate(c=>[...c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.72),1,1).data]),baseline.protected,name+" must preserve the protected sofa");
       if(group==="Geometry"){const shade=page.getByLabel("Pattern colour");const prior=await shade.inputValue();await shade.fill(prior==="#305c80"?"#c4925f":"#305c80");await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,pixels);await shade.fill(prior);await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()===old,pixels);}
       wallEvidence.push({group,name,digest,automationMs:Date.now()-start});pixelDigests.add(digest);
-      if(i===0)await canvas.screenshot({path:path.join("test-results/mobile","wall-art-"+group.toLowerCase().replaceAll(" ","-")+".png"),animations:"disabled"});
+      await canvas.screenshot({path:path.join("test-results/mobile","wall-art-"+group.toLowerCase().replaceAll(" ","-")+"-"+(i+1)+".png"),animations:"disabled"});
      }
     }
     await page.getByRole("button",{name:"3D effects",exact:true}).click();await page.getByRole("button",{name:"Sculptural wave relief",exact:true}).click();await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");
