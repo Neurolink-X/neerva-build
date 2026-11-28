@@ -9,7 +9,7 @@ import "../road-planner/road-planner.css";
 export const dynamic="force-dynamic";
 const portfolioMetadata:Metadata={
  title:"House Plan Generator & 2D to 3D Layouts",
- description:"Generate up to 24 geometry-validated room arrangements for one measured rectangular or supported L-shaped plot, keeping car parking and road direction consistent in 2D and 3D. Draft concepts only.",
+ description:"Generate geometry-validated room arrangements for one measured rectangular or supported L-shaped plot, keeping car parking and road direction consistent in 2D and 3D. Draft concepts only.",
  alternates:{canonical:"/design-studio/portfolio"}
 };
 type Props={searchParams:Promise<Record<string,string|string[]|undefined>>};
@@ -40,7 +40,7 @@ export default async function PlotPortfolioPage({searchParams}:Props){
   roadSide,floors,bedrooms,parking,
   setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}
  };
- const initialOption=Math.trunc(safe(params.option,0,23,0));
+ const initialOption=Math.trunc(safe(params.option,0,25,0));
  return <RoadPlanClient initialBrief={initialBrief} initialOption={initialOption}/>;
 }
 
