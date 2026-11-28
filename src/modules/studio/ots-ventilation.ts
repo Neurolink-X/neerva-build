@@ -45,10 +45,10 @@ function shaftCandidate(p:PlanModel,rect:Rect,replaceBlockedWindows=false):PlanM
  }
  for(let floor=0;floor<p.floors;floor++)rooms.push({...rect,id:"ots-v1-floor-"+floor,label:"Open-to-sky ventilation (roof jaal)",kind:"terrace",floor,minClearWidthFt:3});
  const revised:PlanModel={...p,id:p.id+"-ots-v1",rooms,openings,notes:[...p.notes,"Continuous open-to-sky ventilation reserve with conceptual roof grille. Verify shaft proportions, drainage, fire separation, waterproofing and engineered grille safety."]};
- if(validatePlan(revised).length)return null;
+ // Validate after the shaft-facing openings have been added, not before.
  // Require actual adjacent wet-room ventilation, not an isolated decorative hole.
- const adjacent=rooms.filter(r=>wet(r)&&rooms.some(s=>isOtsRoom(s)&&s.floor===r.floor&&sharedEdge(r,s)));
- if(!adjacent.length)return null;
+ const adjacent=rooms.filter(r=>(wet(r)||["bedroom","living","dining","lounge"].includes(r.kind))&&rooms.some(s=>isOtsRoom(s)&&s.floor===r.floor&&sharedEdge(r,s)));
+ if(!adjacent.some(wet))return null;
  // Explicitly model a screened aperture into the shaft. Other additional
  // windows are added by the same validated ventilation engine.
  for(const r of adjacent){
@@ -59,7 +59,7 @@ function shaftCandidate(p:PlanModel,rect:Rect,replaceBlockedWindows=false):PlanM
   if(openings.some(o=>o.roomId===r.id&&o.side===edge.aSide&&atFt<o.atFt+o.widthFt+.15&&atFt+w>o.atFt-.15))continue;
   openings.push({id:"ots-v1-window-"+r.id,roomId:r.id,side:edge.aSide,atFt,widthFt:w,sillFt:5.5,heightFt:2,kind:"window"});
  }
- if(!openings.some(o=>o.id.startsWith("ots-v1-window-"))||validatePlan(revised).length)return null;
+ if(!openings.some(o=>o.id.startsWith("ots-v1-window-")&&adjacent.some(r=>wet(r)&&r.id===o.roomId)&&windowExposure(revised,rooms.find(r=>r.id===o.roomId)!,o)==="ots")||validatePlan(revised).length)return null;
  if(exposedRoofPatches(revised).some(r=>overlapArea(r,rect)>EPS))return null;
  return revised;
 }
@@ -67,6 +67,13 @@ function shaftCandidate(p:PlanModel,rect:Rect,replaceBlockedWindows=false):PlanM
  * minimal loss of enclosed space. Never alter input dimensions or required rooms. */
 export function otsVariant(p:PlanModel):PlanModel{
  const compact=[[3,3],[3,4],[4,3],[4,4]],expanded=[[3,5],[5,3],[4,5],[5,4],[5,5]];
+ if(p.rooms.some(isOtsRoom))return p;
+ // Try a continuous rear service court before a more costly general search.
+ // This keeps the existing access door and every required habitable room intact.
+ const before=interiorFitReport(p);
+ for(const r of p.rooms.filter(r=>r.floor===0&&r.kind==="utility"&&r.w>=3&&r.d>=6&&Math.abs(r.y+r.d-(p.plot.depthFt-p.setbacks.rearFt))<EPS)){
+  for(const d of [3,4]){const candidate=shaftCandidate(p,{x:r.x,y:fixed(r.y+r.d-d),w:r.w,d},true);if(candidate&&preservesEssentialInterior(before,interiorFitReport(candidate)))return candidate;}
+ }
  return searchOts(p,compact)??searchOts(p,expanded)??searchOts(p,[...compact,...expanded],true)??p;
 }
 function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):PlanModel|null{
@@ -74,14 +81,14 @@ function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):Pla
  const shape=p.plot.siteShape??{kind:"rectangle"} as const,sb=p.setbacks;
  const W=p.plot.widthFt-sb.rightFt,D=p.plot.depthFt-sb.rearFt;
  const seen=new Set<string>(),pool:{r:Rect;score:number}[]=[];
- for(const target of p.rooms.filter(wet))for(const [w,d] of sizes){
+ for(const target of p.rooms.filter(wet))for(const [w,d] of [...sizes,...(target.floor===0&&target.w>=3&&target.w<=9?[[target.w,3],[target.w,4]]:[]),...(target.floor===0&&target.d>=3&&target.d<=9?[[3,target.d],[4,target.d]]:[])]){
   const x=[target.x-w,target.x+target.w,target.x,target.x+target.w-w,target.x+(target.w-w)/2];
   const y=[target.y-d,target.y+target.d,target.y,target.y+target.d-d,target.y+(target.d-d)/2];
   for(const a of x)for(const b of y){
    const r={x:fixed(a),y:fixed(b),w,d},key=JSON.stringify(r);if(seen.has(key))continue;seen.add(key);
    if(r.x<sb.leftFt-EPS||r.y<sb.frontFt-EPS||r.x+w>W+EPS||r.y+d>D+EPS||!rectInsideShape(r,p.plot.widthFt,p.plot.depthFt,shape))continue;
    const affected=p.rooms.filter(q=>overlapArea(q,r)>EPS);if(affected.some(q=>!permitted(q)))continue;
-   const benefit=p.rooms.filter(q=>wet(q)&&sharedEdge(q,r)).length;
+   const benefit=p.rooms.filter(q=>wet(q)&&sharedEdge(q,r)).length+affected.filter(q=>wet(q)&&subtractRect(q,r).some(rest=>sharedEdge(rest,r))).length;
    const cost=affected.filter(q=>q.kind!=="terrace").reduce((n,q)=>n+overlapArea(q,r)*(wet(q)?1:3),0);
    pool.push({r,score:benefit*50-cost-area(r)*.2});
   }
@@ -89,7 +96,7 @@ function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):Pla
  pool.sort((a,b)=>b.score-a.score||a.r.x-b.r.x||a.r.y-b.r.y||a.r.w-b.r.w||a.r.d-b.r.d);
  const before=interiorFitReport(p);
  let best:PlanModel|null=null,bestScore=-Infinity;
- for(const {r,score} of pool.slice(0,96)){
+ for(const {r,score} of pool.slice(0,replaceBlockedWindows?192:96)){
   const candidate=shaftCandidate(p,r,replaceBlockedWindows);if(!candidate)continue;
   const report=ventilationReport(candidate);
   const rank=report.rows.filter(q=>q.openings.some(o=>o.exposure==="ots")).length*100+report.score*30+score;

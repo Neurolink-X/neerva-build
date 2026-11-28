@@ -7,7 +7,7 @@ import {futureArchitecture} from "@/modules/home/future-architecture";
 import {colourFamilies} from "@/modules/studio/colour-families";
 import "./studio-landing.css";
 export const metadata:Metadata={
- title:"Home, Building & Colour Design Studio | NEERVA BUILD",
+ title:"Home, Building & Colour Design Studio",
  description:"Plan a home or commercial building for your measured plot, compare matching 2D and 3D concepts, explore paint colours and prepare for construction in India.",
  alternates:{canonical:"/design-studio"}
 };

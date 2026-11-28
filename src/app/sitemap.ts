@@ -14,10 +14,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   if(!publicIndexingEnabled(process.env))return [];
   const siteUrl = canonicalPublicOrigin(process.env);
   const entries: MetadataRoute.Sitemap = [
-    { url: siteUrl, changeFrequency: "weekly", priority: 1 },
+    { url: `${siteUrl}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${siteUrl}/family-homes`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/design-studio`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${siteUrl}/design-studio/portfolio`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${siteUrl}/design-studio/visualizer`, changeFrequency: "weekly", priority: 0.7 },
+    { url: `${siteUrl}/design-studio/buildings`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/studio-pricing`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${siteUrl}/learn`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/learn/property-guide`, changeFrequency: "monthly", priority: 0.7 },

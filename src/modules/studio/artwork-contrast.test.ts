@@ -1,0 +1,2 @@
+import test from "node:test";import assert from "node:assert/strict";import {artworkContrast,readableArtworkAccent} from "./artwork-contrast.ts";
+test("light and dark wall paintings retain an independently legible accent",()=>{for(const b of ["#ffffff","#f6eee2","#e7ebf3","#b6c7a3","#777777","#202020","#101a30","#000000"])for(const a of [b,"#f4eee0","#d6c7b1","#a8bda8","#192f45"]){const adjusted=readableArtworkAccent(b,a);assert.ok(artworkContrast(b,adjusted)>=2.6,b+" "+a+" "+adjusted);if(artworkContrast(b,a)>=2.6)assert.equal(adjusted,a);}});

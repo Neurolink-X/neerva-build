@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
   redirects: async () => canonicalRedirects(process.env),
   headers: async () => [
     ...(!publicIndexingEnabled(process.env) ? [{source:"/:path*",headers:[{key:"X-Robots-Tag",value:"noindex, nofollow"}]}] : []),
-    ...["/account","/admin","/dealer","/api","/basket","/quotes","/checkout","/orders"].map(path=>({source:`${path}/:path*`,headers:[{key:"X-Robots-Tag",value:"noindex, nofollow"}]})),
+    ...["/account","/admin","/dealer","/api","/basket","/quotes","/checkout","/orders","/my-project"].map(path=>({source:`${path}/:path*`,headers:[{key:"X-Robots-Tag",value:"noindex, nofollow"}]})),
     {source:"/sw.js",headers:[{key:"Cache-Control",value:"no-cache, max-age=0, must-revalidate"}]},
     // Approved catalog filenames are content-addressed; changed bytes require a new URL.
     {source:"/images/catalog/approved/:asset([a-f0-9]{24}[.]webp)",headers:[{key:"Cache-Control",value:"public, max-age=31536000, immutable"}]},

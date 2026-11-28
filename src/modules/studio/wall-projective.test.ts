@@ -1,0 +1,4 @@
+import test from "node:test";import assert from "node:assert/strict";import {wallProjector,wallProjectionGrid} from "./wall-projective.ts";
+const a={x:10,y:20},b={x:410,y:100},c={x:410,y:360},d={x:10,y:440};
+test("projective corners are exact and oblique wall line remains straight",()=>{const at=wallProjector(a,b,c,d);for(const [u,v,p] of [[0,0,a],[1,0,b],[1,1,c],[0,1,d]] as const){const q=at(u,v);assert.ok(Math.hypot(q.x-p.x,q.y-p.y)<1e-8);}const p=at(.1,.1),q=at(.5,.5),r=at(.9,.9);assert.ok(Math.abs((q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x))<1e-7);assert.ok(wallProjectionGrid(a,b,c,d)>1);});
+test("front-facing wall keeps fast two-triangle path; grid is bounded",()=>{const a={x:0,y:0},b={x:400,y:0},c={x:400,y:300},d={x:0,y:300};assert.equal(wallProjectionGrid(a,b,c,d),1);assert.deepEqual(wallProjector(a,b,c,d)(.5,.5),{x:200,y:150});assert.ok(wallProjectionGrid(a,{x:1000,y:200},{x:1000,y:800},d)<=5);});

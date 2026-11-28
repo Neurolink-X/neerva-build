@@ -31,11 +31,10 @@ export const metadata: Metadata = {
     siteName: "NEERVA BUILD",
     title: "Build better. Buy smarter.",
     description: "Compare construction material specifications, request private dealer quotations and plan your home.",
-    url: "/",
+    images: [{url:"/opengraph-image",width:1200,height:630,alt:"NEERVA BUILD construction and home planning"}],
   },
-  twitter: { card: "summary_large_image", title: "NEERVA BUILD — Build better. Buy smarter.", description: "Construction materials, dealer quotations and home planning in one place." },
-  // Keep pre-launch builds out of search until catalog, pricing and enquiry
-  // operations are backed by verified production data.
+  twitter: { card: "summary_large_image", title: "NEERVA BUILD — Build better. Buy smarter.", description: "Construction materials, dealer quotations and home planning in one place.", images:["/opengraph-image"] },
+  // Explicit production opt-in; previews and account areas remain excluded.
   robots: { index: isIndexable, follow: isIndexable },
 };
 
