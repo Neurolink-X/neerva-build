@@ -52,6 +52,15 @@ async function main(){
      const massing=studio.locator(".purpose-views svg").nth(1);
      assert.equal(await massing.getAttribute("data-plan-id"),planId);
      assert.ok(await studio.locator(".purpose-views svg").nth(1).locator("polygon").count()>0,"3D view has actual geometry");
+     const airToggle=studio.getByRole("button",{name:"Highlight ventilation in 3D",exact:true});
+     await airToggle.click();assert.equal(await airToggle.getAttribute("aria-pressed"),"true");
+     assert.equal(await massing.getAttribute("data-plan-id"),planId);
+     await studio.getByRole("button",{name:"Screened openings only",exact:true}).click();
+     await studio.getByRole("button",{name:"Opening exposure links",exact:true}).click();
+     assert.equal(await plan.getAttribute("data-plan-id"),planId);
+     await studio.getByRole("button",{name:"Screened openings only",exact:true}).click();
+     await studio.getByRole("button",{name:"Opening exposure links",exact:true}).click();
+     await airToggle.click();
      if(viewport.width===390){
       const prefix="390-commercial-"+purpose,front=studio.locator(".purpose-front svg");
       await plan.screenshot({path:path.join("test-results/mobile",prefix+"-2d.png"),animations:"disabled"});
@@ -77,6 +86,7 @@ async function main(){
        }
       };
       if(await capture("cutaway")){
+       await airToggle.click();await capture("ventilation");await airToggle.click();
        if(purpose==="shops"){const tools=studio.locator(".purpose-view-tools");if(await tools.getAttribute("open")===null)await tools.locator("summary").click();await studio.getByRole("button",{name:"Show 3D furniture",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Hide 3D furniture",exact:true}).click();}
        await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
        await capture("exterior");
@@ -1188,6 +1198,8 @@ async function main(){
     await chosenLayout.first().waitFor({state:"visible",timeout:20000});
     assert.equal(await chosenLayout.count(),1,"exactly one linked gallery option selected");
     assert.match((await chosenLayout.locator("strong").innerText()),/^6\./,"gallery card #6 opens option #6, not the default plan");
+    const linkedBaseId=await chosenLayout.getAttribute("data-plan-id");
+    const linkedCard=page.locator(`.nroad-variants button[data-plan-id="${linkedBaseId}"]`);
     assert.equal(await page.locator(".nbd-building").count(),0,"3D does not mount before the visitor reaches it");
     await page.getByRole("button",{name:"Ground floor"}).click();
     await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
@@ -1245,7 +1257,7 @@ async function main(){
       await page.waitForFunction(()=>document.querySelector(".nroad-air-status")?.getAttribute("data-shaft-state")==="modeled",{},{timeout:120000});
       await sameAir();
       assert.equal(await plan2D.getAttribute("data-roof-jaal"),"modeled");assert.equal(await roofCamera.isVisible(),true);
-      await page.locator(".nroad-variants button").nth(5).click();await sameAir();
+      await linkedCard.click();await sameAir();
       assert.equal(await plan2D.getAttribute("data-plan-id"),sixthId);
     }
     await plan3D.getByRole("button",{name:"Highlight ventilation in 3D",exact:true}).click();assert.equal(await plan3D.getByRole("button",{name:"Hide ventilation highlights",exact:true}).getAttribute("aria-pressed"),"true");
@@ -1289,7 +1301,7 @@ async function main(){
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"1","return to cutaway follows the same 2D floor");
     await page.locator("details.nroad-shortlist-panel > summary").click();
     await page.getByRole("button",{name:"Save selected layout locally",exact:true}).click();
-    await page.locator(".nroad-variants button").nth(5).click();
+    await linkedCard.click();
     await page.getByRole("button",{name:"Save selected layout locally",exact:true}).click();
     await page.getByRole("button",{name:"Show shortlist (2)",exact:true}).click();
     await page.locator(".nroad-shortlist-choices input").nth(0).check();
@@ -1303,9 +1315,13 @@ async function main(){
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
     await roadPlan.waitFor({state:"visible",timeout:15000});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
-    {const cards=page.locator(".nroad-variants button");const count=await cards.count();assert.ok(count>=24&&count<=26,"24 baseline options plus up to two validated covered-upper alternatives");
+    {const cards=page.locator(".nroad-variants button");const count=await cards.count();assert.ok(count>=24&&count<=38,"24 baseline options plus feasible upper-floor alternatives");
     const ids=await cards.evaluateAll(nodes=>nodes.map(node=>node.getAttribute("data-plan-id")));assert.equal(new Set(ids).size,count,"No duplicated plan IDs");}
     assert.ok((await page.locator(".nroad-variants button").first().locator(".nroad-mini-plan").count())>=1,"every option has real floor previews");
+    await page.getByRole("button",{name:"Roof / jaal plan",exact:true}).click();
+    await page.getByRole("img",{name:"Roof slabs, terraces and roof jaal"}).waitFor();
+    assert.equal(await page.getByRole("region",{name:"Roof and ventilation plan"}).getAttribute("data-plan-id"),await page.locator(".nroad-plan-summary").getAttribute("data-plan-id"));
+    await page.getByRole("button",{name:"Ground floor",exact:true}).click();
     const streetButton=page.getByRole("button",{name:"Open realistic street render",exact:true});
     await streetButton.click();
     const street=page.getByRole("region",{name:"Plan-matched realistic street preview"});
@@ -1391,7 +1407,7 @@ async function main(){
     // Large-home input, full 24-option gallery and the exact selected 3D floor.
     await page.goto(base+"/design-studio/portfolio?width=36&depth=65&floors=2&bedrooms=6&road=W&parking=true",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
-    assert.equal(await page.locator(".nroad-variants button").count(),24,"six-bedroom brief retains its existing validated portfolio");
+    {const count=await page.locator(".nroad-variants button").count();assert.ok(count>=24&&count<=38,"six-bedroom brief retains validated portfolio plus feasible covered alternatives");}
     assert.match(await page.locator(".nroad-plan-summary").innerText(),/6\s*Bedrooms total/);
     const firstLargeId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
     await page.locator(".nroad-variants button").last().click();

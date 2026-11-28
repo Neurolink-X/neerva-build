@@ -17,7 +17,12 @@ export async function verifyWallArtwork(page){
     const search=page.getByRole("searchbox",{name:"Find a shade"});await search.fill("NB-B6C7A3");assert.equal(await page.getByRole("button",{name:"Select #b6c7a3",exact:true}).count(),1);await search.fill("");
     await page.getByText("Shade details & purchase reference",{exact:true}).click();assert.match(await page.locator(".neerva-shade-reference").innerText(),/NB-[0-9A-F]{6}/);const quote=await page.getByRole("link",{name:"Quote selected shade",exact:false}).getAttribute("href");assert.match(quote,/category=paint/);assert.ok(!quote.includes("quantity="));await page.getByText("Shade details & purchase reference",{exact:true}).click();
     const protectedPixel=await canvas.evaluate(c=>[...c.getContext("2d").getImageData(Math.floor(c.width*.16),Math.floor(c.height*.72),1,1).data]);
-    await page.getByRole("button",{name:"Sofa wall",exact:true}).click();await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    const designPicker=page.getByRole("group",{name:"Choose which wall gets the design"});
+    await designPicker.waitFor({state:"visible"});
+    assert.equal(await page.locator(".wall-pattern-options").count(),0,"no artwork applied before choosing a wall");
+    await designPicker.getByRole("button",{name:"Sofa wall",exact:true}).click();
+    assert.equal(await designPicker.count(),0);
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")!=="loading");
     const design=await canvas.evaluate(c=>c.toDataURL());
     await page.getByRole("button",{name:"Full Room",exact:true}).click();await page.getByRole("button",{name:"Full Room",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Sofa wall",exact:true}).getAttribute("aria-pressed"),"true");assert.equal(await canvas.evaluate(c=>c.toDataURL()),design);
@@ -28,10 +33,28 @@ export async function verifyWallArtwork(page){
     await canvas.screenshot({path:path.join("test-results/mobile","corner-room-two-walls.png")});
     // Clicking an active sample tab must not reload or reset the selected artwork.
     await page.getByRole("button",{name:"Sample room",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),design);
-    // Existing local daylight asset is selectable without assigning an unverified mask.
+    // Clean daylight study is paint-ready and supports explicit manual marking.
     await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("daylight");
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="daylight");
+    assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isEnabled(),true);
+    const daylight=await canvas.evaluate(c=>c.toDataURL());
+    await page.locator(".paint-custom-shade input[type=color]").fill("#385c71");
+    await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,daylight);
+    await page.getByRole("button",{name:"Mark wall manually",exact:true}).click();
+    const manual=page.getByRole("group",{name:"Manual wall marking"});
+    await manual.waitFor();
     assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isDisabled(),true);
+    await canvas.scrollIntoViewIfNeeded();
+    const bounds=await canvas.boundingBox();
+    for(const [x,y] of [[.1,.2],[.9,.2],[.9,.7]])await canvas.click({position:{x:x*bounds.width,y:y*bounds.height}});
+    await manual.getByRole("button",{name:"Undo last point",exact:true}).click();
+    assert.match(await manual.innerText(),/2\/4/);
+    await manual.getByRole("button",{name:"Reset points",exact:true}).click();
+    assert.match(await manual.innerText(),/0\/4/);
+    const updated=await canvas.boundingBox();
+    for(const [x,y] of [[.1,.2],[.9,.2],[.9,.7],[.1,.7]])await canvas.click({position:{x:x*updated.width,y:y*updated.height}});
+    await page.getByRole("button",{name:"Confirm wall",exact:true}).click();
+    assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isEnabled(),true);
     await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("feature");
     // Actual full-wall sample, not only the small selection fixture. Record
     // all visible designs' rendered pixels and representative screenshots.
@@ -125,9 +148,11 @@ export async function verifyColourStudio(page,base){
     // All-walls design action must ask for explicit wall selection, not change it.
     // Then test the retained manual tools
     // on the original feature-room sample instead of expecting them on corner.
-    await page.getByRole("button",{name:"Design one wall",exact:true}).click();
+    await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     assert.equal(await page.getByRole("button",{name:"All walls",exact:true}).getAttribute("aria-pressed"),"true");
-    await page.getByRole("button",{name:"Sofa wall",exact:true}).click();await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    const picker=page.getByRole("group",{name:"Choose which wall gets the design"});
+    await picker.getByRole("button",{name:"Sofa wall",exact:true}).click();
+    assert.equal(await picker.count(),0);
     assert.equal(await page.getByRole("button",{name:"Sofa wall",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await page.getByRole("button",{name:"Wall Detail",exact:true}).isEnabled(),true);

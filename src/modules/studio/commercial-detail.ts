@@ -147,7 +147,9 @@ export function commercialFrontageLanguageForPlan(plan:BuildingConcept){
  const panels=commercialFrontPanels(plan).filter(p=>p.floor===0);
  const primaryShare=panels.reduce((sum,p)=>sum+(p.kind==="primary"?p.w:0),0)/Math.max(1,panels.reduce((sum,p)=>sum+p.w,0));
  const streetLed=primaryShare>.55;
- return {...base,style:base.style+(cross?" · transverse gallery":streetLed?" · open frontage":" · framed frontage"),finSpacing:base.finSpacing*(cross?1.2:streetLed?1.12:.86),finDepth:base.finDepth*(cross?.85:1),canopyDepth:base.canopyDepth*(streetLed?1.1:1)};
+ const recessed=panels.length>1&&Math.max(...panels.map(p=>p.y))-Math.min(...panels.map(p=>p.y))>1;
+ const centralCore=panels.some(p=>p.kind==="core"&&p.x<plan.brief.widthFt*.65&&p.x+p.w>plan.brief.widthFt*.35);
+ return {...base,style:base.style+(cross?" · transverse gallery":streetLed?" · open frontage":" · framed frontage")+(recessed?" · stepped massing":centralCore?" · central service tower":""),finSpacing:base.finSpacing*(cross?1.2:streetLed?1.12:.86)*(recessed?1.15:1),finDepth:base.finDepth*(cross?.85:1)*(centralCore?1.12:1),canopyDepth:base.canopyDepth*(streetLed?1.1:1)};
 }
 export type FrontageDetail={id:string;kind:"fin"|"entry-hood"|"window-head"|"window-sill";floor:number;x:number;y:number;widthFt:number;depthFt:number;bottomFt:number;topFt:number};
 /** Shared elevation/render detail geometry in local, road-facing feet.
@@ -158,9 +160,9 @@ export function commercialFrontageDetails(plan:BuildingConcept):FrontageDetail[]
  const portals=commercialPortals(plan),panels=commercialFrontPanels(plan),out:FrontageDetail[]=[];
  for(const [i,p] of panels.entries()){
   const openings=portals.filter(a=>a.floor===p.floor&&a.axis==="x"&&Math.abs(a.y-p.y)<EPS);
-  const depth=Math.min(style.finDepth,p.y);
+  const depth=Math.min(style.finDepth*(p.kind==="core"?1.25:p.kind==="circulation"?.85:1),p.y);
   if(depth>=.3&&p.w>=2.5){
-   const count=Math.min(12,Math.max(1,Math.floor(p.w/style.finSpacing)));
+   const count=Math.min(12,Math.max(1,Math.floor(p.w/(style.finSpacing*(p.kind==="core"?.78:1)))));
    for(let n=0;n<count;n++){
     const x=p.x+p.w*(n+.5)/count-style.finWidth/2;
     if(x<p.x+.2||x+style.finWidth>p.x+p.w-.2)continue;

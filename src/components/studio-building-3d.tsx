@@ -131,6 +131,14 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    });instances.instanceMatrix.needsUpdate=true;instances.castShadow=true;instances.receiveShadow=true;site.add(instances);
    const glass=new THREE.MeshPhysicalMaterial({color:"#9ebdc5",roughness:.16,metalness:.12,transparent:true,opacity:.72,clearcoat:.65,clearcoatRoughness:.16,envMapIntensity:1.1});materials.push(glass);const frameMat=material(design.elevation.surfaces.frame,.35,.3);
    const airGreen=material("#16865d",.5),airAmber=material("#b47825",.6);
+   // In floor views expose the true shaft perimeter, not a fictitious slab
+   // or roof grille hovering above a clipped model.
+   if(planModel&&mode!=="exterior"&&mode!=="walkthrough")for(const r of planModel.rooms.filter(r=>isOtsRoom(r)&&visible(r.floor))){
+    const y=r.floor*height+.075,t=.035;
+    for(const z of [r.y,r.y+r.d])box(xCoord(r.x+r.w/2),y,zCoord(z),r.w*FT,t,t,airGreen,false);
+    for(const x of [r.x,r.x+r.w])box(xCoord(x),y,zCoord(r.y+r.d/2),t,t,r.d*FT,airGreen,false);
+   }
+
    const airWindows=new Map((planModel?modeledWindowGeometry(planModel,mode==="exterior"?undefined:selectedFloor,mode==="dollhouse"?planModel.walls.heightFt*CUTAWAY_WALL_RATIO:planModel.walls.heightFt):[]).map(o=>[windowGeometryKey(o.roomId,o.side,o.atFt,o.widthFt),o]));
    for(const room of design.layout.rooms){if(!visible(room.floorIndex)||room.kind==="open"||room.kind==="parking")continue;
     const base=room.floorIndex*height;for(const o of room.openings){if(o.kind!=="window")continue;
@@ -236,7 +244,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
      // Terrace plates are centred on the floor (top +.07m), roof slabs top +.17m.
      // Place the grate flush with its actual support surface, not above the deck.
      const surface=level<design.floors?.07:.17;
-     for(const r of otsGrilleBars(planModel)){const m=new THREE.Mesh(shared,showAir?airGreen:railingMat);m.name="Concept roof ventilation grille";m.position.set(xCoord(r.x+r.w/2),level*height+surface-.0225,zCoord(r.y+r.d/2));m.scale.set(r.w*FT,.045,r.d*FT);roofGroup.add(m);}
+     for(const r of otsGrilleBars(planModel)){const m=new THREE.Mesh(shared,showAir?airGreen:railingMat);m.name="Concept roof ventilation grille";m.position.set(xCoord(r.x+r.w/2),level*height+surface-.0225,zCoord(r.y+r.d/2));m.scale.set(r.w*FT,.045,r.d*FT);if(level===selectedFloor&&mode!=="exterior"&&mode!=="walkthrough")site.add(m);else roofGroup.add(m);}
     }
    }
    roofGroup.visible=mode==="exterior";site.add(roofGroup);

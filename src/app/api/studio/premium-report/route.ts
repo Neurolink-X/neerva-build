@@ -7,7 +7,7 @@ import {parseStudioConfig,permittedStudioReport} from "@/modules/studio/studio-c
 export const runtime="nodejs";export const dynamic="force-dynamic";
 const hdr={"Cache-Control":"private, no-store","X-Content-Type-Options":"nosniff"};
 const fail=(code:number,error:string)=>Response.json({error},{status:code,headers:hdr});
-const home=z.object({product:z.literal("home_studio"),brief,option:z.number().int().min(0).max(25),planId:z.string().min(5).max(200).optional(),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
+const home=z.object({product:z.literal("home_studio"),brief,option:z.number().int().min(0).max(37),planId:z.string().min(5).max(200).optional(),geometryDigest:z.string().regex(/^[a-f0-9]{64}$/).optional()}).strict();
 const colour=z.object({product:z.literal("colour_studio"),
  base:z.string().regex(/^#[0-9a-fA-F]{6}$/),accent:z.string().regex(/^#[0-9a-fA-F]{6}$/),
  room:z.string().trim().min(3).max(60)}).strict();

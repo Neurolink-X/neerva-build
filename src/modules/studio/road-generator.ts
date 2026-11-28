@@ -1,12 +1,12 @@
 import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type RoomKind,
- type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
+ type Rect,sharedEdge,area,isOtsRoom,validatePlan} from "./plan-model.ts";
 import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
 import {buildingWallCells} from "./geometry.ts";
 import {frontagePanels,frontageSignature,frontageComposition} from "./frontage.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {residentialStairStudies} from "./stair-study.ts";
 import {architectureTopology,entranceArrangement} from "./architecture-profile.ts";
-import {ventilationVariant} from "./ventilation.ts";
+import {ventilationVariant,windowExposure} from "./ventilation.ts";
 import {otsVariant} from "./ots-ventilation.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
@@ -90,7 +90,7 @@ function addWindow(p:Pick<PlanModel,"rooms"|"openings"|"plot"|"setbacks">){
 export type SpatialProgramme="wash"|"family-gallery"|"rear-courtyard"|"rear-baranda";
 /** Road-relative depth, not compass coordinates or left/right mirror. */
 export function kitchenZone(p:PlanModel):"front"|"middle"|"rear"{const k=p.rooms.find(r=>r.kind==="kitchen"&&r.floor===0)??p.rooms.find(r=>r.kind==="kitchen");if(!k)return "middle";const t=(k.y+k.d/2-p.setbacks.frontFt)/(p.plot.depthFt-p.setbacks.frontFt-p.setbacks.rearFt);return t<1/3?"front":t>=2/3?"rear":"middle";}
-type SpatialRecipe={coveredUpper?:boolean;rearKitchen?:boolean;reverseService?:boolean;reverseRear?:boolean;parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
+type SpatialRecipe={coveredUpper?:boolean;upperProgramme?:"full"|"front-terrace"|"rear-service";rearKitchen?:boolean;reverseService?:boolean;reverseRear?:boolean;parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
  rearBedWidthFt?:number;upperBedRatio?:number;rearProgramme?:SpatialProgramme;frontProgramme?:"dining"|"family-hall"|"family-lounge";familyLabel?:string;};
 function houseEnvelope(b:PlanBrief){
  const envelope=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
@@ -129,19 +129,33 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  put(twinRear?"bed-g2":"utility-g",twinRear?"Bedroom 2":recipe.rearKitchen?"Rear kitchen":rearLabel,twinRear?"bedroom":recipe.rearKitchen?"kitchen":rearKind,0,rearBedW,37,W-rearBedW,D-37);
  for(let level=1;level<b.floors;level++){
   const upper=b.bedrooms<b.floors?(level<b.bedrooms?1:0):b.bedrooms-b.floors+1;
-  put(`balcony-${level}`,"Street balcony","balcony",level,0,0,W,4);
+  const frontOpen=recipe.upperProgramme==="full"?0:recipe.upperProgramme==="front-terrace"?5:4;
+  if(frontOpen)put(`balcony-${level}`,recipe.upperProgramme==="front-terrace"?"Front open terrace":"Street balcony",recipe.upperProgramme==="front-terrace"?"terrace":"balcony",level,0,0,W,frontOpen);
   if(upper===0){
-   put(`family-room-${level}`,"Family room (no bedroom)","lounge",level,0,4,W,12);
+   put(`family-room-${level}`,"Family room (no bedroom)","lounge",level,0,frontOpen,W,16-frontOpen);
   }else if(upper===1){
-   put(`bed-${level}a`,`Bedroom ${level+1}`,"bedroom",level,0,4,W,12);
+   put(`bed-${level}a`,`Bedroom ${level+1}`,"bedroom",level,0,frontOpen,W,16-frontOpen);
   }else{
-   put(`bed-${level}a`,`Bedroom ${level+1}`,"bedroom",level,0,4,round(W*(recipe.upperBedRatio??.5)),12);
-   put(`bed-${level}b`,"Bedroom 3","bedroom",level,round(W*(recipe.upperBedRatio??.5)),4,W-round(W*(recipe.upperBedRatio??.5)),12);
+   put(`bed-${level}a`,`Bedroom ${level+1}`,"bedroom",level,0,frontOpen,round(W*(recipe.upperBedRatio??.5)),16-frontOpen);
+   put(`bed-${level}b`,"Bedroom 3","bedroom",level,round(W*(recipe.upperBedRatio??.5)),frontOpen,W-round(W*(recipe.upperBedRatio??.5)),16-frontOpen);
   }
   put(`stairs-${level}`,"Stairs / landing","stairs",level,0,16,stairW,10);
   put(`lounge-${level}`,"Family lounge","lounge",level,stairW,16,W-stairW,10);
   put(`bath-${level}`,"Bath / WC","bath",level,0,26,stairW,8);
-  if(recipe.coveredUpper&&D>=47&&W-stairW>=9&&D-39>=8&&W/(D-39)<=2.5){
+  // For short/custom plots, assess the actual compressed service bands rather
+  // than a 47-ft threshold. Geometry and room constraints still gate publication.
+  const mappedRearStart=D<47?16+Math.max(7,10-(47-D)*.6)+Math.max(6,8-(47-D)*.4):34;
+  const rearDepth=D-mappedRearStart;
+  if(recipe.upperProgramme&&W-stairW>=9&&rearDepth>=8&&W/rearDepth<=2.5){
+   const passage=3.5,serviceWidth=W-stairW-passage;
+   put(`utility-${level}`,"Wash / service","utility",level,stairW,26,serviceWidth,8);
+   put(`rear-passage-${level}`,"Private rear access","corridor",level,W-passage,26,passage,8);
+   if(recipe.upperProgramme==="rear-service"&&W-rearBedW>=3.5&&rearBedW>=8){
+    put(`rear-family-${level}`,"Rear family room / study","lounge",level,0,34,rearBedW,D-34);
+    const kitchenFits=W-rearBedW>=6&&(W-rearBedW)*(D-34)>=48&&(D-34)/(W-rearBedW)<=2.5;
+    put(`rear-wash-${level}`,kitchenFits?"Rear upper kitchen":"Rear wash / ventilation reserve",kitchenFits?"kitchen":"utility",level,rearBedW,34,W-rearBedW,D-34);
+   }else put(`rear-family-${level}`,"Rear family room / study","lounge",level,0,34,W,D-34);
+  }else if(recipe.coveredUpper&&D>=47&&W-stairW>=9&&D-39>=8&&W/(D-39)<=2.5){
    const passage=3.5;
    put(`utility-${level}`,"Wash / service","utility",level,stairW,26,W-stairW-passage,8);
    put(`rear-passage-${level}`,"Private rear access","corridor",level,W-passage,26,passage,8);
@@ -186,10 +200,16 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  ];
  for(let level=1;level<b.floors;level++){
   const frontRoom=b.bedrooms<b.floors&&level>=b.bedrooms?`family-room-${level}`:`bed-${level}a`;
-  joins.push([`stairs-${level}`,`lounge-${level}`],[`stairs-${level}`,`bath-${level}`],[`lounge-${level}`,`utility-${level}`],[`lounge-${level}`,frontRoom],[`balcony-${level}`,frontRoom]);
-  if(rooms.some(r=>r.id===`rear-family-${level}`))joins.push([`lounge-${level}`,`rear-passage-${level}`],[`rear-passage-${level}`,`rear-family-${level}`],[`rear-family-${level}`,`terrace-${level}`]);
-  else if(b.bedrooms<b.floors&&level>=b.bedrooms)joins.push([`utility-${level}`,`terrace-${level}`]);
-  if(b.bedrooms>b.floors)joins.push([`lounge-${level}`,`bed-${level}b`],[`balcony-${level}`,`bed-${level}b`]);
+  joins.push([`stairs-${level}`,`lounge-${level}`],[`stairs-${level}`,`bath-${level}`],[`lounge-${level}`,`utility-${level}`],[`lounge-${level}`,frontRoom]);
+  if(rooms.some(r=>r.id===`balcony-${level}`))joins.push([`balcony-${level}`,frontRoom]);
+  if(rooms.some(r=>r.id===`rear-family-${level}`)){
+   joins.push([`lounge-${level}`,`rear-passage-${level}`]);
+   if(rooms.some(r=>r.id===`rear-wash-${level}`))joins.push([`rear-passage-${level}`,`rear-wash-${level}`],[`utility-${level}`,`rear-family-${level}`]);
+   else joins.push([`rear-passage-${level}`,`rear-family-${level}`]);
+  }
+  if(rooms.some(r=>r.id===`rear-family-${level}`)&&rooms.some(r=>r.id===`terrace-${level}`))joins.push([`rear-family-${level}`,`terrace-${level}`]);
+  else if(b.bedrooms<b.floors&&level>=b.bedrooms&&rooms.some(r=>r.id===`terrace-${level}`))joins.push([`utility-${level}`,`terrace-${level}`]);
+  if(b.bedrooms>b.floors){joins.push([`lounge-${level}`,`bed-${level}b`]);if(rooms.some(r=>r.id===`balcony-${level}`))joins.push([`balcony-${level}`,`bed-${level}b`]);}
  }
  if(!b.parking)joins.push(["verandah","front-court"]);
  for(const [a,b] of joins){
@@ -214,7 +234,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   parking:b.parking?{roomId:"parking",clearWidthFt:gateParking.w,clearDepthFt:gateParking.d}:null,
   stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),
    note:"Staircase is a conceptual volume, NOT a checked tread/rise/headroom or fire escape."},
-  balcony:b.floors>1?{roomId:"balcony-1"}:null,
+  balcony:rooms.some(r=>r.id==="balcony-1"&&r.kind==="balcony")?{roomId:"balcony-1"}:null,
   // Vary the finish kit by the actual front programme, not by a random ID.
   facade:{kit:recipe.frontProgramme==="family-hall"?"stepped-band":recipe.frontProgramme==="family-lounge"?"cladding-band":recipe.reverseService?"jali-screen":"simple-parapet",massing:"box",main:variant==="parking-left"?"#e9e2d4":"#e7e6df",accent:"#8e755b"},
   score:0,notes:[
@@ -669,6 +689,8 @@ function uniquePlanGeometry(plans:readonly PlanModel[]):PlanModel[]{
   geometry.add(key);meshes.add(mesh);return true;
  });
 }
+/** Real wall geometry distinguishes a covered room from an open terrace even when the footprint is identical. */
+export function physicalPlanSignature(p:PlanModel):string{return planSignature(p)+"#"+buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");}
 export function planSignature(p:PlanModel):string{
  // IDs, labels, room names and exterior finishes cannot manufacture a new floor plan.
  return p.rooms.map(r=>[r.floor,r.x,r.y,r.w,r.d].join(":")).sort().join("|");
@@ -863,7 +885,57 @@ export function generateCoveredUpperPortfolio(b:PlanBrief):PlanModel[]{
  }
  return uniquePlanGeometry(plans);
 }
+/** Versioned additional upper-floor programmes; old saved geometries remain resolvable. */
+export function generateEnclosedUpperPortfolio(b:PlanBrief):PlanModel[]{
+ if(b.floors<2||b.bedrooms>3||explainImpossible(b).length)return [];
+ const plans:PlanModel[]=[];
+ for(const upperProgramme of ["full","front-terrace","rear-service"] as const)for(const variant of ["parking-left","parking-right"] as const)for(const option of [0,1]){
+  try{
+   const p=build(b,variant,{upperProgramme,upperBedRatio:option?.52:.48,rearBedWidthFt:upperProgramme==="rear-service"?11:undefined,stairWidthFt:option?5.25:5.5,frontProgramme:option?"family-hall":"dining",rearProgramme:"wash",familyLabel:"upper-v2-"+upperProgramme+"-"+option});
+   if(p.rooms.some(r=>r.id.startsWith("rear-family-"))&&!validateRequestedProgramme(p,b).length)plans.push(p);
+  }catch{/* Only feasible complete programmes are offered. */}
+ }
+ return uniquePlanGeometry(plans);
+}
+/** Generic programme upgrade for compact, standard, wide and irregular plans.
+ * Only convert an existing upper-floor open rectangle into accessible family
+ * space when the geometry and independent access pass. Keep ground courts,
+ * actual balconies, shafts, stairs and every bedroom unchanged. */
+export function usableUpperVariant(base:PlanModel,b:PlanBrief):PlanModel{
+ if(base.floors<2||base.rooms.some(isOtsRoom))return base;
+ let p:PlanModel={...base,rooms:base.rooms.map(r=>({...r})),openings:base.openings.map(o=>({...o}))};
+ let changed=false;
+ const terraces=base.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&Math.min(r.w,r.d)>=8&&area(r)>=95&&Math.max(r.w,r.d)/Math.min(r.w,r.d)<=2.5).sort((a,z)=>area(z)-area(a));
+ for(const open of terraces){
+  const access=p.rooms.filter(r=>r.floor===open.floor&&["stairs","corridor","lounge","living","dining"].includes(r.kind)&&(sharedEdge(r,open)?.length??0)>=3.15).sort((a,z)=>(sharedEdge(z,open)?.length??0)-(sharedEdge(a,open)?.length??0));
+  if(!access.length)continue;
+  // Do not close off any room whose screened external opening relies on this court.
+  if(p.openings.some(o=>o.kind==="window"&&p.rooms.some(r=>r.id===o.roomId&&r.floor<=open.floor&&sharedEdge(r,open)?.aSide===o.side)))continue;
+  for(const entry of access){
+   const rooms=p.rooms.map(r=>r.id===open.id?{...r,kind:"lounge" as const,label:"Enclosed family room / study"}:r),openings=p.openings.map(o=>({...o}));
+   try{
+    if(!openings.some(o=>o.roomId===entry.id&&o.connectsTo===open.id))connect(rooms,openings,entry.id,open.id);
+    const candidate={...p,rooms,openings};
+    if(validateRequestedProgramme(candidate,b).length)continue;
+    // Require a genuinely exposed new room, not a blind enclosed box.
+    const room=rooms.find(r=>r.id===open.id)!;
+    const air=ventilationVariant(candidate);
+    if(!air.openings.some(o=>o.roomId===room.id&&o.kind==="window"&&windowExposure(air,room,o)!=="review"))continue;
+    p={...candidate,openings:air.openings};changed=true;break;
+   }catch{/* Preserve original if the connection is not feasible. */}
+  }
+ }
+ return changed?{...p,id:base.id+"-usable-upper-v3",notes:[...base.notes,"Upper open areas converted only where independent access and screened room openings fit. Verify structure, FAR and legal light/ventilation."]}:base;
+}
+export function generateUsableUpperPortfolio(b:PlanBrief,base:readonly PlanModel[],limit=12):PlanModel[]{
+ if(b.floors<2||limit<=0)return [];
+ const candidates:PlanModel[]=[];
+ for(const p of base){const q=usableUpperVariant(p,b);if(q!==p)candidates.push(q);if(candidates.length>=limit*2)break;}
+ return uniquePlanGeometry(candidates).slice(0,limit);
+}
 export function portfolioForPlanId(b:PlanBrief,planId:string):PlanningResult{
+ if(planId.endsWith("-usable-upper-v3")){const id=planId.slice(0,-16),base=portfolioForPlanId(b,id);return {...base,plans:base.plans.filter(p=>p.id===id).map(p=>usableUpperVariant(p,b))};}
+ if(/-upper-v2-(?:full|front-terrace|rear-service)-[01]$/.test(planId))return {plans:generateEnclosedUpperPortfolio(b),blockers:[]};
  if(planId.endsWith("-ots-v1")){const base=portfolioForPlanId(b,planId.slice(0,-7));return {...base,plans:base.plans.map(p=>p.id===planId.slice(0,-7)?otsVariant(p):p)};}
  if(planId.endsWith("-vent-v1")){const base=portfolioForPlanId(b,planId.slice(0,-8));return {...base,plans:base.plans.map(ventilationVariant)};}
  if(planId.endsWith("-covered-upper-v1"))return {plans:generateCoveredUpperPortfolio(b),blockers:[]};
