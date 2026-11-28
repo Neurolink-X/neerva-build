@@ -47,6 +47,10 @@ export function facadeAccents(plan:PlanModel,panels=frontagePanels(plan)):Facade
   if(kit==="stepped-band"||kit==="cladding-band"||kit==="simple-parapet"){
    const h=Math.min(kit==="cladding-band"?.85:kit==="stepped-band"?.55:.22,Math.max(0,height-top-.08));
    add(p.x,p.w,height-h,h,"band");
+   // Secondary horizontal trim above actual openings, not a synthetic balcony.
+   const available=height-h-top-.1;
+   if(kit==="cladding-band"&&available>.18)add(p.x+.06,p.w-.12,height-h-.16,.12,"lintel");
+   if(kit==="stepped-band"&&available>.28){const span=Math.min(p.w*.68,6);add(p.x+(p.w-span)/2,span,height-h-.24,.18,"lintel");}
   }else{
    const gap= Math.min(.5,Math.max(.18,p.w*.06));
    for(const x of [p.x+.06,p.x+p.w-gap-.06]){
@@ -54,6 +58,11 @@ export function facadeAccents(plan:PlanModel,panels=frontagePanels(plan)):Facade
     if(!openings.some(o=>r.x+o.atFt<x+gap+EPS&&r.x+o.atFt+o.widthFt>x-EPS))add(x,gap,.08,height-.16,"pier");
    }
    const h=Math.min(.38,Math.max(0,height-top-.08));add(p.x,p.w,height-h,h,"lintel");
+   // Jali-inspired opaque-wall rhythm; every strip avoids existing doors/windows.
+   if(kit==="jali-screen"&&p.w>=3)for(let n=1;n<=3;n++){
+    const w=Math.min(.16,p.w*.035),x=p.x+p.w*n/4-w/2;
+    if(!openings.some(o=>r.x+o.atFt<x+w+EPS&&r.x+o.atFt+o.widthFt>x-EPS))add(x,w,.22,height-h-.44,"pier");
+   }
   }
  }
  return out;
