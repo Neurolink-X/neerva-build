@@ -229,7 +229,15 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     roof(cx,top+parapet/2+.14,zCoord(fp.minZ),W+.25,parapet,.18);roof(cx,top+parapet/2+.14,zCoord(fp.maxZ),W+.25,parapet,.18);
     roof(xCoord(fp.minX),top+parapet/2+.14,cz,.18,parapet,D+.25);roof(xCoord(fp.maxX),top+parapet/2+.14,cz,.18,parapet,D+.25);
    }
-   if(planModel)for(const r of otsGrilleBars(planModel)){const m=new THREE.Mesh(shared,showAir?airGreen:railingMat);m.name="Concept roof ventilation grille";m.position.set(xCoord(r.x+r.w/2),(otsGrilleLevel(planModel)??design.floors)*height+.17,zCoord(r.y+r.d/2));m.scale.set(r.w*FT,.045,r.d*FT);roofGroup.add(m);}
+   if(planModel){
+    const level=otsGrilleLevel(planModel);
+    if(level!==null){
+     // Terrace plates are centred on the floor (top +.07m), roof slabs top +.17m.
+     // Place the grate flush with its actual support surface, not above the deck.
+     const surface=level<design.floors?.07:.17;
+     for(const r of otsGrilleBars(planModel)){const m=new THREE.Mesh(shared,showAir?airGreen:railingMat);m.name="Concept roof ventilation grille";m.position.set(xCoord(r.x+r.w/2),level*height+surface-.0225,zCoord(r.y+r.d/2));m.scale.set(r.w*FT,.045,r.d*FT);roofGroup.add(m);}
+    }
+   }
    roofGroup.visible=mode==="exterior";site.add(roofGroup);
    for(const r of design.layout.rooms.filter(r=>r.kind==="parking"&&visible(r.floorIndex))){
     box(xCoord(r.xFt+r.wFt/2),.015,zCoord(r.yFt+r.dFt/2),r.wFt*FT,.03,r.dFt*FT,material("#aaa69a"),false);
