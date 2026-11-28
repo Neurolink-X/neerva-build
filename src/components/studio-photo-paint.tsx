@@ -141,6 +141,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  const groups=exterior?Object.keys(exteriorCollections) as PatternGroup[]:Object.keys(patternGroups) as PatternGroup[];
  const shownPatterns:readonly Pattern[]=exterior?exteriorCollections[exteriorGroup]:[...patternGroups[activeGroup],...(isRetiredPattern(selectedPattern)&&activeGroup===groupForPattern(selectedPattern)?[selectedPattern]:[])];
  const guide=exterior?exteriorGuide[exteriorGroup]:collectionGuide[activeGroup];
+ const designOpen=mode==="design"||pickDesignWall||pickFacadeDesign;
  const effectivePattern=activePattern(mode,selectedPattern);
  const designRecipe=detailedWallRecipe(selectedPattern);
  const execution=exterior?undefined:paintExecution(selectedPattern);
@@ -149,7 +150,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  // gallery card must not rerasterize the full room or invalidate an export.
  const activeTextureKeys=[...new Set<Pattern>([...(mode==="design"?[effectivePattern]:[]),...appliedTextures])].filter(hasWallRaster).join(",");
  const activeTextures=useWallTextures(activeTextureKeys,2);
- const previewTextureKeys=(mode==="design"?shownPatterns:[]).filter(hasWallRaster).join(",");
+ const previewTextureKeys=(designOpen?shownPatterns:[]).filter(hasWallRaster).join(",");
  const previewTextures=useWallTextures(previewTextureKeys,1,true);
  const textures={...previewTextures,...activeTextures};
  const awaitingArtwork=appliedTextures.some(key=>activeTextures[key]===undefined);
@@ -227,10 +228,10 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
    }else{
     const roomWalls=allInterior?repaintInteriorWalls(walls,base,interiorWholeShade):walls;
     roomWalls.forEach((wall,index)=>{if(index!==editing)paintWall(wall)});
-    if(valid)paintWall({points,colour:base,accent,pattern:effectivePattern,opacity,mask:currentMask});
+    if(valid&&!awaitingConfirmation)paintWall({points,colour:base,accent,pattern:effectivePattern,opacity,mask:currentMask});
    }
   }
-  if((scene!=="facade"||patchMode)&&!originalVisible&&points.length>0&&!valid){
+  if((scene!=="facade"||patchMode)&&!originalVisible&&points.length>0&&(!valid||awaitingConfirmation)){
    ctx.save();ctx.strokeStyle="#ffe16a";ctx.fillStyle="#ffe16a";ctx.lineWidth=Math.max(2,w/300);
    ctx.beginPath();ctx.moveTo(points[0].x*w,points[0].y*h);
    for(const p of points.slice(1))ctx.lineTo(p.x*w,p.y*h);
@@ -241,7 +242,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
     ctx.fillText(String(i+1),p.x*w+9,p.y*h-8);ctx.fillStyle="#ffe16a";
    }ctx.restore();
   }
- },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas,wholeShade,activeTextures,allInterior,interiorWholeShade,interiorDetail,exterior]);
+ },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas,wholeShade,activeTextures,allInterior,interiorWholeShade,interiorDetail,exterior,awaitingConfirmation]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask,preMarked?:Wall[],crop?:{x:number;y:number;w:number;h:number})=>{
   ++uploadGeneration.current;setUploadError("");
   const ticket=++generation.current;
@@ -292,7 +293,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   const saved=managedFacadeStyles(facadeStyles,target,currentStyle,wholeShade,facadeZones);
   setFacadeStyles(saved);setTarget(next);setShowOriginal(false);setCloseUp(false);
   const style=next==="all"?{colour:target==="all"?base:wholeShade,accent,opacity,pattern:"plain" as const}:saved[next];
-  if(style){setAccent(style.accent);setOpacity(style.opacity);setMode(designRequested||style.pattern!=="plain"?"design":"paint");if(style.pattern!=="plain"){setPattern(style.pattern);setPatternGroup(isExteriorPattern(style.pattern)?exteriorGroupFor(style.pattern):groupForPattern(style.pattern));}
+  if(style){setAccent(style.accent);setOpacity(style.opacity);setMode(designRequested||style.pattern!=="plain"?"design":"paint");if(style.pattern!=="plain"&&!designRequested){setPattern(style.pattern);setPatternGroup(isExteriorPattern(style.pattern)?exteriorGroupFor(style.pattern):groupForPattern(style.pattern));}
    if(onColourChange){onColourChange(style.colour);setOverride(null)}else setOverride({source:colour,value:style.colour});}
  }
  function applyInteriorStyle(wall:Wall,index:number){
@@ -311,7 +312,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   const saved=snapshotInterior();setWalls(saved);setCloseUp(false);setShowOriginal(false);
   if(index==="all"){setPickDesignWall(false);setAllInterior(true);setInteriorWholeShade(base);setMode("paint");setEditing(null);setHistory(emptyMaskHistory());return;}
   if(index==="new"){setPickDesignWall(false);setAllInterior(false);setEditing(null);setHistory(emptyMaskHistory());setMode("paint");setMessage("Mark four corners of the next visible wall, avoiding openings.");return;}
-  if(saved[index]){applyInteriorStyle(saved[index],index);if(pickDesignWall){setMode("design");setPickDesignWall(false);setMessage("Designing "+wallLabel(index)+". Choose an artwork below.");}}
+  if(saved[index]){applyInteriorStyle(saved[index],index);if(pickDesignWall){setPattern(selectedPattern);setPatternGroup(groupForPattern(selectedPattern));setMode("design");setPickDesignWall(false);setMessage("Designing "+wallLabel(index)+". Choose an artwork below.");}}
  }
  function switchCustomSurface(outside:boolean){
   if(outside===customExterior)return;
@@ -336,6 +337,8 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   setMode(next);setShowOriginal(false);
  }
  function chooseArtwork(key:Pattern){
+  if(pickFacadeDesign){const zone=recommendedZone??facadeZones[0]?.id;if(!zone)return;chooseTarget(zone);setPattern(key);setPatternGroup(exteriorGroupFor(key));setMode("design");setShowOriginal(false);return;}
+  if(pickDesignWall){setPattern(key);setPatternGroup(groupForPattern(key));setMessage("Artwork selected. Choose Sofa wall, Side wall or another marked wall to apply it.");return;}
   if(key===selectedPattern){setShowOriginal(false);return;}
   setPattern(key);setShowOriginal(false);
   if(!exterior&&!keepShades){setOpacity(.95);const [nextBase,nextAccent]=designPreviewPalette(key);if(onColourChange){onColourChange(nextBase);setOverride(null)}else setOverride({source:colour,value:nextBase});setAccent(nextAccent);}
@@ -388,7 +391,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   {allInterior&&!exterior&&<p className="paint-preview-status">Choose a base colour for all marked walls. Existing designs stay unchanged.{base===interiorWholeShade&&walls.some(w=>w.colour!==base)&&<button type="button" className="paint-quiet" onClick={()=>{setWalls(w=>w.map(wall=>({...wall,colour:base})));setInteriorWholeShade(base);setShowOriginal(false)}}>Apply current colour to all</button>}</p>}
   <div className="paint-mode" role="group" aria-label="Paint preview mode"><button disabled={awaitingConfirmation} type="button" aria-pressed={mode==="paint"&&!pickDesignWall&&!pickFacadeDesign} onClick={()=>chooseMode("paint")}>Plain paint</button><button disabled={awaitingConfirmation} type="button" aria-pressed={mode==="design"||pickDesignWall||pickFacadeDesign} onClick={()=>chooseMode("design")}>Paint + design</button></div>
   {pickDesignWall&&allInterior&&<div role="group" aria-label="Choose which wall gets the design" className="paint-targets"><strong>Choose which wall gets the design</strong>{walls.map((_,i)=><button type="button" key={i} onClick={()=>selectInterior(i)}>{wallLabel(i)}</button>)}<button type="button" onClick={()=>setPickDesignWall(false)}>Cancel</button></div>}
-  {pickFacadeDesign&&<p role="status"><strong>Choose an exterior design area.</strong> Full exterior keeps the base paint; select a wall or trim below to apply artwork. <button type="button" onClick={()=>setPickFacadeDesign(false)}>Cancel</button></p>}
+  {pickFacadeDesign&&<p role="status"><strong>Choose an exterior design area.</strong> Full exterior keeps the base paint. Select an area or choose an artwork to apply to the recommended accent surface. <button type="button" onClick={()=>setPickFacadeDesign(false)}>Cancel</button></p>}
   {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}{z.id===recommendedZone?" · Best for design":""}</button>)}</div>}
   <p className="paint-preview-status" role="status">{scene==="facade"&&ready?"Paint marked walls together or select one area. Visible plaster behind transparent railings is included; frames, timber and plants are protected where marked.":points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
   <div className="paint-live-workspace"><div className="paint-live-preview" data-can-stick={ready&&(scene==="facade"||valid||walls.length>0)?"true":"false"}>
@@ -404,7 +407,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   {!ready&&message!=="Loading photo…"&&scene!=="custom"&&<button type="button" className="paint-retry" onClick={()=>scene==="room"?openRoom(roomPhoto):openFacade()}>Retry photo</button>}
   {ready&&scene==="facade"&&(sampleId==="compact-family"||sampleId==="modern-courtyard"||sampleId==="family")&&<p className="paint-reference-note">AI-generated architectural concept · full elevation shown. Not an approved construction drawing.</p>}
   {ready&&<div className="paint-actions paint-compact-actions paint-preview-actions" role="group" aria-label="Live preview actions"><button type="button" disabled={scene!=="facade"&&!valid&&!walls.length} aria-pressed={originalVisible} onClick={toggleOriginal}>{interiorDetail?(originalVisible?"Show design":"View plain colour"):originalVisible?(scene==="facade"?"Show new paint":"Show new colour"):"View original"}</button><button type="button" className="paint-primary" disabled={awaitingConfirmation||patchMode||originalVisible||awaitingArtwork||(scene!=="facade"&&!valid&&(points.length>0||!walls.length))} onClick={saveImage}>Save colour preview</button></div>}
-  </div><div className="paint-live-tools">{awaitingConfirmation?<p role="status">Confirm the marked wall to unlock colours and designs.</p>:colourControls}  {!awaitingConfirmation&&mode==="design"&&<><details className="paint-more"><summary>Curated colour combinations</summary><div className="paint-pairings">{colourPairings.map(pair=><button key={pair.id} type="button" aria-pressed={base===pair.base&&accent===pair.accent} onClick={()=>{if(onColourChange){onColourChange(pair.base);setOverride(null)}else setOverride({source:colour,value:pair.base});setAccent(pair.accent);setShowOriginal(false)}}><span aria-hidden="true"><i style={{background:pair.base}}/><i style={{background:pair.accent}}/></span>{pair.label}</button>)}</div><small>Digital base and pattern colours, not physical shade samples.</small></details><h3 className="paint-pattern-title">{exterior?"Exterior Design Collections":"Interior Wall Design Collections"}</h3><p className="paint-design-hint">{exterior?"Exterior-appropriate paint effects only. Choose one accent surface; use exterior-rated materials.":"Choose a feature-wall design. Pre-marked masks protect furniture; keep manual selections clear of furniture and openings."}</p><div className="paint-pattern-groups" role="group" aria-label="Design collections">{groups.map(group=><button type="button" key={group} aria-pressed={activeGroup===group} onClick={()=>{setPatternGroup(group)}}>{group}</button>)}</div><div className="paint-collection-intro"><strong>{guide.title}</strong><p>{guide.description}</p></div><p className="paint-pattern-current" role="status">{textureStatus==="loading"?"Loading detailed texture · vector preview available. ":textureStatus==="fallback"?"Detailed texture unavailable · vector preview active. ":""}Selected: {finishes[selectedPattern].name}{isRetiredPattern(selectedPattern)?" · previous design preserved":""}</p><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
+  </div><div className="paint-live-tools">{awaitingConfirmation?<p role="status">Confirm the marked wall to unlock colours and designs.</p>:colourControls}  {!awaitingConfirmation&&designOpen&&<><details className="paint-more"><summary>Curated colour combinations</summary><div className="paint-pairings">{colourPairings.map(pair=><button key={pair.id} type="button" aria-pressed={base===pair.base&&accent===pair.accent} onClick={()=>{if(onColourChange){onColourChange(pair.base);setOverride(null)}else setOverride({source:colour,value:pair.base});setAccent(pair.accent);setShowOriginal(false)}}><span aria-hidden="true"><i style={{background:pair.base}}/><i style={{background:pair.accent}}/></span>{pair.label}</button>)}</div><small>Digital base and pattern colours, not physical shade samples.</small></details><h3 className="paint-pattern-title">{exterior?"Exterior Design Collections":"Interior Wall Design Collections"}</h3><p className="paint-design-hint">{exterior?"Exterior-appropriate paint effects only. Choose one accent surface; use exterior-rated materials.":"Choose a feature-wall design. Pre-marked masks protect furniture; keep manual selections clear of furniture and openings."}</p><div className="paint-pattern-groups" role="group" aria-label="Design collections">{groups.map(group=><button type="button" key={group} aria-pressed={activeGroup===group} onClick={()=>{setPatternGroup(group)}}>{group}</button>)}</div><div className="paint-collection-intro"><strong>{guide.title}</strong><p>{guide.description}</p></div><p className="paint-pattern-current" role="status">{textureStatus==="loading"?"Loading detailed texture · vector preview available. ":textureStatus==="fallback"?"Detailed texture unavailable · vector preview active. ":""}Selected: {finishes[selectedPattern].name}{isRetiredPattern(selectedPattern)?" · previous design preserved":""}</p><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
    {shownPatterns.map(key=>{const [previewBase,chosenAccent]=exterior||keepShades||selectedPattern===key?[base,accent]:designPreviewPalette(key);const previewAccent=exterior?chosenAccent:readableArtworkAccent(previewBase,chosenAccent);const intensity=selectedPattern===key?opacity:1;return <button type="button" key={key} aria-pressed={selectedPattern===key} onClick={()=>chooseArtwork(key)}>
     {textures[key]?<WallTextureSwatch texture={textures[key]} base={previewBase} accent={previewAccent} intensity={intensity} preserveComposition={fullArtwork(key)}/>:isSurfaceProfile(key)?<StudioSurfaceSwatch profile={key} base={previewBase} accent={previewAccent} intensity={intensity}/>:<WallArtworkSwatch pattern={key} base={previewBase} accent={previewAccent} intensity={intensity}/>}<span>{finishes[key].name}</span>{textures[key]===null&&hasWallRaster(key)&&<small aria-hidden="true" className="paint-finish-type">Illustrated fallback</small>}
    </button>})}
