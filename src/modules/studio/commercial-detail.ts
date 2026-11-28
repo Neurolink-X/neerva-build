@@ -154,16 +154,18 @@ export function commercialFrontageDetails(plan:BuildingConcept):FrontageDetail[]
   // Keep clear of the aperture and do not add any floor area or structural claim.
   if(p.y>=.3)for(const a of openings.filter(a=>a.kind==="exterior-glazing"&&a.x>=p.x-EPS&&a.x+a.length<=p.x+p.w+EPS)){
    const purpose=plan.brief.purpose;
-   const spread=purpose==="mall"?.45:purpose==="restaurant"?.35:.15;
+   const spread=purpose==="mall"?.65:purpose==="restaurant"?.40:purpose==="school"?.25:.15;
    const x=Math.max(p.x,a.x-spread),right=Math.min(p.x+p.w,a.x+a.length+spread);
-   const head=purpose==="mall"?{bottom:8.35,top:9.65,depth:1.6}:purpose==="restaurant"?{bottom:8.25,top:9.1,depth:1.15}:purpose==="school"?{bottom:8.3,top:8.65,depth:1.35}:purpose==="shops"?{bottom:8.25,top:8.85,depth:.85}:null;
+   const head=purpose==="mall"?{bottom:8.35,top:10.05,depth:1.85}:purpose==="restaurant"?{bottom:8.25,top:9.2,depth:1.25}:purpose==="school"?{bottom:8.3,top:8.75,depth:1.55}:purpose==="shops"?{bottom:8.25,top:8.85,depth:.85}:null;
    if(head)out.push({id:`head-${i}-${a.id}`,kind:"window-head",floor:p.floor,x,y:p.y,widthFt:right-x,depthFt:Math.min(head.depth,p.y),bottomFt:head.bottom,topFt:head.top});
    if(purpose!=="mall")out.push({id:`sill-${i}-${a.id}`,kind:"window-sill",floor:p.floor,x,y:p.y,widthFt:right-x,depthFt:Math.min(purpose==="rental"?.85:purpose==="restaurant"?.45:.35,p.y),bottomFt:purpose==="rental"?2.35:2.65,topFt:2.95});
   }
   if(p.floor!==0||p.y<1)continue;
   for(const a of openings.filter(a=>a.kind==="access"&&a.x>=p.x-EPS&&a.x+a.length<=p.x+p.w+EPS)){
-   const x=Math.max(p.x,a.x-.5),right=Math.min(p.x+p.w,a.x+a.length+.5);
-   out.push({id:`hood-${a.id}`,kind:"entry-hood",floor:0,x,y:p.y,widthFt:right-x,depthFt:Math.min(style.canopyDepth,p.y),bottomFt:8.35,topFt:8.85});
+   const purpose=plan.brief.purpose,margin=purpose==="mall"?1.0:purpose==="restaurant"?.75:purpose==="school"?.65:.4;
+   const x=Math.max(p.x,a.x-margin),right=Math.min(p.x+p.w,a.x+a.length+margin);
+   const topFt=purpose==="mall"?9.65:purpose==="restaurant"?9.1:purpose==="school"?8.95:8.85;
+   out.push({id:`hood-${a.id}`,kind:"entry-hood",floor:0,x,y:p.y,widthFt:right-x,depthFt:Math.min(style.canopyDepth,p.y),bottomFt:8.35,topFt});
   }
  }
  return out;
