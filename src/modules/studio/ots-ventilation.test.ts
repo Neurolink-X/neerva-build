@@ -4,6 +4,7 @@ import {isOtsRoom,overlapArea,validatePlan,type PlanBrief,type PlanModel} from "
 import {generateSpatialPortfolio,portfolioForPlanId,validateRequestedProgramme} from "./road-generator.ts";
 import {otsVariant,otsGrilleBars,airOptimizedPlan} from "./ots-ventilation.ts";
 import {exposedRoofPatches} from "./plan-surfaces.ts";
+import {windowExposure} from "./ventilation.ts";
 const brief:PlanBrief={widthFt:30,depthFt:60,roadSide:"N",floors:2,bedrooms:4,parking:true,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
 test("shaft alternatives preserve exact programme, no solid roof and deterministic restoration",()=>{
  let found=0;
@@ -49,6 +50,7 @@ test("attached-house matrix covers 1–6 BHK, three levels, irregular plots and 
   if(!portfolio.plans.length){assert.ok(portfolio.blockers.length);blocked++;continue;}
   for(const p of portfolio.plans){
    checked++;const q=airOptimizedPlan(p,true,true);
+   const remaining=new Set(q.openings.map(o=>o.id));for(const o of p.openings.filter(o=>!remaining.has(o.id))){assert.equal(o.kind,"window");assert.equal(o.connectsTo,undefined);const old=p.rooms.find(r=>r.id===o.roomId)!;assert.equal(windowExposure(p,old,o),"review");}
    assert.deepEqual(validatePlan(q),[],q.id);assert.deepEqual(validateRequestedProgramme(q,b),[],q.id);
    const shafts=q.rooms.filter(isOtsRoom);
    if(!shafts.length){unavailable++;assert.equal(otsGrilleBars(q).length,0);continue;}
