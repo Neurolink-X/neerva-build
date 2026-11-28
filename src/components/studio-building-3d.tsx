@@ -12,7 +12,7 @@ import {DesignPlanArt} from "@/components/studio-design-gallery";
 import {finishSpaces,wallFaceOwners,wallShade,type FinishScheme,type FinishMaterial,type FinishSurface} from "@/modules/studio/finish-model";
 import type {Side} from "@/modules/studio/plan-model";
 import {isOtsRoom,type PlanModel} from "@/modules/studio/plan-model";
-import {otsGrilleBars} from "@/modules/studio/ots-ventilation";
+import {otsGrilleBars,otsGrilleLevel} from "@/modules/studio/ots-ventilation";
 import {modeledWindowGeometry,ventilationGeometrySummary,windowGeometryKey} from "@/modules/studio/ventilation-geometry";
 import {threeRoadRotation} from "@/modules/studio/plan-coordinate";
 import {residentialStairStudies,stairFloorPatches,stairStepDepthFt} from "@/modules/studio/stair-study";
@@ -227,7 +227,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     roof(cx,top+parapet/2+.14,zCoord(fp.minZ),W+.25,parapet,.18);roof(cx,top+parapet/2+.14,zCoord(fp.maxZ),W+.25,parapet,.18);
     roof(xCoord(fp.minX),top+parapet/2+.14,cz,.18,parapet,D+.25);roof(xCoord(fp.maxX),top+parapet/2+.14,cz,.18,parapet,D+.25);
    }
-   if(planModel)for(const r of otsGrilleBars(planModel)){const m=new THREE.Mesh(shared,showAir?airGreen:railingMat);m.name="Concept roof ventilation grille";m.position.set(xCoord(r.x+r.w/2),top+.17,zCoord(r.y+r.d/2));m.scale.set(r.w*FT,.045,r.d*FT);roofGroup.add(m);}
+   if(planModel)for(const r of otsGrilleBars(planModel)){const m=new THREE.Mesh(shared,showAir?airGreen:railingMat);m.name="Concept roof ventilation grille";m.position.set(xCoord(r.x+r.w/2),(otsGrilleLevel(planModel)??design.floors)*height+.17,zCoord(r.y+r.d/2));m.scale.set(r.w*FT,.045,r.d*FT);roofGroup.add(m);}
    roofGroup.visible=mode==="exterior";site.add(roofGroup);
    for(const r of design.layout.rooms.filter(r=>r.kind==="parking"&&visible(r.floorIndex))){
     box(xCoord(r.xFt+r.wFt/2),.015,zCoord(r.yFt+r.dFt/2),r.wFt*FT,.03,r.dFt*FT,material("#aaa69a"),false);
