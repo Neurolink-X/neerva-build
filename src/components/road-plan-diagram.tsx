@@ -83,6 +83,6 @@ export function RoadElevation({plan,main,accent,glass="#91b5bd"}:{plan:PlanModel
    {gates.map(g=><g key={g.xFt}><rect x={x(g.xFt)} y={y(4)} width={g.widthFt*scale} height={4*scale} fill="#536359" stroke="#303f35"/>{Array.from({length:7},(_,k)=><line key={k} x1={x(g.xFt+g.widthFt*(k+.5)/7)} x2={x(g.xFt+g.widthFt*(k+.5)/7)} y1={y(3.8)} y2={y(.2)} stroke="#a7b2a6" strokeWidth="1.5"/>)}</g>)}
 
   </svg>
-  <p className="nroad-small">{widthFt} ft frontage · Road {roadSide} · {plan.floors} level(s). Plan-derived front elevation with actual modeled openings and gates. For depth, balcony projection and lighting, use the plan-matched interactive 3D Front view or its rendered-image option. This elevation is not a photograph or a construction-approved drawing.</p>
+  <p className="nroad-small">{widthFt} ft frontage · Road {roadSide} · {plan.floors} level(s). Plan-derived front elevation with actual modeled openings and gates. For depth, balcony projection and lighting, open the realistic street render below. This elevation is not a photograph or a construction-approved drawing.</p>
  </section>;
 }
