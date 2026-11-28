@@ -300,3 +300,14 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
  .visualizer-app .paint-pattern-groups{display:flex;flex-wrap:wrap;overflow:visible}
  .visualizer-app .paint-pattern-groups button{flex:1 1 8rem;white-space:normal;min-height:44px}
 }
+
+/* One stable touch workspace: don't shrink the actual photo on wall/design
+ * changes. Keep the same aspect ratio and prevent sticky overlays from
+ * stealing touch input or causing focus-driven scrolling. */
+@media (max-width:850px), (pointer:coarse) and (max-width:1100px){
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){position:static;top:auto;z-index:auto;padding:0}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) .paint-canvas-frame{height:auto;max-height:none}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) canvas{width:100%!important;height:auto!important;max-height:none!important;max-width:100%;margin:0}
+ .visualizer-app .paint-live-tools,.visualizer-app .paint-live-workspace,.visualizer-app .paint-preview-status{overflow-anchor:none}
+ .visualizer-app .paint-targets{flex-wrap:wrap;overflow:visible;max-width:100%}
+}
