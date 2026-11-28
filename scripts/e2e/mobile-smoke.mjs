@@ -307,12 +307,12 @@ async function main(){
      await verifyInvalidPhotoUpload(page);
      await page.getByRole("button",{name:"Paint + design",exact:true}).click();
      await page.getByRole("button",{name:"Signature",exact:true}).click();
-     const pattern=page.getByRole("button",{name:"Soft marble veining",exact:true});
+     const pattern=page.getByRole("button",{name:"Sun and circle mural",exact:true});
      await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
      await pattern.click();
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
-     await pattern.locator("svg[data-surface-profile=marble] image").waitFor({state:"attached"});assert.match(await pattern.locator("svg image").getAttribute("href")??"",/^data:image\/png/,"preview uses the actual local material mask");
-     const intensity=page.getByLabel(/Design intensity/);await intensity.fill("0.45");assert.equal(await pattern.locator("svg rect[mask]").getAttribute("opacity"),"0.45","texture swatch intensity matches the wall control");await intensity.press("End");assert.equal(await intensity.inputValue(),"1","keyboard reaches maximum intensity");await intensity.press("ArrowLeft");assert.equal(await intensity.inputValue(),"0.95","keyboard follows the declared step");
+     await pattern.locator("svg polyline").first().waitFor({state:"attached"});assert.ok(await pattern.locator("svg polyline").count()>1,"painting swatch has actual procedural motif geometry");
+     const intensity=page.getByLabel(/Design intensity/);await intensity.fill("0.45");assert.ok(await pattern.locator("svg polyline").evaluateAll(rows=>rows.every(r=>Number(r.getAttribute("opacity"))<=.45)),"painting swatch intensity follows the wall control");await intensity.press("End");assert.equal(await intensity.inputValue(),"1","keyboard reaches maximum intensity");await intensity.press("ArrowLeft");assert.equal(await intensity.inputValue(),"0.95","keyboard follows the declared step");
      await page.getByRole("button",{name:"Geometry",exact:true}).click();const geo=page.getByRole("button",{name:"Chevron herringbone",exact:true});await geo.click();assert.equal(await geo.getAttribute("aria-pressed"),"true");
      const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
      assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");

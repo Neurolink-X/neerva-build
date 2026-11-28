@@ -9,7 +9,7 @@ const plain:PaintStyle={colour:"#b6c7a3",accent:"#c4925f",pattern:"plain",opacit
 test("all sample exterior paint sections have independent normalized masks",()=>{
  assert.equal(new Set(facadeZones.map(z=>z.id)).size,10);
  for(const z of facadeZones){assert.ok(validWallMask(z.points),z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1,z.id);}
- assert.equal(facadeZones.find(z=>z.id==="right")?.mask.holes.length,1);
+ assert.ok((facadeZones.find(z=>z.id==="right")?.mask.holes.length??0)>1,"window and foreground railing exclusions are independently retained");
 });
 test("plain paint is independent of stored pattern and selected base shade",()=>{
  assert.equal(activePattern("paint","diamonds"),"plain");
