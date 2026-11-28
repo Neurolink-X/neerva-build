@@ -674,7 +674,7 @@ async function main(){
       "/admin/catalog","/admin/rfqs","/admin/fulfilment","/admin/pricing","/admin/orders",
       "/admin/studio","/admin/studio-payments","/admin/system-health","/admin/users",
       "/dealer/inventory","/dealer/quotes","/dealer/orders","/account/orders","/account/quotes",
-      "/support","/privacy","/brands","/business-model","/calculators","/blog",
+      "/support","/privacy","/brands","/business-model","/calculators","/blog","/my-project","/family-homes","/contractors",
       "/learn/plot-size-in-gaj","/learn/2d-to-3d-house-layout","/learn/wall-paint-pattern-ideas",
       "/materials/cement","/materials/steel","/materials/tiles","/materials/plumbing",
       "/materials/bricks-blocks","/materials/electrical","/materials/paint",
@@ -1503,7 +1503,7 @@ async function main(){
 
     assert.equal(await page.getByRole("button",{name:/Replay illustration/}).count(),0,"do not fabricate manual state before dragging");
     assert.equal(await page.locator(".home-stage-comparison").count(),1,"construction stages replace static colour mood");
-    const quick=page.locator(".nbh-quick-quote");
+    const quick=page.locator(".nbh-quick-quote");await quick.locator("select[name=category]").selectOption("cement");assert.equal(await quick.locator("input[name=quantity]").getAttribute("step"),"1");
     await quick.locator("select[name=category]").selectOption("steel");
     assert.match(await quick.locator("input[name=material]").getAttribute("placeholder"),/TMT/);
     assert.equal(await quick.locator("select[name=unit]").inputValue(),"kg");

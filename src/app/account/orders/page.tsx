@@ -10,7 +10,7 @@ export default function Orders() {
     <main className="catalog-page">
       <SiteHeader />
       <section className="section ops-content">
-        <span className="eyebrow">YOUR ACCOUNT</span><h1>My orders</h1><p>Track material purchases, review final prices and manage deliveries in one place.</p><nav className="neerva-journey-links" aria-label="Order help and next actions"><Link href="/account/quotes">My quotations →</Link><Link href="/my-project">My construction project →</Link><Link href="/support">Order help →</Link><Link href="/returns">Returns & refunds →</Link></nav>
+        <span className="eyebrow">YOUR ACCOUNT</span><h1>My orders</h1><p>Track purchases, final prices and deliveries.</p><nav className="neerva-journey-links" aria-label="Order help and next actions"><Link href="/account/quotes">My quotations →</Link><Link href="/my-project">My construction project →</Link><Link href="/support">Order help →</Link><Link href="/returns">Returns & refunds →</Link></nav>
         <CustomerOrdersWorkspace/>
       </section>
       <SiteFooter />
