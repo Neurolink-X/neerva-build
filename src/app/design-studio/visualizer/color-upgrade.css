@@ -280,3 +280,12 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 .signature-wall-note{font-size:12px;margin-top:16px!important}.signature-wall-gallery button:focus-visible{outline:3px solid #a46b35;outline-offset:2px}
 @media(max-width:650px){.signature-wall-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.signature-wall-card-label{padding:9px}.signature-wall-card-label small{font-size:11px}}
 @media(max-width:320px){.signature-wall-grid{grid-template-columns:1fr}}
+
+/* Fixed gallery images: never crop off artwork, even in narrow cards. */
+.signature-wall-art{position:relative;display:grid;place-items:center;background:#ecece7;overflow:hidden}
+.signature-wall-art img{display:block;width:100%;height:100%;object-fit:contain}
+.signature-art-gold img{filter:sepia(.82) saturate(1.38) contrast(1.08)}
+.signature-art-warm img{filter:sepia(.20) saturate(.85)}
+.signature-art-unavailable{font-size:13px;color:#58675b;padding:12px;text-align:center}
+.signature-art-description{padding:10px 14px;margin:0!important}
+.signature-wall-detail .signature-wall-art{max-height:650px}
