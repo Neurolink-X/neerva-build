@@ -66,6 +66,14 @@ export function streetRenderSnapshot(p:PlanModel,glass="#94b6c5",view:"front"|"c
   put(r.x,r.floor*H,r.y,r.w,2.8,.12,glass,.18,.15,.65);
   put(r.x,r.floor*H+2.8,r.y,r.w,.13,.18,"#34433f",.32,.4);
  }
+ // Street-facing terraces receive railings only where the actual plan has
+ // an open upper-floor zone at the street edge, not over enclosed bedrooms.
+ for(const r of p.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)&&Math.abs(r.y-p.setbacks.frontFt)<.02)){
+  const y=r.floor*H+.12;
+  put(r.x,y,r.y,r.w,1.1,.35,p.facade.main);
+  put(r.x,y+2.65,r.y,r.w,.15,.2,"#34433f",.32,.4);
+  const count=Math.max(2,Math.ceil(r.w/1.5));for(let i=0;i<=count;i++)put(r.x+Math.min(r.w-.12,i*r.w/count),y+1.1,r.y,.12,1.55,.14,"#34433f",.32,.4);
+ }
  for(const gate of [p.gate,p.pedestrianGate].filter(g=>g.widthFt>0)){
   put(gate.xFt,0,0,gate.widthFt,.3,.16,"#3c4941",.45,.3);
   put(gate.xFt,3.7,0,gate.widthFt,.2,.16,"#3c4941",.45,.3);
