@@ -6,7 +6,9 @@ export function entranceArrangement(plan:PlanModel):"front-stair"|"front-bedroom
  if(!parking)return "pedestrian";
  const adjacent=(r:Room)=>r.floor===0&&Math.abs(r.y-parking.y)<.05&&!!sharedEdge(r,parking);
  if(plan.rooms.some(r=>r.kind==="stairs"&&adjacent(r)))return "front-stair";
- if(plan.rooms.some(r=>r.kind==="bedroom"&&adjacent(r)))return "front-bedroom";
+ // The pedestrian verandah may separate the car and bedroom; both still
+ // face the street. Do not misclassify this independent entry family.
+ if(plan.rooms.some(r=>r.kind==="bedroom"&&r.floor===0&&Math.abs(r.y-parking.y)<.05))return "front-bedroom";
  return "front-verandah";
 }
 export function architectureTopology(plan:PlanModel){

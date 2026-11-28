@@ -157,19 +157,23 @@ test("standard 18×50 and compact 15×30 no-parking ground 1 BHK share validated
 
 });
 
-test("expanded no-parking 1 BHK offers ten validated footprints and preserves legacy alternatives",()=>{
+test("expanded no-parking 1 BHK retains all ten legacy footprints plus real new programmes",()=>{
  const {plans,blockers}=generateSpatialPortfolio(brief({parking:false}));
- assert.deepEqual(blockers,[]);assert.equal(plans.length,10);
+ assert.deepEqual(blockers,[]);assert.equal(plans.length,14);
  assert.equal(new Set(plans.map(planSignature)).size,plans.length);
  assert.equal(new Set(plans.map(p=>p.id)).size,plans.length);
- assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size,5);
- assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="bedroom")!.d)).size,5);
+ const legacy=generateSpatialPortfolio(brief({parking:false}),24,true).plans;
+ assert.equal(legacy.length,10);for(const p of legacy)assert.ok(plans.some(q=>q.id===p.id&&planSignature(q)===planSignature(p)));
+ assert.ok(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size>=5);
+ assert.ok(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="bedroom")!.d)).size>=5);
  for(const side of ["left","right"])for(const suffix of ["","-living","-bedroom"])assert.ok(plans.some(p=>p.id==="18x50-N-pedestrian-"+side+suffix),"legacy saved ID remains available");
  for(const p of plans)assert.deepEqual(validatePlan(p),[]);
  for(const roadSide of ["N","E","S","W"] as const){
   const small=generateSpatialPortfolio(brief({parking:false,widthFt:15,depthFt:30,roadSide})).plans;
-  assert.equal(small.length,6);assert.equal(new Set(small.map(planSignature)).size,6);
-  assert.equal(new Set(small.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size,3);
+  assert.equal(small.length,10);assert.equal(new Set(small.map(planSignature)).size,10);
+  const old=generateSpatialPortfolio(brief({parking:false,widthFt:15,depthFt:30,roadSide}),24,true).plans;
+  assert.equal(old.length,6);for(const p of old)assert.ok(small.some(q=>q.id===p.id&&planSignature(q)===planSignature(p)));
+  assert.ok(new Set(small.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size>=3);
   for(const p of small)assert.deepEqual(validatePlan(p),[]);
  }
 });

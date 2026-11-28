@@ -428,7 +428,7 @@ function compactPedestrianPlans(b:PlanBrief,limit:number,legacy=false):PlanningR
     addWindow(p);if(!validateRequestedProgramme(p,b).length&&!plans.some(q=>planSignature(q)===planSignature(p)))alternatives.push(p);
    }catch{/* Discard infeasible candidates. */}
   }
-  if(alternatives.length){const pool=uniquePlanGeometry([baseline[0],...alternatives,...baseline.slice(1)]);return {plans:pool.slice(0,baseline.length),blockers:[]};}
+  if(alternatives.length){const pool=uniquePlanGeometry([baseline[0],...alternatives,...baseline.slice(1)]);return {plans:pool.slice(0,limit),blockers:[]};}
  }
  return {plans:baseline,blockers:plans.length?[]:["Room sizes or access could not be validated within the available footprint."]};
 }
@@ -731,7 +731,7 @@ function prioritizeArchitecturalOptions(original:PlanModel[],pool:PlanModel[],li
   const eligible=sidePool.length?sidePool:remaining;
   const score=(p:PlanModel)=>{
    const profile=profiles.get(p.id)!,arrangement=profile.arrangement,count=arrangementCounts.get(arrangement)??0;
-   return (count===0?100:arrangement==="front-stair"&&count<4?45:0)+(!topologies.has(profile.topology)?30:0)+(!fronts.has(profile.front)?15:0)+(baseline.has(p.id)?1:0)-(sideCounts.get(p.variant)??0)*.01;
+   return (count===0?100:arrangement==="front-bedroom"&&count<2?65:arrangement==="front-stair"&&count<4?45:0)+(!topologies.has(profile.topology)?30:0)+(!fronts.has(profile.front)?15:0)+(baseline.has(p.id)?1:0)-(sideCounts.get(p.variant)??0)*.01;
   };
   const next=eligible.reduce((a,b)=>score(b)>score(a)?b:a);
   result.push(next);used.add(next.id);topologies.add(profiles.get(next.id)!.topology);fronts.add(profiles.get(next.id)!.front);

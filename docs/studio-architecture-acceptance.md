@@ -36,3 +36,7 @@ This is an implementation checklist, not a certificate of design quality or stat
 - Compact street-service alternative, new pedestrian court architecture and wider street-bedroom allocation; all candidates pass common geometry checks and preserve legacy IDs where previously feasible.
 - Review on-site ventilation exposure and bathroom exhaust explicitly; do not claim compliance or vehicle swept-path without road width, vehicle dimensions, neighboring buildings and survey inputs.
 - Commercial interior lighting and actual-aperture glazing frames improve rendered detail. Photorealistic visual acceptance remains subject to browser screenshot review.
+
+## Regression corrections
+- Preserve every prior compact footprint in the full gallery and append new geometry within the existing 24-option maximum, instead of replacing older choices. Tests assert preserved IDs and signatures and increased counts.
+- Recognize a street-facing bedroom separated from a car bay by an independent entry verandah, so both front-bedroom and stair alternatives are prioritized without implying direct adjacency.
