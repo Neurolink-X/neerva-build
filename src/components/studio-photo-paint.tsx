@@ -239,7 +239,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
     ctx.fillText(String(i+1),p.x*w+9,p.y*h-8);ctx.fillStyle="#ffe16a";
    }ctx.restore();
   }
- },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas,wholeShade,activeTextures,allInterior,interiorWholeShade,interiorDetail]);
+ },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas,wholeShade,activeTextures,allInterior,interiorWholeShade,interiorDetail,exterior]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask,preMarked?:Wall[])=>{
   ++uploadGeneration.current;setUploadError("");
   const ticket=++generation.current;
