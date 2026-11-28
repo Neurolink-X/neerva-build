@@ -7,15 +7,15 @@ import {facadeZones,facadeSamples,stylesForTarget,activePattern,shadedPixel,type
 import {validWallMask} from "./mask-editor.ts";
 const plain:PaintStyle={colour:"#b6c7a3",accent:"#c4925f",pattern:"plain",opacity:.78};
 test("all sample exterior paint sections have independent normalized masks",()=>{
- assert.equal(new Set(facadeZones.map(z=>z.id)).size,8);
+ assert.equal(new Set(facadeZones.map(z=>z.id)).size,10);
  for(const z of facadeZones){assert.ok(validWallMask(z.points),z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1,z.id);}
- assert.equal(facadeZones.find(z=>z.id==="right")?.mask.holes.length,0);
+ assert.equal(facadeZones.find(z=>z.id==="right")?.mask.holes.length,1);
 });
 test("plain paint is independent of stored pattern and selected base shade",()=>{
  assert.equal(activePattern("paint","diamonds"),"plain");
  assert.equal(activePattern("design","diamonds"),"diamonds");
  const full=stylesForTarget({},"all",plain);
- assert.equal(Object.keys(full).length,8);
+ assert.equal(Object.keys(full).length,10);
  const design=stylesForTarget(full,"right",{...plain,pattern:activePattern("design","diamonds")});
  assert.equal(design.right?.colour,plain.colour);
  assert.equal(design.right?.pattern,"diamonds");
@@ -33,8 +33,8 @@ test("shade calculation retains light and shadow and supports both pale and deep
 });
 
 test("each local house has its own validated paint zones and independent whole-exterior selection",()=>{
- assert.equal(facadeSamples.length,4);
- assert.equal(new Set(facadeSamples.map(s=>s.src)).size,4);
+ assert.equal(facadeSamples.length,5);
+ assert.equal(new Set(facadeSamples.map(s=>s.src)).size,5);
  for(const s of facadeSamples){assert.ok(s.src.startsWith("/images/studio/"));assert.ok(s.zones.length>=3);const styles=stylesForTarget({},"all",plain,s.zones);assert.equal(Object.keys(styles).length,s.zones.length);for(const z of s.zones){assert.ok(validWallMask(z.points),s.id+" "+z.id);for(const ring of [z.mask.outline,...z.mask.holes])for(const [x,y] of ring)assert.ok(x>=0&&x<=1&&y>=0&&y<=1);}}
 });
 
@@ -44,8 +44,8 @@ test("full exterior covers previously omitted wall and trim regions in all local
  function inside(ring:number[][],x:number,y:number){let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [a,b]=ring[i],[c,d]=ring[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;}
  function painted(sample:typeof facadeSamples[number],x:number,y:number){return sample.zones.some(z=>inside(z.mask.outline,x,y)&&!z.mask.holes.some(h=>inside(h,x,y)));}
  const family=facadeSamples[0],modern=facadeSamples[1],villa=facadeSamples[2];
- for(const [x,y] of [[350,60],[1045,110],[257,150],[565,160],[500,285],[565,350],[1042,365],[160,420]])assert.ok(painted(family,x/1200,y/600),"plaster "+x+","+y);
- for(const [x,y] of [[980,190],[450,205],[880,180],[720,190],[750,440],[1100,170]])assert.equal(painted(family,x/1200,y/600),false,"protected "+x+","+y);
+ for(const [x,y] of [[100,35],[1020,70],[190,65],[490,80],[500,201],[530,240],[1050,235],[150,350],[1020,350],[160,240]])assert.ok(painted(family,x/1200,y/400),"plaster "+x+","+y);
+ for(const [x,y] of [[300,100],[928,110],[600,115],[600,270],[290,265],[930,270],[600,350],[400,165],[20,60],[515,113]])assert.equal(painted(family,x/1200,y/400),false,"protected "+x+","+y);
  assert.ok(painted(modern,575/880,414/738));assert.ok(painted(modern,270/880,490/738));
  assert.ok(painted(villa,790/880,320/584));assert.ok(painted(villa,640/880,300/584));
  assert.equal(painted(modern,575/880,365/738),false);
@@ -83,4 +83,16 @@ test("all preset design quadrilaterals cover their actual paint mask, including 
   const xs=z.points.map(p=>p.x),ys=z.points.map(p=>p.y);
   for(const [x,y] of z.mask.outline)assert.ok(x>=Math.min(...xs)-1e-8&&x<=Math.max(...xs)+1e-8&&y>=Math.min(...ys)-1e-8&&y<=Math.max(...ys)+1e-8,sample.id+" "+z.id);
  }
+});
+
+test("modern accent residence local bytes, zones and protected points",()=>{
+ const sample=facadeSamples.find(s=>s.id==="modern-courtyard")!;
+ const bytes=readFileSync(new URL("../../../public"+sample.src,import.meta.url));
+ assert.deepEqual(encodedPhotoDimensions(bytes),{width:1200,height:900});
+ assert.equal(bytes.length,79970);assert.equal(createHash("sha256").update(bytes).digest("hex"),"a3f120574797ce090f5f88a68ead5f3a0a4ae6d7355a6c4137b444c67fe7ffbb");
+ assert.equal(sample.zones.length,11);assert.equal(new Set(sample.zones.map(z=>z.id)).size,11);
+ const inside=(ring:number[][],x:number,y:number)=>{let hit=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [a,b]=ring[i],[c,d]=ring[j];if((b>y)!==(d>y)&&x<(c-a)*(y-b)/(d-b)+a)hit=!hit;}return hit;};
+ const hits=(x:number,y:number)=>sample.zones.filter(z=>inside(z.mask.outline,x/1408,y/1056)&&!z.mask.holes.some(h=>inside(h,x/1408,y/1056))).length;
+ for(const [x,y] of [[400,260],[320,375],[900,300],[695,400],[480,585],[647,660],[900,720],[230,850],[1150,850],[450,210]])assert.equal(hits(x,y),1,"paintable "+x+","+y);
+ for(const [x,y] of [[450,400],[1100,400],[750,430],[750,720],[400,720],[1100,720],[1220,300],[945,420],[750,900],[250,935],[50,200],[260,440],[600,510]])assert.equal(hits(x,y),0,"protected "+x+","+y);
 });
