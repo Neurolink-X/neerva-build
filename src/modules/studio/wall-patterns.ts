@@ -1,5 +1,6 @@
 import {decorativeArt,luxuryLattice} from "./decorative-wall-art.ts";
 import {premiumArt,enrichArtwork} from "./premium-wall-art.ts";
+import {refinedArtwork} from "./refined-wall-art.ts";
 // Coordinates are fractions of the selected wall, clockwise from its top-left corner.
 type Point = [number, number];
 export type Motif = {points: Point[]; filled?: boolean; alpha?: number; weight?: number; tone?:number};
@@ -102,18 +103,64 @@ export type Pattern = keyof typeof finishes;
 export const patternKeys = Object.keys(finishes) as Pattern[];
 // Old IDs remain valid for previously selected walls; weak filler designs are
 // excluded from the new curated chooser rather than breaking restored selections.
-export const retiredPatterns=["travertine","mineral","marble","limewash","linen","terracotta","brushed","stonewash","venetian","onyx","suede","microcement","softConcrete","printLotus","printPalm","printTerrazzo","printScandi","printMosaic","printDots","printWave","printPaisley","reliefDiamond","reliefPyramid","reliefCube","reliefSteps","reliefFolds","reliefTiles","reliefRibbon","reliefChevron","fluted","ribbed","slimframes","reception","archNiches","shakerPanels","pilasterLines","steppedFrames"] as const satisfies readonly Pattern[];
 export const patternGroups={
- Signature:["sunDisc","orbit","layeredArches","abstractLeaves","eclipse","aurora","galleryArc","celestial"],
- Murals:["flyingBirds","gardenTree","riverSunset","meadowBloom","lotusPond","desertDunes","oceanCliffs","citySilhouette"],
- Nature:["floralScroll","bamboo","botanical","forest","mountain","waterflow","fernStencil","blossomBranch"],
- Classic:["diamonds","inset","heritage","decoFan","artDecoSunburst","royalRosette","jaliMedallion","ogee"],
- Modern:["arch","split","asymmetric","mural","scallop","steppedColourBlock","modernRibbons","offsetCircles"],
- Geometry:["facets","herringbone","grid","diagonal","panels","bands","hexGrid","angularWeave"],
- Printed:["silkBotanical","imperialVine","indigoMedallion","magnoliaRepeat","decoInlay","moroccanFiligree","palaceFloral","japaneseKamon"],
- "3D effects":["sculptFlute","sculptWave","sculptDiamond","sculptFold","sculptReed","sculptRibbon","sculptStone","sculptPrism"],
- Architectural:["atelierPanel","regencyPanel","palazzoPanel","artHotelPanel","walnutPanel","contemporaryPanel","grandSalon","archGallery"]
+ "Signature": [
+  "orbit",
+  "layeredArches",
+  "sunDisc",
+  "aurora"
+ ],
+ "Murals": [
+  "riverSunset",
+  "lotusPond",
+  "flyingBirds",
+  "gardenTree"
+ ],
+ "Nature": [
+  "floralScroll",
+  "bamboo",
+  "forest",
+  "blossomBranch"
+ ],
+ "Classic": [
+  "diamonds",
+  "decoFan",
+  "jaliMedallion",
+  "heritage"
+ ],
+ "Modern": [
+  "arch",
+  "split",
+  "modernRibbons",
+  "offsetCircles"
+ ],
+ "Geometry": [
+  "facets",
+  "herringbone",
+  "hexGrid",
+  "angularWeave"
+ ],
+ "Printed": [
+  "silkBotanical",
+  "imperialVine",
+  "decoInlay",
+  "moroccanFiligree"
+ ],
+ "3D effects": [
+  "sculptWave",
+  "sculptRibbon",
+  "sculptFold",
+  "sculptStone"
+ ],
+ "Architectural": [
+  "atelierPanel",
+  "regencyPanel",
+  "grandSalon",
+  "archGallery"
+ ]
 } as const satisfies Record<string,readonly Pattern[]>;
+const curated=new Set<Pattern>(Object.values(patternGroups).flat());
+export const retiredPatterns=patternKeys.filter(key=>key!=="plain"&&!curated.has(key));
 export type PatternGroup=keyof typeof patternGroups;
 export function groupForPattern(pattern:Pattern):PatternGroup{return (Object.keys(patternGroups) as PatternGroup[]).find(g=>(patternGroups[g] as readonly Pattern[]).includes(pattern))??"Signature";}
 export function isRetiredPattern(pattern:Pattern){return (retiredPatterns as readonly Pattern[]).includes(pattern);}
@@ -122,7 +169,7 @@ export function isRetiredPattern(pattern:Pattern){return (retiredPatterns as rea
 const motifCache=new Map<Pattern,Motif[]>();
 export function artworkMotifs(key:Pattern):Motif[]{
  const cached=motifCache.get(key);if(cached)return cached;
- const motifs=(Object.hasOwn(premiumArt,key)||isRetiredPattern(key)||key==="plain")?finishes[key].motifs:enrichArtwork(key,finishes[key].motifs);
+ const motifs=refinedArtwork[key]??((Object.hasOwn(premiumArt,key)||isRetiredPattern(key)||key==="plain")?finishes[key].motifs:enrichArtwork(key,finishes[key].motifs));
  if(motifCache.size>=16){const first=motifCache.keys().next().value;if(first!==undefined)motifCache.delete(first);}
  motifCache.set(key,motifs);return motifs;
 }

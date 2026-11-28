@@ -16,7 +16,7 @@ function ends(o:Opening,r:Room){
  return [[r.x+r.w,r.y+o.atFt],[r.x+r.w,r.y+o.atFt+o.widthFt]];
 }
 export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?:number;scheme?:FinishScheme}){
- const [showFurniture,setShowFurniture]=useState(true),[showVentilation,setShowVentilation]=useState(false);
+ const [showFurniture,setShowFurniture]=useState(true),[showVentilation,setShowVentilation]=useState(true);
  const furniture=useMemo(()=>showFurniture?planFurniture(plan):[],[plan,showFurniture]);
  const stairs=useMemo(()=>residentialStairStudies(plan),[plan]);
  const {widthFt:w,depthFt:d,roadSide:side}=plan.plot,dim=siteDimensions(w,d,side);
