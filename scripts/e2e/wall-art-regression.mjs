@@ -11,6 +11,7 @@ export async function verifyWallArtwork(page){
     await page.locator(".paint-canvas-frame[aria-busy=false] canvas").waitFor({state:"visible"});
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const wallEvidence=[],pixelDigests=new Set();
+    const fullRoom=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"Wall Detail",exact:true}).click();assert.equal(await canvas.getAttribute("data-interior-view"),"detail");assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),fullRoom);await page.getByRole("button",{name:"Full Room",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),fullRoom);
     // Capture the baseline on the same masked wall, then check every artwork
     // changes painted pixels without touching a known protected sofa pixel.
     await page.getByRole("button",{name:"Plain paint",exact:true}).click();
