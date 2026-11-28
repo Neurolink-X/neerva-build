@@ -4,7 +4,7 @@ import path from "node:path";
 import {createHash} from "node:crypto";
 
 export async function verifyWallArtwork(page){
- const canvas=page.locator(".nbd-photo canvas");
+ const canvas=page.locator(".nbd-photo .paint-canvas-frame[aria-busy=false] canvas");
     // Actual full-wall sample, not only the small selection fixture. Record
     // all visible designs' rendered pixels and representative screenshots.
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
@@ -17,7 +17,7 @@ export async function verifyWallArtwork(page){
      for(let i=0;i<8;i++){
       const card=cards.nth(i),name=(await card.innerText()).trim(),start=Date.now();
       await card.click();assert.equal(await card.getAttribute("aria-pressed"),"true");
-      const pixels=await canvas.evaluate(c=>c.toDataURL());
+      const pixels=await canvas.evaluate(c=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(c.toDataURL())))));
       const digest=createHash("sha256").update(pixels).digest("hex");
       wallEvidence.push({group,name,digest,automationMs:Date.now()-start});pixelDigests.add(digest);
       if(i===0)await canvas.screenshot({path:path.join("test-results/mobile","wall-art-"+group.toLowerCase().replaceAll(" ","-")+".png"),animations:"disabled"});

@@ -1382,15 +1382,15 @@ async function main(){
     assert.match(await page.locator(".nroad-plan-summary").innerText(),/1\s*Bedrooms on this floor/);
     await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=1&bedrooms=1&road=N&parking=false",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
-    assert.equal(await page.locator(".nroad-variants button").count(),10,"standard plot has ten geometry-validated 1 BHK choices");
+    assert.equal(await page.locator(".nroad-variants button").count(),14,"standard plot has fourteen geometry-validated 1 BHK choices");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
-    assert.match(await page.locator(".nroad-selection-feedback").innerText(),/Layout 10 of 10 selected/);
+    assert.match(await page.locator(".nroad-selection-feedback").innerText(),/Layout 14 of 14 selected/);
     await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
     await page.waitForFunction(()=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")});
     await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=1&bedrooms=1&road=W&parking=false",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
-    assert.equal(await page.locator(".nroad-variants button").count(),6,"compact 1 BHK has six validated room allocations and orientations");
+    assert.equal(await page.locator(".nroad-variants button").count(),10,"compact 1 BHK has ten validated room allocations and orientations");
     const compactFirstId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
