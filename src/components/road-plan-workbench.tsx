@@ -16,6 +16,8 @@ import {frontageComposition} from "@/modules/studio/frontage";
 import {entranceArrangement,architectureTopology,representativeIndices} from "@/modules/studio/architecture-profile";
 import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
+import {ventilationReport,ventilationVariant} from "@/modules/studio/ventilation";
+import {VentilationPanel} from "./ventilation-panel";
 import {PlanShortlist} from "./plan-shortlist";
 import {briefKey} from "@/modules/studio/plan-shortlist";
 import {allowStudioWarmup,studioWarmupDelay,preferLitePreview,preferLiteDevice,type NetworkHint} from "@/modules/navigation/intent";
@@ -45,7 +47,9 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const representativeSet=new Set(representativeIndices(matching,({p})=>architectureTopology(p)));
  const filtered=matching.filter((_,i)=>!representativesOnly||representativeSet.has(i));
  const activeOption=filtered.some(({i})=>i===chosen)?chosen:filtered[0]?.i??(result.plans[chosen]?chosen:0);
- const draft=result.plans[activeOption]??null;
+ const baseDraft=result.plans[activeOption]??null;
+ const [enhanceVentilation,setEnhanceVentilation]=useState(false);
+ const draft=useMemo(()=>baseDraft&&enhanceVentilation?ventilationVariant(baseDraft):baseDraft,[baseDraft,enhanceVentilation]);
  const kit=kitOverride??draft?.facade.kit??"simple-parapet";
  const shade=colours.find(c=>c.id===palette)??colours[0];
  const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,kit,main:shade.main,accent:shade.accent}}:null,[draft,shade,kit]);
@@ -189,11 +193,12 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      </div>
      <div className="nroad-plan-summary" data-plan-id={plan.id} data-selected-floor={floor} aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.floor===floor).length}</strong> Spaces on this floor</span><span><strong>{plan.plot.widthFt} × {plan.plot.depthFt}</strong> Plot (ft)</span><span><strong>{plan.floors}</strong> Level(s)</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom").length}</strong> Bedrooms total</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===floor).length}</strong> Bedrooms on this floor</span></div>
      <OrientedPlanDrawing plan={plan} floor={floor} scheme={scheme??undefined}/>
+     <VentilationPanel plan={plan} floor={floor} enhanced={enhanceVentilation} onEnhance={v=>{setEnhanceVentilation(v);setSaveInfo("")}} onBest={()=>{const ranked=filtered.map(({p,i})=>({i,score:ventilationReport(enhanceVentilation?ventilationVariant(p):p).score})).sort((a,b)=>b.score-a.score||a.i-b.i);if(ranked[0]){setChosen(ranked[0].i);setKit(null);setSaveInfo("")}}} changed={baseDraft?.id!==draft?.id}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
      <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. On slow connections or low-resource devices, open interactive 3D when needed.","2D नक्शा तैयार है। धीमे इंटरनेट पर जरूरत होने पर 3D व्यू खोलें।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
      <p className="nroad-small">Same floor and room geometry as 2D. Concept only; professional verification required.</p>
      <details className="nroad-advanced nroad-shortlist-panel"><summary>{str("Compare or shortlist layouts","नक्शों की तुलना करें")}</summary>
-     <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0){setEntranceFilter("all");setRepresentativesOnly(false);setChosen(i);setKit(null)}}}/>
+     <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={baseDraft?.id??plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0){setEntranceFilter("all");setRepresentativesOnly(false);setChosen(i);setKit(null)}}}/>
      </details>
      <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
@@ -215,7 +220,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      {scheme&&<PlanFinishStudio key={plan.id+":"+floor} source={{kind:"residential",plan}} floor={floor} scheme={scheme} onChange={next=>{setFinishHistory(h=>rememberFinish(h,finishKey,next));setSaveInfo("")}} showExterior={false}/>}
      <StudioProjectExchange key={plan.id} source={{kind:"residential",plan}} scheme={scheme??undefined}/>
      <section className="nroad-notes"><h2>{str("What still needs a professional?","क्या-क्या जाँचना बाकी है?")}</h2>
-      {siteReview&&<details className="nroad-small"><summary>Site access and ventilation review</summary><p>{siteReview.parking}</p><p>{siteReview.ventilationNote}</p><p>{siteReview.ventilationReview.length} of {siteReview.habitableCount} habitable rooms need further opening review; {siteReview.bathroomExhaust} bathroom(s) need exhaust/shaft review.</p>{siteReview.ventilationReview.length>0&&<ul>{siteReview.ventilationReview.map((x,i)=><li key={i}>{x}</li>)}</ul>}</details>}
+      {siteReview&&<p className="nroad-small">{siteReview.parking}</p>}
       <ul>{plan.notes.map(x=><li key={x}>{x}</li>)}</ul></section>
     </>}
    </div>

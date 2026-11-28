@@ -46,7 +46,8 @@ test("input coverage matrix: 18 briefs across every road direction, honest feasi
   }
   console.log("architecture-matrix "+JSON.stringify({widthFt:b.widthFt,depthFt:b.depthFt,floors:b.floors,bedrooms:b.bedrooms,parking:b.parking,roadSide,shape:b.siteShape?.kind??"rectangle",layouts:r.plans.length,programmes:new Set(r.plans.map(architectureTopology)).size,frontCompositions:new Set(r.plans.map(frontageComposition)).size,frontStairs:r.plans.filter(p=>entranceArrangement(p)==="front-stair").length}));
  }
- assert.ok(feasible>=40);assert.ok(blocked>=8);
+ assert.ok(feasible>=64);assert.ok(blocked>=4);
+ for(const roadSide of ["N","E","S","W"] as const){const impossible=generateSpatialPortfolio({...cases[16],roadSide});assert.equal(impossible.plans.length,0);assert.ok(impossible.blockers.length);}
  console.log("architecture-matrix-summary "+JSON.stringify({briefs:cases.length*4,feasible,blocked}));
 });
 test("wide 4–6 BHK portfolios include actual aligned parking-adjacent stair geometry",()=>{

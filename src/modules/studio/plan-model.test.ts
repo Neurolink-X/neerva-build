@@ -195,8 +195,10 @@ test("1 BHK is one bedroom total, not one bedroom per floor; preserve G+1/G+2 an
    }
   }
  }
- const impossible=generateSpatialPortfolio(brief({widthFt:15,depthFt:30,floors:2,parking:false}));
- assert.equal(impossible.plans.length,0,"do not stretch compact plot or silently remove floors");
+ const compactBrief=brief({widthFt:15,depthFt:30,floors:2,parking:false});
+ const compact=generateSpatialPortfolio(compactBrief);assert.ok(compact.plans.length>0);
+ for(const p of compact.plans){assert.deepEqual(validatePlan(p),[]);assert.equal(p.plot.widthFt,15);assert.equal(p.plot.depthFt,30);assert.equal(p.floors,2);assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,1);assert.equal(p.parking,null);}
+ const impossible=generateSpatialPortfolio({...compactBrief,setbacks:{frontFt:6,rearFt:6,leftFt:3,rightFt:3}});assert.equal(impossible.plans.length,0);assert.ok(impossible.blockers.length);
 });
 test("ground parking 1 BHK is capped to six useful geometry-distinct choices",()=>{
  const {plans,blockers}=generateSpatialPortfolio(brief());
