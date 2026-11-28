@@ -6,13 +6,19 @@ import {isPremiumRaster} from "@/modules/studio/premium-wall-raster";
 import {generateWallRaster,isGeneratedWallPattern} from "@/modules/studio/generated-wall-raster";
 type Texture={width:number;height:number;values:Uint8Array};
 type TextureState=Partial<Record<Pattern,Texture|null>>;
+// Share one in-flight request per design; keep only recently used decoded rasters.
 const pending=new Map<Pattern,Promise<Texture|null>>();
-function loadTexture(key:Pattern){
+const decoded=new Map<Pattern,Texture>();
+const cacheLimit=16;
+function loadTexture(key:Pattern):Promise<Texture|null>{
+ const cached=decoded.get(key);
+ if(cached){decoded.delete(key);decoded.set(key,cached);return Promise.resolve(cached);}
  const old=pending.get(key);if(old)return old;
- if(isGeneratedWallPattern(key)){const promise=Promise.resolve().then(()=>generateWallRaster(key,isPremiumRaster(key)?360:600,isPremiumRaster(key)?240:400));pending.set(key,promise);void promise.then(()=>{while(pending.size>16){const first=pending.keys().next().value;if(first===undefined)break;pending.delete(first);}});return promise;}
- const meta=textureFor(key);if(!meta)return Promise.resolve(null);
- const promise=new Promise<Texture|null>(resolve=>{
-  const img=new Image();let settled=false;
+ const meta=textureFor(key);
+ // A real local image is preferred over its procedural substitute.
+ let promise:Promise<Texture|null>;
+ if(meta)promise=new Promise<Texture|null>(resolve=>{
+  const img=new Image();img.decoding="async";let settled=false;
   const done=(value:Texture|null)=>{if(settled)return;settled=true;clearTimeout(timer);img.onload=null;img.onerror=null;resolve(value);};
   const timer=window.setTimeout(()=>done(null),8000);
   img.onerror=()=>done(null);
@@ -23,17 +29,43 @@ function loadTexture(key:Pattern){
    const ctx=c.getContext("2d",{willReadFrequently:true});if(!ctx){done(null);return;}
    ctx.drawImage(img,u*meta.width,v*meta.height,w*meta.width,h*meta.height,0,0,c.width,c.height);
    const pixels=ctx.getImageData(0,0,c.width,c.height).data,values=new Uint8Array(c.width*c.height);
-   for(let j=0;j<values.length;j++)values[j]=pixels[j*4];done({width:c.width,height:c.height,values});
+   for(let j=0;j<values.length;j++)values[j]=pixels[j*4];
+   const result={width:c.width,height:c.height,values};c.width=0;c.height=0;done(result);
   }catch{done(null);}};
   img.src=meta.src;
  });
- pending.set(key,promise);void promise.then(value=>{if(!value&&pending.get(key)===promise)pending.delete(key);});return promise;
+ else if(isGeneratedWallPattern(key))promise=new Promise(resolve=>{
+  window.setTimeout(()=>{try{resolve(generateWallRaster(key,isPremiumRaster(key)?360:600,isPremiumRaster(key)?240:400));}catch{resolve(null);}},0);
+ });
+ else return Promise.resolve(null);
+ pending.set(key,promise);
+ void promise.then(value=>{
+  pending.delete(key);
+  if(value){decoded.set(key,value);while(decoded.size>cacheLimit){const first=decoded.keys().next().value;if(first===undefined)break;decoded.delete(first);}}
+ });
+ return promise;
 }
-/** Only current collection and already applied designs are requested. Eight image assets and eight bounded
- * procedural rasters limit the cache; no stale photo or user data is stored. */
+/** Selected and applied walls take priority. Only the current category is
+ * loaded, with at most three active tasks per view and a bounded shared cache. */
 export function useWallTextures(keys:string){
  const [textures,setTextures]=useState<TextureState>({});
- useEffect(()=>{let cancelled=false;const wanted=keys.split(",") as Pattern[];void Promise.resolve().then(()=>{if(!cancelled)setTextures(old=>{const entries=Object.entries(old);return entries.every(([k])=>wanted.includes(k as Pattern))?old:Object.fromEntries(entries.filter(([k])=>wanted.includes(k as Pattern)));});});for(const key of wanted){if(!hasWallRaster(key))continue;void loadTexture(key).then(value=>{if(!cancelled)setTextures(old=>old[key]===value?old:{...old,[key]:value});});}return()=>{cancelled=true};},[keys]);
+ useEffect(()=>{
+  let cancelled=false;
+  const wanted=(keys.split(",") as Pattern[]).filter(hasWallRaster);
+  let cursor=0;
+  const worker=async()=>{
+   while(!cancelled&&cursor<wanted.length){
+    const key=wanted[cursor++],value=await loadTexture(key);
+    if(!cancelled)setTextures(old=>old[key]===value?old:{...old,[key]:value});
+   }
+  };
+  void Promise.resolve().then(()=>{
+   if(cancelled)return;
+   setTextures(old=>{const entries=Object.entries(old);return entries.every(([k])=>wanted.includes(k as Pattern))?old:Object.fromEntries(entries.filter(([k])=>wanted.includes(k as Pattern)));});
+   for(let i=0;i<Math.min(3,wanted.length);i++)void worker();
+  });
+  return()=>{cancelled=true;};
+ },[keys]);
  return textures;
 }
 export function colouredTexture(texture:Texture,base:string,accent:string,maxSide=960){

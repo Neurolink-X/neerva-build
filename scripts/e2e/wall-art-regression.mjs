@@ -30,7 +30,14 @@ export async function verifyWallArtwork(page){
     // all visible designs' rendered pixels and representative screenshots.
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="feature");
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-    const premium=page.getByRole("button",{name:"Image-based premium finishes · 8 designs",exact:true});await premium.click();assert.equal(await page.locator(".wall-pattern-options button").count(),8);await page.waitForFunction(()=>document.querySelectorAll(".wall-pattern-options .paint-texture-swatch").length===8);await page.getByRole("button",{name:"Signature",exact:true}).click();
+    assert.equal(await page.getByRole("button",{name:/Image-based premium finishes/i}).count(),0,"no duplicate image-only collection");
+    for(const [group,name] of [["Signature","Midnight onyx veins"],["Nature","Tropical leaf fresco"],["Modern","Contemporary fluted arch"],["Geometry","Continuous faceted geometry"]]){
+     await page.getByRole("button",{name:group,exact:true}).click();
+     const card=page.getByRole("button",{name,exact:true});await card.click();
+     await card.locator(".paint-texture-swatch").waitFor({state:"visible"});
+     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");
+    }
+    await page.getByRole("button",{name:"Signature",exact:true}).click();
     await page.getByRole("button",{name:"3D effects",exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll(".wall-pattern-options .paint-texture-swatch").length===8);await page.getByRole("button",{name:"Signature",exact:true}).click();
     const wallEvidence=[],pixelDigests=new Set();
     const fullRoom=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"Wall Detail",exact:true}).click();assert.equal(await canvas.getAttribute("data-interior-view"),"detail");assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),fullRoom);await page.getByRole("button",{name:"Full Room",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),fullRoom);

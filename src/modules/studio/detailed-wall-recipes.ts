@@ -71,7 +71,8 @@ export const detailedWallRecipes={
  contemporaryPanel:["panel","Living room","Keep the central frame aligned with furniture."],
  grandSalon:["panel","Formal living","Use subtle moulding highlights with a calm base tone."]
 } as const satisfies Partial<Record<Pattern,Recipe>>;
-export function detailedWallRecipe(key:Pattern):Recipe|undefined{if(isPremiumRaster(key))return ["relief","Living, bedroom or feature wall",premiumRasterNames[key]+": use an uninterrupted wall and verify the optical finish on a sample board; not physical relief."];return (detailedWallRecipes as Partial<Record<Pattern,Recipe>>)[key];}
+const originalImageRecipes:Partial<Record<Pattern,Recipe>>={eclipse:["wash","Living or bedroom feature","Veined onyx concept: use a broad wall and confirm stone-effect finish or print with your installer."],arch:["relief","TV or headboard wall","Fluted arch concept: retain the central arch and use soft side lighting; the preview is not physical stone."],botanical:["wash","Living or dining feature","Tropical foliage concept: choose muted greens and a full-wall print or specialist mural finish."],facets:["inlay","Living or reception wall","Faceted metallic concept: use restrained accent tones; confirm panel or painted effect on a sample."]};
+export function detailedWallRecipe(key:Pattern):Recipe|undefined{if(originalImageRecipes[key])return originalImageRecipes[key];if(isPremiumRaster(key))return ["relief","Living, bedroom or feature wall",premiumRasterNames[key]+": use an uninterrupted wall and verify the optical finish on a sample board; not physical relief."];return (detailedWallRecipes as Partial<Record<Pattern,Recipe>>)[key];}
 export function wallFinishStrength(key:Pattern){const recipe=detailedWallRecipe(key);return recipe?{pigment:.016,wash:.035,stencil:.021,inlay:.013,relief:.028,panel:.022}[recipe[0]]:0;}
 
 /** Different finish families require different texture frequency and depth.
