@@ -31,11 +31,11 @@ function landscape(key:GeneratedPattern,x:number,y:number){
   return shade;
  }
  if(key==="oceanCliffs"){
-  const coastL=.22+.075*Math.sin(y*9+.4)+.025*Math.sin(y*23),coastR=.83+.065*Math.sin(y*8+1.9)+.018*Math.sin(y*24);
+  const coastL=.20+.085*Math.sin(y*9+.4)+.025*Math.sin(y*23)+.009*Math.sin(y*57),coastR=.86+.065*Math.sin(y*8+1.9)+.018*Math.sin(y*24)+.007*Math.cos(y*67);
   if(y<.34){const sun=Math.hypot((x-.61)*1.5,y-.15);return .76-.20*y+.16*(1-smooth((sun-.075)/.02));}
-  const depth=(y-.34)/.66,water=.34+.29*(1-depth)+.045*Math.sin(y*90+Math.sin(x*14)*1.8)+.035*Math.cos(x*22-y*24);
-  if(x>coastL&&x<coastR){const distance=Math.min(x-coastL,coastR-x);return water+.27*Math.exp(-distance*120)*(.6+.4*Math.sin(y*105+x*15));}
-  const cliff=x<=coastL?coastL-x:x-coastR;return .30+.25*smooth(cliff*11)+.13*Math.sin(y*29+x*21)+.08*Math.sin(y*81+x*38)+.045*Math.cos(x*100-y*23);
+  const depth=(y-.34)/.66,water=.25+.46*(1-depth)+.045*Math.sin(y*90+Math.sin(x*14)*1.8)+.035*Math.cos(x*22-y*24)+.025*Math.sin(y*145+x*31)*Math.sin(x*43-y*12);
+  if(x>coastL&&x<coastR){const distance=Math.min(x-coastL,coastR-x);const surf=.23*Math.exp(-distance*100)*(.6+.4*Math.sin(y*105+x*15))+.12*Math.exp(-Math.pow((distance-.028-.008*Math.sin(y*40))/.012,2));return water+surf;}
+  const cliff=x<=coastL?coastL-x:x-coastR;return .23+.32*smooth(cliff*11)+.12*Math.sin(y*29+x*21)+.07*Math.sin(y*81+x*38)+.045*Math.cos(x*100-y*23)+.025*Math.sin(x*173+y*137);
  }
  let sky=.73-.22*y+.07*Math.cos(x*3);const moon=Math.hypot((x-.79)*1.5,y-.16);sky+=.19*(1-smooth((moon-.065)/.008));
  for(let row=0;row<3;row++){const n=12-row*2,i=Math.min(n-1,Math.floor(x*n)),u=fract(x*n),seed=fract(Math.sin((i+1)*53.19+row*18.13)*43758.5453);

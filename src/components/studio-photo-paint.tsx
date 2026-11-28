@@ -14,6 +14,7 @@ import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide"
 import {exteriorCollections,exteriorGuide,exteriorGroupFor,isExteriorPattern} from "@/modules/studio/exterior-wall-art";
 import {designPreviewPalette} from "@/modules/studio/design-preview-palette";
 import {paintExecution} from "@/modules/studio/paint-execution";
+import {wallProjector} from "@/modules/studio/wall-projective";
 import {artworkFrame} from "@/modules/studio/wall-design-layout";
 import {shadeArtworkPixels} from "@/modules/studio/artwork-lighting";
 import {detailedWallRecipe,wallMaterialDetail} from "@/modules/studio/detailed-wall-recipes";
@@ -55,10 +56,8 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
   // Image-based finishes wrap the entire wall; the photo mask still protects furniture.
   const focal=!texture&&isFeatureWall(wall.pattern),reference=1.5;
   const frame=wall.mask&&wall.mask!==roomMask&&focal?fitFacadeArtwork(wall.mask,wall.points,corners,reference):artworkFrame(corners,focal,wall.mask===roomMask?.70:1,reference);
-  const at=(x:number,y:number)=>{const u=frame.u+x*frame.w,v=frame.v+y*frame.h;return {
-   x:(1-v)*(a.x+(b.x-a.x)*u)+v*(d.x+(c.x-d.x)*u),
-   y:(1-v)*(a.y+(b.y-a.y)*u)+v*(d.y+(c.y-d.y)*u)
-  };};
+  const project=wallProjector(a,b,c,d);
+  const at=(x:number,y:number)=>project(frame.u+x*frame.w,frame.v+y*frame.h);
   // Mask an accent tint with the motif: the design inherits the same photographic
   // highlights and shadows as the base paint. One reusable scratch canvas, only for patterns.
   const layer=patternSurface?patternSurface.getContext("2d",{willReadFrequently:true}):null;
@@ -68,7 +67,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
   brush.strokeStyle=brush.fillStyle=wall.accent;const weight=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)*frame.w*.006);brush.lineCap="round";brush.lineJoin="round";
   // Organic finishes use a continuous material mask rather than stripes or flat line art.
   const tile=layer&&isSurfaceProfile(wall.pattern)?surfaceCanvas(wall.pattern):null;
-  if(texture&&layer){brush.globalAlpha=1;drawTextureQuad(brush,texture,at(0,0),at(1,0),at(1,1),at(0,1),isPracticalPaintArt(wall.pattern));}
+  if(texture&&layer){brush.globalAlpha=1;drawTextureQuad(brush,texture,at(0,0),at(1,0),at(1,1),at(0,1),isPracticalPaintArt(wall.pattern)||(["Murals","Nature","Signature","Modern","Geometry"] as const).some(group=>(patternGroups[group] as readonly Pattern[]).includes(wall.pattern)));}
   else if(tile){
    const left=Math.min(...corners.map(p=>p.x)),top=Math.min(...corners.map(p=>p.y)),right=Math.max(...corners.map(p=>p.x)),bottom=Math.max(...corners.map(p=>p.y));
    brush.save();brush.beginPath();corners.forEach((p,i)=>i?brush.lineTo(p.x,p.y):brush.moveTo(p.x,p.y));brush.closePath();brush.clip();
@@ -322,7 +321,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  }
  function chooseArtwork(key:Pattern){
   if(key!==selectedPattern)setPattern(key);setShowOriginal(false);
-  if(!exterior&&!keepShades){const [nextBase,nextAccent]=designPreviewPalette(key);if(onColourChange){onColourChange(nextBase);setOverride(null)}else setOverride({source:colour,value:nextBase});setAccent(nextAccent);}
+  if(!exterior&&!keepShades){setOpacity(.95);const [nextBase,nextAccent]=designPreviewPalette(key);if(onColourChange){onColourChange(nextBase);setOverride(null)}else setOverride({source:colour,value:nextBase});setAccent(nextAccent);}
  }
  function toggleOriginal(){setOriginalKey(styleKey);setShowOriginal(!originalVisible);}
 

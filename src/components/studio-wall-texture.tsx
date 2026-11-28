@@ -1,4 +1,5 @@
 "use client";
+import {wallProjector,wallProjectionGrid} from "@/modules/studio/wall-projective";
 import {memo,useEffect,useLayoutEffect,useRef,useState} from "react";
 import {textureFor,texturePalette,paintTexturePalette,wallTextureFrame,hasWallRaster} from "@/modules/studio/wall-textures";
 import type {Pattern} from "@/modules/studio/wall-patterns";
@@ -90,18 +91,25 @@ export const WallTextureSwatch=memo(function WallTextureSwatch({texture,base,acc
  return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio={texture.paintPigments||detail?"none":"xMidYMid slice"} opacity={intensity}/></svg>;
 });
 type Point={x:number;y:number};
-/** Two clipped affine triangles share the same wall diagonal. This is a
- * bounded photo projection, not a physical relief mesh or a ray tracer. */
+/** Adaptive projective mesh: flat walls stay cheap; oblique walls preserve
+ * continuous geometry and avoid the former visible diagonal kink. */
 export function drawTextureQuad(ctx:CanvasRenderingContext2D,source:HTMLCanvasElement,a:Point,b:Point,c:Point,d:Point,preserveComposition=false){
  const length=(p:Point,q:Point)=>Math.hypot(p.x-q.x,p.y-q.y);
  const aspect=(length(a,b)+length(d,c))/Math.max(1,length(a,d)+length(b,c));
  const [u,v,cw,ch]=wallTextureFrame(source.width,source.height,aspect,preserveComposition);
- const triangle=(p:Point,q:Point,r:Point,flip:boolean)=>{
-  ctx.save();ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.lineTo(r.x,r.y);ctx.closePath();ctx.clip();
-  const w=source.width,h=source.height;
-  if(!flip)ctx.transform((q.x-p.x)/w,(q.y-p.y)/w,(r.x-q.x)/h,(r.y-q.y)/h,p.x,p.y);
-  else ctx.transform((q.x-r.x)/w,(q.y-r.y)/w,(r.x-p.x)/h,(r.y-p.y)/h,p.x,p.y);
+ const project=wallProjector(a,b,c,d),n=wallProjectionGrid(a,b,c,d),w=source.width,h=source.height;
+ const triangle=(p:Point,q:Point,r:Point,flip:boolean,i:number,j:number)=>{
+  // Draw opaque texture into overlapping clips, then the caller applies
+  // intensity once. Subpixel overlaps avoid antialiasing hairlines.
+  const center={x:(p.x+q.x+r.x)/3,y:(p.y+q.y+r.y)/3};
+  const edge=(z:Point)=>{const dx=z.x-center.x,dy=z.y-center.y,len=Math.hypot(dx,dy)||1;return {x:z.x+dx/len*.7,y:z.y+dy/len*.7}};
+  const [pp,qq,rr]=[p,q,r].map(edge);
+  ctx.save();ctx.beginPath();ctx.moveTo(pp.x,pp.y);ctx.lineTo(qq.x,qq.y);ctx.lineTo(rr.x,rr.y);ctx.closePath();ctx.clip();
+  const tx=flip?q.x-r.x:q.x-p.x,ty=flip?q.y-r.y:q.y-p.y,ux=flip?r.x-p.x:r.x-q.x,uy=flip?r.y-p.y:r.y-q.y;
+  ctx.transform(tx*n/w,ty*n/w,ux*n/h,uy*n/h,p.x-tx*i-ux*j,p.y-ty*i-uy*j);
   ctx.drawImage(source,u*w,v*h,cw*w,ch*h,0,0,w,h);ctx.restore();
  };
- triangle(a,b,c,false);triangle(a,c,d,true);
+ ctx.save();ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.lineTo(c.x,c.y);ctx.lineTo(d.x,d.y);ctx.closePath();ctx.clip();
+ for(let j=0;j<n;j++)for(let i=0;i<n;i++){const p=project(i/n,j/n),q=project((i+1)/n,j/n),r=project((i+1)/n,(j+1)/n),s=project(i/n,(j+1)/n);triangle(p,q,r,false,i,j);triangle(p,r,s,true,i,j);}
+ ctx.restore();
 }
