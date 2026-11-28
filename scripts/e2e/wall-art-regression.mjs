@@ -6,6 +6,9 @@ import {visualCases} from "./photo-upload-regression.mjs";
 
 export async function verifyWallArtwork(page){
  const canvas=page.locator(".nbd-photo .paint-canvas-frame[aria-busy=false] canvas");
+ await page.getByRole("button",{name:"Signature Wall Gallery",exact:true}).click();
+ const gallery=page.getByRole("region",{name:"Signature wall gallery"});await gallery.waitFor({state:"visible"});assert.equal(await gallery.locator(".signature-wall-grid button").count(),8);assert.equal(await page.getByRole("searchbox",{name:"Find a shade"}).count(),0);await gallery.getByRole("button",{name:/Emerald & champagne/}).click();await gallery.getByRole("region",{name:"Selected wall artwork"}).waitFor({state:"visible"});await gallery.getByRole("button",{name:"Close detail"}).click();await page.getByRole("button",{name:"Paint visualizer",exact:true}).click();
+
     // The new corner sample has two pre-marked walls and preserves furniture.
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="corner");
