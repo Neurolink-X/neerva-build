@@ -5,6 +5,18 @@ import {createHash} from "node:crypto";
 
 export async function verifyWallArtwork(page){
  const canvas=page.locator(".nbd-photo .paint-canvas-frame[aria-busy=false] canvas");
+    // The new corner sample has two pre-marked walls and preserves furniture.
+    await page.getByRole("button",{name:"Sample room",exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="corner");
+    assert.equal(await page.getByRole("button",{name:"All walls",exact:true}).getAttribute("aria-pressed"),"true");
+    const protectedPixel=await canvas.evaluate(c=>[...c.getContext("2d").getImageData(Math.floor(c.width*.16),Math.floor(c.height*.72),1,1).data]);
+    await page.getByRole("button",{name:"Sofa wall",exact:true}).click();await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    const design=await canvas.evaluate(c=>c.toDataURL());
+    await page.getByRole("button",{name:"Side wall",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
+    await page.getByRole("button",{name:"Sofa wall",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).getAttribute("aria-pressed"),"true");
+    assert.equal(await canvas.evaluate(c=>c.toDataURL()),design);
+    assert.deepEqual(await canvas.evaluate(c=>[...c.getContext("2d").getImageData(Math.floor(c.width*.16),Math.floor(c.height*.72),1,1).data]),protectedPixel);
+    await canvas.screenshot({path:path.join("test-results/mobile","corner-room-two-walls.png")});
     // Existing local daylight asset is selectable without assigning an unverified mask.
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
     await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("daylight");
@@ -13,8 +25,7 @@ export async function verifyWallArtwork(page){
     await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("feature");
     // Actual full-wall sample, not only the small selection fixture. Record
     // all visible designs' rendered pixels and representative screenshots.
-    await page.getByRole("button",{name:"Sample room",exact:true}).click();
-    await page.locator(".paint-canvas-frame[aria-busy=false] canvas").waitFor({state:"visible"});
+    await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="feature");
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const wallEvidence=[],pixelDigests=new Set();
     const fullRoom=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"Wall Detail",exact:true}).click();assert.equal(await canvas.getAttribute("data-interior-view"),"detail");assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),fullRoom);await page.getByRole("button",{name:"Full Room",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),fullRoom);

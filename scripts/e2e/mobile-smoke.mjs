@@ -1245,6 +1245,8 @@ async function main(){
     assert.ok(Math.abs(afterPatternScroll-stableScroll)<=3,"choosing a visible design must not jump the page to the house");
     assert.equal(await patternButton.getAttribute("aria-pressed"),"true");
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
+ await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("feature");
+ await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="feature");
  const canvas=page.locator(".nbd-photo canvas");
  await canvas.waitFor({state:"visible"});await canvas.scrollIntoViewIfNeeded();
  async function mark(x){let b=await canvas.boundingBox();for(const [u,v] of [[x,.12],[x+.12,.12],[x+.12,.26],[x,.26]])await canvas.click({position:{x:u*b.width,y:v*b.height}});}
