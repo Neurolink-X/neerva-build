@@ -36,9 +36,9 @@ const rules:Record<CalculatorId,readonly FieldRule[]>={
  excavation:[positive,positive,positive],slab:[positive,positive],plaster:[positive,positive,percent],
  paint:[positive,count,positive,percent],tiles:[positive,positive,positive,percent],tank:[positive,positive,positive],
  roof:[positive,{},percent],formwork:[positive,positive,count],floor:[positive,{},{},percent],units:[{}],
- rainwater:[positive,{},percent],energy:[{}, {max:24},{},{}],budget:[positive,{},percent],
+ rainwater:[positive,{},percent],energy:[{}, {max:24},{whole:true},{}],budget:[positive,{},percent],
  lifecycle:[{},{},{min:1,max:100,whole:true}],mortar:[positive,positive,positive],packs:[{},positive,percent],
- ventilation:[positive,{}],"module-grid":[positive,positive],slope:[positive,percent],reuse:[positive,{}],"energy-use":[{},{max:24},{}]
+ ventilation:[positive,{}],"module-grid":[positive,positive],slope:[positive,percent],reuse:[positive,{}],"energy-use":[{},{max:24},{whole:true}]
 };
 export function calculatorFieldRule(id:CalculatorId,index:number):FieldRule{return rules[id]?.[index]??{};}
 export function calculatorErrors(id:CalculatorId,values:readonly number[]):string[]{
@@ -53,6 +53,7 @@ export function calculatorErrors(id:CalculatorId,values:readonly number[]):strin
   if(r.max!==undefined&&n>r.max)return "Maximum: "+r.max+".";
   if(r.whole&&!Number.isInteger(n))return "Enter a whole number.";
   if(id==="reuse"&&i===1&&n>values[0])return "Cannot exceed total measured mass.";
+  if((id==="energy"||id==="energy-use")&&i===2&&!Number.isInteger(n))return "Enter whole days in the period.";
   return "";
  });
 }
@@ -75,8 +76,8 @@ export function calculatorBreakdown(id:CalculatorId,v:readonly number[],result:n
   case "ventilation":return [{label:"Net openable window area",value:b,unit:"m²"}];
   case "slope":return [{label:"Fall in centimetres",value:result/10,unit:"cm"}];
   case "units":return [{label:"Square feet",value:a,unit:"sq ft"},{label:"Square gaj",value:a/SQUARE_FEET_PER_SQUARE_GAJ,unit:"sq gaj"},{label:"Hectares",value:result/10000,unit:"ha"}];
-  case "tiles":return [{label:"Net area",value:a*SQFT_TO_M2,unit:"m²"},{label:"Nominal purchased tile area",value:result*b*c/1e6,unit:"m²"}];
-  case "paint":return [{label:"Before allowance",value:a*SQFT_TO_M2*b/c,unit:"L"}];
+  case "tiles":return [{label:"Net area",value:a*SQFT_TO_M2,unit:"m²"},{label:"Area including allowance",value:withAllowance(a*SQFT_TO_M2,d),unit:"m²"},{label:"Nominal purchased tile area",value:result*b*c/1e6,unit:"m²"}];
+  case "paint":return [{label:"Before allowance",value:a*SQFT_TO_M2*b/c,unit:"L"},{label:"Extra paint allowance",value:a*SQFT_TO_M2*b/c*d/100,unit:"L"}];
   case "budget":return [{label:"Base estimate",value:a*b,unit:"₹"},{label:"Contingency",value:a*b*c/100,unit:"₹"}];
   case "floor":return [{label:"Material with allowance",value:a*b*(1+d/100),unit:"₹"},{label:"Labour",value:a*c,unit:"₹"}];
   case "energy":return [{label:"Energy for period",value:energyKwh(a,b,c),unit:"kWh"}];
