@@ -1,6 +1,5 @@
 "use client";
 import Image from "next/image";
-import Link from "@/components/intent-link";
 import {useEffect, useRef, useState} from "react";
 import {houseJourney} from "@/modules/studio/house-journey";
 import {heroGalleryPhotos} from "@/modules/home/assets";
@@ -48,7 +47,7 @@ export function HomeShowcase({hindi}:{hindi:boolean}) {
     }}>{heroGalleryPhotos.map((photo,i)=><div key={photo.src}><Image src={photo.src} fill sizes="(max-width:760px) 95vw, 46vw" loading={i===0?"eager":"lazy"} fetchPriority={i===0?"high":"low"} alt={photo.name}/></div>)}</div>
     <div className="nbh-house-controls">{heroGalleryPhotos.map((photo,i)=><button type="button" key={photo.src} aria-current={i===index?"true":undefined} aria-label={(hindi?"घर ":"House ")+(i+1)} onClick={()=>{setPlaying(false);slide(i,true);}}>{i+1}</button>)}</div>
     <figure ref={figure} className="home-stage-comparison" data-journey="premium" aria-label={hindi?"निर्माण सामग्री से तैयार घर तक":"From construction materials to finished home"}>
-      <figcaption className="nbh-stage-heading"><strong>{hindi?"निर्माण सामग्री से तैयार घर तक":"From materials to a finished home"}</strong><small>{hindi?"एक ही घर, दो चरण · खींचकर तुलना करें":"Same house, two stages · Drag to compare"}</small></figcaption>
+      <figcaption className="nbh-stage-heading"><strong>{hindi?"निर्माण सामग्री से तैयार घर तक":"From materials to a finished home"}</strong><small>{hindi?"घर का उदाहरण · खींचकर तुलना करें":"Illustrative home · Drag to compare"}</small></figcaption>
       <div className="nbh-compare-frame">
       <Image src={houseJourney.finished.src} fill sizes="(max-width:760px) 95vw, 46vw" loading="lazy" fetchPriority="low" alt={hindi?"तैयार घर: पेंट, खिड़कियाँ, रेलिंग और फिनिश":"Finished family home with exterior paint, windows, railing and finishes"}/>
       <Image src={houseJourney.shell.src} fill sizes="(max-width:760px) 95vw, 46vw" loading="lazy" fetchPriority="low" alt={hindi?"निर्माणाधीन घर: खुली ईंट की दीवारें, कंक्रीट बीम और स्लैब":"Same family home under construction, showing exposed brick masonry, concrete beams and slabs"} className="nbh-construction-layer"/>
@@ -60,11 +59,7 @@ export function HomeShowcase({hindi}:{hindi:boolean}) {
         <button type="button" data-stage="50" aria-pressed={true} onClick={()=>revealStage(50)}>{hindi?"तुलना":"Compare"}</button>
         <button type="button" data-stage="0" aria-pressed={false} onClick={()=>revealStage(0)}>{hindi?"तैयार घर":"Finished home"}</button>
       </div>
-      <div className="nbh-stage-materials">
-        <div><strong>{hindi?"मजबूत ढांचा":"Structure & masonry"}</strong><div><Link href="/materials/cement">{hindi?"सीमेंट":"Cement"}</Link><Link href="/materials/steel">{hindi?"सरिया":"TMT steel"}</Link><Link href="/materials/bricks-blocks">{hindi?"ईंट":"Bricks"}</Link><Link href="/materials/aggregates">{hindi?"बालू / गिट्टी":"Sand & aggregates"}</Link></div></div>
-        <div><strong>{hindi?"फिनिशिंग":"Finishing touches"}</strong><div><Link href="/materials/paint">{hindi?"पेंट":"Paint"}</Link><Link href="/materials/tiles">{hindi?"टाइल्स":"Tiles"}</Link><Link href="/materials/hardware">{hindi?"हार्डवेयर":"Hardware"}</Link></div></div>
-      </div>
-      <small className="nbh-stage-note">{hindi?"चित्र केवल समझाने के लिए हैं; किसी वास्तविक परियोजना की प्रगति या सामग्री की मात्रा का प्रमाण नहीं।":"Illustrative construction stages, not a record of a real project or a material quantity estimate."}</small>
+
     </figure>
   </div>;
 }
