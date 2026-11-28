@@ -146,7 +146,10 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
    const passage=3.5,serviceWidth=W-stairW-passage;
    put(`utility-${level}`,recipe.upperProgramme==="rear-service"&&serviceWidth>=6?"Upper kitchen":"Wash / service",recipe.upperProgramme==="rear-service"&&serviceWidth>=6?"kitchen":"utility",level,stairW,26,serviceWidth,8);
    put(`rear-passage-${level}`,"Private rear access","corridor",level,W-passage,26,passage,8);
-   put(`rear-family-${level}`,"Rear family room / study","lounge",level,0,34,W,D-34);
+   if(recipe.upperProgramme==="rear-service"&&W-rearBedW>=3.5&&rearBedW>=8){
+    put(`rear-family-${level}`,"Rear family room / study","lounge",level,0,34,rearBedW,D-34);
+    put(`rear-wash-${level}`,"Rear wash / ventilation reserve","utility",level,rearBedW,34,W-rearBedW,D-34);
+   }else put(`rear-family-${level}`,"Rear family room / study","lounge",level,0,34,W,D-34);
   }else if(recipe.coveredUpper&&D>=47&&W-stairW>=9&&D-39>=8&&W/(D-39)<=2.5){
    const passage=3.5;
    put(`utility-${level}`,"Wash / service","utility",level,stairW,26,W-stairW-passage,8);
@@ -194,7 +197,11 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   const frontRoom=b.bedrooms<b.floors&&level>=b.bedrooms?`family-room-${level}`:`bed-${level}a`;
   joins.push([`stairs-${level}`,`lounge-${level}`],[`stairs-${level}`,`bath-${level}`],[`lounge-${level}`,`utility-${level}`],[`lounge-${level}`,frontRoom]);
   if(rooms.some(r=>r.id===`balcony-${level}`))joins.push([`balcony-${level}`,frontRoom]);
-  if(rooms.some(r=>r.id===`rear-family-${level}`))joins.push([`lounge-${level}`,`rear-passage-${level}`],[`rear-passage-${level}`,`rear-family-${level}`]);
+  if(rooms.some(r=>r.id===`rear-family-${level}`)){
+   joins.push([`lounge-${level}`,`rear-passage-${level}`]);
+   if(rooms.some(r=>r.id===`rear-wash-${level}`))joins.push([`rear-passage-${level}`,`rear-wash-${level}`],[`rear-wash-${level}`,`rear-family-${level}`]);
+   else joins.push([`rear-passage-${level}`,`rear-family-${level}`]);
+  }
   if(rooms.some(r=>r.id===`rear-family-${level}`)&&rooms.some(r=>r.id===`terrace-${level}`))joins.push([`rear-family-${level}`,`terrace-${level}`]);
   else if(b.bedrooms<b.floors&&level>=b.bedrooms&&rooms.some(r=>r.id===`terrace-${level}`))joins.push([`utility-${level}`,`terrace-${level}`]);
   if(b.bedrooms>b.floors){joins.push([`lounge-${level}`,`bed-${level}b`]);if(rooms.some(r=>r.id===`balcony-${level}`))joins.push([`balcony-${level}`,`bed-${level}b`]);}
