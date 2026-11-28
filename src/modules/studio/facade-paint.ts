@@ -44,19 +44,24 @@ const compactFamilyZones=[
 ] as const;
 // The railing is a foreground occluder, not the whole lower wall. Protect
 // metal bars and posts individually while including visible plaster behind them.
-const railingHoles=(x:number,w:number)=>[...[[136,4],[149,3],[160,6],[173,3],[184,4]].map(([y,h])=>rect(x,y,w,h)),...[158,218,353,430,445,474,490,550,668,755,789,799,864,991].filter(v=>v>=x&&v<x+w).map(v=>rect(v,136,3,52))];
-// Dedicated 1200×400 paint geometry for the replacement comparison pair.
+// 1200×400 journey-v2 finished frame; independently trace paint, openings,
+// foreground planting, and balcony glazing. Coordinates match the exact manifest.
+const journeyRail=(x:number,w:number)=>[rect(x,153,w,5),...[561,625,798,866].filter(v=>v>=x&&v<x+w).map(v=>rect(v,153,3,36))];
+const upperPlant=[[542,189],[542,154],[548,141],[543,125],[554,120],[568,125],[569,111],[581,105],[590,111],[590,125],[610,115],[618,130],[604,143],[611,160],[599,169],[599,189]];
+const upperRightPlant=[[814,189],[814,157],[818,144],[811,131],[819,120],[831,124],[833,111],[844,106],[854,113],[851,127],[867,119],[872,135],[860,146],[864,158],[853,167],[854,189]];
+const lowerPlant=[[510,305],[510,289],[513,278],[524,267],[536,268],[540,260],[553,266],[558,278],[572,275],[576,288],[570,305]];
+const lowerRightPlant=[[803,305],[803,288],[810,280],[806,268],[815,259],[825,263],[836,253],[846,260],[854,274],[861,285],[852,305]];
 export const facadeZones=[
- zone("roof","Upper plaster band",[[83,22],[434,22],[434,12],[795,12],[795,23],[1111,23],[1111,45],[83,45]],[],undefined,1200,400),
- zone("left","Upper left wall",rect(160,56,273,132),[rect(223,79,133,109),...railingHoles(160,273)],undefined,1200,400),
- zone("right","Upper right wall",rect(799,56,277,132),[rect(864,79,130,109),...railingHoles(799,277)],undefined,1200,400),
- zone("upper-recess","Upper central wall",rect(479,59,277,129),[rect(551,98,125,90),rect(510,105,15,17),rect(698,105,15,17),...railingHoles(479,277)],undefined,1200,400),
- zone("balcony","Balcony slab",rect(64,193,1067,21),[],undefined,1200,400),
- zone("entry","Entrance wall",rect(480,223,276,69),[rect(550,248,127,44),rect(510,259,15,17),rect(698,259,15,17)],undefined,1200,400),
- zone("lower-recess","Ground right wall",rect(812,225,261,72),[rect(874,244,129,53)],undefined,1200,400),
- zone("garden-left","Ground left wall",rect(78,225,348,72),[rect(218,244,137,53)],undefined,1200,400),
- zone("boundary","Left boundary wall",rect(1,308,412,81),[],undefined,1200,400),
- zone("boundary-right","Right boundary wall",rect(806,308,393,81),[],undefined,1200,400)
+ zone("roof","Roof and upper plaster bands",[[276,14],[600,14],[600,49],[915,49],[915,72],[499,72],[499,29],[276,29]],[],undefined,1200,400),
+ zone("left","Terracotta feature wall",rect(344,30,155,195),[rect(330,65,134,26),rect(349,94,108,84)],undefined,1200,400),
+ zone("right","Upper right balcony return",rect(798,104,72,85),[upperRightPlant,...journeyRail(798,72)],undefined,1200,400),
+ zone("upper-recess","Upper central balcony wall",rect(503,104,295,85),[rect(606,120,26,69),rect(670,121,125,68),upperPlant,...journeyRail(503,295)],undefined,1200,400),
+ zone("balcony","Balcony plaster fascia",rect(481,189,485,27),[],undefined,1200,400),
+ zone("entry","Ground entrance plaster",rect(502,231,225,74),[rect(610,260,65,45),lowerPlant],undefined,1200,400),
+ zone("lower-recess","Right entrance return",rect(798,220,72,85),[rect(798,240,35,65),lowerRightPlant],undefined,1200,400),
+ zone("garden-left","Lower front wall",rect(344,225,155,101),[rect(330,225,135,20),rect(349,245,108,81)],undefined,1200,400),
+ zone("boundary","Left compound wall",[[149,290],[201,290],[201,303],[270,303],[270,326],[500,326],[500,371],[201,371],[201,387],[149,387]],[ [[201,371],[201,339],[214,326],[239,315],[252,308],[272,311],[286,324],[303,310],[321,312],[337,324],[352,321],[366,337],[393,344],[418,332],[441,345],[461,335],[489,346],[500,351],[500,371]] ],undefined,1200,400),
+ zone("boundary-right","Right compound wall and column",[[834,305],[979,305],[979,298],[1043,298],[1043,387],[979,387],[979,372],[834,372]],[ [[834,372],[834,352],[850,345],[865,333],[879,340],[893,332],[912,338],[930,334],[948,344],[968,340],[979,352],[979,372]] ],undefined,1200,400)
 ] as const;
 // Dedicated geometry for the 1408×1056 source, resized proportionally to 1200×900.
 const courtyardZones=[
@@ -73,7 +78,7 @@ const courtyardZones=[
  zone("garden-right","Upper parapet",rect(208,185,636,44),[],undefined,1408,1056)
 ] as const;
 export const facadeSamples=[
- {id:"family",label:"Modern family home",description:"Premium two-storey family residence",src:houseJourney.finished.src,zones:facadeZones},
+ {id:"family",label:"Modern family home",description:"New stone, terracotta and plaster elevation",src:houseJourney.finished.src,zones:facadeZones},
  {id:"contemporary",label:"Contemporary home",description:"Clean lines and contrasting cladding",src:"/images/studio/house-3.webp",zones:contemporaryZones},
  {id:"villa",label:"Premium villa",description:"Modern facade with terraces",src:"/images/studio/house-2.webp",zones:villaZones},
  {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 photorealistic concept",src:"/images/studio/family/neerva-100gaj-photorealistic.webp",zones:compactFamilyZones},
