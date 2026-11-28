@@ -55,6 +55,7 @@ export const patternKeys = Object.keys(finishes) as Pattern[];
 export const retiredPatterns=["travertine","mineral"] as const satisfies readonly Pattern[];
 export const patternGroups={
  Signature:["sunDisc","orbit","layeredArches","abstractLeaves","marble","eclipse"],
+ Murals:["flyingBirds","gardenTree","riverSunset","meadowBloom"],
  Nature:["floralScroll","bamboo","botanical","forest","mountain","waterflow"],
  Classic:["diamonds","inset","heritage","decoFan","artDecoSunburst"],
  Modern:["arch","split","asymmetric","mural","scallop","steppedColourBlock"],
