@@ -1294,6 +1294,15 @@ async function main(){
     {const cards=page.locator(".nroad-variants button");const count=await cards.count();assert.ok(count>=24&&count<=26,"24 baseline options plus up to two validated covered-upper alternatives");
     const ids=await cards.evaluateAll(nodes=>nodes.map(node=>node.getAttribute("data-plan-id")));assert.equal(new Set(ids).size,count,"No duplicated plan IDs");}
     assert.ok((await page.locator(".nroad-variants button").first().locator(".nroad-mini-plan").count())>=1,"every option has real floor previews");
+    const streetButton=page.getByRole("button",{name:"Open realistic street render",exact:true});
+    await streetButton.click();
+    const street=page.getByRole("region",{name:"Plan-matched realistic street preview"});
+    await street.waitFor({state:"visible"});
+    assert.equal(await street.getAttribute("data-plan-id"),await page.locator(".nroad-plan-summary").getAttribute("data-plan-id"));
+    await street.getByRole("button",{name:"Straight front",exact:true}).click();
+    assert.equal(await street.getByRole("button",{name:"Straight front",exact:true}).getAttribute("aria-pressed"),"true");
+    await street.getByRole("button",{name:"Evening",exact:true}).click();
+    assert.equal(await street.getByRole("button",{name:"Evening",exact:true}).getAttribute("aria-pressed"),"true");
     await page.getByRole("button",{name:/Parking right/}).first().click();
     assert.equal(await page.getByRole("button",{name:/Parking right/}).first().getAttribute("aria-pressed"),"true");
     const floorToggle=page.getByRole("button",{name:"First floor"});
