@@ -76,7 +76,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
 
  const [override,setOverride]=useState<{source:string;value:string}|null>(null);
  const base=override?.source===colour?override.value:colour;
- const canvas=useRef<HTMLCanvasElement>(null),image=useRef<HTMLCanvasElement|null>(null),url=useRef<string|null>(null),pending=useRef<HTMLImageElement|null>(null),generation=useRef(0);
+ const canvas=useRef<HTMLCanvasElement>(null),image=useRef<HTMLCanvasElement|null>(null),url=useRef<string|null>(null),pending=useRef<HTMLImageElement|null>(null),generation=useRef(0),uploadGeneration=useRef(0);
  const photoTimer=useRef<number|null>(null);
  const tintCache=useRef(new Map<string,HTMLCanvasElement>()),patternScratch=useRef<HTMLCanvasElement|null>(null);
  const sourceLuma=useRef<Uint8Array|null>(null),tintPixels=useRef<ImageData|null>(null);
@@ -151,6 +151,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   }
  },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas,wholeShade]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask)=>{
+  ++uploadGeneration.current;
   const ticket=++generation.current;
   if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}
   for(const surface of tintCache.current.values()){surface.width=0;surface.height=0;}tintCache.current.clear();sourceLuma.current=null;tintPixels.current=null;if(patternScratch.current){patternScratch.current.width=0;patternScratch.current.height=0;patternScratch.current=null;}
@@ -182,7 +183,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  },[setCloseUp,setPreset,setWalls,setEditing,setReady,setHistory,setShowOriginal,setMessage,setPatchMode,setExtraPaintAreas]);
  const openRoom=useCallback(()=>{setScene("room");setMode("paint");openPhoto("/images/studio/paint-room.webp",[{x:40/420,y:34/280},{x:373/420,y:37/280},{x:373/420,y:215/280},{x:40/420,y:215/280}],roomMask)},[openPhoto,setScene]);
  function openFacade(id:FacadeSampleId=sampleId){
-  if(scene==="facade"&&ready&&id===sampleId)return;
+  if(scene==="facade"&&ready&&id===sampleId){++uploadGeneration.current;return;}
   const next=facadeSamples.find(s=>s.id===id)??facadeSamples[0];
   setWholeShade(base);setScene("facade");setSampleId(next.id);setTarget("all");setFacadeStyles({});setMode("paint");openPhoto(next.src);
  }
@@ -205,21 +206,21 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  }
  function toggleOriginal(){setOriginalKey(styleKey);setShowOriginal(!originalVisible);}
 
- useEffect(()=>{const frame=requestAnimationFrame(openRoom),shades=tintCache.current;const invalidate=()=>{++generation.current;};return ()=>{invalidate();cancelAnimationFrame(frame);if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of shades.values()){surface.width=0;surface.height=0;}shades.clear();sourceLuma.current=null;tintPixels.current=null;if(patternScratch.current){patternScratch.current.width=0;patternScratch.current.height=0;patternScratch.current=null;}if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
+ useEffect(()=>{const frame=requestAnimationFrame(openRoom),shades=tintCache.current;const invalidate=()=>{++generation.current;++uploadGeneration.current;};return ()=>{invalidate();cancelAnimationFrame(frame);if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}if(url.current?.startsWith("blob:"))URL.revokeObjectURL(url.current);url.current=null;for(const surface of shades.values()){surface.width=0;surface.height=0;}shades.clear();sourceLuma.current=null;tintPixels.current=null;if(patternScratch.current){patternScratch.current.width=0;patternScratch.current.height=0;patternScratch.current=null;}if(image.current){image.current.width=0;image.current.height=0;image.current=null;}}},[openRoom]);
  async function load(e:ChangeEvent<HTMLInputElement>){
   const f=e.target.files?.[0];e.target.value="";if(!f)return;
   if(!["image/jpeg","image/png","image/webp"].includes(f.type)||f.size>10*1024*1024){
+    ++uploadGeneration.current;
     setMessage("Choose a JPG, PNG or WebP under 10 MB.");return;
   }
-  const ticket=++generation.current;
-  if(pending.current){pending.current.onload=null;pending.current.onerror=null;pending.current.src="";pending.current=null;}
-  if(url.current?.startsWith("blob:")){URL.revokeObjectURL(url.current);url.current=null;}
+  // Validate the new file without cancelling a working or in-flight preview.
+  const ticket=++uploadGeneration.current;
   try{
    const dimensions=encodedPhotoDimensions(new Uint8Array(await f.slice(0,1024*1024).arrayBuffer()));
-   if(ticket!==generation.current)return;
+   if(ticket!==uploadGeneration.current)return;
    if(!dimensions||!photoDimensionsAllowed(dimensions.width,dimensions.height)){setMessage("Choose a still photo up to 16 megapixels. Resize unsupported or larger files first.");return;}
    setScene("custom");openPhoto(URL.createObjectURL(f));
-  }catch{if(ticket===generation.current)setMessage("Could not read this photo. Try another image.");}
+  }catch{if(ticket===uploadGeneration.current)setMessage("Could not read this photo. Try another image.");}
  }
  function addPoint(e:ReactPointerEvent<HTMLCanvasElement>){
   if((scene==="facade"&&!patchMode)||!ready||points.length>=4)return;
