@@ -12,7 +12,7 @@ import {surfaceCanvas,StudioSurfaceSwatch} from "./studio-surface-swatch";
 import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide";
 import {artworkFrame} from "@/modules/studio/wall-design-layout";
 import {shadeArtworkPixels} from "@/modules/studio/artwork-lighting";
-import {textureFor} from "@/modules/studio/wall-textures";
+import {textureFor,appliedWallTextureKeys} from "@/modules/studio/wall-textures";
 import {fitFacadeArtwork,managedFacadeStyles,recommendedFacadeZone} from "@/modules/studio/facade-design-management";
 import {useWallTextures,colouredTexture,WallTextureSwatch,drawTextureQuad} from "./studio-wall-texture";
 import {colourPairings} from "@/modules/studio/colour-families";
@@ -108,9 +108,9 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   const [showOriginal,setShowOriginal]=useState(false),[message,setMessage]=useState("Choose a local photo, then mark four corners of one wall clockwise.");
  const points=history.points,valid=validWallMask(points);
  const effectivePattern=activePattern(mode,pattern);
- const textureKeys=mode==="design"?[...new Set<Pattern>([effectivePattern,...patternGroups[patternGroup],...walls.map(w=>w.pattern),...Object.values(facadeStyles).map(s=>s.pattern)])].filter(key=>textureFor(key)).sort().join(","):[...new Set<Pattern>([...walls.map(w=>w.pattern),...Object.values(facadeStyles).map(s=>s.pattern)])].filter(key=>textureFor(key)).sort().join(",");
+ const appliedTextures=appliedWallTextureKeys({scene,target,facadeStyles,walls,editing,valid,effectivePattern});
+ const textureKeys=[...new Set<Pattern>([...appliedTextures,...(mode==="design"?[effectivePattern,...patternGroups[patternGroup]]:[])])].filter(key=>textureFor(key)).sort().join(",");
  const textures=useWallTextures(textureKeys);
- const appliedTextures=[effectivePattern,...walls.map(w=>w.pattern),...Object.values(facadeStyles).map(s=>s.pattern)].filter(key=>textureFor(key));
  const awaitingArtwork=appliedTextures.some(key=>textures[key]===undefined);
  const textureStatus=mode==="design"&&textureFor(effectivePattern)?textures[effectivePattern]?"ready":textures[effectivePattern]===null?"fallback":"loading":"none";
  const currentStyle:PaintStyle={colour:base,accent,pattern:effectivePattern,opacity};
@@ -150,8 +150,11 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    // Only organic material masks need a full-photo accent tint. Vector and
    // raster artworks already carry their own pigments and source luminance.
    const accentTint=isSurfaceProfile(wall.pattern)?tint(wall.accent):undefined;patternScratch.current??=document.createElement("canvas");
-   const raw=textures[wall.pattern],texture=raw?colouredTexture(raw,wall.colour,wall.accent):undefined;
+   const raw=textures[wall.pattern],xs=wall.points.map(p=>p.x*w),ys=wall.points.map(p=>p.y*h);
+   const visibleSide=Math.min(960,Math.max(160,Math.ceil(Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys)))));
+   const texture=raw?colouredTexture(raw,wall.colour,wall.accent,visibleSide):undefined;
    drawWall(ctx!,wall,w,h,tinted,patternScratch.current,accentTint,sourceLuma.current,texture);
+   if(texture){texture.width=0;texture.height=0;}
   }
   if(!originalVisible){
    if(scene==="facade"){
