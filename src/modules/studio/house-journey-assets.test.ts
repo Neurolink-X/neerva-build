@@ -41,7 +41,7 @@ test("Next image optimizer admits exactly the reviewed cache-versioned journey U
   const url=new URL(houseJourneyImageUrl(a.src),"https://example.test");
   assert.ok(houseJourneyLocalPatterns.some(p=>p.pathname===url.pathname&&p.search===url.search));
  }
- assert.ok(houseJourneyLocalPatterns.every(p=>/^\\?v=[a-f0-9]{16}$/.test(p.search)&&!p.pathname.includes("*")));
+ assert.ok(houseJourneyLocalPatterns.every(p=>/^\?v=[a-f0-9]{16}$/.test(p.search)&&!p.pathname.includes("*")));
  const config=readFileSync(new URL("../../../next.config.ts",import.meta.url),"utf8");
  assert.match(config,/localPatterns:\s*\[\{pathname:"\/\*\*",search:""\},\s*\.\.\.houseJourneyLocalPatterns\]/);
 });
