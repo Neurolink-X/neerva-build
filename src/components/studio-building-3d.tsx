@@ -47,6 +47,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
  useEffect(()=>{colourRef.current=colour;if(wallMat.current){wallMat.current.color.set(colour);refresh.current?.()}},[colour]);
  useEffect(()=>{
   const target=host.current;if(!target||fallback)return;
+  delete target.dataset.gpuResources;
   let renderer:THREE.WebGLRenderer|undefined,controls:OrbitControls|undefined,observer:ResizeObserver|undefined,failedTimer=0;
   let scheduler:ReturnType<typeof browserFrameScheduler>|undefined;
   let environmentTarget:THREE.WebGLRenderTarget|undefined;
@@ -296,7 +297,14 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    }
    const radius=Math.max(...corners.map(p=>p.length()));
    const orbitFit=()=>{const halfY=THREE.MathUtils.degToRad(camera.fov/2),halfX=Math.atan(Math.tan(halfY)*camera.aspect);return radius/Math.sin(Math.min(halfX,halfY))*1.08;};
-   scheduler=browserFrameScheduler(()=>{if(!renderer||!controls||disposed)return;try{controls.update();renderer.render(scene,camera)}catch{if(!disposed)setFallback(true)}});
+   let resourceSampled=false;
+   scheduler=browserFrameScheduler(()=>{if(!renderer||!controls||disposed)return;try{
+    controls.update();const started=performance.now();renderer.render(scene,camera);
+    if(!resourceSampled){resourceSampled=true;
+     // Renderer allocation counts, not GPU byte measurements or field INP.
+     target.dataset.gpuResources=JSON.stringify({geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,canvasPixels:renderer.domElement.width*renderer.domElement.height,firstRenderCpuMs:Math.round((performance.now()-started)*100)/100});
+    }
+   }catch{if(!disposed)setFallback(true)}});
    const schedule=scheduler.schedule;document.addEventListener("visibilitychange",scheduler.visibility);
    refresh.current=schedule;controls.addEventListener("change",schedule);
    let lastWidth=0,lastHeight=0;
