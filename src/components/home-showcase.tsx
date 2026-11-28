@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import {useEffect, useRef, useState} from "react";
-import {houseJourney} from "@/modules/studio/house-journey";
+import {houseJourney,houseJourneyImageUrl} from "@/modules/studio/house-journey";
 import {heroGalleryPhotos} from "@/modules/home/assets";
 import {allowSpeculativeNetwork,type NetworkHint} from "@/modules/navigation/intent";
 
@@ -49,8 +49,8 @@ export function HomeShowcase({hindi}:{hindi:boolean}) {
     <figure ref={figure} className="home-stage-comparison" data-journey="premium" aria-label={hindi?"निर्माण सामग्री से तैयार घर तक":"From construction materials to finished home"}>
       <figcaption className="nbh-stage-heading"><strong>{hindi?"निर्माण सामग्री से तैयार घर तक":"From materials to a finished home"}</strong><small>{hindi?"घर का उदाहरण · खींचकर तुलना करें":"Illustrative home · Drag to compare"}</small></figcaption>
       <div className="nbh-compare-frame">
-      <Image src={houseJourney.finished.src} fill sizes="(max-width:760px) 95vw, 46vw" loading="lazy" fetchPriority="low" alt={hindi?"तैयार घर: पेंट, खिड़कियाँ, रेलिंग और फिनिश":"Finished family home with exterior paint, windows, railing and finishes"}/>
-      <Image src={houseJourney.shell.src} fill sizes="(max-width:760px) 95vw, 46vw" loading="lazy" fetchPriority="low" alt={hindi?"निर्माणाधीन घर: खुली ईंट की दीवारें, कंक्रीट बीम और स्लैब":"Illustrative matching home under construction, showing brick masonry, concrete beams, reinforcing steel, sand and cement bags"} className="nbh-construction-layer"/>
+      <Image src={houseJourneyImageUrl(houseJourney.finished.src)} fill sizes="(max-width:760px) 95vw, 46vw" loading="lazy" fetchPriority="low" alt={hindi?"तैयार घर: पेंट, खिड़कियाँ, रेलिंग और फिनिश":"Finished family home with exterior paint, windows, railing and finishes"}/>
+      <Image src={houseJourneyImageUrl(houseJourney.shell.src)} fill sizes="(max-width:760px) 95vw, 46vw" loading="lazy" fetchPriority="low" alt={hindi?"निर्माणाधीन घर: खुली ईंट की दीवारें, कंक्रीट बीम और स्लैब":"Illustrative matching home under construction, showing brick masonry, concrete beams, reinforcing steel, sand and cement bags"} className="nbh-construction-layer"/>
       <span aria-hidden="true"/>
       <input ref={slider} type="range" min={0} max={100} defaultValue={50} aria-label={hindi?"निर्माण के चरणों की तुलना":"Compare construction-stage views"} onInput={e=>revealStage(e.currentTarget.valueAsNumber)}/>
     </div>
