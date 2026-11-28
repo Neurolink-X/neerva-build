@@ -2,7 +2,7 @@ import type {Pattern,PatternGroup} from "./wall-patterns.ts";
 /** One recommendation per collection; no second catalogue or duplicated design IDs. */
 export const collectionGuide={
  Signature:{title:"Signature murals",description:"Large-scale focal compositions for a living room, bedroom or reception.",tip:"Leave breathing space around the artwork; avoid repeating it across every wall."},
- Murals:{title:"Nature murals",description:"Original birds, flowering branches, a river landscape and lotus pond.",tip:"Use a subtle accent on a broad wall. Transfer the design with a stencil or grid and test on a sample board."},
+ Murals:{title:"Nature murals",description:"Birds, flowering branches, river and lotus landscapes, dunes, ocean cliffs and skyline studies.",tip:"Use a subtle accent on a broad wall. Transfer the design with a stencil or grid and test on a sample board."},
  Nature:{title:"Nature-inspired",description:"Botanical stencils and gentle landscapes for calm rooms.",tip:"Muted greens, warm ivory and earthy tones work well; keep the other walls quiet."},
  Classic:{title:"Classic luxury",description:"Refined linework and architectural detail for dining and formal spaces.",tip:"Use a restrained accent colour and review the stencil scale on a sample board."},
  Modern:{title:"Modern decorative",description:"Curved accents, colour blocking and contemporary panel compositions.",tip:"Align the feature with furniture and door edges before marking the wall."},

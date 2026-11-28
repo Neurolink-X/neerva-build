@@ -13,6 +13,7 @@ import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide"
 import {exteriorCollections,exteriorGuide,exteriorGroupFor,isExteriorPattern} from "@/modules/studio/exterior-wall-art";
 import {artworkFrame} from "@/modules/studio/wall-design-layout";
 import {shadeArtworkPixels} from "@/modules/studio/artwork-lighting";
+import {detailedWallRecipe,wallFinishStrength} from "@/modules/studio/detailed-wall-recipes";
 import {textureFor,appliedWallTextureKeys} from "@/modules/studio/wall-textures";
 import {fitFacadeArtwork,managedFacadeStyles,recommendedFacadeZone} from "@/modules/studio/facade-design-management";
 import {useWallTextures,colouredTexture,WallTextureSwatch,drawTextureQuad} from "./studio-wall-texture";
@@ -74,7 +75,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
     // readback to the selected wall; leave transparent/protected pixels intact.
     const left=Math.max(0,Math.floor(Math.min(...corners.map(p=>p.x)))),top=Math.max(0,Math.floor(Math.min(...corners.map(p=>p.y))));
     const right=Math.min(w,Math.ceil(Math.max(...corners.map(p=>p.x)))),bottom=Math.min(h,Math.ceil(Math.max(...corners.map(p=>p.y))));
-    if(right>left&&bottom>top){const pixels=layer.getImageData(left,top,right-left,bottom-top);shadeArtworkPixels(pixels.data,sourceLuma,w,left,top,pixels.width);layer.putImageData(pixels,left,top);}
+    if(right>left&&bottom>top){const pixels=layer.getImageData(left,top,right-left,bottom-top);shadeArtworkPixels(pixels.data,sourceLuma,w,left,top,pixels.width,texture?0:wallFinishStrength(wall.pattern));layer.putImageData(pixels,left,top);}
    }
   }
   brush.restore();
@@ -117,6 +118,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  const shownPatterns:readonly Pattern[]=exterior?exteriorCollections[exteriorGroup]:[...patternGroups[activeGroup],...(isRetiredPattern(selectedPattern)&&activeGroup===groupForPattern(selectedPattern)?[selectedPattern]:[])];
  const guide=exterior?exteriorGuide[exteriorGroup]:collectionGuide[activeGroup];
  const effectivePattern=activePattern(mode,selectedPattern);
+ const designRecipe=detailedWallRecipe(selectedPattern);
  const appliedTextures=appliedWallTextureKeys({scene,target,facadeStyles,walls,editing,valid,effectivePattern});
  const textureKeys=[...new Set<Pattern>([...appliedTextures,...(mode==="design"?[effectivePattern,...shownPatterns]:[])])].filter(key=>textureFor(key)).sort().join(",");
  const textures=useWallTextures(textureKeys);
@@ -304,7 +306,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    {shownPatterns.map(key=><button type="button" key={key} aria-pressed={selectedPattern===key} onClick={()=>{setPattern(key);setShowOriginal(false)}}>
     {textures[key]?<WallTextureSwatch texture={textures[key]} base={base} accent={accent} intensity={opacity}/>:isSurfaceProfile(key)?<StudioSurfaceSwatch profile={key} base={base} accent={accent} intensity={opacity}/>:<WallArtworkSwatch pattern={key} base={base} accent={accent} intensity={opacity}/>}<span>{finishes[key].name}</span>
    </button>)}
-  </div><p className="paint-collection-tip">{guide.tip}</p><label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
+  </div>{designRecipe?<p className="paint-collection-tip"><strong>{designRecipe[1]}:</strong> {designRecipe[2]}</p>:<p className="paint-collection-tip">{guide.tip}</p>}<label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
   </>}
 </div></div>
   {ready&&scene==="facade"&&<div className="paint-actions paint-compact-actions" role="group" aria-label="Exterior editing options"><details className="paint-more"><summary>More exterior options</summary><button type="button" onClick={()=>{if(target!=="all")chooseTarget("all");setMode("paint");setCloseUp(false);setHistory(emptyMaskHistory());setShowOriginal(false);setPatchMode(v=>!v)}}>{patchMode?"Cancel wall correction":"Correct a missed wall area"}</button>{patchMode&&<><p role="status">Tap four corners of the exposed wall clockwise. Avoid windows, doors and plants.</p><button type="button" disabled={!valid||extraPaintAreas.length>=8} onClick={()=>{setExtraPaintAreas(a=>[...a,points]);setHistory(emptyMaskHistory());setPatchMode(false)}}>Apply wall correction</button><button type="button" onClick={()=>setHistory(undoCorner)}>Undo corner</button></>}{extraPaintAreas.length>0&&<button type="button" onClick={()=>setExtraPaintAreas(a=>a.slice(0,-1))}>Undo last wall correction</button>}<button type="button" onClick={()=>{setFacadeStyles({});setTarget("all");setMode("paint");setCloseUp(false);setShowOriginal(false);setPatchMode(false);setExtraPaintAreas([]);setHistory(emptyMaskHistory())}}>Reset exterior sections</button></details></div>}
