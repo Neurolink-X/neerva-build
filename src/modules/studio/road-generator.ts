@@ -1,12 +1,12 @@
 import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type RoomKind,
- type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
+ type Rect,sharedEdge,area,isOtsRoom,validatePlan} from "./plan-model.ts";
 import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
 import {buildingWallCells} from "./geometry.ts";
 import {frontagePanels,frontageSignature,frontageComposition} from "./frontage.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {residentialStairStudies} from "./stair-study.ts";
 import {architectureTopology,entranceArrangement} from "./architecture-profile.ts";
-import {ventilationVariant} from "./ventilation.ts";
+import {ventilationVariant,windowExposure} from "./ventilation.ts";
 import {otsVariant} from "./ots-ventilation.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
@@ -891,7 +891,44 @@ export function generateEnclosedUpperPortfolio(b:PlanBrief):PlanModel[]{
  }
  return uniquePlanGeometry(plans);
 }
+/** Generic programme upgrade for compact, standard, wide and irregular plans.
+ * Only convert an existing upper-floor open rectangle into accessible family
+ * space when the geometry and independent access pass. Keep ground courts,
+ * actual balconies, shafts, stairs and every bedroom unchanged. */
+export function usableUpperVariant(base:PlanModel,b:PlanBrief):PlanModel{
+ if(base.floors<2||base.rooms.some(isOtsRoom))return base;
+ let p:PlanModel={...base,rooms:base.rooms.map(r=>({...r})),openings:base.openings.map(o=>({...o}))};
+ let changed=false;
+ const terraces=base.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&Math.min(r.w,r.d)>=8&&area(r)>=95&&Math.max(r.w,r.d)/Math.min(r.w,r.d)<=2.5).sort((a,z)=>area(z)-area(a));
+ for(const open of terraces){
+  const access=p.rooms.filter(r=>r.floor===open.floor&&["stairs","corridor","lounge","living","dining"].includes(r.kind)&&(sharedEdge(r,open)?.length??0)>=3.15).sort((a,z)=>(sharedEdge(z,open)?.length??0)-(sharedEdge(a,open)?.length??0));
+  if(!access.length)continue;
+  // Do not close off any room whose screened external opening relies on this court.
+  if(p.openings.some(o=>o.kind==="window"&&p.rooms.some(r=>r.id===o.roomId&&r.floor<=open.floor&&sharedEdge(r,open)?.aSide===o.side)))continue;
+  for(const entry of access){
+   const rooms=p.rooms.map(r=>r.id===open.id?{...r,kind:"lounge" as const,label:"Enclosed family room / study"}:r),openings=p.openings.map(o=>({...o}));
+   try{
+    if(!openings.some(o=>o.roomId===entry.id&&o.connectsTo===open.id))connect(rooms,openings,entry.id,open.id);
+    const candidate={...p,rooms,openings};
+    if(validateRequestedProgramme(candidate,b).length)continue;
+    // Require a genuinely exposed new room, not a blind enclosed box.
+    const room=rooms.find(r=>r.id===open.id)!;
+    const air=ventilationVariant(candidate);
+    if(!air.openings.some(o=>o.roomId===room.id&&o.kind==="window"&&windowExposure(air,room,o)!=="review"))continue;
+    p={...candidate,openings:air.openings};changed=true;break;
+   }catch{/* Preserve original if the connection is not feasible. */}
+  }
+ }
+ return changed?{...p,id:base.id+"-usable-upper-v3",notes:[...base.notes,"Upper open areas converted only where independent access and screened room openings fit. Verify structure, FAR and legal light/ventilation."]}:base;
+}
+export function generateUsableUpperPortfolio(b:PlanBrief,base:readonly PlanModel[],limit=12):PlanModel[]{
+ if(b.floors<2||limit<=0)return [];
+ const candidates:PlanModel[]=[];
+ for(const p of base){const q=usableUpperVariant(p,b);if(q!==p)candidates.push(q);if(candidates.length>=limit*2)break;}
+ return uniquePlanGeometry(candidates).slice(0,limit);
+}
 export function portfolioForPlanId(b:PlanBrief,planId:string):PlanningResult{
+ if(planId.endsWith("-usable-upper-v3")){const id=planId.slice(0,-16),base=portfolioForPlanId(b,id);return {...base,plans:base.plans.filter(p=>p.id===id).map(p=>usableUpperVariant(p,b))};}
  if(/-upper-v2-(?:full|front-terrace|rear-service)-[01]$/.test(planId))return {plans:generateEnclosedUpperPortfolio(b),blockers:[]};
  if(planId.endsWith("-ots-v1")){const base=portfolioForPlanId(b,planId.slice(0,-7));return {...base,plans:base.plans.map(p=>p.id===planId.slice(0,-7)?otsVariant(p):p)};}
  if(planId.endsWith("-vent-v1")){const base=portfolioForPlanId(b,planId.slice(0,-8));return {...base,plans:base.plans.map(ventilationVariant)};}
