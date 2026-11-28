@@ -2,14 +2,15 @@ import {generateBuildingConcepts,buildingLayoutFamily,type BuildingBrief,type Bu
 import {commercialInternalSpaces} from "./commercial-internal.ts";
 import {rentalLayouts} from "./rental-layout.ts";
 import {commercialPortals} from "./commercial-detail.ts";
+import {commercialAirReport} from "./commercial-ventilation.ts";
 const round=(n:number)=>Math.round(n*1000)/1000;
 /** Compare actual displayed room and opening geometry, not family IDs, labels or colours.
  * A left/right reflection alone does not count as an additional interior option.
  * Keep persisted plan signatures unchanged for backward-compatible restoration. */
-export function visibleInteriorSignature(plan:BuildingConcept){
+export function visibleInteriorSignature(plan:BuildingConcept,portals=commercialPortals(plan)){
  const detailed=commercialInternalSpaces(plan),rooms=detailed.length?detailed:rentalLayouts(plan).flatMap(u=>u.rooms.map(r=>({...r,parentId:u.unitId})));
  const parents=new Set(rooms.map(r=>r.parentId)),spaces=[...plan.zones.filter(z=>!parents.has(z.id)),...rooms];
- const portals=commercialPortals(plan),width=plan.brief.widthFt;
+ const width=plan.brief.widthFt;
  const signature=(mirror:boolean)=>JSON.stringify([
   spaces.map(r=>JSON.stringify([r.floor,r.kind,round(mirror?width-r.x-r.w:r.x),round(r.y),round(r.w),round(r.d)])).sort(),
   portals.map(p=>JSON.stringify([p.floor,p.kind,p.axis,round(mirror?width-p.x-(p.axis==="x"?p.length:0):p.x),round(p.y),round(p.length)])).sort()
@@ -24,13 +25,17 @@ export function commercialTopology(p:BuildingConcept){
  const a=signature(false),b=signature(true);return a<b?a:b;
 }
 export const layoutFamilies=["internal","cross-gallery","purpose-led","classic","side-gallery"] as const;
-export type BuildingRecommendation={id:string;family:BuildingLayoutFamily;index:number;label:string;primaryAreaShare:number;accessAreaShare:number;coreSeparationFt:number;interiorRoomCount:number;detailed:boolean};
-function summarize(plan:BuildingConcept,index:number):BuildingRecommendation{
+export type BuildingRecommendation={id:string;family:BuildingLayoutFamily;index:number;label:string;primaryAreaShare:number;accessAreaShare:number;coreSeparationFt:number;interiorRoomCount:number;detailed:boolean;screenedSpaceShare:number;wetServiceReviewCount:number;coveredFootprintShare:number};
+function summarize(plan:BuildingConcept,index:number,portals:ReturnType<typeof commercialPortals>):BuildingRecommendation{
  const zones=plan.zones.filter(z=>z.floor===0&&!["open","parking"].includes(z.kind)),total=zones.reduce((s,z)=>s+z.w*z.d,0);
  const fraction=(kind:string)=>zones.filter(z=>z.kind===kind).reduce((s,z)=>s+z.w*z.d,0)/Math.max(1,total);
  const cores=zones.filter(z=>z.kind==="core"),[a,b]=cores;
  const rooms=commercialInternalSpaces(plan);
- return {interiorRoomCount:rooms.length,detailed:rooms.length>0,id:plan.id,family:buildingLayoutFamily(plan.id),index,label:plan.layout,primaryAreaShare:fraction("primary"),accessAreaShare:fraction("circulation"),coreSeparationFt:a&&b?Math.hypot(a.x+a.w/2-b.x-b.w/2,a.y+a.d/2-b.y-b.d/2):0};
+ const air=Array.from({length:plan.brief.floors},(_,floor)=>commercialAirReport(plan,portals,floor)).flat();
+ const wet=air.filter(r=>["bath","toilet","kitchen","service-a","service-b","service","support"].includes(r.kind));
+ const covered=plan.zones.filter(z=>!["parking","open"].includes(z.kind)).reduce((sum,z)=>sum+z.w*z.d,0);
+ const envelope=(plan.brief.widthFt-2*plan.brief.sideFt)*(plan.brief.depthFt-plan.brief.frontFt-plan.brief.rearFt)*plan.brief.floors;
+ return {screenedSpaceShare:air.filter(r=>r.exposed>0).length/Math.max(1,air.length),wetServiceReviewCount:wet.filter(r=>!r.exposed).length,coveredFootprintShare:covered/Math.max(1,envelope),interiorRoomCount:rooms.length,detailed:rooms.length>0,id:plan.id,family:buildingLayoutFamily(plan.id),index,label:plan.layout,primaryAreaShare:fraction("primary"),accessAreaShare:fraction("circulation"),coreSeparationFt:a&&b?Math.hypot(a.x+a.w/2-b.x-b.w/2,a.y+a.d/2-b.y-b.d/2):0};
 }
 /** On-demand comparison only. Return compact summaries, never 72 full models.
  * Primary-area share is an indicator, not compliance, occupancy or quality certification.
@@ -40,8 +45,8 @@ export function recommendBuildingConcepts(brief:BuildingBrief,limit=24){
  for(const family of layoutFamilies){
   const {plans}=generateBuildingConcepts(brief,24,family);counts[family]=plans.length;
   const group:BuildingRecommendation[]=[];
-  plans.forEach((p,i)=>{const key=visibleInteriorSignature(p);if(seen.has(key))return;seen.add(key);topologyById.set(p.id,commercialTopology(p));group.push(summarize(p,i));});
-  group.sort((a,b)=>Number(b.detailed)-Number(a.detailed)||b.interiorRoomCount-a.interiorRoomCount||b.primaryAreaShare-a.primaryAreaShare||b.coreSeparationFt-a.coreSeparationFt||a.index-b.index);groups.push(group);
+  plans.forEach((p,i)=>{const portals=commercialPortals(p);const key=visibleInteriorSignature(p,portals);if(seen.has(key))return;seen.add(key);topologyById.set(p.id,commercialTopology(p));group.push(summarize(p,i,portals));});
+  group.sort((a,b)=>Number(b.detailed)-Number(a.detailed)||b.screenedSpaceShare-a.screenedSpaceShare||a.wetServiceReviewCount-b.wetServiceReviewCount||b.interiorRoomCount-a.interiorRoomCount||b.primaryAreaShare-a.primaryAreaShare||b.coreSeparationFt-a.coreSeparationFt||a.index-b.index);groups.push(group);
  }
  const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,options:BuildingRecommendation[]=[];
  // Prioritize validated detailed interiors; use zoning only to fill genuine gaps.
