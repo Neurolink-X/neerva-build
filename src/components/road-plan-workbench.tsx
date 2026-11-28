@@ -46,18 +46,18 @@ const PlanMiniPreview=memo(function PlanMiniPreview({v,i}:{v:PlanModel;i:number}
 function RoofJaalPlan({plan}:{plan:PlanModel}){
  const {widthFt:w,depthFt:d,roadSide:side}=plan.plot,dim=siteDimensions(w,d,side);
  const rect=(r:{x:number;y:number;w:number;d:number})=>roadRect(r,w,d,side);
- const shaft=plan.rooms.find(r=>isOtsRoom(r)&&r.floor===plan.floors-1),level=otsGrilleLevel(plan);
+ const shaft=plan.rooms.find(r=>isOtsRoom(r)&&r.floor===plan.floors-1),level=otsGrilleLevel(plan),road=roadSegment(w,d,side);
  const boundary=siteOutline(w,d,plan.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,side));
  return <section className="nroad-diagram" aria-label="Roof and ventilation plan" data-plan-id={plan.id} data-roof-jaal={shaft?"modeled":"not-modeled"}>
- <h3>Roof / ventilation plan</h3><p>{shaft?("Open-to-sky shaft · "+shaft.w.toFixed(1)+" × "+shaft.d.toFixed(1)+" ft · grille at "+(level===plan.floors?"roof":"terrace")+" level"):"No aligned roof shaft is modeled. Select a feasible ventilation layout below."}</p>
+ <h3>Roof / ventilation plan</h3><p>{shaft?("Open-to-sky shaft · "+shaft.w.toFixed(1)+" × "+shaft.d.toFixed(1)+" ft · "+otsPositionOf(plan,shaft).replaceAll("-"," ")+" · grille at "+(level===plan.floors?"roof":"terrace")+" level"):"No aligned roof shaft is modeled. Select a feasible ventilation layout below."}</p>
  <svg role="img" aria-label="Roof slabs, terraces and roof jaal" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} style={{width:"100%",maxHeight:460}}>
- <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#faf7ed" stroke="#536859" strokeWidth=".2"/>
+ <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#faf7ed" stroke="#536859" strokeWidth=".2"/><line x1={road.start.x} x2={road.end.x} y1={road.start.y} y2={road.end.y} stroke="#be6740" strokeWidth=".55"><title>Road-facing edge</title></line>
  {exposedRoofPatches(plan).map((p,i)=>{const r=rect(p);return <rect key={i} x={r.x} y={r.y} width={r.w} height={r.d} fill="#ded9cd" stroke="#8b877b" strokeWidth=".12"><title>{`Roof slab level ${p.floor}`}</title></rect>})}
  {plan.rooms.filter(r=>r.floor===plan.floors-1&&!["terrace","balcony","parking","verandah"].includes(r.kind)).map(p=>{const r=rect(p);return <rect key={p.id} x={r.x} y={r.y} width={r.w} height={r.d} fill="#ded9cd" stroke="#8b877b" strokeWidth=".12"/>})}
  {plan.rooms.filter(r=>r.floor===plan.floors-1&&(r.kind==="terrace"||r.kind==="balcony")&&!isOtsRoom(r)).map(p=>{const r=rect(p);return <rect key={p.id} x={r.x} y={r.y} width={r.w} height={r.d} fill="#f3e9cf" stroke="#8b877b" strokeWidth=".12"><title>{p.label}</title></rect>})}
  {shaft&&(()=>{const r=rect(shaft);return <rect x={r.x} y={r.y} width={r.w} height={r.d} fill="#b2e1d6" stroke="#08766c" strokeWidth=".24"/>})()}
  {otsGrilleBars(plan).map((p,i)=>{const r=rect(p);return <rect key={i} x={r.x} y={r.y} width={r.w} height={r.d} fill="#126d5b"/>})}
- </svg><p className="nroad-small">Grey: slab · cream: open terrace / balcony · green grid: actual modeled shaft. Concept only; engineered grille and drainage require professional review.</p>
+ </svg><p className="nroad-small">Grey: slab · cream: open terrace / balcony · green grid: actual modeled shaft · orange: road-facing edge. Concept only; engineered grille and drainage require professional review.</p>
  </section>;
 }
 function terraceShare(p:PlanModel){let highest=0;for(let floor=1;floor<p.floors;floor++){const rooms=p.rooms.filter(r=>r.floor===floor&&!isOtsRoom(r)),total=rooms.reduce((n,r)=>n+r.w*r.d,0);if(total)highest=Math.max(highest,rooms.filter(r=>r.kind==="terrace").reduce((n,r)=>n+r.w*r.d,0)/total);}return highest;}
@@ -75,8 +75,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
   const base=generateSpatialPortfolio(brief,24);
   const seen=new Set(base.plans.map(physicalPlanSignature));
   const specific=[...generateCoveredUpperPortfolio(brief),...generateEnclosedUpperPortfolio(brief)];
-  const generic=generateUsableUpperPortfolio(brief,base.plans,14);
-  const extra=[...specific,...generic].sort((a,b)=>terraceShare(a)-terraceShare(b)).filter(p=>{const signature=physicalPlanSignature(p);if(seen.has(signature))return false;seen.add(signature);return true;}).slice(0,14);
+  const generic=generateUsableUpperPortfolio(brief,base.plans,Math.max(0,14-specific.length));
+  const extra=[...specific,...generic].filter(p=>{const signature=physicalPlanSignature(p);if(seen.has(signature))return false;seen.add(signature);return true;}).slice(0,14);
   return {...base,plans:[...base.plans,...extra]};
  },[brief,stairReady]);
 
@@ -132,7 +132,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
   airLock.current=true;setAirBusy(true);setAirFeedback(null);const scope=airScope;
   try{
    const ranked:{i:number;shaft:boolean;score:number}[]=[];
-   for(const {p,i} of filtered){
+   const searchable=requireShaft&&terracePreference==="recommended"?matching:filtered;
+   for(const {p,i} of searchable){
     // Yield between bounded geometry searches so input and scrolling stay responsive.
     await new Promise<void>(resolve=>window.setTimeout(resolve,0));
     if(airScopeRef.current!==scope)return;
@@ -140,10 +141,10 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
     if(!requireShaft||shaft)ranked.push({i,shaft,score:ventilationReport(candidate).score});
    }
    if(airScopeRef.current!==scope)return;
-   ranked.sort((a,b)=>Number(b.shaft)-Number(a.shaft)||b.score-a.score||terraceShare(result.plans[a.i])-terraceShare(result.plans[b.i])||a.i-b.i);
+   ranked.sort((a,b)=>Number(b.shaft)-Number(a.shaft)||Number(terraceShare(result.plans[a.i])>.2)-Number(terraceShare(result.plans[b.i])>.2)||b.score-a.score||terraceShare(result.plans[a.i])-terraceShare(result.plans[b.i])||a.i-b.i);
    if(!ranked.length){setAirFeedback({scope,message:requireShaft?"No feasible aligned roof-jaal reserve in the displayed layouts. Change filters, plot clearance or room requirements.":"No layout available to compare."});return;}
-   const next=ranked[0];setEnhanceVentilation(true);if(requireShaft)setIncludeOts(true);setChosen(next.i);setKit(null);setSaveInfo("");
-   setAirFeedback({scope:JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,terracePreference,requireShaft||includeOts,true,next.i,shaftPosition]),message:"Selected layout "+(next.i+1)+" with screened ventilation"+(next.shaft?" and modeled roof-jaal reserve.":"; shaft is not modeled.")});
+   const next=ranked[0],nextTerrace=filtered.some(({i})=>i===next.i)?terracePreference:"all";setTerracePreference(nextTerrace);setEnhanceVentilation(true);if(requireShaft)setIncludeOts(true);setChosen(next.i);setKit(null);setSaveInfo("");
+   setAirFeedback({scope:JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,nextTerrace,requireShaft||includeOts,true,next.i,shaftPosition]),message:"Selected layout "+(next.i+1)+" with screened ventilation"+(next.shaft?" and modeled roof-jaal reserve.":"; shaft is not modeled.")});
   }finally{airLock.current=false;setAirBusy(false);}
  }
 
