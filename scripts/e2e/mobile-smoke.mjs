@@ -1193,6 +1193,16 @@ async function main(){
     const dark=await samplePixel();
     await page.getByRole("button",{name:"Select #edf2db",exact:true}).click();
     await page.waitForFunction(d=>{const c=document.querySelector(".nbd-photo canvas");return c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.32),1,1).data[1]>d[1]+70},dark);
+    // The default corner sample opens in all-walls mode. Check the contextual
+    // design action selects the first wall, then test the retained manual tools
+    // on the original feature-room sample instead of expecting them on corner.
+    await page.getByRole("button",{name:"Design one wall",exact:true}).click();
+    assert.equal(await page.getByRole("button",{name:"Sofa wall",exact:true}).getAttribute("aria-pressed"),"true");
+    assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).getAttribute("aria-pressed"),"true");
+    assert.equal(await page.getByRole("button",{name:"Wall Detail",exact:true}).isEnabled(),true);
+    assert.equal(await page.locator(".paint-wall-actions").count(),0,"pre-marked corner hides manual selection tools");
+    await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("feature");
+    await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="feature");
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const actionSizes=await page.locator(".paint-wall-actions button,.paint-preview-actions button").evaluateAll(bs=>bs.filter(b=>b.getClientRects().length>0).map(b=>({w:b.getBoundingClientRect().width,h:b.getBoundingClientRect().height})));
     assert.ok(actionSizes.length>=3&&actionSizes.every(b=>b.w>=100&&b.h>=44&&b.h<=88),"wall actions stay compact and readable");
