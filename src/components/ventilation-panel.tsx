@@ -1,11 +1,10 @@
 "use client";
-import {useMemo,useState,useEffect} from "react";
+import {useMemo,useState} from "react";
 import {ventilationReport} from "@/modules/studio/ventilation";
 import {isOtsRoom,type PlanModel} from "@/modules/studio/plan-model";
 export function VentilationPanel({plan,floor,enhanced,ots,onOts,onEnhance,onBest,changed}:{plan:PlanModel;floor:number;enhanced:boolean;ots:boolean;onOts:(v:boolean)=>void;onEnhance:(v:boolean)=>void;onBest:()=>void;changed:boolean}){
  const report=useMemo(()=>ventilationReport(plan),[plan]),rows=report.rows.filter(r=>r.floor===floor),shaft=plan.rooms.find(r=>r.floor===floor&&isOtsRoom(r));
- const [open,setOpen]=useState(ots||enhanced);
- useEffect(()=>{if(ots||enhanced)setOpen(true)},[ots,enhanced]);
+ const [open,setOpen]=useState(true);
  return <details className="nroad-small" open={open} onToggle={e=>setOpen(e.currentTarget.open)}><summary><strong>Ventilation &amp; daylight</strong> · {report.exposed}/{report.total} rooms with screened exposure</summary>
  <p>Green openings in the ventilation drawing have a modeled road or open-space exposure. Amber windows need site review. Opposite openings indicate potential cross-ventilation, not measured air changes.</p>
  <div className="nroad-layout-filters"><label className="nroad-representative-toggle"><input type="checkbox" checked={enhanced} onChange={e=>onEnhance(e.target.checked)}/> Add feasible ventilation windows to this concept</label><label className="nroad-representative-toggle"><input type="checkbox" checked={ots} onChange={e=>onOts(e.target.checked)}/> Open-to-sky ventilation / roof jaal</label><button type="button" className="nroad-recovery-action" onClick={onBest}>Choose better-exposed layout</button></div>
