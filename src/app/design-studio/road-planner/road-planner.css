@@ -174,3 +174,5 @@
  .nroad .nbd-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}
  .nroad .nroad-exterior-workspace>label select{min-width:0;flex-basis:100%}
 }
+
+.nroad-street-render{min-width:0;max-width:100%;display:grid;gap:8px}.nroad-street-render .nbd-buttons{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr));gap:8px}.nroad-street-render canvas{height:auto;max-width:100%;object-fit:contain}.nroad-street-render .nbd-disclaimer{font-size:12px;line-height:1.5}
