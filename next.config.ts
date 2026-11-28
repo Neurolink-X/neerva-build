@@ -1,12 +1,15 @@
 import type { NextConfig } from "next";
 import {canonicalRedirects} from "./src/modules/seo/site-origin";
 import {publicIndexingEnabled} from "./src/modules/seo/indexing";
+import {houseJourneyLocalPatterns} from "./src/modules/studio/house-journey";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   images: {
     formats: ["image/avif", "image/webp"],
+    // Preserve query-free local images; allow only exact reviewed digest queries.
+    localPatterns: [{pathname:"/**",search:""}, ...houseJourneyLocalPatterns],
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/photo-**" },
       { protocol: "https", hostname: "images.pexels.com", pathname: "/photos/**" },

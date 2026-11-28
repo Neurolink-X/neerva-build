@@ -81,7 +81,10 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
   if(zs.filter(z=>z.kind==="primary").length!==b.unitsPerFloor||zs.filter(z=>z.kind==="core").length!==2||zs.filter(z=>z.kind==="toilet").length!==2||!hall)e.push("Incomplete floor programme: "+f);
   if(hall)for(const z of zs.filter(z=>!["open","parking","circulation"].includes(z.kind))){
    const edge=Math.min(z.y+z.d,hall.y+hall.d)-Math.max(z.y,hall.y);
-   if(edge<3-EPS||!(Math.abs(z.x+z.w-hall.x)<EPS||Math.abs(z.x-hall.x-hall.w)<EPS))e.push("No circulation adjacency: "+z.id);
+   const crossEdge=Math.min(z.x+z.w,hall.x+hall.w)-Math.max(z.x,hall.x);
+   const sharesVertical=edge>=4-EPS&&(Math.abs(z.x+z.w-hall.x)<EPS||Math.abs(z.x-hall.x-hall.w)<EPS);
+   const sharesHorizontal=crossEdge>=4-EPS&&(Math.abs(z.y+z.d-hall.y)<EPS||Math.abs(z.y-hall.y-hall.d)<EPS);
+   if(!(sharesVertical||sharesHorizontal))e.push("No circulation adjacency: "+z.id);
   }
  }
  if(c.zones.filter(z=>z.kind==="parking").length!==b.parkingBays)e.push("Parking reservation count mismatch");
@@ -93,18 +96,19 @@ function buildingSignature(b:BuildingBrief,zones:BuildingZone[]){
  const geometry=zones.map(z=>[z.floor,z.kind,fmt(z.x),fmt(z.y),fmt(z.w),fmt(z.d)]).sort();
  return b.siteContext?JSON.stringify([geometry,b.siteContext.offsetXFt,b.siteContext.points.map(p=>[p.x,p.y])]):JSON.stringify(geometry);
 }
-export type BuildingLayoutFamily="classic"|"purpose-led"|"side-gallery"|"internal";
-export const buildingLayoutFamily=(id:string):BuildingLayoutFamily=>/-internal-v1-[0123]$/.test(id)?"internal":id.endsWith("-gallery-v1")?"side-gallery":id.endsWith("-purpose-v2")?"purpose-led":"classic";
+export type BuildingLayoutFamily="classic"|"purpose-led"|"side-gallery"|"internal"|"cross-gallery";
+export const buildingLayoutFamily=(id:string):BuildingLayoutFamily=>/-internal-v1-[0123]$/.test(id)?"internal":id.endsWith("-cross-v1")?"cross-gallery":id.endsWith("-gallery-v1")?"side-gallery":id.endsWith("-purpose-v2")?"purpose-led":"classic";
 export function generateBuildingConcepts(b:BuildingBrief,limit=24,family:BuildingLayoutFamily="classic"):{plans:BuildingConcept[];blockers:string[]}{
  const blockers=validateBuildingBrief(b);if(blockers.length)return {plans:[],blockers};
  const p=purpose[b.purpose],W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
  if(family==="internal")return internalConcepts(b,limit);
  if(family==="side-gallery")return sideGalleryConcepts(b,limit);
+ if(family==="cross-gallery")return crossGalleryConcepts(b,limit);
  const out:BuildingConcept[]=[],seen=new Set<string>(),max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24;
  // Different circulation widths, asymmetric wings, unit allocation and service
  // locations. A fixed order makes the first preview independent of requested limit.
  for(let step=0;step<144&&out.length<max;step++){
-  const recipe=step*37%144,coreFront=recipe%2===0,swapServices=Math.floor(recipe/2)%2===1;
+  const recipe=(step*37+(family==="purpose-led"&&b.purpose==="shops"?36:0))%144,coreFront=recipe%2===0,swapServices=Math.floor(recipe/2)%2===1;
   const corridor=(family==="purpose-led"&&b.purpose==="mall"?[12,14,16]:family==="purpose-led"&&b.purpose==="school"?[10,12,14]:[8,10,12])[Math.floor(recipe/4)%3];
   const ratio=[.5,.42,.58][Math.floor(recipe/12)%3];
   const leftUnits=Math.max(0,Math.min(b.unitsPerFloor,Math.floor(b.unitsPerFloor/2)+[-1,0,1,2][Math.floor(recipe/36)%4]));
@@ -187,6 +191,51 @@ function sideGalleryConcepts(b:BuildingBrief,limit:number):{plans:BuildingConcep
   seen.add(signature);plans.push(c);
  }
  return {plans,blockers:plans.length?[]:["A single-loaded gallery needs additional depth for the full programme and both core reserves. Select a different family or review the exact plot dimensions."]};
+}
+
+
+/** A transverse double-loaded gallery provides a genuinely different topology.
+ * Side approaches are retained, not counted as covered area. No rental, lift or
+ * engineered escape claim is made: the vertical core remains a reservation. */
+function crossGalleryConcepts(b:BuildingBrief,limit:number):{plans:BuildingConcept[];blockers:string[]}{
+ if(b.purpose==="rental"||b.sideFt<5)return {plans:[],blockers:["Transverse gallery requires a non-rental brief with at least 5 ft open side approach on both sides."]};
+ const p=purpose[b.purpose],W=b.widthFt-2*b.sideFt,D=b.depthFt-b.frontFt-b.rearFt;
+ const plans:BuildingConcept[]=[],seen=new Set<string>(),max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24;
+ type Segment={kind:ZoneKind;label:string;min:number;weight:number};
+ for(let recipe=0;recipe<96&&plans.length<max;recipe++){
+  const hallWidth=[10,12,14][recipe%3],ratio=[.5,.42,.58][Math.floor(recipe/3)%3],frontD=(D-hallWidth)*ratio,rearD=D-hallWidth-frontD;
+  if(Math.min(frontD,rearD)<Math.max(12,p.minD))continue;
+  const variant=Math.floor(recipe/9)%4;
+  const frontCount=variant===0?b.unitsPerFloor:variant===1?Math.ceil(b.unitsPerFloor/2):variant===2?Math.max(1,b.unitsPerFloor-1):Math.min(b.unitsPerFloor,Math.ceil(b.unitsPerFloor*.67));
+  const groups:Segment[][]=[[],[]];
+  for(let i=0;i<b.unitsPerFloor;i++){const bank=i<frontCount?0:1;groups[bank].push({kind:"primary",label:p.unit+" "+(i+1),min:Math.max(p.minW,p.minArea/(bank===0?frontD:rearD)),weight:i===0&&variant===3?1.7:1});}
+  const core=(i:number):Segment=>({kind:"core",label:"Vertical access / exit core reserve "+i,min:b.floors>1?18:10,weight:.3});
+  const wc=(i:number):Segment=>({kind:"toilet",label:"Toilet / accessible WC reserve "+i,min:8,weight:.25});
+  const support=(i:number):Segment=>({kind:"support",label:p.support[i],min:10,weight:.45});
+  // The front row stays primarily street-facing; two rear service cores or
+  // split cores create a different programme without changing the exact brief.
+  if(frontCount===b.unitsPerFloor)groups[1]=[core(1),wc(1),support(0),support(1),wc(2),core(2)];
+  else {groups[0]=[core(1),...groups[0],wc(1)];groups[1]=[wc(2),support(0),...groups[1],support(1),core(2)];}
+  if(Math.floor(recipe/36)%2)groups[1].reverse();
+  if(Math.floor(recipe/72)%2)groups[0].reverse();
+  if(groups.some(g=>!g.length||g.reduce((s,r)=>s+r.min,0)>W+EPS))continue;
+  const zones:BuildingZone[]=[],add=(floor:number,kind:ZoneKind,label:string,x:number,y:number,w:number,d:number)=>zones.push({id:floor+"-"+zones.length,floor,kind,label,x,y,w,d});
+  for(let floor=0;floor<b.floors;floor++){
+   add(floor,"circulation","Transverse access gallery",b.sideFt,b.frontFt+frontD,W,hallWidth);
+   for(const [bank,g] of groups.entries()){
+    const slack=W-g.reduce((s,r)=>s+r.min,0),total=g.reduce((s,r)=>s+r.weight,0);let x=b.sideFt;
+    for(const r of g){const w=r.min+slack*r.weight/total;add(floor,r.kind,r.label,x,bank===0?b.frontFt:b.frontFt+frontD+hallWidth,w,bank===0?frontD:rearD);x+=w;}
+   }
+  }
+  for(let i=0;i<b.parkingBays;i++)add(0,"parking","Reserved bay "+(i+1),b.sideFt+i*9,0,9,18);
+  if(b.rearFt>0)add(0,"open",b.purpose==="school"?"Open play / assembly reserve":"Rear open / service reserve",b.sideFt,b.depthFt-b.rearFt,W,b.rearFt);
+  const signature=buildingSignature(b,zones);
+  if(seen.has(signature))continue;
+  const c:BuildingConcept={id:[b.purpose,b.widthFt,b.depthFt,b.roadSide,b.floors,b.unitsPerFloor,b.parkingBays,b.frontFt,b.rearFt,b.sideFt,0,recipe].join("-")+siteIdentity(b)+"-cross-v1",brief:b,zones,signature,layout:(frontCount===b.unitsPerFloor?"Street-facing row / rear services":variant===3?"Anchor-led cross gallery":"Split programme / cross gallery")+" · "+hallWidth+" ft access · "+Math.round(frontD)+" ft front depth",conceptOnly:true};
+  if(validateBuildingConcept(c).length)continue;
+  seen.add(signature);plans.push(c);
+ }
+ return {plans,blockers:plans.length?[]:["No transverse gallery fits the requested width, programme and side approaches. Select another layout family without changing the brief."]};
 }
 
 /** Versioned internal programme: keep the exact brief and select only
