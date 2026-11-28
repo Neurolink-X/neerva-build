@@ -54,3 +54,5 @@ test("scenario reports are reproducible and comparisons stay within matching cal
  assert.equal(quickEstimate("tank",[1e9,1e9,1e9]),null);
  assert.equal(quickEstimate("tiles",[100,1e-12,600,10]),null);
 });
+
+test("whole operating days and explicit quantity allowance breakdowns",()=>{assert.equal(quickEstimate("energy",[100,8,1.5,8]),null);assert.equal(quickEstimate("energy-use",[100,8,1.5]),null);assert.equal(quickEstimate("energy-use",[100,8,0]),0);const paint=calculatorBreakdown("paint",[100,2,10,5],quickEstimate("paint",[100,2,10,5])!);close(paint[0].value+paint[1].value,1.95096384);const tile=calculatorBreakdown("tiles",[100,600,600,10],29);assert.ok(tile[2].value>=tile[1].value);});
