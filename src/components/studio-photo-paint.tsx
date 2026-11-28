@@ -30,7 +30,7 @@ import dynamic from "next/dynamic";
 import {cornerRoomAsset,cornerRoomInitialWalls,cornerRoomWalls} from "@/modules/studio/corner-room";
 import {facadeSamples,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const StudioPremiumTools=dynamic(()=>import("./studio-premium-tools").then(m=>m.StudioPremiumTools),{loading:()=> <p role="status">Loading report options…</p>});
-const roomPhotos={corner:cornerRoomAsset.src,feature:"/images/studio/paint-room.webp",daylight:"/images/studio/clean-daylight-wall.svg"} as const;
+const roomPhotos={corner:cornerRoomAsset.src,feature:"/images/studio/paint-room.webp",daylight:cornerRoomAsset.src} as const;
 type RoomPhoto=keyof typeof roomPhotos;
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
 type Wall=InteriorWall;
@@ -241,7 +241,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
    }ctx.restore();
   }
  },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas,wholeShade,activeTextures,allInterior,interiorWholeShade,interiorDetail,exterior]);
- const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask,preMarked?:Wall[])=>{
+ const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask,preMarked?:Wall[],crop?:{x:number;y:number;w:number;h:number})=>{
   ++uploadGeneration.current;setUploadError("");
   const ticket=++generation.current;
   if(photoTimer.current!==null){window.clearTimeout(photoTimer.current);photoTimer.current=null;}
@@ -260,10 +260,11 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
    const el=canvas.current;if(!el){release();setMessage("Preview not ready. Please retry the sample.");return;}
    if(!photoDimensionsAllowed(img.naturalWidth,img.naturalHeight)){release();setMessage("Photo dimensions are too large. Resize the image before trying again.");return;}
    const nav=navigator as Navigator&{deviceMemory?:number;connection?:{saveData?:boolean}};
-   const size=paintPreviewDimensions(img.naturalWidth,img.naturalHeight,{memory:nav.deviceMemory,cores:nav.hardwareConcurrency,saveData:nav.connection?.saveData});
+   const sw=Math.max(1,Math.round(img.naturalWidth*(crop?.w??1))),sh=Math.max(1,Math.round(img.naturalHeight*(crop?.h??1)));
+   const size=paintPreviewDimensions(sw,sh,{memory:nav.deviceMemory,cores:nav.hardwareConcurrency,saveData:nav.connection?.saveData});
    const source=document.createElement("canvas");source.width=size.width;source.height=size.height;
    const context=source.getContext("2d");if(!context){release();setMessage("Photo preview unavailable on this device.");return;}
-   try{context.drawImage(img,0,0,source.width,source.height);}catch{release();setMessage("Could not prepare this photo. Try a smaller image.");return;}
+   try{if(crop)context.drawImage(img,img.naturalWidth*crop.x,img.naturalHeight*crop.y,img.naturalWidth*crop.w,img.naturalHeight*crop.h,0,0,source.width,source.height);else context.drawImage(img,0,0,source.width,source.height);}catch{release();setMessage("Could not prepare this photo. Try a smaller image.");return;}
    el.width=source.width;el.height=source.height;image.current=source;release();setReady(true);
    if(preMarked?.length){setWalls(preMarked);setAllInterior(true);setInteriorWholeShade(preMarked[0].colour);setHistory(emptyMaskHistory());setMessage("Both walls are ready. Change all colours or tap one wall for a design.");return;}
    if(corners){setHistory({points:corners,redo:[]});setMessage("Wall selected. Try a colour or pattern below.");return}
@@ -275,7 +276,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   img.src=next;
  },[setCloseUp,setPreset,setWalls,setEditing,setReady,setHistory,setShowOriginal,setMessage,setPatchMode,setExtraPaintAreas]);
  const openRoom=useCallback((photo:RoomPhoto="corner")=>{setScene("room");setRoomPhoto(photo);setMode("paint");setPattern("sunDisc");setPatternGroup("Signature");
- if(photo==="corner"){openPhoto(roomPhotos.corner,undefined,undefined,cornerRoomInitialWalls(latestBase.current));}else if(photo==="feature"){openPhoto(roomPhotos.feature,[{x:40/420,y:34/280},{x:373/420,y:37/280},{x:373/420,y:215/280},{x:40/420,y:215/280}],roomMask);}else{const points=[{x:.045,y:.12},{x:.95,y:.12},{x:.95,y:.79},{x:.045,y:.79}];openPhoto(roomPhotos.daylight,points,{outline:points.map(p=>[p.x,p.y])});}
+ if(photo==="corner"){openPhoto(roomPhotos.corner,undefined,undefined,cornerRoomInitialWalls(latestBase.current));}else if(photo==="feature"){openPhoto(roomPhotos.feature,[{x:40/420,y:34/280},{x:373/420,y:37/280},{x:373/420,y:215/280},{x:40/420,y:215/280}],roomMask);}else{const crop={x:.60,y:0,w:.40,h:1};const points=cornerRoomWalls[1].points.map(p=>({x:(p.x-crop.x)/crop.w,y:(p.y-crop.y)/crop.h}));openPhoto(roomPhotos.daylight,points,{outline:points.map(p=>[p.x,p.y])},undefined,crop);}
  },[openPhoto,setScene]);
  function openFacade(id:FacadeSampleId=sampleId){
   if(scene==="facade"&&ready&&id===sampleId){++uploadGeneration.current;setUploadError("");return;}
@@ -377,7 +378,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  return <section className="nbd-photo" aria-label="Private wall colour preview">
   <div className="paint-source"><button type="button" aria-pressed={scene==="room"} onClick={()=>{if(scene!=="room"||!ready)openRoom()}}>Sample room</button><button type="button" aria-pressed={scene==="facade"} onClick={()=>openFacade()}>Sample house exterior</button><label>Use my home photo<input type="file" accept="image/png,image/jpeg,image/webp" onChange={load}/></label></div>
   {scene==="room"&&<label className="paint-room-choice">Room sample <select aria-label="Room sample" value={roomPhoto} onChange={e=>openRoom(e.target.value as RoomPhoto)}><option value="corner">Corner living room · two ready walls</option><option value="feature">Feature wall · ready to paint</option><option value="daylight">Daylight room · ready to paint</option></select></label>}
-  {scene==="room"&&roomPhoto==="daylight"&&<p className="paint-reference-note">Clean, unobstructed wall study with a ready paint area. Choose any shade or artwork immediately. Use Mark wall manually for a custom area, or upload your own photo.</p>}
+  {scene==="room"&&roomPhoto==="daylight"&&<p className="paint-reference-note">Daylight photo detail with an unobstructed side wall and a ready paint area. Choose any shade or artwork immediately. Use Mark wall manually for a custom area, or upload your own photo.</p>}
   {scene==="room"&&roomPhoto==="daylight"&&ready&&<button type="button" onClick={()=>{setWalls([]);setPreset(null);setEditing(null);setAllInterior(false);setPickDesignWall(false);setMode("paint");setHistory(emptyMaskHistory());setCloseUp(false);setShowOriginal(false);setMessage("Tap four wall corners clockwise, avoiding doors, windows and furniture.");}}>Mark wall manually</button>}
   {uploadError&&<p role="alert" className="paint-preview-status">{uploadError}</p>}
   {scene==="facade"&&<div className="paint-sample-gallery" data-journey="premium" role="group" aria-label="Choose sample house">{[...facadeSamples].sort((a,b)=>(["compact-family","modern-courtyard","family","contemporary","villa"].indexOf(a.id)-["compact-family","modern-courtyard","family","contemporary","villa"].indexOf(b.id))).map(s=><button key={s.id} data-facade-sample={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={houseJourneyImageUrl(s.src)} alt="" fill sizes={s.id==="compact-family"?"(max-width:900px) 90vw, 440px":"(max-width:600px) 46vw, (max-width:1100px) 42vw, 240px"} loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
@@ -392,7 +393,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   <div className="paint-live-workspace"><div className="paint-live-preview" data-can-stick={ready&&(scene==="facade"||valid||walls.length>0)?"true":"false"}>
   {ready&&!exterior&&(valid||walls.length>0)?<div className="paint-mode interior-view-switch" role="group" aria-label="Interior view"><button type="button" aria-pressed={!interiorDetail} onClick={()=>{if(interiorDetail){setCloseUp(false);setShowOriginal(false)}}}>Full Room</button><button type="button" disabled={allInterior||!valid} aria-pressed={interiorDetail} onClick={()=>{if(!interiorDetail){setCloseUp(true);setShowOriginal(false)}}}>Wall Detail</button></div>:ready&&canInspect&&<button type="button" aria-pressed={closeUp} onClick={()=>setCloseUp(v=>!v)}>{closeUp?"See whole scene":"Inspect selected wall"}</button>}
   <div className="paint-canvas-frame" aria-busy={!ready} data-inspecting={closeUp&&canInspect&&!interiorDetail?"true":"false"}>
-  {!ready&&scene!=="custom"&&message==="Loading photo…"&&<NextImage src={scene==="room"?roomPhotos[roomPhoto]:houseJourneyImageUrl(sample.src)} alt="Original sample while the colour preview prepares" fill unoptimized loading="eager" className="paint-photo-placeholder"/>}
+  {!ready&&scene!=="custom"&&!(scene==="room"&&roomPhoto==="daylight")&&message==="Loading photo…"&&<NextImage src={scene==="room"?roomPhotos[roomPhoto]:houseJourneyImageUrl(sample.src)} alt="Original sample while the colour preview prepares" fill unoptimized loading="eager" className="paint-photo-placeholder"/>}
   <canvas data-wall-texture={textureStatus} data-interior-view={interiorDetail?"detail":"room"} data-room-sample={scene==="room"?roomPhoto:undefined} data-sample={scene==="facade"?sampleId:scene} ref={canvas} role="img" aria-hidden={!ready} aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Interior wall paint preview. Select a wall or mark four corners in a manual photo."} onPointerDown={e=>{if(e.isPrimary)tapStart.current={x:e.clientX,y:e.clientY,id:e.pointerId}}} onPointerUp={addPoint} onPointerCancel={()=>{tapStart.current=null}}
     style={{transform:wallZoom,transformOrigin:wallCentre,visibility:ready?"visible":"hidden",display:ready?"block":"none",width:"100%",height:"auto",cursor:interiorDetail?"default":!exterior&&(allInterior||valid)?"pointer":(scene!=="facade"||patchMode)&&points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   </div>
