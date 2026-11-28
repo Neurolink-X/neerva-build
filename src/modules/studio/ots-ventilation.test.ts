@@ -31,3 +31,5 @@ test("rejects a missing or moved upper shaft floor",()=>{
  const q:PlanModel={...p,rooms:[...p.rooms,{id:"ots-v1-floor-0",kind:"terrace",label:"OTS",floor:0,x:0,y:0,w:3,d:3,minClearWidthFt:3}]};
  assert.ok(validatePlan(q).some(e=>e.includes("OTS reserve")));
 });
+
+test("attached-house roof-jaal alternatives never create a solid roof over the shaft or pretend an infeasible shaft exists",()=>{const b={...brief,widthFt:18,depthFt:50,bedrooms:3};for(const p of generateSpatialPortfolio(b,8).plans){const q=airOptimizedPlan(p,true,true);assert.deepEqual(validateRequestedProgramme(q,b),[]);const shafts=q.rooms.filter(isOtsRoom);if(!shafts.length){assert.equal(otsGrilleBars(q).length,0);continue;}assert.equal(shafts.length,q.floors);assert.ok(shafts.every(s=>exposedRoofPatches(q).every(r=>overlapArea(r,s)<1e-5)));assert.ok(otsGrilleBars(q).length>0);}});
