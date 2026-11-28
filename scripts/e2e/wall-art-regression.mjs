@@ -18,13 +18,15 @@ export async function verifyWallArtwork(page){
     const protectedPixel=await canvas.evaluate(c=>[...c.getContext("2d").getImageData(Math.floor(c.width*.16),Math.floor(c.height*.72),1,1).data]);
     await page.getByRole("button",{name:"Sofa wall",exact:true}).click();await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const design=await canvas.evaluate(c=>c.toDataURL());
+    await page.getByRole("button",{name:"Full Room",exact:true}).click();await page.getByRole("button",{name:"Full Room",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Sofa wall",exact:true}).getAttribute("aria-pressed"),"true");assert.equal(await canvas.evaluate(c=>c.toDataURL()),design);
     await page.getByRole("button",{name:"Side wall",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
     await page.getByRole("button",{name:"Sofa wall",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await canvas.evaluate(c=>c.toDataURL()),design);
     assert.deepEqual(await canvas.evaluate(c=>[...c.getContext("2d").getImageData(Math.floor(c.width*.16),Math.floor(c.height*.72),1,1).data]),protectedPixel);
     await canvas.screenshot({path:path.join("test-results/mobile","corner-room-two-walls.png")});
+    // Clicking an active sample tab must not reload or reset the selected artwork.
+    await page.getByRole("button",{name:"Sample room",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),design);
     // Existing local daylight asset is selectable without assigning an unverified mask.
-    await page.getByRole("button",{name:"Sample room",exact:true}).click();
     await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("daylight");
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="daylight");
     assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isDisabled(),true);

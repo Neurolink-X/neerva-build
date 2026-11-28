@@ -45,10 +45,10 @@ function shaftCandidate(p:PlanModel,rect:Rect,replaceBlockedWindows=false):PlanM
  }
  for(let floor=0;floor<p.floors;floor++)rooms.push({...rect,id:"ots-v1-floor-"+floor,label:"Open-to-sky ventilation (roof jaal)",kind:"terrace",floor,minClearWidthFt:3});
  const revised:PlanModel={...p,id:p.id+"-ots-v1",rooms,openings,notes:[...p.notes,"Continuous open-to-sky ventilation reserve with conceptual roof grille. Verify shaft proportions, drainage, fire separation, waterproofing and engineered grille safety."]};
- if(validatePlan(revised).length)return null;
+ // Validate after the shaft-facing openings have been added, not before.
  // Require actual adjacent wet-room ventilation, not an isolated decorative hole.
- const adjacent=rooms.filter(r=>wet(r)&&rooms.some(s=>isOtsRoom(s)&&s.floor===r.floor&&sharedEdge(r,s)));
- if(!adjacent.length)return null;
+ const adjacent=rooms.filter(r=>(wet(r)||["bedroom","living","dining","lounge"].includes(r.kind))&&rooms.some(s=>isOtsRoom(s)&&s.floor===r.floor&&sharedEdge(r,s)));
+ if(!adjacent.some(wet))return null;
  // Explicitly model a screened aperture into the shaft. Other additional
  // windows are added by the same validated ventilation engine.
  for(const r of adjacent){
@@ -59,7 +59,7 @@ function shaftCandidate(p:PlanModel,rect:Rect,replaceBlockedWindows=false):PlanM
   if(openings.some(o=>o.roomId===r.id&&o.side===edge.aSide&&atFt<o.atFt+o.widthFt+.15&&atFt+w>o.atFt-.15))continue;
   openings.push({id:"ots-v1-window-"+r.id,roomId:r.id,side:edge.aSide,atFt,widthFt:w,sillFt:5.5,heightFt:2,kind:"window"});
  }
- if(!openings.some(o=>o.id.startsWith("ots-v1-window-"))||validatePlan(revised).length)return null;
+ if(!openings.some(o=>o.id.startsWith("ots-v1-window-")&&adjacent.some(r=>wet(r)&&r.id===o.roomId)&&windowExposure(revised,rooms.find(r=>r.id===o.roomId)!,o)==="ots")||validatePlan(revised).length)return null;
  if(exposedRoofPatches(revised).some(r=>overlapArea(r,rect)>EPS))return null;
  return revised;
 }
@@ -81,7 +81,7 @@ function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):Pla
    const r={x:fixed(a),y:fixed(b),w,d},key=JSON.stringify(r);if(seen.has(key))continue;seen.add(key);
    if(r.x<sb.leftFt-EPS||r.y<sb.frontFt-EPS||r.x+w>W+EPS||r.y+d>D+EPS||!rectInsideShape(r,p.plot.widthFt,p.plot.depthFt,shape))continue;
    const affected=p.rooms.filter(q=>overlapArea(q,r)>EPS);if(affected.some(q=>!permitted(q)))continue;
-   const benefit=p.rooms.filter(q=>wet(q)&&sharedEdge(q,r)).length;
+   const benefit=p.rooms.filter(q=>wet(q)&&sharedEdge(q,r)).length+affected.filter(q=>wet(q)&&subtractRect(q,r).some(rest=>sharedEdge(rest,r))).length;
    const cost=affected.filter(q=>q.kind!=="terrace").reduce((n,q)=>n+overlapArea(q,r)*(wet(q)?1:3),0);
    pool.push({r,score:benefit*50-cost-area(r)*.2});
   }

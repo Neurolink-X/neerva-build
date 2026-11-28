@@ -123,7 +123,7 @@ export function validatePlan(p:PlanModel):string[]{
   }
   if(["living","bedroom","kitchen","dining"].includes(r.kind)){
    const sides=externalSide(r,p.plot,sb);
-   if(!p.openings.some(o=>o.roomId===r.id&&o.kind==="window"&&sides.includes(o.side)))errors.push("No external ventilation window "+r.id);
+   if(!p.openings.some(o=>o.roomId===r.id&&o.kind==="window"&&(sides.includes(o.side)||shafts.some(shaft=>{if(shaft.floor!==r.floor)return false;const edge=sharedEdge(r,shaft);if(!edge||edge.aSide!==o.side)return false;const start=(o.side==="front"||o.side==="rear"?r.x:r.y)+o.atFt;return start>=edge.from-EPS&&start+o.widthFt<=edge.from+edge.length+EPS;}))))errors.push("No external ventilation window "+r.id);
   }
  }
  const covered=p.rooms.filter(r=>!["parking","verandah","balcony","terrace"].includes(r.kind)).reduce((t,r)=>t+area(r),0);
