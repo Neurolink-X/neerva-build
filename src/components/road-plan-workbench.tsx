@@ -8,7 +8,7 @@ import {ShadeReferenceCard} from "./shade-reference-card";
 import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/studio/finish-model";
 import {StudioProjectExchange} from "./studio-project-exchange";
 import {StudioPremiumTools} from "./studio-premium-tools";
-import {generateSpatialPortfolio,generateStairReadyPortfolio,generateCoveredUpperPortfolio,generateEnclosedUpperPortfolio,kitchenZone} from "@/modules/studio/road-generator";
+import {generateSpatialPortfolio,generateStairReadyPortfolio,generateCoveredUpperPortfolio,generateEnclosedUpperPortfolio,planSignature,kitchenZone} from "@/modules/studio/road-generator";
 import {isOtsRoom,planMetrics,planSiteReview,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
 import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
@@ -73,7 +73,9 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
  const result=useMemo(()=>{
   if(stairReady)return generateStairReadyPortfolio(brief,24);
   const base=generateSpatialPortfolio(brief,24);
-  return {...base,plans:[...base.plans,...generateCoveredUpperPortfolio(brief),...generateEnclosedUpperPortfolio(brief)]};
+  const seen=new Set(base.plans.map(planSignature));
+  const extra=[...generateCoveredUpperPortfolio(brief),...generateEnclosedUpperPortfolio(brief)].filter(p=>{const signature=planSignature(p);if(seen.has(signature))return false;seen.add(signature);return true;});
+  return {...base,plans:[...base.plans,...extra]};
  },[brief,stairReady]);
 
  const [entranceFilter,setEntranceFilter]=useState<"all"|ReturnType<typeof entranceArrangement>>("all");
@@ -99,6 +101,25 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
  const airScope=JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,terracePreference,includeOts,enhanceVentilation,activeOption]);
  useLayoutEffect(()=>{airScopeRef.current=airScope;return()=>{airScopeRef.current="";}},[airScope]);
  const draft=useMemo(()=>baseDraft?airOptimizedPlan(baseDraft,includeOts,enhanceVentilation):null,[baseDraft,includeOts,enhanceVentilation]);
+ // Search automatically only for a fresh attached-house brief, never override
+ // an explicit gallery/deep-link selection. Yield between candidate searches.
+ useEffect(()=>{
+  if(chosen>=0||!attachedSite||!includeOts||!baseDraft||draft?.rooms.some(isOtsRoom)||!filtered.length)return;
+  let cancelled=false;
+  const scope=airScope;
+  const timer=window.setTimeout(async()=>{
+   for(const {p,i} of filtered){
+    await new Promise<void>(resolve=>window.setTimeout(resolve,0));
+    if(cancelled||airScopeRef.current!==scope||airLock.current)return;
+    if(p.id===baseDraft.id)continue;
+    const candidate=airOptimizedPlan(p,true,enhanceVentilation);
+    if(candidate.rooms.some(isOtsRoom)){
+     setChosen(i);setKit(null);setSaveInfo("");return;
+    }
+   }
+  },120);
+  return()=>{cancelled=true;window.clearTimeout(timer);};
+ },[chosen,attachedSite,includeOts,enhanceVentilation,baseDraft,draft,filtered,airScope]);
  const addedWindows=draft?.openings.filter(o=>o.id.startsWith("vent-v1-")||o.id.startsWith("ots-v1-window-")).length??0;
  const shaftModeled=!!draft?.rooms.some(isOtsRoom);
  function changeAir(option:"windows"|"shaft",value:boolean){if(option==="windows")setEnhanceVentilation(value);else setIncludeOts(value);setAirFeedback(null);setSaveInfo("");}
