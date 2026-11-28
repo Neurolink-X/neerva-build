@@ -323,7 +323,7 @@ async function main(){
    }finally{await ctx.close()}
   }
   for(const v of views){
-   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=430});
+   const ctx=await browser.newContext({viewport:{width:v.w,height:v.h},deviceScaleFactor:v.w<=430?2:1,isMobile:v.w<=430,hasTouch:v.w<=768});
    const page=await ctx.newPage(),errors=[];
    if(v.w===390)await page.addInitScript(()=>{
     const metrics={lcp:null,cls:0,sessionStart:0,previousShift:0,sessionScore:0};
@@ -1255,7 +1255,19 @@ async function main(){
     if(await comparisonCanvas.count()&&await comparisonCanvas.isVisible()){
      await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
      await comparisonCanvas.screenshot({path:path.join("test-results/mobile","390-residential-cutaway.png"),animations:"disabled"});
-     architectureReports.push({purpose:"residential",mode:"cutaway",renderer:"webgl",planId:sixthId,...await comparisonCanvas.evaluate(el=>({width:el.width,height:el.height}))});
+     const gpuHost=plan3D.locator(".nbd-webgl");
+     const gpuSample=async()=>{await gpuHost.locator("canvas").waitFor({state:"visible"});await page.waitForFunction(()=>!!document.querySelector(".nbd-webgl")?.getAttribute("data-gpu-resources"));return JSON.parse(await gpuHost.getAttribute("data-gpu-resources"));};
+     const before=await gpuSample();
+     for(let cycle=0;cycle<3;cycle++){
+      await plan3D.getByRole("button",{name:"Full exterior · all floors",exact:true}).click();await gpuSample();
+      await plan3D.getByRole("button",{name:"Selected floor cutaway",exact:true}).click();await gpuSample();
+     }
+     const after=await gpuSample();
+     assert.equal(after.geometries,before.geometries,"identical cutaway must not accumulate geometry allocations");
+     assert.equal(after.textures,before.textures,"identical cutaway must not accumulate texture allocations");
+     assert.ok(before.canvasPixels>0&&before.drawCalls>0&&before.triangles>0);
+     assert.equal(await gpuHost.locator("canvas").count(),1,"no duplicate WebGL canvas after switches");
+     architectureReports.push({purpose:"residential",mode:"cutaway",renderer:"webgl",planId:sixthId,before,after,scope:"Three.js resource counts and first CPU submission, not GPU memory bytes",...await comparisonCanvas.evaluate(el=>({width:el.width,height:el.height}))});
     }else architectureReports.push({purpose:"residential",mode:"cutaway",renderer:"not-verified",planId:sixthId});
     await page.locator(".nroad-variants button").first().click();
     await page.waitForFunction(previous=>{
@@ -1303,6 +1315,14 @@ async function main(){
     assert.equal(await street.getByRole("button",{name:"Straight front",exact:true}).getAttribute("aria-pressed"),"true");
     await street.getByRole("button",{name:"Evening",exact:true}).click();
     assert.equal(await street.getByRole("button",{name:"Evening",exact:true}).getAttribute("aria-pressed"),"true");
+    await street.getByText("Render this house from the street",{exact:true}).click();
+    const renderStarted=Date.now();await street.getByRole("button",{name:"Generate realistic image",exact:true}).click();
+    await street.getByRole("button",{name:"Save render (PNG)",exact:true}).waitFor({timeout:95000});
+    const rendered=street.locator("canvas");
+    const pixelStats=await rendered.evaluate(el=>{const pixels=el.getContext("2d").getImageData(0,0,el.width,el.height).data;const rgb=new Set();for(let i=0;i<pixels.length;i+=4)rgb.add(pixels[i]*65536+pixels[i+1]*256+pixels[i+2]);return {width:el.width,height:el.height,colours:rgb.size};});
+    assert.ok(pixelStats.width>0&&pixelStats.height>0&&pixelStats.colours>30,"street worker returns a genuine nonblank render");
+    await rendered.screenshot({path:path.join("test-results/mobile","390-residential-street-raytrace.png"),animations:"disabled"});
+    architectureReports.push({purpose:"residential",mode:"street-evening",renderer:"worker-raytrace",planId:await street.getAttribute("data-plan-id"),elapsedMs:Date.now()-renderStarted,...pixelStats});
     await page.getByRole("button",{name:/Parking right/}).first().click();
     assert.equal(await page.getByRole("button",{name:/Parking right/}).first().getAttribute("aria-pressed"),"true");
     const floorToggle=page.getByRole("button",{name:"First floor"});
