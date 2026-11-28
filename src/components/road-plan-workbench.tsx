@@ -119,7 +119,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
  const baseDraft=result.plans[activeOption]??null;
  const [airFeedback,setAirFeedback]=useState<{scope:string;message:string}|null>(null),[airBusy,setAirBusy]=useState(false);
  const [shaftResults,setShaftResults]=useState<{scope:string;matches:{i:number;position:OtsPosition;score:number}[];checked:number}|null>(null);
- const shaftResultsScope=JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,shaftPosition]);
+ const shaftResultsScope=JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,shaftPosition,terracePreference==="compact"||terracePreference==="large"?terracePreference:"eligible"]);
  const visibleShaftResults=shaftResults?.scope===shaftResultsScope?shaftResults:null;
  const airLock=useRef(false),airScopeRef=useRef("");
  const airScope=JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,terracePreference,includeOts,enhanceVentilation,activeOption,shaftPosition]);
@@ -135,7 +135,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
   airLock.current=true;setAirBusy(true);setAirFeedback(null);const scope=airScope;
   try{
    const ranked:{i:number;shaft:boolean;score:number;position?:OtsPosition}[]=[];
-   const searchable=requireShaft?matching.filter((_,i)=>!representativesOnly||representativeSet.has(i)):filtered;
+   const searchable=requireShaft&&terracePreference==="recommended"?matching.filter((_,i)=>!representativesOnly||representativeSet.has(i)):filtered;
    for(const {p,i} of searchable){
     // Yield between bounded geometry searches so input and scrolling stay responsive.
     await new Promise<void>(resolve=>window.setTimeout(resolve,0));
