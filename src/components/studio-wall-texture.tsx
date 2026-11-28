@@ -52,7 +52,7 @@ function loadTexture(key:Pattern):Promise<Texture|null>{
 }
 /** Selected and applied walls take priority. Only the current category is
  * loaded, with at most three active tasks per view and a bounded shared cache. */
-export function useWallTextures(keys:string){
+export function useWallTextures(keys:string,concurrency=3){
  const [textures,setTextures]=useState<TextureState>({});
  useEffect(()=>{
   let cancelled=false;
@@ -67,10 +67,10 @@ export function useWallTextures(keys:string){
   void Promise.resolve().then(()=>{
    if(cancelled)return;
    setTextures(old=>{const entries=Object.entries(old);return entries.every(([k])=>wanted.includes(k as Pattern))?old:Object.fromEntries(entries.filter(([k])=>wanted.includes(k as Pattern)));});
-   for(let i=0;i<Math.min(3,wanted.length);i++)void worker();
+   for(let i=0;i<Math.min(concurrency,wanted.length);i++)void worker();
   });
   return()=>{cancelled=true;};
- },[keys]);
+ },[keys,concurrency]);
  return textures;
 }
 export function colouredTexture(texture:Texture,base:string,accent:string,maxSide=960){

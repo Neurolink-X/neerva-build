@@ -139,10 +139,14 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  const designRecipe=detailedWallRecipe(selectedPattern);
  const execution=exterior?undefined:paintExecution(selectedPattern);
  const appliedTextures=appliedWallTextureKeys({scene,target,facadeStyles,walls,editing,valid,effectivePattern});
- const textureKeys=[...new Set<Pattern>([...(mode==="design"?[effectivePattern]:[]),...appliedTextures,...(mode==="design"?shownPatterns:[])])].filter(hasWallRaster).join(",");
- const textures=useWallTextures(textureKeys);
- const awaitingArtwork=appliedTextures.some(key=>textures[key]===undefined);
- const textureStatus=mode==="design"&&hasWallRaster(effectivePattern)?textures[effectivePattern]?"ready":textures[effectivePattern]===null?"fallback":"loading":"none";
+ // Independent state for painted walls and background thumbnails: loading a
+ // gallery card must not rerasterize the full room or invalidate an export.
+ const activeTextureKeys=[...new Set<Pattern>([...(mode==="design"?[effectivePattern]:[]),...appliedTextures])].filter(hasWallRaster).join(",");
+ const activeTextures=useWallTextures(activeTextureKeys,2);
+ const previewTextureKeys=(mode==="design"?shownPatterns:[]).filter(hasWallRaster).join(",");
+ const textures=useWallTextures(previewTextureKeys,1);
+ const awaitingArtwork=appliedTextures.some(key=>activeTextures[key]===undefined);
+ const textureStatus=mode==="design"&&hasWallRaster(effectivePattern)?activeTextures[effectivePattern]?"ready":activeTextures[effectivePattern]===null?"fallback":"loading":"none";
  const currentStyle:PaintStyle={colour:base,accent,pattern:effectivePattern,opacity};
  const styleKey=JSON.stringify([base,accent,effectivePattern,opacity,target,sampleId,extraPaintAreas,patchMode,wholeShade,walls,editing,points,facadeStyles,allInterior,interiorWholeShade,interiorDetail]);
  const originalVisible=showOriginal&&originalKey===styleKey;
@@ -187,7 +191,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
    // Only organic material masks need a full-photo accent tint. Vector and
    // raster artworks already carry their own pigments and source luminance.
    const accentTint=!flat&&isSurfaceProfile(wall.pattern)?tint(wall.accent):undefined;patternScratch.current??=document.createElement("canvas");
-   const raw=textures[wall.pattern],xs=wall.points.map(p=>p.x*w),ys=wall.points.map(p=>p.y*h);
+   const raw=activeTextures[wall.pattern],xs=wall.points.map(p=>p.x*w),ys=wall.points.map(p=>p.y*h);
    const visibleSide=Math.min(960,Math.max(160,Math.ceil(Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys)))));
    const texture=raw?colouredTexture(raw,wall.colour,wall.accent,visibleSide):undefined;
    drawWall(ctx!,wall,w,h,tinted,patternScratch.current,accentTint,flat?undefined:sourceLuma.current,texture,flat);
@@ -224,7 +228,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
     ctx.fillText(String(i+1),p.x*w+9,p.y*h-8);ctx.fillStyle="#ffe16a";
    }ctx.restore();
   }
- },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas,wholeShade,textures,allInterior,interiorWholeShade,interiorDetail]);
+ },[points,base,accent,effectivePattern,opacity,walls,editing,ready,originalVisible,valid,currentMask,scene,target,facadeStyles,facadeZones,patchMode,extraPaintAreas,wholeShade,activeTextures,allInterior,interiorWholeShade,interiorDetail]);
  const openPhoto=useCallback((next:string, corners?:MaskCorner[],mask?:PhotoMask,preMarked?:Wall[])=>{
   ++uploadGeneration.current;setUploadError("");
   const ticket=++generation.current;
