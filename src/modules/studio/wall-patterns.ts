@@ -1,3 +1,4 @@
+import {practicalPaintNames} from "./practical-paint-art.ts";
 import {premiumRasterNames} from "./premium-wall-raster.ts";
 import {decorativeArt,luxuryLattice} from "./decorative-wall-art.ts";
 import {premiumArt,enrichArtwork} from "./premium-wall-art.ts";
@@ -105,8 +106,7 @@ export const finishes = {
 } satisfies Record<string,{name:string;motifs:Motif[]}>;
 export type Pattern = keyof typeof finishes;
 for(const [key,name] of Object.entries(premiumRasterNames))finishes[key as Pattern].name=name;
-finishes.sculptDiamond.name="Folded silk paint illusion";
-finishes.sculptPrism.name="Sculpted wave paint illusion";
+for(const [key,name] of Object.entries(practicalPaintNames))finishes[key as Pattern].name=name;
 export const patternKeys = Object.keys(finishes) as Pattern[];
 // Old IDs remain valid for previously selected walls; weak filler designs are
 // excluded from the new curated chooser rather than breaking restored selections.

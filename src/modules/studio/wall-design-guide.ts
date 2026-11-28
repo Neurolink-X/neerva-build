@@ -1,3 +1,4 @@
+import {isPracticalPaintArt} from "./practical-paint-art.ts";
 import {isPremiumRaster} from "./premium-wall-raster.ts";
 import type {Pattern,PatternGroup} from "./wall-patterns.ts";
 /** One recommendation per collection; no second catalogue or duplicated design IDs. */
@@ -14,4 +15,4 @@ export const collectionGuide={
 } as const satisfies Record<PatternGroup,{title:string;description:string;tip:string}>;
 export const featureWallPatterns=["sunDisc","orbit","eclipse","layeredArches","abstractLeaves","floralScroll","bamboo","forest","mountain","flyingBirds","gardenTree","riverSunset","meadowBloom","aurora","galleryArc","celestial","lotusPond","desertDunes","oceanCliffs","citySilhouette","fernStencil","blossomBranch","modernRibbons","offsetCircles","asymmetric","mural","artDecoSunburst","galleryArc","celestial"] as const satisfies readonly Pattern[];
 const fullWall=new Set<Pattern>(["riverSunset","lotusPond","forest","aurora","gardenTree","bamboo","waterflow","desertDunes","oceanCliffs","citySilhouette","mountain","meadowBloom"]);
-export function isFeatureWall(p:Pattern){return !isPremiumRaster(p)&&!fullWall.has(p)&&(featureWallPatterns as readonly Pattern[]).includes(p);}
+export function isFeatureWall(p:Pattern){return !isPracticalPaintArt(p)&&!isPremiumRaster(p)&&!fullWall.has(p)&&(featureWallPatterns as readonly Pattern[]).includes(p);}

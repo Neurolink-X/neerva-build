@@ -31,7 +31,7 @@ export async function verifyWallArtwork(page){
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="feature");
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     assert.equal(await page.getByRole("button",{name:/Image-based premium finishes/i}).count(),0,"no duplicate image-only collection");
-    for(const [group,name] of [["Signature","Metallic floral frames"],["Nature","Tropical leaf fresco"],["Modern","Soft painted arch"],["Geometry","Intersecting metallic lines"]]){
+    for(const [group,name] of [["Signature","Metallic floral frames"],["Nature","Tropical leaf fresco"],["Modern","Sculpted arch and ribbons"],["Geometry","Metallic architectural geometry"]]){
      await page.getByRole("button",{name:group,exact:true}).click();
      const card=page.getByRole("button",{name,exact:true});await card.click();
      await card.locator(".paint-texture-swatch").waitFor({state:"visible"});
@@ -74,11 +74,11 @@ export async function verifyWallArtwork(page){
     const mark=async(coords)=>{await canvas.scrollIntoViewIfNeeded();const b=await canvas.boundingBox();for(const [x,y] of coords)await canvas.click({position:{x:x*b.width,y:y*b.height}})};
     await mark([[.05,.08],[.53,.08],[.53,.89],[.05,.89]]);
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-    await page.getByRole("button",{name:"Geometry",exact:true}).click();await page.getByRole("button",{name:"Hexagon geometry",exact:true}).click();
+    await page.getByRole("button",{name:"Geometry",exact:true}).click();await page.getByRole("button",{name:"Fine hexagonal linework",exact:true}).click();
     await page.getByRole("button",{name:"+ Add wall",exact:true}).click();await mark([[.59,.08],[.94,.08],[.94,.89],[.59,.89]]);
     assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
     await page.getByRole("button",{name:"Wall 1",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).getAttribute("aria-pressed"),"true");
-    assert.equal(await page.getByRole("button",{name:"Hexagon geometry",exact:true}).getAttribute("aria-pressed"),"true");
+    assert.equal(await page.getByRole("button",{name:"Fine hexagonal linework",exact:true}).getAttribute("aria-pressed"),"true");
     const both=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"All walls",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),both);
     assert.equal(await page.getByRole("button",{name:"Wall Detail",exact:true}).isDisabled(),true);
     await page.getByRole("button",{name:"Wall 2",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");

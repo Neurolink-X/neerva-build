@@ -36,7 +36,7 @@ function loadTexture(key:Pattern):Promise<Texture|null>{
   img.src=meta.src;
  });
  else if(isGeneratedWallPattern(key))promise=new Promise(resolve=>{
-  window.setTimeout(()=>{try{resolve({...generateWallRaster(key,isPremiumRaster(key)?360:600,isPremiumRaster(key)?240:400),paintPigments:isPracticalPaintArt(key)});}catch{resolve(null);}},0);
+  window.setTimeout(()=>{try{resolve({...generateWallRaster(key,isPracticalPaintArt(key)?600:isPremiumRaster(key)?360:600,isPracticalPaintArt(key)?400:isPremiumRaster(key)?240:400),paintPigments:isPracticalPaintArt(key)});}catch{resolve(null);}},0);
  });
  else return Promise.resolve(null);
  pending.set(key,promise);

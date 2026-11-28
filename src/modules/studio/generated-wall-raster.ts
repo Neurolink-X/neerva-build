@@ -1,10 +1,10 @@
 import {premiumRasterNames,isPremiumRaster,premiumRasterShade,type PremiumRasterPattern} from "./premium-wall-raster.ts";
-import {isPracticalPaintArt,practicalPaintShade} from "./practical-paint-art.ts";
+import {practicalPaintNames,isPracticalPaintArt,practicalPaintShade} from "./practical-paint-art.ts";
 import type {Pattern} from "./wall-patterns.ts";
 /** Original offline optical material studies. Height-field shading is a
  * two-dimensional preview of relief, not actual sculpted geometry. */
 const originalGeneratedWallPatterns=["sculptFlute","sculptDiamond","sculptReed","sculptStone","sculptPrism","oceanCliffs","desertDunes","citySilhouette"] as const satisfies readonly Pattern[];
-export const generatedWallPatterns=[...originalGeneratedWallPatterns,...Object.keys(premiumRasterNames) as PremiumRasterPattern[]] as const;
+export const generatedWallPatterns=[...new Set([...originalGeneratedWallPatterns,...Object.keys(premiumRasterNames) as PremiumRasterPattern[],...Object.keys(practicalPaintNames) as (keyof typeof practicalPaintNames)[]])];
 type GeneratedPattern=typeof generatedWallPatterns[number];
 export function isGeneratedWallPattern(key:Pattern):key is GeneratedPattern{return (generatedWallPatterns as readonly Pattern[]).includes(key);}
 const clamp=(v:number,min=0,max=1)=>Math.min(max,Math.max(min,v));
