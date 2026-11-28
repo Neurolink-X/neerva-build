@@ -3,6 +3,7 @@ import {overlapArea,type Rect} from "./plan-model.ts";
 import {commercialInternalSpaces,commercialInternalOpenings} from "./commercial-internal.ts";
 import {rentalLayouts} from "./rental-layout.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
+import {additionalCommercialGlazing} from "./commercial-ventilation.ts";
 export type CommercialFixture=Rect&{id:string;zoneId:string;floor:number;label:string;kind:"desk"|"table"|"display"|"counter"|"bed"|"sofa"};
 export type ConceptPortal={id:string;zoneId:string;floor:number;axis:"x"|"y";x:number;y:number;length:number;kind:"access"|"exterior-glazing";reviewRequired:true;connectsTo?:string};
 const EPS=1e-5;
@@ -53,7 +54,8 @@ export function commercialPortals(plan:BuildingConcept):ConceptPortal[]{
   const length=entry?Math.min(6,p.w-2):Math.min(glazingCap,p.w-2,Math.max(4,p.w*glazingRatio));
   result.push({id:p.zoneId+"-front-"+p.x,zoneId:p.zoneId,floor:p.floor,axis:"x",x:p.x+(p.w-length)/2,y:p.y,length,kind:entry?"access":"exterior-glazing",reviewRequired:true});
  }
- return [...result,...commercialInternalOpenings(plan)];
+ const openings=[...result,...commercialInternalOpenings(plan)];
+ return [...openings,...additionalCommercialGlazing(plan,openings)];
 }
  /** Indicative loose furniture, not seat capacity or compliant aisle design. */
 export function commercialFixtures(plan:BuildingConcept):CommercialFixture[]{
