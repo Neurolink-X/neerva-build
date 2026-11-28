@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {isOtsRoom,overlapArea,validatePlan,type PlanBrief,type PlanModel} from "./plan-model.ts";
 import {generateSpatialPortfolio,portfolioForPlanId,validateRequestedProgramme} from "./road-generator.ts";
-import {otsVariant,otsGrilleBars,airOptimizedPlan} from "./ots-ventilation.ts";
+import {otsVariant,otsGrilleBars,otsGrilleLevel,airOptimizedPlan} from "./ots-ventilation.ts";
 import {exposedRoofPatches} from "./plan-surfaces.ts";
 import {windowExposure} from "./ventilation.ts";
 const brief:PlanBrief={widthFt:30,depthFt:60,roadSide:"N",floors:2,bedrooms:4,parking:true,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
@@ -64,3 +64,16 @@ test("attached-house matrix covers 1–6 BHK, three levels, irregular plots and 
 });
 
  test("exact attached 18x50 G+1 3BHK portfolio includes a usable roof-jaal option",()=>{const b={...brief,widthFt:18,depthFt:50,bedrooms:3};const plans=generateSpatialPortfolio(b).plans;let q:PlanModel|undefined;for(const p of plans){const candidate=airOptimizedPlan(p,true,true);if(candidate.rooms.some(isOtsRoom)){q=candidate;break;}}assert.ok(q,"at least one feasible aligned shaft is required for this benchmark");assert.deepEqual(validateRequestedProgramme(q,b),[]);assert.ok(otsGrilleBars(q).length>0);assert.ok(q.openings.some(o=>o.id.startsWith("ots-v1-window-")&&windowExposure(q!,q!.rooms.find(r=>r.id===o.roomId)!,o)==="ots"));});
+
+test("roof grille uses the adjacent terrace level instead of floating at full roof height",()=>{
+ const p=generateSpatialPortfolio({...brief,widthFt:18,depthFt:50,bedrooms:3},1).plans[0];assert.ok(p);
+ assert.equal(otsGrilleLevel({...p,rooms:[]}),null);
+ const shaft={id:"ots-v1-floor-1",label:"OTS",kind:"terrace" as const,floor:1,x:0,y:0,w:3,d:3,minClearWidthFt:3};
+ const terrace={...shaft,id:"rear-terrace",x:3,w:6};
+ const fixture={...p,rooms:[shaft,terrace]};
+ assert.equal(otsGrilleLevel(fixture),1);
+ assert.equal(otsGrilleLevel({...fixture,rooms:[shaft]}),2);
+ assert.ok(otsGrilleBars(fixture).length>0);
+ assert.equal(airOptimizedPlan(p,false,false),p);
+ assert.equal(airOptimizedPlan(p,true,true),airOptimizedPlan(p,true,true));
+});
