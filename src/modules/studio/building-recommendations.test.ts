@@ -13,7 +13,7 @@ test("bounded summary shortlist regenerates the exact selected geometry",()=>{
   const selected=r.options.map(o=>generateBuildingConcepts(brief,24,o.family).plans[o.index]);
   assert.equal(new Set(selected.map(visibleInteriorSignature)).size,selected.length);
   assert.equal(r.detailedCount,r.options.filter(o=>o.detailed).length);
-  for(const o of r.options){assert.equal(generateBuildingConcepts(brief,24,o.family).plans[o.index].id,o.id);assert.ok(o.primaryAreaShare>0&&o.primaryAreaShare<1);}
+  for(const o of r.options){assert.equal(generateBuildingConcepts(brief,24,o.family).plans[o.index].id,o.id);assert.ok(o.primaryAreaShare>0&&o.primaryAreaShare<1);assert.ok(o.screenedSpaceShare>=0&&o.screenedSpaceShare<=1);assert.ok(o.coveredFootprintShare>0&&o.coveredFootprintShare<=1+1e-6);assert.ok(Number.isInteger(o.wetServiceReviewCount)&&o.wetServiceReviewCount>=0);}
  }
 });
 test("L plot alternatives remain contained and preserve boundary identity through save",()=>{
@@ -59,4 +59,18 @@ test("commercial recommendations report functional zoning groups separately from
  const selected=r.options.map(o=>generateBuildingConcepts(b,24,o.family).plans[o.index]);
  assert.equal(r.topologyCount,new Set(selected.map(commercialTopology)).size);
  assert.ok(r.topologyCount>0&&r.topologyCount<=r.options.length);
+});
+
+test("custom commercial dimensions retain exact programme and exposure metrics",()=>{
+ for(const purpose of buildingPurposes){
+  const brief={...buildingStarter(purpose),widthFt:123.5,depthFt:178.25,frontFt:40,rearFt:35,sideFt:0,floors:2,unitsPerFloor:2,parkingBays:0,roadSide:"E" as const,reserveLift:false};
+  const result=recommendBuildingConcepts(brief,4);
+  assert.ok(result.options.length>0,purpose);
+  for(const o of result.options){
+   const p=generateBuildingConcepts(brief,24,o.family).plans[o.index];assert.ok(p);
+   assert.deepEqual(p.brief,brief);assert.deepEqual(validateBuildingConcept(p),[]);
+   assert.ok(o.screenedSpaceShare>=0&&o.screenedSpaceShare<=1);
+   assert.ok(o.coveredFootprintShare>0&&o.coveredFootprintShare<=1+1e-6);
+  }
+ }
 });
