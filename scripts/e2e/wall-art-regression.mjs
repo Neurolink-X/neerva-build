@@ -9,6 +9,8 @@ export async function verifyWallArtwork(page){
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="corner");
     assert.equal(await page.getByRole("button",{name:"All walls",exact:true}).getAttribute("aria-pressed"),"true");
+    const search=page.getByRole("searchbox",{name:"Find a shade"});await search.fill("NB-B6C7A3");assert.equal(await page.getByRole("button",{name:"Select #b6c7a3",exact:true}).count(),1);await search.fill("");
+    await page.getByText("Shade details & purchase reference",{exact:true}).click();assert.match(await page.locator(".neerva-shade-reference").innerText(),/NB-[0-9A-F]{6}/);const quote=await page.getByRole("link",{name:"Quote selected shade",exact:false}).getAttribute("href");assert.match(quote,/category=paint/);assert.ok(!quote.includes("quantity="));await page.getByText("Shade details & purchase reference",{exact:true}).click();
     const protectedPixel=await canvas.evaluate(c=>[...c.getContext("2d").getImageData(Math.floor(c.width*.16),Math.floor(c.height*.72),1,1).data]);
     await page.getByRole("button",{name:"Sofa wall",exact:true}).click();await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const design=await canvas.evaluate(c=>c.toDataURL());

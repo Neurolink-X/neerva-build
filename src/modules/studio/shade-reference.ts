@@ -161,3 +161,19 @@ export function shadeReference(value:string):ShadeReference|null{
 }
 export function shadeSpecification(value:string){const s=shadeReference(value);return s?s.name+" ("+s.hex+", digital reference "+s.code+")":"Unspecified digital shade";}
 export function shadeBrief(entries:readonly {label:string;value:string}[]){return entries.flatMap(({label,value})=>{const s=shadeReference(value);return s?[label+": "+s.name+" | HEX "+s.hex+" | RGB "+s.rgb+" | "+s.code]:[];}).join("\n")+"\nDigital reference only, not a manufacturer shade code. Ask a dealer for a physical shade-card match and confirm finish, product, coverage and price before purchase.";}
+
+/** Search all 120 shades by name/family or restore a shared custom HEX/NB code.
+ * Case-insensitive, no network lookup and no invented manufacturer mappings. */
+export function searchShadeReferences(input:string):ShadeReference[]{
+ const query=input.trim().toLowerCase().slice(0,100);
+ if(!query)return [];
+ const exact=/^(?:#|nb-)?([0-9a-f]{6})$/i.exec(query);
+ if(exact){const result=shadeReference("#"+exact[1]);return result?[result]:[];}
+ const terms=query.split(/\s+/).filter(Boolean);
+ return [...index.keys()].flatMap(key=>{const ref=shadeReference(key);if(!ref)return [];const hay=[ref.name,ref.family,ref.hex,ref.code,ref.rgb].join(" ").toLowerCase();return terms.every(term=>hay.includes(term))?[ref]:[];});
+}
+export function shadeQuoteHref(value:string,application:"interior"|"exterior"|"unspecified"="unspecified"){
+ const ref=shadeReference(value);if(!ref)return null;
+ const material=(application==="exterior"?"Exterior-rated wall paint":application==="interior"?"Interior wall paint":"Wall paint")+" — "+shadeSpecification(value)+"; match physical shade card, confirm product and finish.";
+ return "/quotes?"+new URLSearchParams({category:"paint",unit:"litre",material});
+}

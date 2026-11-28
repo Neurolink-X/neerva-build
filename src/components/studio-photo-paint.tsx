@@ -21,6 +21,7 @@ import {fitFacadeArtwork,managedFacadeStyles,recommendedFacadeZone} from "@/modu
 import {useWallTextures,colouredTexture,WallTextureSwatch,drawTextureQuad} from "./studio-wall-texture";
 import {colourPairings} from "@/modules/studio/colour-families";
 import {ShadeReferenceCard} from "./shade-reference-card";
+import {StudioPremiumTools} from "./studio-premium-tools";
 import {cornerRoomAsset,cornerRoomInitialWalls,cornerRoomWalls} from "@/modules/studio/corner-room";
 import {facadeSamples,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomPhotos={corner:cornerRoomAsset.src,feature:"/images/studio/paint-room.webp",daylight:"/images/studio/daylight-living-room.webp"} as const;
@@ -91,7 +92,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
  }
  ctx.restore();
 }
-export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:string;onColourChange?:(colour:string)=>void;colourControls?:ReactNode}){
+export function StudioPhotoPaint({colour,onColourChange,colourControls,showReport=false}:{colour:string;onColourChange?:(colour:string)=>void;colourControls?:ReactNode;showReport?:boolean}){
  const [walls,setWalls]=useState<Wall[]>([]),[editing,setEditing]=useState<number|null>(null);
  const [pattern,setPattern]=useState<Pattern>("sunDisc"),[accent,setAccent]=useState("#c4925f");
  const [patternGroup,setPatternGroup]=useState<PatternGroup>("Signature");
@@ -360,7 +361,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   </div>{designRecipe?<p className="paint-collection-tip"><strong>{designRecipe[1]}:</strong> {designRecipe[2]}</p>:<p className="paint-collection-tip">{guide.tip}</p>}<label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
   </>}
 </div></div>
-  <ShadeReferenceCard entries={shadeEntries} compact/>
+  <ShadeReferenceCard entries={shadeEntries} compact quoteValue={base} application={exterior?"exterior":"interior"}/>
   {ready&&scene==="facade"&&<div className="paint-actions paint-compact-actions" role="group" aria-label="Exterior editing options"><details className="paint-more"><summary>More exterior options</summary><button type="button" onClick={()=>{if(target!=="all")chooseTarget("all");setMode("paint");setCloseUp(false);setHistory(emptyMaskHistory());setShowOriginal(false);setPatchMode(v=>!v)}}>{patchMode?"Cancel wall correction":"Correct a missed wall area"}</button>{patchMode&&<><p role="status">Tap four corners of the exposed wall clockwise. Avoid windows, doors and plants.</p><button type="button" disabled={!valid||extraPaintAreas.length>=8} onClick={()=>{setExtraPaintAreas(a=>[...a,points]);setHistory(emptyMaskHistory());setPatchMode(false)}}>Apply wall correction</button><button type="button" onClick={()=>setHistory(undoCorner)}>Undo corner</button></>}{extraPaintAreas.length>0&&<button type="button" onClick={()=>setExtraPaintAreas(a=>a.slice(0,-1))}>Undo last wall correction</button>}<button type="button" onClick={()=>{setFacadeStyles({});setTarget("all");setMode("paint");setCloseUp(false);setShowOriginal(false);setPatchMode(false);setExtraPaintAreas([]);setHistory(emptyMaskHistory())}}>Reset exterior sections</button></details></div>}
   {ready&&scene!=="facade"&&!allInterior&&!(scene==="room"&&roomPhoto==="corner")&&<div className="paint-actions paint-wall-actions paint-compact-actions" role="group" aria-label="Wall preview actions">
       <button className="paint-quiet" type="button" disabled={!valid||originalVisible} onClick={()=>{
@@ -384,6 +385,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
    <button type="button" className="paint-quiet" onClick={()=>{setAllInterior(false);setCloseUp(false);setHistory(emptyMaskHistory());setEditing(null);setShowOriginal(false)}}>Reset wall selection ({points.length}/4)</button>
    </div></details>
   </div>}
+  {showReport&&<details className="paint-more"><summary>Detailed Studio report</summary><StudioPremiumTools product="colour_studio" base={base} accent={mode==="design"?accent:base} room={exterior?"Selected exterior colour":scene==="room"&&roomPhoto==="corner"&&!allInterior&&editing!==null?wallLabel(editing):"Selected interior colour"}/></details>}
   <p className="nbd-disclaimer">Corner, feature-wall and exterior samples have pre-marked surfaces. Other photos require manual wall selection. The 100 gaj sample is design inspiration, not a verified construction drawing. Full exterior colours all marked areas, not glass, timber, plants or neighbouring buildings. For your own photo, mark a flat wall and avoid openings. Preview shades retain lighting; edges and colours are approximate. Verify physical shade cards and measured wall area before buying.</p>
  </section>;
 }
