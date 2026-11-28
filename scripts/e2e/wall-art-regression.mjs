@@ -148,9 +148,11 @@ export async function verifyColourStudio(page,base){
     // All-walls design action must ask for explicit wall selection, not change it.
     // Then test the retained manual tools
     // on the original feature-room sample instead of expecting them on corner.
-    await page.getByRole("button",{name:"Design one wall",exact:true}).click();
+    await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     assert.equal(await page.getByRole("button",{name:"All walls",exact:true}).getAttribute("aria-pressed"),"true");
-    await page.getByRole("button",{name:"Sofa wall",exact:true}).click();await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    const picker=page.getByRole("group",{name:"Choose which wall gets the design"});
+    await picker.getByRole("button",{name:"Sofa wall",exact:true}).click();
+    assert.equal(await picker.count(),0);
     assert.equal(await page.getByRole("button",{name:"Sofa wall",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await page.getByRole("button",{name:"Wall Detail",exact:true}).isEnabled(),true);
