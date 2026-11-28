@@ -2,7 +2,7 @@ import {visibleWallCells,CUTAWAY_WALL_RATIO} from "@/modules/studio/geometry";
 import type {StudioDesign} from "@/modules/studio/library";
 import {isOtsRoom,type PlanModel} from "@/modules/studio/plan-model";
 import {modeledWindowGeometry} from "@/modules/studio/ventilation-geometry";
-import {otsGrilleBars} from "@/modules/studio/ots-ventilation";
+import {otsGrilleBars,otsGrilleLevel} from "@/modules/studio/ots-ventilation";
 import {roadRect,roadPoint,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {residentialStairStudies,stairFloorPatches} from "@/modules/studio/stair-study";
 import {siteOutline} from "@/modules/studio/site-shape";
@@ -30,7 +30,8 @@ export function PlanAxonometric({plan,design,floor,cutaway=floor!==undefined,sho
  });
  const top=(floor===undefined?plan.floors:1)*height;
  const windows=modeledWindowGeometry(plan,floor,cutaway?height*CUTAWAY_WALL_RATIO:height).map(o=>{const a=roadPoint(o.vertical?{x:o.plane,y:o.start}:{x:o.start,y:o.plane},w,d,roadSide),b=roadPoint(o.vertical?{x:o.plane,y:o.end}:{x:o.end,y:o.plane},w,d,roadSide),z=(floor===undefined?o.floor:0)*height;return {key:"window-"+o.id,depth:(a.x+b.x+a.y+b.y)/2+.001,level:o.floor,points:[project(a.x,a.y,z+o.bottom),project(b.x,b.y,z+o.bottom),project(b.x,b.y,z+o.top),project(a.x,a.y,z+o.top)].join(" "),fill:showVentilation?(o.exposure==="review"?"#b47825":"#16865d"):"#9ebdc5",label:"Modeled window · "+o.exposure};});
- const grilles=floor===undefined?otsGrilleBars(plan).map((bar,i)=>{const r=roadRect(bar,w,d,roadSide);return {key:"roof-jaal-"+i,depth:r.x+r.y,level:plan.floors,points:[[r.x,r.y],[r.x+r.w,r.y],[r.x+r.w,r.y+r.d],[r.x,r.y+r.d]].map(([x,y])=>project(x,y,top+.06)).join(" "),fill:showVentilation?"#16865d":"#33453f",label:"Concept roof-jaal grille"};}):[];
+ const grilleLevel=otsGrilleLevel(plan)??plan.floors;
+ const grilles=floor===undefined?otsGrilleBars(plan).map((bar,i)=>{const r=roadRect(bar,w,d,roadSide);return {key:"roof-jaal-"+i,depth:r.x+r.y,level:grilleLevel,points:[[r.x,r.y],[r.x+r.w,r.y],[r.x+r.w,r.y+r.d],[r.x,r.y+r.d]].map(([x,y])=>project(x,y,grilleLevel*height+.06)).join(" "),fill:showVentilation?"#16865d":"#33453f",label:"Concept roof-jaal grille"};}):[];
  const bounds=[-size.d*.86-2,-top-2,(size.w+size.d)*.86+4,(size.w+size.d)*.5+top+4];
  return <svg viewBox={bounds.join(" ")} style={{width:"100%",maxHeight:460}} role="img" aria-label={"Axonometric view of "+(floor===undefined?"all floors":"floor "+(floor+1))}>
   {(floor===undefined||floor===0)&&<polygon points={siteOutline(w,d,plan.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,roadSide)).map(p=>project(p.x,p.y,-.2)).join(" ")} fill="#ede8d8" stroke="#526954" strokeWidth=".25"><title>Measured plot boundary</title></polygon>}
