@@ -93,38 +93,34 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
   const openArea=(p:PlanModel)=>p.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0);
   return preferCovered?[...choices].sort((a,b)=>terraceShare(a.p)-terraceShare(b.p)||openArea(a.p)-openArea(b.p)||a.i-b.i):choices;
  },[matching,representativesOnly,representativeSet,preferCovered,terracePreference]);
- const activeOption=filtered.some(({i})=>i===chosen)?chosen:filtered[0]?.i??(result.plans[chosen]?chosen:0);
- const baseDraft=result.plans[activeOption]??null;
  const attachedSite=brief.setbacks.leftFt<3&&brief.setbacks.rightFt<3;
  const [windowPreference,setEnhanceVentilation]=useState<boolean|null>(null),[shaftPreference,setIncludeOts]=useState<boolean|null>(null);
  const enhanceVentilation=windowPreference??attachedSite,includeOts=shaftPreference??attachedSite;
+ // Pick the initial recommendation before publishing either preview. A bounded
+ // deterministic search avoids a delayed automatic switch after a user starts
+ // inspecting a floor. Exhaustive shaft search remains an explicit action.
+ const activeOption=useMemo(()=>{
+  if(filtered.some(({i})=>i===chosen))return chosen;
+  const first=filtered[0]?.i??(result.plans[chosen]?chosen:0);
+  if(chosen>=0||!attachedSite||!includeOts||!filtered.length)return first;
+  // Prefer a shaft in the same compact-terrace category; do not trade a usable
+  // upper floor for a large terrace just to manufacture a shaft recommendation.
+  const compact=terraceShare(filtered[0].p)<=.2;
+  for(const {p,i} of filtered.slice(0,4)){
+   if(compact&&terraceShare(p)>.2)break;
+   if(airOptimizedPlan(p,true,enhanceVentilation).rooms.some(isOtsRoom))return i;
+  }
+  return first;
+ },[chosen,filtered,result.plans,attachedSite,includeOts,enhanceVentilation]);
+ const baseDraft=result.plans[activeOption]??null;
  const [airFeedback,setAirFeedback]=useState<{scope:string;message:string}|null>(null),[airBusy,setAirBusy]=useState(false);
  const airLock=useRef(false),airScopeRef=useRef("");
  const airScope=JSON.stringify([briefKey(brief),stairReady,entranceFilter,kitchenFilter,representativesOnly,terracePreference,includeOts,enhanceVentilation,activeOption]);
  useLayoutEffect(()=>{airScopeRef.current=airScope;return()=>{airScopeRef.current="";}},[airScope]);
  const draft=useMemo(()=>baseDraft?airOptimizedPlan(baseDraft,includeOts,enhanceVentilation):null,[baseDraft,includeOts,enhanceVentilation]);
- // Search automatically only for a fresh attached-house brief, never override
- // an explicit gallery/deep-link selection. Yield between candidate searches.
- useEffect(()=>{
-  if(chosen>=0||!attachedSite||!includeOts||!baseDraft||draft?.rooms.some(isOtsRoom)||!filtered.length)return;
-  let cancelled=false;
-  const scope=airScope;
-  const timer=window.setTimeout(async()=>{
-   for(const {p,i} of filtered){
-    await new Promise<void>(resolve=>window.setTimeout(resolve,0));
-    if(cancelled||airScopeRef.current!==scope||airLock.current)return;
-    if(p.id===baseDraft.id)continue;
-    const candidate=airOptimizedPlan(p,true,enhanceVentilation);
-    if(candidate.rooms.some(isOtsRoom)){
-     setChosen(i);setKit(null);setSaveInfo("");return;
-    }
-   }
-  },120);
-  return()=>{cancelled=true;window.clearTimeout(timer);};
- },[chosen,attachedSite,includeOts,enhanceVentilation,baseDraft,draft,filtered,airScope]);
  const addedWindows=draft?.openings.filter(o=>o.id.startsWith("vent-v1-")||o.id.startsWith("ots-v1-window-")).length??0;
  const shaftModeled=!!draft?.rooms.some(isOtsRoom);
- function changeAir(option:"windows"|"shaft",value:boolean){if(option==="windows")setEnhanceVentilation(value);else setIncludeOts(value);setAirFeedback(null);setSaveInfo("");}
+ function changeAir(option:"windows"|"shaft",value:boolean){setChosen(activeOption);if(option==="windows")setEnhanceVentilation(value);else setIncludeOts(value);setAirFeedback(null);setSaveInfo("");}
  async function bestAir(requireShaft=false){
   if(airLock.current)return;
   airLock.current=true;setAirBusy(true);setAirFeedback(null);const scope=airScope;
@@ -276,7 +272,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
      <details className="nroad-advanced nroad-filter-panel"><summary>{str("Filter layouts","नक्शे फ़िल्टर करें")}</summary><div className="nroad-layout-filters"><label>Entrance arrangement <select aria-label="Filter entrance arrangement" value={entranceFilter} onChange={e=>{setEntranceFilter(e.target.value as typeof entranceFilter);setKit(null);setSaveInfo("")}}><option value="all">All layouts ({result.plans.length})</option>{(["front-stair","front-bedroom","front-verandah","pedestrian"] as const).map(k=>{const count=result.plans.filter(p=>entranceArrangement(p)===k).length;return <option key={k} value={k} disabled={!count}>{({ "front-stair":"Stairs beside parking","front-bedroom":"Street-facing bedroom","front-verandah":"Verandah / other entry","pedestrian":"Pedestrian only"} as const)[k]} ({count})</option>})}</select></label><label>Kitchen position <select aria-label="Filter kitchen position" value={kitchenFilter} onChange={e=>{setKitchenFilter(e.target.value as typeof kitchenFilter);setKit(null);setSaveInfo("")}}><option value="all">All positions</option>{(["front","middle","rear"] as const).map(zone=>{const count=result.plans.filter(p=>kitchenZone(p)===zone).length;return <option key={zone} value={zone} disabled={!count}>{zone==="rear"?"Rear kitchen":zone==="front"?"Front kitchen":"Middle kitchen"} ({count})</option>})}</select></label><label className="nroad-representative-toggle"><input type="checkbox" checked={representativesOnly} onChange={e=>{setRepresentativesOnly(e.target.checked);setKit(null);setSaveInfo("")}}/> Show different room programmes only ({representativeSet.size})</label></div></details>{filtered.length===0&&<p role="status">No layout matches these filters. Change entrance or kitchen position.</p>}
      {brief.floors>1&&<div className="nroad-advanced"><label><input type="checkbox" checked={preferCovered} onChange={e=>{const enabled=e.target.checked;setPreferCovered(enabled);if(enabled&&filtered.length){const openArea=(p:PlanModel)=>p.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0);const best=[...filtered].sort((a,b)=>openArea(a.p)-openArea(b.p)||a.i-b.i)[0];setChosen(best.i);setKit(null);setSaveInfo("");}}}/> Prefer more enclosed upper-floor space (less terrace)</label><label>Upper-floor open space <select aria-label="Terrace preference" value={terracePreference} onChange={e=>{setTerracePreference(e.target.value as typeof terracePreference);setChosen(-1);setKit(null);setSaveInfo("");}}><option value="all">All options · covered first</option><option value="compact">Covered / compact terrace (up to 20%)</option><option value="large">Larger terrace (over 20%)</option></select></label><p className="nroad-small">Ranks validated layouts by upper-floor terrace area; full-covered, compact rear terrace and front terrace options are ranked first when the plot fits. Requested bedroom count stays fixed; necessary open space and roof ventilation are not converted into rooms automatically.</p></div>}
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{filtered.map(({p:v,i})=>{return <button key={v.id} type="button" aria-pressed={i===activeOption} data-plan-id={v.id}
-       onClick={()=>{if(i!==activeOption){setChosen(i);setKit(null);setSaveInfo("")}}}><PlanMiniPreview v={v} i={i}/>
+       onClick={()=>{setChosen(i);if(i!==activeOption){setKit(null);setSaveInfo("")}}}><PlanMiniPreview v={v} i={i}/>
       <strong>{i+1}. {v.rooms.filter(r=>r.kind==="bedroom").length} BHK · {v.floors===1?"Ground":`G+${v.floors-1}`}</strong>
       <span>{!v.parking?str("No car parking","बिना पार्किंग"):v.variant==="parking-left"?str("Parking left","बाईं पार्किंग"):str("Parking right","दाईं पार्किंग")} · {v.rooms.some(r=>r.kind==="stairs"&&r.floor===0&&Math.abs(r.y-v.setbacks.frontFt)<.01)?str("Front stairs","सामने सीढ़ी"):v.rooms.some(r=>r.kind==="bedroom"&&r.floor===0&&Math.abs(r.y-v.setbacks.frontFt)<.01)?str("Front bedroom","सामने बेडरूम"):str("Shared home entry","घर का प्रवेश")}</span>
       {v.floors>1&&<small>{terraceShare(v)>.2?"Large terrace":"Covered / compact"} · {Math.round(terraceShare(v)*100)}% max-floor terrace · {Math.round(v.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0))} sq ft</small>}
@@ -286,8 +282,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
      <div className="nroad-save"><button type="button" disabled={saving} onClick={()=>void saveDraft()}>{saving?"Saving…":str("Save this plot-specific concept privately","अपना नक्शा सुरक्षित सेव करें")}</button>{saveInfo&&<p role="status">{saveInfo} {saveInfo.startsWith("Sign in")&&<Link href="/account">Sign in →</Link>}</p>}</div>
      <div className="nroad-head" id="selected-plan-drawing"><h2>{str("Plan & room dimensions","प्लान और कमरों का नाप")}</h2><span>Road · {plan.plot.roadSide}</span></div>
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
-      {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={!roofView&&floor===i} onClick={()=>{setFloor(i);setRoofView(false)}}>{["Ground floor","First floor","Second floor"][i]}</button>)}
-      <button type="button" aria-pressed={roofView} onClick={()=>setRoofView(true)}>Roof / jaal plan</button>
+      {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={!roofView&&floor===i} onClick={()=>{setChosen(activeOption);setFloor(i);setRoofView(false)}}>{["Ground floor","First floor","Second floor"][i]}</button>)}
+      <button type="button" aria-pressed={roofView} onClick={()=>{setChosen(activeOption);setRoofView(true)}}>Roof / jaal plan</button>
      </div>
      <div className="nroad-plan-summary" data-plan-id={plan.id} data-selected-floor={floor} aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom").length}</strong> Bedrooms total</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===floor).length}</strong> Bedrooms on this floor</span></div>
      {roofView?<RoofJaalPlan plan={plan}/>:<OrientedPlanDrawing plan={plan} floor={floor} scheme={scheme??undefined}/>}
