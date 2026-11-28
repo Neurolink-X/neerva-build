@@ -53,3 +53,7 @@ This is an implementation checklist, not a certificate of design quality or stat
 ## Versioned OTS shaft / roof grille
 - Optional deterministic aligned 3–4 ft concept reserve searches wet-core adjacency and minimizes area loss. Preserves room count, openings, plot, parking, stair access and common validators. If no feasible geometry exists, retain the original and report the limitation. No claim of legal shaft sizing or grille safety.
 - A terrace reserve with versioned IDs is drawn on each floor, excluded from upper slabs and roof, and represented by open grille bars in the actual 3D scene. Adjacent wet-room apertures are modeled and saved through the original plan resolver. The server regenerates the same versioned geometry; old plans remain unchanged. Full legal and visual review remains required.
+
+## Interior / floor-plan integration
+- Bounded deterministic furniture search considers actual standard and compact furniture footprints, rotated positions, door/window buffers and item separation. Explicitly report missing essential furniture rather than imply all rooms are furnished.
+- OTS and combined window options retain previously feasible essential furniture per room; selection highlights remain tied to the base gallery card and finish choices carry over only for matching room IDs on the same base plan. Added dimensional detail to actual 3D furniture and a compact selected-floor interior review next to the drawing. This is not an accessibility or finished-clearance certification.

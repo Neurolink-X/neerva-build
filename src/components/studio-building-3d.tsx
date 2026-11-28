@@ -162,8 +162,20 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
       box(x,base+capped/2,z+d*.4,w,capped,d*.20,upholstery,false);
       for(const dx of [-1,1])box(x+dx*w*.45,base+.36,z,w*.10,.42,d,upholstery,false);
      }else{
-      box(x,base+capped/2,z,w,capped,d,p.kind==="bed"?linen:p.kind==="counter"?worktop:timber,false);
-      if(p.kind==="bed")box(x,base+capped+.05,z-d*.32,w*.8,.10,d*.22,upholstery,false);
+      if(p.kind==="bed"){
+       const frameH=capped*.48,mattress=capped-frameH;
+       box(x,base+frameH/2,z,w,frameH,d,timber,false);
+       box(x,base+frameH+mattress/2,z,w*.96,mattress,d*.97,linen,false);
+       box(x,base+capped+.035,z-d*.32,w*.75,.07,d*.19,upholstery,false);
+       box(x,base+frameH,z-d*.47,w,.32,d*.06,timber,false);
+      }else if(p.kind==="counter"){
+       const slab=Math.min(.045,capped*.1);box(x,base+(capped-slab)/2,z,w,capped-slab,d,timber,false);
+       box(x,base+capped-slab/2,z,w,slab,d,worktop,false);
+       for(const q of [-.3,0,.3])box(x+w*q,base+capped*.66,z+d*.49,w*.12,.025,.018,railingMat,false);
+      }else{
+       box(x,base+capped/2,z,w,capped,d,timber,false);
+       for(const q of [-.1,.1])box(x+w*q,base+capped*.55,z+d*.49,.025,.16,.018,railingMat,false);
+      }
      }
     }
    }

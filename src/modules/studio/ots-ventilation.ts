@@ -2,6 +2,7 @@ import {area,isOtsRoom,overlapArea,sharedEdge,validatePlan,type PlanModel,type R
 import {rectInsideShape} from "./site-shape.ts";
 import {subtractRect,exposedRoofPatches} from "./plan-surfaces.ts";
 import {ventilationReport,ventilationVariant} from "./ventilation.ts";
+import {interiorFitReport,preservesEssentialInterior} from "./furniture.ts";
 const EPS=1e-5;
 const equal=(a:number,b:number)=>Math.abs(a-b)<EPS;
 const wet=(r:Room)=>["bath","kitchen","utility"].includes(r.kind);
@@ -77,12 +78,13 @@ export function otsVariant(p:PlanModel):PlanModel{
   }
  }
  pool.sort((a,b)=>b.score-a.score||a.r.x-b.r.x||a.r.y-b.r.y||a.r.w-b.r.w||a.r.d-b.r.d);
+ const before=interiorFitReport(p);
  let best:PlanModel|null=null,bestScore=-Infinity;
  for(const {r,score} of pool.slice(0,96)){
   const candidate=shaftCandidate(p,r);if(!candidate)continue;
   const report=ventilationReport(candidate);
   const rank=report.rows.filter(q=>q.openings.some(o=>o.exposure==="ots")).length*100+report.score*30+score;
-  if(rank>bestScore){best=candidate;bestScore=rank;}
+  if(rank>bestScore&&preservesEssentialInterior(before,interiorFitReport(candidate))){best=candidate;bestScore=rank;}
  }
  return best??p;
 }
@@ -96,5 +98,8 @@ export function otsGrilleBars(p:PlanModel):Rect[]{
  return bars;
 }
 export function airOptimizedPlan(p:PlanModel,shaft:boolean,windows:boolean){
- const base=shaft?otsVariant(p):p;return windows?ventilationVariant(base):base;
+ const base=shaft?otsVariant(p):p;
+ if(!windows)return base;
+ const revised=ventilationVariant(base);
+ return revised===base||preservesEssentialInterior(interiorFitReport(base),interiorFitReport(revised))?revised:base;
 }
