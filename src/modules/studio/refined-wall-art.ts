@@ -1,8 +1,9 @@
 import type {Motif} from "./wall-patterns.ts";
 type P=[number,number];
 const seq=<T>(n:number,f:(i:number)=>T)=>Array.from({length:n},(_,i)=>f(i));
-const fill=(points:P[],tone=0,alpha=.94):Motif=>({points,filled:true,tone,alpha});
-const line=(points:P[],tone=.2,weight=.8):Motif=>({points,tone,weight,alpha:.9});
+const boundedTone=(tone:number)=>Math.max(-.8,Math.min(.8,tone));
+const fill=(points:P[],tone=0,alpha=.94):Motif=>({points,filled:true,tone:boundedTone(tone),alpha});
+const line=(points:P[],tone=.2,weight=.8):Motif=>({points,tone:boundedTone(tone),weight,alpha:.9});
 const ellipse=(x:number,y:number,rx:number,ry:number,tone:number)=>fill(seq(65,i=>[x+rx*Math.cos(i*Math.PI/32),y+ry*Math.sin(i*Math.PI/32)]),tone);
 const curve=(a:P,b:P,c:P,d:P)=>seq(41,i=>{const t=i/40,s=1-t;return [s*s*s*a[0]+3*s*s*t*b[0]+3*s*t*t*c[0]+t*t*t*d[0],s*s*s*a[1]+3*s*s*t*b[1]+3*s*t*t*c[1]+t*t*t*d[1]] as P});
 function leaf(a:P,b:P,w:number,tone:number){

@@ -4,11 +4,10 @@ import {buildingStarter,generateBuildingConcepts,type BuildingConcept} from "./b
 import {commercialPortals,commercialGeometryIssues} from "./commercial-detail.ts";
 import {commercialAirSpaces,commercialExposure,additionalCommercialGlazing,commercialAirReport} from "./commercial-ventilation.ts";
 test("commercial air candidates belong to actual rooms, stay on walls and have screened exposure",()=>{
- let additions=0;
  for(const purpose of ["shops","mall","school","restaurant","rental"] as const){
   const plans=generateBuildingConcepts(buildingStarter(purpose),3).plans;assert.ok(plans.length,purpose);
   for(const plan of plans){const portals=commercialPortals(plan);assert.deepEqual(commercialGeometryIssues(plan),[]);const rooms=commercialAirSpaces(plan);
-   for(const p of portals.filter(p=>p.id.includes("-air-"))){const r=rooms.find(r=>r.id===p.zoneId);assert.ok(r);assert.notEqual(commercialExposure(plan,r,p),"review");additions++;}
+   for(const p of portals.filter(p=>p.id.includes("-air-"))){const r=rooms.find(r=>r.id===p.zoneId);assert.ok(r);assert.notEqual(commercialExposure(plan,r,p),"review");}
    for(let f=0;f<plan.brief.floors;f++)assert.ok(commercialAirReport(plan,portals,f).every(r=>r.exposed<=r.glazing.length));
   }
  }
