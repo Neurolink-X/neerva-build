@@ -12,3 +12,7 @@ export function houseJourneyImageUrl(src:string):string{
  const asset=[houseJourney.finished,houseJourney.shell].find(a=>a.src===src);
  return asset?asset.src+"?v="+asset.sha256.slice(0,16):src;
 }
+
+/** Only the reviewed pair's exact digest URLs can enter Next image optimization.
+ * Derive the allowlist from the same manifest as the browser URL. */
+export const houseJourneyLocalPatterns=[houseJourney.finished,houseJourney.shell].map(a=>({pathname:a.src,search:"?v="+a.sha256.slice(0,16)}));

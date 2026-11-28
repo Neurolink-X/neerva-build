@@ -1,10 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {mkdtempSync,rmSync,existsSync} from "node:fs";
+import {mkdtempSync,rmSync,existsSync,readFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 import {verifyHouseJourney} from "./house-journey-assets.ts";
-import {houseJourney,houseJourneyImageUrl} from "./house-journey.ts";
+import {houseJourney,houseJourneyImageUrl,houseJourneyLocalPatterns} from "./house-journey.ts";
 import {facadeSamples} from "./facade-paint.ts";
 import {validWallMask} from "./mask-editor.ts";
 test("missing pair never activates new masks or image paths",()=>{
@@ -33,4 +33,15 @@ test("stable journey paths retain current reviewed bytes and digest-versioned br
  assert.equal(houseJourneyImageUrl("/images/studio/paint-room.webp"),"/images/studio/paint-room.webp");
  assert.notEqual(houseJourneyImageUrl(houseJourney.finished.src),houseJourneyImageUrl(houseJourney.shell.src));
  assert.ok(verifyHouseJourney());
+});
+
+test("Next image optimizer admits exactly the reviewed cache-versioned journey URLs",()=>{
+ assert.equal(houseJourneyLocalPatterns.length,2);
+ for(const a of [houseJourney.finished,houseJourney.shell]){
+  const url=new URL(houseJourneyImageUrl(a.src),"https://example.test");
+  assert.ok(houseJourneyLocalPatterns.some(p=>p.pathname===url.pathname&&p.search===url.search));
+ }
+ assert.ok(houseJourneyLocalPatterns.every(p=>/^\\?v=[a-f0-9]{16}$/.test(p.search)&&!p.pathname.includes("*")));
+ const config=readFileSync(new URL("../../../next.config.ts",import.meta.url),"utf8");
+ assert.match(config,/localPatterns:\s*\[\{pathname:"\/\*\*",search:""\},\s*\.\.\.houseJourneyLocalPatterns\]/);
 });
