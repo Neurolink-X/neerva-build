@@ -11,12 +11,14 @@ export async function verifyWallArtwork(page){
 
     // The new corner sample has two pre-marked walls and preserves furniture.
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
+    await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("corner");
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="corner");
     assert.equal(await page.getByRole("button",{name:"All walls",exact:true}).getAttribute("aria-pressed"),"true");
     const search=page.getByRole("searchbox",{name:"Find a shade"});await search.fill("NB-B6C7A3");assert.equal(await page.getByRole("button",{name:"Select #b6c7a3",exact:true}).count(),1);await search.fill("");
     await page.getByText("Shade details & purchase reference",{exact:true}).click();assert.match(await page.locator(".neerva-shade-reference").innerText(),/NB-[0-9A-F]{6}/);const quote=await page.getByRole("link",{name:"Quote selected shade",exact:false}).getAttribute("href");assert.match(quote,/category=paint/);assert.ok(!quote.includes("quantity="));await page.getByText("Shade details & purchase reference",{exact:true}).click();
     const protectedPixel=await canvas.evaluate(c=>[...c.getContext("2d").getImageData(Math.floor(c.width*.16),Math.floor(c.height*.72),1,1).data]);
     await page.getByRole("button",{name:"Sofa wall",exact:true}).click();await page.getByRole("button",{name:"Paint + design",exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")!=="loading");
     const design=await canvas.evaluate(c=>c.toDataURL());
     await page.getByRole("button",{name:"Full Room",exact:true}).click();await page.getByRole("button",{name:"Full Room",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Sofa wall",exact:true}).getAttribute("aria-pressed"),"true");assert.equal(await canvas.evaluate(c=>c.toDataURL()),design);
     await page.getByRole("button",{name:"Side wall",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
@@ -115,10 +117,12 @@ export async function verifyColourStudio(page,base){
     const dark=await samplePixel();
     await page.getByRole("button",{name:"Select #edf2db",exact:true}).click();
     await page.waitForFunction(d=>{const c=document.querySelector(".nbd-photo canvas");return c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.32),1,1).data[1]>d[1]+70},dark);
-    // The default corner sample opens in all-walls mode. Check the contextual
-    // design action selects the first wall, then test the retained manual tools
+    // All-walls design action must ask for explicit wall selection, not change it.
+    // Then test the retained manual tools
     // on the original feature-room sample instead of expecting them on corner.
     await page.getByRole("button",{name:"Design one wall",exact:true}).click();
+    assert.equal(await page.getByRole("button",{name:"All walls",exact:true}).getAttribute("aria-pressed"),"true");
+    await page.getByRole("button",{name:"Sofa wall",exact:true}).click();await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     assert.equal(await page.getByRole("button",{name:"Sofa wall",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await page.getByRole("button",{name:"Wall Detail",exact:true}).isEnabled(),true);

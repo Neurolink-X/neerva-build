@@ -62,3 +62,5 @@ test("attached-house matrix covers 1–6 BHK, three levels, irregular plots and 
  assert.ok(checked>0);assert.equal(modeled+unavailable,checked);
  console.log("attached-house-matrix "+JSON.stringify({briefs:cases.length*4,checked,modeled,unavailable,blocked}));
 });
+
+ test("exact attached 18x50 G+1 3BHK portfolio includes a usable roof-jaal option",()=>{const b={...brief,widthFt:18,depthFt:50,bedrooms:3};const plans=generateSpatialPortfolio(b).plans;let q:PlanModel|undefined;for(const p of plans){const candidate=airOptimizedPlan(p,true,true);if(candidate.rooms.some(isOtsRoom)){q=candidate;break;}}assert.ok(q,"at least one feasible aligned shaft is required for this benchmark");assert.deepEqual(validateRequestedProgramme(q,b),[]);assert.ok(otsGrilleBars(q).length>0);assert.ok(q.openings.some(o=>o.id.startsWith("ots-v1-window-")&&windowExposure(q!,q!.rooms.find(r=>r.id===o.roomId)!,o)==="ots"));});

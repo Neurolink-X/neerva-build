@@ -67,6 +67,13 @@ function shaftCandidate(p:PlanModel,rect:Rect,replaceBlockedWindows=false):PlanM
  * minimal loss of enclosed space. Never alter input dimensions or required rooms. */
 export function otsVariant(p:PlanModel):PlanModel{
  const compact=[[3,3],[3,4],[4,3],[4,4]],expanded=[[3,5],[5,3],[4,5],[5,4],[5,5]];
+ if(p.rooms.some(isOtsRoom))return p;
+ // Try a continuous rear service court before a more costly general search.
+ // This keeps the existing access door and every required habitable room intact.
+ const before=interiorFitReport(p);
+ for(const r of p.rooms.filter(r=>r.floor===0&&r.kind==="utility"&&r.w>=3&&r.d>=6&&Math.abs(r.y+r.d-(p.plot.depthFt-p.setbacks.rearFt))<EPS)){
+  for(const d of [3,4]){const candidate=shaftCandidate(p,{x:r.x,y:fixed(r.y+r.d-d),w:r.w,d},true);if(candidate&&preservesEssentialInterior(before,interiorFitReport(candidate)))return candidate;}
+ }
  return searchOts(p,compact)??searchOts(p,expanded)??searchOts(p,[...compact,...expanded],true)??p;
 }
 function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):PlanModel|null{

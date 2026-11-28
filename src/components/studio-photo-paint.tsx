@@ -120,6 +120,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  const [history,setHistory]=useState(emptyMaskHistory),[ready,setReady]=useState(false);
  const [closeUp,setCloseUp]=useState(false);
  const [keepShades,setKeepShades]=useState(false);
+ const tapStart=useRef<{x:number;y:number;id:number}|null>(null);
  const [allInterior,setAllInterior]=useState(false),[interiorWholeShade,setInteriorWholeShade]=useState(colour);
  const [patchMode,setPatchMode]=useState(false),[extraPaintAreas,setExtraPaintAreas]=useState<MaskCorner[][]>([]);
  const [uploadError,setUploadError]=useState("");
@@ -316,8 +317,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   setMode(next);setShowOriginal(false);
  }
  function chooseArtwork(key:Pattern){
-  if(key===selectedPattern){setShowOriginal(false);return;}
-  setPattern(key);setShowOriginal(false);
+  if(key!==selectedPattern)setPattern(key);setShowOriginal(false);
   if(!exterior&&!keepShades){const [nextBase,nextAccent]=designPreviewPalette(key);if(onColourChange){onColourChange(nextBase);setOverride(null)}else setOverride({source:colour,value:nextBase});setAccent(nextAccent);}
  }
  function toggleOriginal(){setOriginalKey(styleKey);setShowOriginal(!originalVisible);}
@@ -339,6 +339,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   }catch{if(ticket===uploadGeneration.current)setUploadError("Could not read this photo. Try another image.");}
  }
  function addPoint(e:ReactPointerEvent<HTMLCanvasElement>){
+  const start=tapStart.current;tapStart.current=null;if(!start||start.id!==e.pointerId||Math.hypot(e.clientX-start.x,e.clientY-start.y)>9)return;
   if((scene==="facade"&&!patchMode)||!ready||interiorDetail)return;
   const el=canvas.current;if(!el)return;const r=el.getBoundingClientRect();
   const point:MaskCorner={x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
@@ -370,7 +371,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
   {ready&&!exterior&&(valid||walls.length>0)?<div className="paint-mode interior-view-switch" role="group" aria-label="Interior view"><button type="button" aria-pressed={!interiorDetail} onClick={()=>{if(interiorDetail){setCloseUp(false);setShowOriginal(false)}}}>Full Room</button><button type="button" disabled={allInterior||!valid} aria-pressed={interiorDetail} onClick={()=>{if(!interiorDetail){setCloseUp(true);setShowOriginal(false)}}}>Wall Detail</button></div>:ready&&canInspect&&<button type="button" aria-pressed={closeUp} onClick={()=>setCloseUp(v=>!v)}>{closeUp?"See whole scene":"Inspect selected wall"}</button>}
   <div className="paint-canvas-frame" aria-busy={!ready} data-inspecting={closeUp&&canInspect&&!interiorDetail?"true":"false"}>
   {!ready&&scene!=="custom"&&message==="Loading photo…"&&<NextImage src={scene==="room"?roomPhotos[roomPhoto]:houseJourneyImageUrl(sample.src)} alt="Original sample while the colour preview prepares" fill unoptimized loading="eager" className="paint-photo-placeholder"/>}
-  <canvas data-wall-texture={textureStatus} data-interior-view={interiorDetail?"detail":"room"} data-room-sample={scene==="room"?roomPhoto:undefined} data-sample={scene==="facade"?sampleId:scene} ref={canvas} role="img" aria-hidden={!ready} aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Interior wall paint preview. Select a wall or mark four corners in a manual photo."} onPointerDown={addPoint}
+  <canvas data-wall-texture={textureStatus} data-interior-view={interiorDetail?"detail":"room"} data-room-sample={scene==="room"?roomPhoto:undefined} data-sample={scene==="facade"?sampleId:scene} ref={canvas} role="img" aria-hidden={!ready} aria-label={scene==="facade"?"Live exterior paint preview of the selected facade sections":"Interior wall paint preview. Select a wall or mark four corners in a manual photo."} onPointerDown={e=>{if(e.isPrimary)tapStart.current={x:e.clientX,y:e.clientY,id:e.pointerId}}} onPointerUp={addPoint} onPointerCancel={()=>{tapStart.current=null}}
     style={{transform:wallZoom,transformOrigin:wallCentre,visibility:ready?"visible":"hidden",display:ready?"block":"none",width:"100%",height:"auto",cursor:interiorDetail?"default":!exterior&&(allInterior||valid)?"pointer":(scene!=="facade"||patchMode)&&points.length<4?"crosshair":"default",touchAction:"manipulation",borderRadius:12}}/>
   </div>
   {interiorDetail&&<p className="paint-reference-note">Unobstructed wall design study · room lighting and furniture are shown in Full Room.</p>}
