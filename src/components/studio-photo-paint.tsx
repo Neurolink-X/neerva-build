@@ -1,5 +1,5 @@
 "use client";
-import {useCallback,useEffect,useLayoutEffect,useRef,useState,type ChangeEvent,type PointerEvent as ReactPointerEvent,type ReactNode} from "react";
+import {useCallback,useEffect,useLayoutEffect,useMemo,useRef,useState,type ChangeEvent,type PointerEvent as ReactPointerEvent,type ReactNode} from "react";
 import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type MaskCorner} from "@/modules/studio/mask-editor";
 import {encodedPhotoDimensions,photoDimensionsAllowed,paintPreviewDimensions} from "@/modules/studio/photo-budget";
 import {finishes,artworkMotifs,patternGroups,groupForPattern,isRetiredPattern,type PatternGroup,type Pattern} from "@/modules/studio/wall-patterns";
@@ -47,7 +47,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
   };};
   // Mask an accent tint with the motif: the design inherits the same photographic
   // highlights and shadows as the base paint. One reusable scratch canvas, only for patterns.
-  const layer=patternSurface&&accentTint?patternSurface.getContext("2d",{willReadFrequently:true}):null;
+  const layer=patternSurface?patternSurface.getContext("2d",{willReadFrequently:true}):null;
   if(layer&&patternSurface){if(patternSurface.width!==w)patternSurface.width=w;if(patternSurface.height!==h)patternSurface.height=h;layer.clearRect(0,0,w,h);}
   const brush=layer??ctx;brush.save();
   brush.globalCompositeOperation="source-over";brush.globalAlpha=wall.opacity??.78;
@@ -66,8 +66,8 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
    if(motif.filled){brush.closePath();brush.fill()}else brush.stroke();
   }
   }
-  if(layer&&patternSurface&&accentTint){
-   if(tile){brush.globalCompositeOperation="source-in";brush.globalAlpha=1;brush.drawImage(accentTint,0,0,w,h);}
+  if(layer&&patternSurface){
+   if(tile&&accentTint){brush.globalCompositeOperation="source-in";brush.globalAlpha=1;brush.drawImage(accentTint,0,0,w,h);}
    else if(sourceLuma?.length===w*h){
     // Apply the original photo luminance once to the finished artwork. Bound
     // readback to the selected wall; leave transparent/protected pixels intact.
@@ -91,6 +91,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  const [sampleId,setSampleId]=useState<FacadeSampleId>("compact-family");
  const sample=facadeSamples.find(s=>s.id===sampleId)??facadeSamples[0];
  const facadeZones=sample.zones;
+ const recommendedZone=useMemo(()=>recommendedFacadeZone(facadeZones),[facadeZones]);
  const [originalKey,setOriginalKey]=useState("");
  const [wholeShade,setWholeShade]=useState(colour);
 
@@ -146,7 +147,9 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   function paintWall(wall:Wall){
    const tinted=tint(wall.colour);
    if(wall.pattern==="plain"){drawWall(ctx!,wall,w,h,tinted);return;}
-   const accentTint=tint(wall.accent);patternScratch.current??=document.createElement("canvas");
+   // Only organic material masks need a full-photo accent tint. Vector and
+   // raster artworks already carry their own pigments and source luminance.
+   const accentTint=isSurfaceProfile(wall.pattern)?tint(wall.accent):undefined;patternScratch.current??=document.createElement("canvas");
    const raw=textures[wall.pattern],texture=raw?colouredTexture(raw,wall.colour,wall.accent):undefined;
    drawWall(ctx!,wall,w,h,tinted,patternScratch.current,accentTint,sourceLuma.current,texture);
   }
@@ -228,7 +231,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   setPatchMode(false);if(scene==="facade")setHistory(emptyMaskHistory());
   if(next==="design"&&mode==="paint"&&scene==="facade"&&target==="all"){
    const saved=managedFacadeStyles(facadeStyles,target,currentStyle,wholeShade,facadeZones);
-   const selected=recommendedFacadeZone(facadeZones)??facadeZones[0].id;
+   const selected=recommendedZone??facadeZones[0].id;
    setWholeShade(base);setFacadeStyles(saved);setTarget(selected);setCloseUp(false);
    const style=saved[selected];if(style){if(onColourChange){onColourChange(style.colour);setOverride(null)}else setOverride({source:colour,value:style.colour});}
   }
@@ -272,7 +275,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   {scene==="facade"&&<div className="paint-sample-gallery" data-journey="premium" role="group" aria-label="Choose sample house">{[...facadeSamples].sort((a,b)=>(["compact-family","modern-courtyard","family","contemporary","villa"].indexOf(a.id)-["compact-family","modern-courtyard","family","contemporary","villa"].indexOf(b.id))).map(s=><button key={s.id} data-facade-sample={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={houseJourneyImageUrl(s.src)} alt="" fill sizes={s.id==="compact-family"?"(max-width:900px) 90vw, 440px":"(max-width:600px) 46vw, (max-width:1100px) 42vw, 240px"} loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
   {scene==="facade"&&<p className="paint-sample-feedback" role="status">{ready?"Previewing: ":message==="Loading photo…"?"Preparing: ":"Selected: "}<strong>{sample.label}</strong>{ready?" · Try a colour or wall design.":""}</p>}
   <div className="paint-mode" role="group" aria-label="Paint preview mode"><button type="button" aria-pressed={mode==="paint"} onClick={()=>chooseMode("paint")}>Plain paint</button><button type="button" aria-pressed={mode==="design"} onClick={()=>chooseMode("design")}>Paint + design</button></div>
-  {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}{z.id===recommendedFacadeZone(facadeZones)?" · Best for design":""}</button>)}</div>}
+  {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}{z.id===recommendedZone?" · Best for design":""}</button>)}</div>}
   <p className="paint-preview-status" role="status">{scene==="facade"&&ready?"Paint marked walls together or select one area. Visible plaster behind transparent railings is included; frames, timber and plants are protected where marked.":points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
   <div className="paint-live-workspace"><div className="paint-live-preview" data-can-stick={ready&&(scene==="facade"||valid)?"true":"false"}>
   {ready&&canInspect&&<button type="button" aria-pressed={closeUp} onClick={()=>setCloseUp(v=>!v)}>{closeUp?"See whole scene":"Inspect selected wall"}</button>}
