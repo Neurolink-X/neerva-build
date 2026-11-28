@@ -5,6 +5,7 @@ import {planGeometryDigest,type PlanBrief,type PlanModel} from "@/modules/studio
 import "@/app/studio-pricing/pricing.css";
 import {useStudioSettings} from "@/components/use-studio-settings";
 import type {StudioProduct} from "@/modules/studio/paid-products";
+import {shadeReference} from "@/modules/studio/shade-reference";
 const esc=(s:unknown)=>String(s??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]??ch));
 type Props={product:StudioProduct;brief?:PlanBrief;option?:number;planId?:string;selectedPlan?:PlanModel;base?:string;accent?:string;room?:string};
 export function StudioPremiumTools({product,brief,option=0,planId,selectedPlan,base="#b6c7a3",accent="#c4925f",room="Home colour concept"}:Props){
@@ -30,7 +31,7 @@ export function StudioPremiumTools({product,brief,option=0,planId,selectedPlan,b
     body+='</tbody></table>';
    }else{
     body='<h2>'+esc(data.room)+'</h2><p>Suggested digital palette; physical manufacturer shade matches are not guaranteed.</p><div class="swatches">';
-    for(const swatch of data.swatches??[])body+='<div class="swatch"><i style="background:'+esc(swatch.colour)+'"></i><strong>'+esc(swatch.label)+'</strong><p>'+esc(swatch.colour)+'</p></div>';
+    for(const swatch of data.swatches??[]){const ref=shadeReference(swatch.colour);body+='<div class="swatch"><i style="background:'+esc(swatch.colour)+'"></i><strong>'+esc(swatch.label)+'</strong><p>'+esc(ref?ref.name+' · '+ref.hex+' · '+ref.code+' · RGB '+ref.rgb:swatch.colour)+'</p></div>';}
     body+='</div>';
    }
    const html='<!doctype html><html lang="en-IN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>NEERVA Studio concept report</title><style>body{font:15px/1.6 Arial,sans-serif;padding:25px;max-width:950px;margin:auto;color:#193f30}h1,h2{font-family:Georgia,serif}table{width:100%;border-collapse:collapse}td,th{border:1px solid #b0bcad;padding:7px;text-align:left}.swatches{display:flex;flex-wrap:wrap;gap:12px}.swatch{width:180px}.swatch i{display:block;height:110px;border-radius:9px;border:1px solid #ddd}footer{margin-top:40px;border-top:1px solid #bbb;padding-top:14px;font-size:12px;color:#697369}@media print{body{padding:0}}</style></head><body><h1>NEERVA BUILD — Studio concept report</h1><p>Private, user-requested planning summary. Not a construction approval.</p>'+body+'<footer>'+esc(data.disclaimer)+'</footer></body></html>';

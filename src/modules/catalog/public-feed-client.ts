@@ -5,6 +5,8 @@ type Feed="prices"|"offers";
 type Entry={revision:number;at:number;data?:unknown;pending?:Promise<unknown>;controller?:AbortController};
 const entries=new Map<string,Entry>();
 let revision=0;
+/** Settle even if a mocked transport or body reader ignores cancellation. */
+function abortable<T>(work:Promise<T>,signal:AbortSignal):Promise<T>{return new Promise((resolve,reject)=>{const abort=()=>reject(new Error("Public feed deadline exceeded"));signal.addEventListener("abort",abort,{once:true});if(signal.aborted)abort();work.then(value=>{signal.removeEventListener("abort",abort);resolve(value)},error=>{signal.removeEventListener("abort",abort);reject(error)});});}
 export function invalidatePublicFeeds(){revision++;for(const entry of entries.values())entry.controller?.abort();entries.clear();}
 export function loadPublicFeed(kind:Feed,category?:string):Promise<unknown>{
  const key=kind+":"+(category??"all");
@@ -24,9 +26,9 @@ export function loadPublicFeed(kind:Feed,category?:string):Promise<unknown>{
   const rows:unknown[]=[],seen=new Set<string>();let cursor:string|null=null;
   for(let page=0;page<FEED_MAX_PAGES;page++){
    const params=new URLSearchParams({limit:String(FEED_PAGE_SIZE)});if(cursor)params.set("after",cursor);if(category)params.set("category",category);
-   const r=await fetch("/api/catalog/"+kind+"?"+params,{cache:"no-store",signal:controller.signal});
+   const r=await abortable(fetch("/api/catalog/"+kind+"?"+params,{cache:"no-store",signal:controller.signal}),controller.signal);
    if(!r.ok)throw Error("Public "+kind+" unavailable");
-   const value=await r.json();
+   const value=await abortable(r.json(),controller.signal);
    if(!value||!Array.isArray(value[kind])||value[kind].length>FEED_PAGE_SIZE)throw Error("Invalid "+kind+" response");
    if(entry.revision!==revision)throw Error("Public feed was revised");
    if(controller.signal.aborted)throw Error("Public feed deadline exceeded");

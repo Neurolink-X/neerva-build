@@ -249,3 +249,18 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 .visualizer-app .paint-sample-gallery button .paint-sample-photo{flex:0 0 auto;min-width:0}
 .visualizer-app .paint-targets,.visualizer-app .paint-mode{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
 .visualizer-app .paint-preview-status,.visualizer-app .paint-reference-note{overflow-wrap:anywhere;white-space:normal}
+
+/* Avoid hiding the selected pattern beneath the mobile live preview on keyboard focus. */
+.visualizer-app .wall-pattern-options button{scroll-margin-block:16px}
+@media(max-width:850px){.visualizer-app .wall-pattern-options button{scroll-margin-block-start:calc(30svh + 96px)}.visualizer-app .paint-pattern-groups button:focus-visible,.visualizer-app .wall-pattern-options button:focus-visible{outline:2px solid #35674e;outline-offset:2px}}
+@media(max-height:480px) and (max-width:850px){.visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){position:static;top:auto}.visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) :is(canvas,.paint-canvas-frame){max-height:none;height:auto}.visualizer-app .wall-pattern-options button{scroll-margin-block-start:16px}}
+
+.visualizer-app .wall-pattern-options .paint-texture-swatch{display:block;width:100%;height:auto;aspect-ratio:3/2;border-radius:5px;object-fit:contain}.visualizer-app .paint-pattern-current{overflow-wrap:anywhere}
+
+.visualizer-app .interior-view-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:8px}.visualizer-app .interior-view-switch button{min-height:44px;white-space:normal}.visualizer-app .interior-wall-targets{margin-block:8px}.visualizer-app .interior-wall-targets button[aria-pressed=true],.visualizer-app .interior-view-switch button[aria-pressed=true]{border-color:#35674e;background:#e9f1e9;color:#234b35}.visualizer-app .interior-view-switch button:disabled{opacity:.55}
+
+.visualizer-app .paint-room-choice{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600;margin-block:6px;color:inherit}.visualizer-app .paint-room-choice select{min-height:44px;min-width:0;flex:1;max-width:100%;font:inherit;border:1px solid #b8c9bb;border-radius:8px;padding:6px 10px;background:white;color:#263d35}
+
+.neerva-shade-reference{min-width:0;border:1px solid #d6e0d5;border-radius:10px;padding:8px 12px;margin:8px 0;color:inherit}.neerva-shade-reference summary{font-weight:650;cursor:pointer;min-height:44px;align-content:center}.neerva-shade-rows{display:grid;gap:8px;max-height:320px;overflow:auto}.neerva-shade-row{display:flex;gap:10px;align-items:center;min-width:0}.neerva-shade-row i{width:38px;height:38px;border:1px solid #a9b5aa;border-radius:6px;flex:none}.neerva-shade-row span{display:grid;min-width:0;overflow-wrap:anywhere}.neerva-shade-row small,.neerva-shade-reference p{font-size:12px;line-height:1.4}.neerva-shade-actions{display:flex;flex-wrap:wrap;gap:6px}.neerva-shade-actions :is(button,a){min-height:44px;display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #9eb3a4;border-radius:8px;background:#fff;color:#254738;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer}
+
+.visualizer-app .paint-shade-search{display:block;width:100%;min-width:0;min-height:44px;box-sizing:border-box;border:1px solid #b8c9bb;border-radius:8px;padding:8px 10px;background:white;color:#263d35;font:inherit}.visualizer-app .paint-custom-shade output{overflow-wrap:anywhere;line-height:1.4}

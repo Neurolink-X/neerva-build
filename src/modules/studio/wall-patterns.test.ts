@@ -1,12 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {finishes,artworkMotifs,patternKeys,patternGroups,retiredPatterns,groupForPattern,isRetiredPattern,type Motif} from "./wall-patterns.ts";
+import {exteriorPatternKeys,exteriorCollections,isExteriorPattern} from "./exterior-wall-art.ts";
+import {rebuiltWallArt} from "./rebuilt-wall-art.ts";
 import {colourFamilies,colourPairings} from "./colour-families.ts";
 test("curated wall library exposes exactly 72 designs and preserves retired IDs",()=>{
  const keys=Object.values(patternGroups).flat();
  assert.equal(keys.length,72);
  assert.equal(new Set(keys).size,keys.length);
- assert.deepEqual([...keys,...retiredPatterns].sort(),patternKeys.filter(k=>k!=="plain").sort());
+ assert.deepEqual([...keys,...retiredPatterns,...exteriorPatternKeys].sort(),patternKeys.filter(k=>k!=="plain").sort());
  assert.ok(retiredPatterns.every(k=>isRetiredPattern(k)&&groupForPattern(k)==="Signature"));
  assert.ok(keys.every(k=>!isRetiredPattern(k)));
  assert.ok(Object.values(patternGroups).every(g=>g.length===8));
@@ -47,3 +49,10 @@ test("artwork is generated on demand, reused and deterministic after cache evict
  for(const key of patternKeys)artworkMotifs(key);
  assert.deepEqual(artworkMotifs("aurora"),first);
 });
+test("distinct full wall relief and original nature compositions",()=>{for(const key of ["riverSunset","lotusPond","gardenTree","blossomBranch","sculptWave","sculptRibbon","sculptFold","sculptStone"] as const)assert.ok(artworkMotifs(key).length>20,key);assert.notDeepEqual(artworkMotifs("gardenTree"),artworkMotifs("blossomBranch"));assert.notDeepEqual(artworkMotifs("sculptWave"),artworkMotifs("sculptRibbon"));});
+
+test("all active patterns use a bounded material and pigment recipe",()=>{for(const key of Object.values(patternGroups).flat()){const motifs=artworkMotifs(key);assert.ok(motifs.length<=600,key);assert.ok(motifs.every(m=>m.finish&&m.pigment!==undefined&&m.pigment>=0&&m.pigment<=1),key);}});
+
+test("each restored design owns a distinct rebuilt composition, not the legacy motif or renamed clone",()=>{const keys=Object.keys(rebuiltWallArt) as (keyof typeof rebuiltWallArt)[];assert.equal(keys.length,36);assert.ok(keys.every(k=>!isRetiredPattern(k)));const geometry=keys.map(k=>JSON.stringify(artworkMotifs(k).map(m=>m.points)));assert.equal(new Set(geometry).size,36);for(const k of keys)assert.notDeepEqual(artworkMotifs(k).map(m=>m.points),finishes[k].motifs.map(m=>m.points),k);});
+
+test("exterior catalogue is separate, complete and distinct",()=>{const keys=Object.values(exteriorCollections).flat();assert.equal(keys.length,12);assert.equal(new Set(keys).size,12);assert.deepEqual([...keys].sort(),[...exteriorPatternKeys].sort());assert.ok(Object.values(patternGroups).flat().every(k=>!isExteriorPattern(k)));assert.equal(new Set(keys.map(k=>JSON.stringify(artworkMotifs(k)))).size,12);for(const k of keys)assert.ok(artworkMotifs(k).every(m=>m.points.every(p=>p.every(Number.isFinite))&&Math.abs(m.tone??0)<=.8));});

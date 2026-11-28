@@ -1,8 +1,12 @@
 import {decorativeArt,luxuryLattice} from "./decorative-wall-art.ts";
 import {premiumArt,enrichArtwork} from "./premium-wall-art.ts";
+import {refinedArtwork} from "./refined-wall-art.ts";
+import {finishWallArt} from "./wall-material-art.ts";
+import {rebuiltWallArt} from "./rebuilt-wall-art.ts";
+import {exteriorArt,isExteriorPattern} from "./exterior-wall-art.ts";
 // Coordinates are fractions of the selected wall, clockwise from its top-left corner.
 type Point = [number, number];
-export type Motif = {points: Point[]; filled?: boolean; alpha?: number; weight?: number; tone?:number};
+export type Motif = {points: Point[]; filled?: boolean; alpha?: number; weight?: number; tone?:number;pigment?:number;finish?:"matte"|"bevel"|"metal"};
 const line = (...points: Point[]): Motif => ({points});
 const box = (x:number,y:number,w:number,h:number) => line([x,y],[x+w,y],[x+w,y+h],[x,y+h],[x,y]);
 const repeat = (count:number,make:(i:number)=>Motif) => Array.from({length:count},(_,i)=>make(i));
@@ -96,13 +100,12 @@ export const finishes = {
  reception:{name:"Reception feature wall",motifs:[{...box(.08,.10,.84,.80),alpha:.55,weight:1.6},...repeat(8,i=>({...line([.10+i*.033,.12],[.10+i*.033,.88]),alpha:.35,weight:1.4})),...repeat(8,i=>({...line([.66+i*.033,.12],[.66+i*.033,.88]),alpha:.35,weight:1.4}))]}
  ,herringbone:{name:"Chevron herringbone",motifs:repeat(6,i=>({...line([0,i/6],[.25,(i+.5)/6],[.5,i/6],[.75,(i+.5)/6],[1,i/6]),alpha:.68,weight:1.5}))},artDecoSunburst:{name:"Art deco sunburst",motifs:repeat(15,i=>({...line([.5,.8],[.5+.46*Math.cos(Math.PI+i*Math.PI/14),.8+.64*Math.sin(Math.PI+i*Math.PI/14)]),alpha:.55,weight:1.3}))},
   steppedColourBlock:{name:"Stepped colour block",motifs:[{filled:true,alpha:.74,points:[[0,1],[0,.45],[.32,.45],[.32,.62],[.65,.62],[.65,.8],[1,.8],[1,1]] as Point[]}]},
-  softConcrete:{name:"Fine concrete patina",motifs:[...grain(64,43),...repeat(14,i=>wave(.04+i*.07,.018,i*.91,.10,3))]},...decorativeArt,...newPaintedArt,...premiumArt
+  softConcrete:{name:"Fine concrete patina",motifs:[...grain(64,43),...repeat(14,i=>wave(.04+i*.07,.018,i*.91,.10,3))]},...decorativeArt,...newPaintedArt,...premiumArt,...exteriorArt
 } satisfies Record<string,{name:string;motifs:Motif[]}>;
 export type Pattern = keyof typeof finishes;
 export const patternKeys = Object.keys(finishes) as Pattern[];
 // Old IDs remain valid for previously selected walls; weak filler designs are
 // excluded from the new curated chooser rather than breaking restored selections.
-export const retiredPatterns=["travertine","mineral","marble","limewash","linen","terracotta","brushed","stonewash","venetian","onyx","suede","microcement","softConcrete","printLotus","printPalm","printTerrazzo","printScandi","printMosaic","printDots","printWave","printPaisley","reliefDiamond","reliefPyramid","reliefCube","reliefSteps","reliefFolds","reliefTiles","reliefRibbon","reliefChevron","fluted","ribbed","slimframes","reception","archNiches","shakerPanels","pilasterLines","steppedFrames"] as const satisfies readonly Pattern[];
 export const patternGroups={
  Signature:["sunDisc","orbit","layeredArches","abstractLeaves","eclipse","aurora","galleryArc","celestial"],
  Murals:["flyingBirds","gardenTree","riverSunset","meadowBloom","lotusPond","desertDunes","oceanCliffs","citySilhouette"],
@@ -114,6 +117,8 @@ export const patternGroups={
  "3D effects":["sculptFlute","sculptWave","sculptDiamond","sculptFold","sculptReed","sculptRibbon","sculptStone","sculptPrism"],
  Architectural:["atelierPanel","regencyPanel","palazzoPanel","artHotelPanel","walnutPanel","contemporaryPanel","grandSalon","archGallery"]
 } as const satisfies Record<string,readonly Pattern[]>;
+const curated=new Set<Pattern>(Object.values(patternGroups).flat());
+export const retiredPatterns=patternKeys.filter(key=>key!=="plain"&&!curated.has(key)&&!isExteriorPattern(key));
 export type PatternGroup=keyof typeof patternGroups;
 export function groupForPattern(pattern:Pattern):PatternGroup{return (Object.keys(patternGroups) as PatternGroup[]).find(g=>(patternGroups[g] as readonly Pattern[]).includes(pattern))??"Signature";}
 export function isRetiredPattern(pattern:Pattern){return (retiredPatterns as readonly Pattern[]).includes(pattern);}
@@ -122,7 +127,8 @@ export function isRetiredPattern(pattern:Pattern){return (retiredPatterns as rea
 const motifCache=new Map<Pattern,Motif[]>();
 export function artworkMotifs(key:Pattern):Motif[]{
  const cached=motifCache.get(key);if(cached)return cached;
- const motifs=(Object.hasOwn(premiumArt,key)||isRetiredPattern(key)||key==="plain")?finishes[key].motifs:enrichArtwork(key,finishes[key].motifs);
+ const original=isExteriorPattern(key)?exteriorArt[key].motifs:(rebuiltWallArt as Partial<Record<Pattern,()=>Motif[]>>)[key]?.()??refinedArtwork[key]?.()??((Object.hasOwn(premiumArt,key)||isRetiredPattern(key)||key==="plain")?finishes[key].motifs:enrichArtwork(key,finishes[key].motifs));
+ const motifs=key==="plain"||isRetiredPattern(key)?original:finishWallArt(key,original);
  if(motifCache.size>=16){const first=motifCache.keys().next().value;if(first!==undefined)motifCache.delete(first);}
  motifCache.set(key,motifs);return motifs;
 }

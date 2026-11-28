@@ -14,3 +14,5 @@ test("collection guidance is aligned with the only active catalogue",()=>{
  assert.deepEqual(Object.keys(collectionGuide).sort(),Object.keys(patternGroups).sort());
  assert.ok(featureWallPatterns.every(p=>patternKeys.includes(p)));
 });
+
+test("focal art fits above the sample sofa without changing its aspect",()=>{const f=artworkFrame(rect(600,400),true,.7);assert.ok(f.v+f.h<=.7+1e-8);assert.ok(Math.abs(600*f.w/(400*f.h)-1.5)<1e-8);});
