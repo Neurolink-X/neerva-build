@@ -106,6 +106,14 @@ function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):Pla
 }
 /** Deterministic roof grille geometry, feet. No solid cover; bar spacing is
  * illustrative, not a fall-protection specification. */
+/** A shaft beside an upper open terrace terminates at the walkable terrace
+ * plane, not at the nominal roof of the tallest enclosed room. Concept only. */
+export function otsGrilleLevel(p:PlanModel):number|null{
+ const shaft=p.rooms.find(r=>isOtsRoom(r)&&r.floor===p.floors-1);
+ if(!shaft)return null;
+ const terrace=p.rooms.some(r=>r.floor===shaft.floor&&r.kind==="terrace"&&!isOtsRoom(r)&&sharedEdge(r,shaft));
+ return terrace?shaft.floor:p.floors;
+}
 export function otsGrilleBars(p:PlanModel):Rect[]{
  const r=p.rooms.find(q=>isOtsRoom(q)&&q.floor===p.floors-1);if(!r)return [];
  const bars:Rect[]=[],t=.075;
@@ -113,9 +121,16 @@ export function otsGrilleBars(p:PlanModel):Rect[]{
  for(let i=0;i<=Math.ceil(r.d/.4);i++){const y=r.y+Math.min(r.d-t,i*r.d/Math.ceil(r.d/.4));bars.push({x:r.x,y,w:r.w,d:t});}
  return bars;
 }
-export function airOptimizedPlan(p:PlanModel,shaft:boolean,windows:boolean){
+// Immutable generated PlanModels have a bounded four-mode cache. Weak keys
+// allow discarded portfolios to be collected; no cross-brief stale geometry.
+const airPlanCache=new WeakMap<PlanModel,Map<number,PlanModel>>();
+export function airOptimizedPlan(p:PlanModel,shaft:boolean,windows:boolean):PlanModel{
+ const key=Number(shaft)*2+Number(windows);
+ let modes=airPlanCache.get(p);
+ if(!modes){modes=new Map();airPlanCache.set(p,modes);}
+ const cached=modes.get(key);if(cached)return cached;
  const base=shaft?otsVariant(p):p;
- if(!windows)return base;
- const revised=ventilationVariant(base);
- return revised===base||preservesEssentialInterior(interiorFitReport(base),interiorFitReport(revised))?revised:base;
+ const revised=windows?ventilationVariant(base):base;
+ const result=revised===base||preservesEssentialInterior(interiorFitReport(base),interiorFitReport(revised))?revised:base;
+ modes.set(key,result);return result;
 }

@@ -289,3 +289,14 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 .signature-art-unavailable{font-size:13px;color:#58675b;padding:12px;text-align:center}
 .signature-art-description{padding:10px 14px;margin:0!important}
 .signature-wall-detail .signature-wall-art{max-height:650px}
+
+/* Touch layouts also cover desktop-width mobile viewports and tablets. */
+@media (pointer:coarse) and (max-width:1100px){
+ .visualizer-app .paint-live-workspace{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;overflow:visible}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){position:static;top:auto}
+ .visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) :is(canvas,.paint-canvas-frame){max-height:none;height:auto}
+ .visualizer-app .paint-live-tools{margin:0;min-width:0}
+ .visualizer-app .paint-live-tools :is(button,select,input){scroll-margin-block:12px}
+ .visualizer-app .paint-pattern-groups{display:flex;flex-wrap:wrap;overflow:visible}
+ .visualizer-app .paint-pattern-groups button{flex:1 1 8rem;white-space:normal;min-height:44px}
+}

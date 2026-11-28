@@ -12,7 +12,7 @@ import {DesignPlanArt} from "@/components/studio-design-gallery";
 import {finishSpaces,wallFaceOwners,wallShade,type FinishScheme,type FinishMaterial,type FinishSurface} from "@/modules/studio/finish-model";
 import type {Side} from "@/modules/studio/plan-model";
 import {isOtsRoom,type PlanModel} from "@/modules/studio/plan-model";
-import {otsGrilleBars} from "@/modules/studio/ots-ventilation";
+import {otsGrilleBars,otsGrilleLevel} from "@/modules/studio/ots-ventilation";
 import {modeledWindowGeometry,ventilationGeometrySummary,windowGeometryKey} from "@/modules/studio/ventilation-geometry";
 import {threeRoadRotation} from "@/modules/studio/plan-coordinate";
 import {residentialStairStudies,stairFloorPatches,stairStepDepthFt} from "@/modules/studio/stair-study";
@@ -38,6 +38,8 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
  const [lighting,setLighting]=useState<"day"|"evening">("day");
  const [quality,setQuality]=useState<"balanced"|"detail">("balanced");
  const [mode,setMode]=useState<Mode>(selectedFloor===undefined?"exterior":"dollhouse"),[fallback,setFallback]=useState(false);
+ const [previousFloor,setPreviousFloor]=useState(selectedFloor);
+ if(previousFloor!==selectedFloor){setPreviousFloor(selectedFloor);if(selectedFloor!==undefined&&mode==="exterior")setMode("dollhouse");}
  // The same wall cells feed the WebGL meshes and the cross-view regression contract.
  const stairReview=useMemo(()=>planModel?residentialStairStudies(planModel):null,[planModel]);
  const wallCells=useMemo(()=>visibleWallCells(design,mode==="exterior"?undefined:selectedFloor,mode==="dollhouse"),[design,mode,selectedFloor]);
@@ -45,6 +47,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
  useEffect(()=>{colourRef.current=colour;if(wallMat.current){wallMat.current.color.set(colour);refresh.current?.()}},[colour]);
  useEffect(()=>{
   const target=host.current;if(!target||fallback)return;
+  delete target.dataset.gpuResources;
   let renderer:THREE.WebGLRenderer|undefined,controls:OrbitControls|undefined,observer:ResizeObserver|undefined,failedTimer=0;
   let scheduler:ReturnType<typeof browserFrameScheduler>|undefined;
   let environmentTarget:THREE.WebGLRenderTarget|undefined;
@@ -227,7 +230,15 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     roof(cx,top+parapet/2+.14,zCoord(fp.minZ),W+.25,parapet,.18);roof(cx,top+parapet/2+.14,zCoord(fp.maxZ),W+.25,parapet,.18);
     roof(xCoord(fp.minX),top+parapet/2+.14,cz,.18,parapet,D+.25);roof(xCoord(fp.maxX),top+parapet/2+.14,cz,.18,parapet,D+.25);
    }
-   if(planModel)for(const r of otsGrilleBars(planModel)){const m=new THREE.Mesh(shared,showAir?airGreen:railingMat);m.name="Concept roof ventilation grille";m.position.set(xCoord(r.x+r.w/2),top+.17,zCoord(r.y+r.d/2));m.scale.set(r.w*FT,.045,r.d*FT);roofGroup.add(m);}
+   if(planModel){
+    const level=otsGrilleLevel(planModel);
+    if(level!==null){
+     // Terrace plates are centred on the floor (top +.07m), roof slabs top +.17m.
+     // Place the grate flush with its actual support surface, not above the deck.
+     const surface=level<design.floors?.07:.17;
+     for(const r of otsGrilleBars(planModel)){const m=new THREE.Mesh(shared,showAir?airGreen:railingMat);m.name="Concept roof ventilation grille";m.position.set(xCoord(r.x+r.w/2),level*height+surface-.0225,zCoord(r.y+r.d/2));m.scale.set(r.w*FT,.045,r.d*FT);roofGroup.add(m);}
+    }
+   }
    roofGroup.visible=mode==="exterior";site.add(roofGroup);
    for(const r of design.layout.rooms.filter(r=>r.kind==="parking"&&visible(r.floorIndex))){
     box(xCoord(r.xFt+r.wFt/2),.015,zCoord(r.yFt+r.dFt/2),r.wFt*FT,.03,r.dFt*FT,material("#aaa69a"),false);
@@ -286,7 +297,14 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    }
    const radius=Math.max(...corners.map(p=>p.length()));
    const orbitFit=()=>{const halfY=THREE.MathUtils.degToRad(camera.fov/2),halfX=Math.atan(Math.tan(halfY)*camera.aspect);return radius/Math.sin(Math.min(halfX,halfY))*1.08;};
-   scheduler=browserFrameScheduler(()=>{if(!renderer||!controls||disposed)return;try{controls.update();renderer.render(scene,camera)}catch{if(!disposed)setFallback(true)}});
+   let resourceSampled=false;
+   scheduler=browserFrameScheduler(()=>{if(!renderer||!controls||disposed)return;try{
+    controls.update();const started=performance.now();renderer.render(scene,camera);
+    if(!resourceSampled){resourceSampled=true;
+     // Renderer allocation counts, not GPU byte measurements or field INP.
+     target.dataset.gpuResources=JSON.stringify({geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,canvasPixels:renderer.domElement.width*renderer.domElement.height,firstRenderCpuMs:Math.round((performance.now()-started)*100)/100});
+    }
+   }catch{if(!disposed)setFallback(true)}});
    const schedule=scheduler.schedule;document.addEventListener("visibilitychange",scheduler.visibility);
    refresh.current=schedule;controls.addEventListener("change",schedule);
    let lastWidth=0,lastHeight=0;
@@ -341,7 +359,8 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
      const append=(matrix:THREE.Matrix4)=>{
       const b=bounds.clone().applyMatrix4(matrix);
       if(b.isEmpty()||!Number.isFinite(b.min.x+b.min.y+b.min.z+b.max.x+b.max.y+b.max.z))return;
-      boxes.push({lo:b.min.toArray(),hi:b.max.toArray(),color:[mat.color.r,mat.color.g,mat.color.b],opacity:mat.transparent?mat.opacity:1,metal:mat.metalness,rough:mat.roughness});
+      const srgb=mat.color.clone().convertLinearToSRGB();
+      boxes.push({lo:b.min.toArray(),hi:b.max.toArray(),color:[srgb.r,srgb.g,srgb.b],opacity:mat.transparent?mat.opacity:1,metal:mat.metalness,rough:mat.roughness});
      };
      transform.multiplyMatrices(inverse,object.matrixWorld);
      if(object instanceof THREE.InstancedMesh){for(let i=0;i<object.count;i++){object.getMatrixAt(i,instance);append(transform.clone().multiply(instance));}}

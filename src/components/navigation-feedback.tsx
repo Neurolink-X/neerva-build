@@ -4,12 +4,13 @@ import {usePathname,useRouter,useSearchParams} from "next/navigation";
 import {navigationPath,prefetchPath,takePrefetch,allowSpeculativeNetwork,type NetworkHint} from "@/modules/navigation/intent";
 export function NavigationFeedback(){
  const router=useRouter(),pathname=usePathname(),search=useSearchParams().toString();
+ const navigationStart=useRef<number|null>(null);
  const bar=useRef<HTMLDivElement>(null),deadline=useRef<ReturnType<typeof setTimeout>|undefined>(undefined),recent=useRef(new Map<string,number>());
- useEffect(()=>{clearTimeout(deadline.current);bar.current?.removeAttribute("data-active")},[pathname,search]);
+ useEffect(()=>{clearTimeout(deadline.current);bar.current?.removeAttribute("data-active");if(navigationStart.current!==null){const ms=performance.now()-navigationStart.current;navigationStart.current=null;if(Number.isFinite(ms)&&ms>=0)window.dispatchEvent(new CustomEvent("neerva:navigation-timing",{detail:{durationMs:Math.round(ms),viewport:window.innerWidth<=760?"mobile":"desktop"}}));}},[pathname,search]);
  useEffect(()=>{
   let hover:ReturnType<typeof setTimeout>|undefined;
-  function stop(){clearTimeout(deadline.current);bar.current?.removeAttribute("data-active")}
-  function start(){if(document.visibilityState==="hidden")return;bar.current?.setAttribute("data-active","true");clearTimeout(deadline.current);deadline.current=setTimeout(stop,15000)}
+  function stop(){navigationStart.current=null;clearTimeout(deadline.current);bar.current?.removeAttribute("data-active")}
+  function start(){if(document.visibilityState==="hidden")return;navigationStart.current=performance.now();bar.current?.setAttribute("data-active","true");clearTimeout(deadline.current);deadline.current=setTimeout(stop,15000)}
   function anchor(target:EventTarget|null){return target instanceof Element?target.closest<HTMLAnchorElement>("a[href]"):null}
   function ordinary(a:HTMLAnchorElement){return (!a.target||a.target==="_self")&&!a.hasAttribute("download")&&a.getAttribute("aria-disabled")!=="true"}
   function click(e:MouseEvent){const a=anchor(e.target);if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||!a||!ordinary(a)||!navigationPath(a.href,location.href))return;start()}

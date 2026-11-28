@@ -90,7 +90,7 @@ function addWindow(p:Pick<PlanModel,"rooms"|"openings"|"plot"|"setbacks">){
 export type SpatialProgramme="wash"|"family-gallery"|"rear-courtyard"|"rear-baranda";
 /** Road-relative depth, not compass coordinates or left/right mirror. */
 export function kitchenZone(p:PlanModel):"front"|"middle"|"rear"{const k=p.rooms.find(r=>r.kind==="kitchen"&&r.floor===0)??p.rooms.find(r=>r.kind==="kitchen");if(!k)return "middle";const t=(k.y+k.d/2-p.setbacks.frontFt)/(p.plot.depthFt-p.setbacks.frontFt-p.setbacks.rearFt);return t<1/3?"front":t>=2/3?"rear":"middle";}
-type SpatialRecipe={rearKitchen?:boolean;reverseService?:boolean;reverseRear?:boolean;parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
+type SpatialRecipe={coveredUpper?:boolean;rearKitchen?:boolean;reverseService?:boolean;reverseRear?:boolean;parkWidthFt?:number;entryDepthFt?:number;stairWidthFt?:number;kitchenWidthFt?:number;
  rearBedWidthFt?:number;upperBedRatio?:number;rearProgramme?:SpatialProgramme;frontProgramme?:"dining"|"family-hall"|"family-lounge";familyLabel?:string;};
 function houseEnvelope(b:PlanBrief){
  const envelope=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
@@ -141,8 +141,16 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   put(`stairs-${level}`,"Stairs / landing","stairs",level,0,16,stairW,10);
   put(`lounge-${level}`,"Family lounge","lounge",level,stairW,16,W-stairW,10);
   put(`bath-${level}`,"Bath / WC","bath",level,0,26,stairW,8);
-  put(`utility-${level}`,"Wash / service","utility",level,stairW,26,W-stairW,8);
-  put(`terrace-${level}`,"Open terrace","terrace",level,0,34,W,D-34);
+  if(recipe.coveredUpper&&D>=47&&W-stairW>=9&&D-39>=8&&W/(D-39)<=2.5){
+   const passage=3.5;
+   put(`utility-${level}`,"Wash / service","utility",level,stairW,26,W-stairW-passage,8);
+   put(`rear-passage-${level}`,"Private rear access","corridor",level,W-passage,26,passage,8);
+   put(`rear-family-${level}`,"Rear family room / study","lounge",level,0,34,W,D-39);
+   put(`terrace-${level}`,"Compact open terrace","terrace",level,0,D-5,W,5);
+  }else{
+   put(`utility-${level}`,"Wash / service","utility",level,stairW,26,W-stairW,8);
+   put(`terrace-${level}`,"Open terrace","terrace",level,0,34,W,D-34);
+  }
  }
  // Place the wet core and sleeping wing independently of the street entrance.
  for(const r of rooms){
@@ -179,7 +187,8 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  for(let level=1;level<b.floors;level++){
   const frontRoom=b.bedrooms<b.floors&&level>=b.bedrooms?`family-room-${level}`:`bed-${level}a`;
   joins.push([`stairs-${level}`,`lounge-${level}`],[`stairs-${level}`,`bath-${level}`],[`lounge-${level}`,`utility-${level}`],[`lounge-${level}`,frontRoom],[`balcony-${level}`,frontRoom]);
-  if(b.bedrooms<b.floors&&level>=b.bedrooms)joins.push([`utility-${level}`,`terrace-${level}`]);
+  if(rooms.some(r=>r.id===`rear-family-${level}`))joins.push([`lounge-${level}`,`rear-passage-${level}`],[`rear-passage-${level}`,`rear-family-${level}`],[`rear-family-${level}`,`terrace-${level}`]);
+  else if(b.bedrooms<b.floors&&level>=b.bedrooms)joins.push([`utility-${level}`,`terrace-${level}`]);
   if(b.bedrooms>b.floors)joins.push([`lounge-${level}`,`bed-${level}b`],[`balcony-${level}`,`bed-${level}b`]);
  }
  if(!b.parking)joins.push(["verandah","front-court"]);
@@ -841,9 +850,23 @@ export function generateStairReadyPortfolio(b:PlanBrief,limit=24):PlanningResult
  }
  return {plans,blockers:plans.length?[]:["No dog-leg stair candidate fits the exact requested programme and door alignment. Try the standard concepts or review usable frontage with an architect."]};
 }
+/** Additional real upper-floor programme, preserving original portfolio IDs.
+ * Never force a room on a constrained site or count a lounge as a bedroom. */
+export function generateCoveredUpperPortfolio(b:PlanBrief):PlanModel[]{
+ if(b.floors<2||explainImpossible(b).length)return [];
+ const plans:PlanModel[]=[];
+ for(const variant of ["parking-left","parking-right"] as const){
+  try{
+   const p=build(b,variant,{coveredUpper:true,familyLabel:"covered-upper-v1",rearProgramme:"wash",frontProgramme:"dining"});
+   if(p.rooms.some(r=>r.id.startsWith("rear-family-"))&&!validateRequestedProgramme(p,b).length)plans.push(p);
+  }catch{/* Infeasible options are excluded. */}
+ }
+ return uniquePlanGeometry(plans);
+}
 export function portfolioForPlanId(b:PlanBrief,planId:string):PlanningResult{
  if(planId.endsWith("-ots-v1")){const base=portfolioForPlanId(b,planId.slice(0,-7));return {...base,plans:base.plans.map(p=>p.id===planId.slice(0,-7)?otsVariant(p):p)};}
  if(planId.endsWith("-vent-v1")){const base=portfolioForPlanId(b,planId.slice(0,-8));return {...base,plans:base.plans.map(ventilationVariant)};}
+ if(planId.endsWith("-covered-upper-v1"))return {plans:generateCoveredUpperPortfolio(b),blockers:[]};
  if(/-stair-v1-[01]$/.test(planId))return generateStairReadyPortfolio(b,24);
  const current=generateSpatialPortfolio(b,24);return current.plans.some(p=>p.id===planId)?current:generateSpatialPortfolio(b,24,true);
 }

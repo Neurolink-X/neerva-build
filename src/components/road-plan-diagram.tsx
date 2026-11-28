@@ -59,13 +59,13 @@ export function RoadElevation({plan,main,accent,glass="#91b5bd"}:{plan:PlanModel
  const accents=facadeAccents(plan,frontRooms);
  const gates=[plan.gate,plan.pedestrianGate].filter(g=>g.widthFt>0);
  return <section className="nroad-elevation" aria-label="Road-side elevation derived from PlanModel" data-plan-id={plan.id} data-frontage-signature={frontageSignature(plan)}>
-  <svg viewBox="0 0 700 420" role="img" aria-label={`Road-side elevation for ${widthFt} ft frontage, ${plan.floors} levels`}>
+  <svg viewBox="0 0 700 420" preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Road-side elevation for ${widthFt} ft frontage, ${plan.floors} levels`}>
    <ElevationDefs id={id} wall={main} accent={accent} glass={glass}/>
 
    <rect width="700" height="420" fill={`url(#${id}sky)`}/>
    <rect y="355" width="700" height="65" fill={`url(#${id}ground)`}/>
    <path d="M0 371H700" stroke="#f6f4eb" strokeWidth="2"/>
-   <rect x={x(0)} y={355} width={widthFt*scale} height="8" fill="#676f67"/>
+   <rect x={x(0)} y={355} width={widthFt*scale} height="8" fill="#676f67"/><path d={`M${x(0)} 363 H${x(widthFt)} L${x(widthFt)+18} 369 H${x(0)+18}Z`} fill="#26392e" opacity=".14"/>
    {frontRooms.map(r=><g key={r.roomId+"-"+r.x}><rect x={x(r.x)} y={y((r.floor+1)*storeyFt)} width={r.w*scale} height={storeyFt*scale} fill={`url(#${id}wall)`}/><rect x={x(r.x)} y={y((r.floor+1)*storeyFt)} width={r.w*scale} height={storeyFt*scale} fill="#24382c" opacity={Math.min(.20,r.y/depth*.26)}/><path d={`M${x(r.x)} ${y((r.floor+1)*storeyFt)}v${storeyFt*scale}`} stroke="#27392e" opacity=".14" strokeWidth="1.2"/></g>)}
    {frontRooms.filter(r=>r.floor===plan.floors-1).map(r=><g key={"parapet-"+r.roomId+"-"+r.x}><rect x={x(r.x)} y={y(plan.floors*storeyFt+plan.walls.parapetFt)} width={r.w*scale} height={plan.walls.parapetFt*scale} fill={`url(#${id}accent)`}/><rect x={x(r.x)} y={y(plan.floors*storeyFt+plan.walls.parapetFt)} width={r.w*scale} height={Math.max(1,.18*scale)} fill="#43574b"/></g>)}
    {accents.map((a,i)=><rect key={i} x={x(a.x)} y={y(a.y+a.h)} width={a.w*scale} height={a.h*scale} fill={`url(#${id}accent)`} stroke="#453a31" strokeOpacity=".18" strokeWidth=".5"/>)}
@@ -83,6 +83,6 @@ export function RoadElevation({plan,main,accent,glass="#91b5bd"}:{plan:PlanModel
    {gates.map(g=><g key={g.xFt}><rect x={x(g.xFt)} y={y(4)} width={g.widthFt*scale} height={4*scale} fill="#536359" stroke="#303f35"/>{Array.from({length:7},(_,k)=><line key={k} x1={x(g.xFt+g.widthFt*(k+.5)/7)} x2={x(g.xFt+g.widthFt*(k+.5)/7)} y1={y(3.8)} y2={y(.2)} stroke="#a7b2a6" strokeWidth="1.5"/>)}</g>)}
 
   </svg>
-  <p className="nroad-small">{widthFt} ft frontage · Road {roadSide} · {plan.floors} level(s). Plan-derived architectural illustration. Actual openings and gate positions are retained; materials and lighting are illustrative, not a photoreal render.</p>
+  <p className="nroad-small">{widthFt} ft frontage · Road {roadSide} · {plan.floors} level(s). Plan-derived front elevation with actual modeled openings and gates. For depth, balcony projection and lighting, open the realistic street render below. This elevation is not a photograph or a construction-approved drawing.</p>
  </section>;
 }
