@@ -42,13 +42,12 @@ export function colouredTexture(texture:Texture,base:string,accent:string,maxSid
  ctx.putImageData(img,0,0);return canvas;
 }
 export const WallTextureSwatch=memo(function WallTextureSwatch({texture,base,accent,intensity}:{texture:Texture;base:string;accent:string;intensity:number}){
- const ref=useRef<HTMLCanvasElement>(null);
- useLayoutEffect(()=>{const c=colouredTexture(texture,base,accent,280),target=ref.current,ctx=target?.getContext("2d");if(!target||!ctx)return;
- const scale=Math.min(target.width/c.width,target.height/c.height),w=c.width*scale,h=c.height*scale;
- ctx.clearRect(0,0,target.width,target.height);ctx.drawImage(c,(target.width-w)/2,(target.height-h)/2,w,h);c.width=0;c.height=0;
+ const ref=useRef<SVGImageElement>(null);
+ useLayoutEffect(()=>{const c=colouredTexture(texture,base,accent,220);
+ // Only pigment changes regenerate the small swatch; intensity is SVG opacity.
+ ref.current?.setAttribute("href",c.toDataURL("image/webp",.82));c.width=0;c.height=0;
  },[texture,base,accent]);
- // Avoid synchronous PNG encoding and base64 strings every time a shade changes.
- return <span className="paint-texture-swatch" aria-hidden="true" style={{background:base,display:"block",padding:0,borderRadius:5,overflow:"hidden",aspectRatio:"3/2"}}><canvas ref={ref} width={300} height={200} style={{display:"block",width:"100%",height:"auto",opacity:intensity}}/></span>;
+ return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio="xMidYMid meet" opacity={intensity}/></svg>;
 });
 type Point={x:number;y:number};
 /** Two clipped affine triangles share the same wall diagonal. This is a
