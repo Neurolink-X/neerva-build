@@ -85,3 +85,10 @@ test("lift is explicitly optional; stairs remain on every level and project iden
  }
  assert.equal(generateBuildingConcepts({...b,floors:1,reserveLift:true},24,"internal").plans.length,0);
 });
+
+test("non-rental internal variants include distinct service room dimensions",()=>{
+ const b={...buildingStarter("restaurant"),widthFt:180,depthFt:240,floors:2,unitsPerFloor:4};
+ const plans=generateBuildingConcepts(b,24,"internal").plans;
+ assert.ok(plans.some(p=>p.id.endsWith("-internal-v1-1")||p.id.endsWith("-internal-v1-3")));
+ for(const p of plans){assert.deepEqual(validateBuildingConcept(p),[]);assert.deepEqual(commercialGeometryIssues(p),[]);}
+});

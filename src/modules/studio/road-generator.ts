@@ -2,14 +2,24 @@ import {type PlanBrief,type PlanModel,type Room,type Opening,type Side,type Room
  type Rect,sharedEdge,area,validatePlan} from "./plan-model.ts";
 import {conservativeEnvelope,shapeErrors} from "./site-shape.ts";
 import {buildingWallCells} from "./geometry.ts";
-import {frontagePanels,frontageSignature} from "./frontage.ts";
+import {frontagePanels,frontageSignature,frontageComposition} from "./frontage.ts";
 import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {residentialStairStudies} from "./stair-study.ts";
+import {architectureTopology,entranceArrangement} from "./architecture-profile.ts";
+import {ventilationVariant} from "./ventilation.ts";
+import {otsVariant} from "./ots-ventilation.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;
 const round=(n:number)=>Math.round(n*1e6)/1e6;
 const valid=(v:number)=>Number.isFinite(v)&&v>=0;
+/** Additional concept families for genuinely narrow plots. The original
+ * wider-house criteria still apply outside these specific geometries. */
+function microFamily(b:PlanBrief,W:number,D:number):"pedestrian"|"parking-duplex"|null{
+ if(b.parking)return W>=14.75&&W<17.5&&D>=30&&D<40&&b.floors>=2&&b.bedrooms<=2*(b.floors-1)?"parking-duplex":null;
+ if(W>=10&&W<20&&D>=24&&(W<15||D<30||((W<17.5||D<40)&&!(b.floors===1&&b.bedrooms===1))||(b.floors===1&&b.bedrooms>1&&W<20)))return "pedestrian";
+ return null;
+}
 export function explainImpossible(b:PlanBrief):string[]{
  const x:string[]=[];
  if(!valid(b.widthFt)||!valid(b.depthFt)||b.widthFt<10||b.depthFt<15||b.widthFt>200||b.depthFt>250)x.push("Plot dimensions outside supported input range.");
@@ -21,6 +31,7 @@ export function explainImpossible(b:PlanBrief):string[]{
  const safe=conservativeEnvelope(b.widthFt,b.depthFt,shape,b.setbacks);
  const W=b.widthFt-safe.leftFt-safe.rightFt;
  const D=b.depthFt-safe.frontFt-safe.rearFt;
+ if(!x.length&&microFamily(b,W,D))return [];
  if(b.parking&&W<17.5)x.push("Parking + pedestrian entry + stairs needs at least 17.5 ft clear frontage in this layout family.");
  if(!b.parking&&(W<17.5||D<40)){
   if(W<15||D<30||b.floors!==1||b.bedrooms!==1)x.push("Compact pedestrian layouts need 15 × 30 ft usable area, one floor and one bedroom.");
@@ -221,12 +232,13 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
  */
 function buildArchitecturalFamily(
  b:PlanBrief,variant:"parking-left"|"parking-right",
- family:"front-stair"|"front-bedroom",rearProgramme:SpatialProgramme
+ family:"front-stair"|"front-bedroom",rearProgramme:SpatialProgramme,variation=0
 ):PlanModel{
- if(!b.parking)throw new Error("Pedestrian variants are handled separately");
+ // A pedestrian court occupies the same validated street-side zone without inventing a car bay.
  const sb=houseEnvelope(b),U={x:sb.leftFt,y:sb.frontFt,
   w:b.widthFt-sb.leftFt-sb.rightFt,d:b.depthFt-sb.frontFt-sb.rearFt};
- const W=U.w,D=U.d,parkW=8.5;
+ const W=U.w,D=U.d,parkW=family==="front-stair"&&variation===2?9:8.5;
+ const stairW=variation===1?4.75:5,stairD=variation===1?9:variation===2?11:10;
  if(D<47||W<(family==="front-bedroom"?20:17.5)||b.bedrooms<b.floors||
     (b.floors===1&&b.bedrooms!==1))throw new Error("Footprint cannot fit this circulation family");
  const rooms:Room[]=[],openings:Opening[]=[];
@@ -234,11 +246,11 @@ function buildArchitecturalFamily(
   rooms.push(room(id,label,kind,floor,U.x+x,U.y+y,w,d));
  const rearKind:RoomKind=rearProgramme==="rear-courtyard"?"terrace":rearProgramme==="family-gallery"?"lounge":
   rearProgramme==="rear-baranda"?"verandah":"utility";
- add("parking","Car parking","parking",0,0,0,parkW,16);
+ add(b.parking?"parking":"front-court",b.parking?"Car parking":"Street garden court",b.parking?"parking":"terrace",0,0,0,parkW,16);
  if(family==="front-stair"){
-  add("stairs-g","Street-side stair bay","stairs",0,parkW,0,5,10);
-  add("verandah","Front pedestrian verandah","verandah",0,parkW+5,0,W-parkW-5,10);
-  add("living","Living / drawing","living",0,parkW,10,W-parkW,16);
+  add("stairs-g","Street-side stair bay","stairs",0,parkW,0,stairW,stairD);
+  add("verandah","Front pedestrian verandah","verandah",0,parkW+stairW,0,W-parkW-stairW,stairD);
+  add("living","Living / drawing","living",0,parkW,stairD,W-parkW,26-stairD);
   add("kitchen","Kitchen","kitchen",0,0,16,parkW,10);
   add("dining","Dining / family hall","dining",0,parkW,26,W-parkW,8);
   add("bath-g","Bath / WC","bath",0,0,26,5,8);
@@ -248,13 +260,19 @@ function buildArchitecturalFamily(
   add("bed-g","Ground bedroom","bedroom",0,0,37,rearBed,D-37);
   add("utility-g",rearProgramme.replace(/-/g," "),"utility"===rearKind?"utility":rearKind,0,rearBed,37,W-rearBed,D-37);
   for(let level=1;level<b.floors;level++){
-   add("stairs-"+level,"Stairs / landing","stairs",level,parkW,0,5,10);
-   add("balcony-"+level,"Street balcony","balcony",level,parkW+5,0,W-parkW-5,10);
-   add("bath-"+level,"Bath / WC","bath",level,0,10,5,10);
-   add("corridor-"+level,"Bedroom corridor","corridor",level,5,10,parkW-5,10);
-   add("lounge-"+level,"Family landing","lounge",level,parkW,10,W-parkW,10);
+   add("stairs-"+level,"Stairs / landing","stairs",level,parkW,0,stairW,stairD);
+   add("balcony-"+level,"Street balcony","balcony",level,parkW+stairW,0,W-parkW-stairW,stairD);
+   const frontSleeping=variation>=3&&(level===1||variation===4);
+   const wetStart=frontSleeping?16:stairD;
+   add("bath-"+level,"Bath / WC","bath",level,0,wetStart,5,20-wetStart);
+   add("corridor-"+level,"Bedroom corridor","corridor",level,5,wetStart,parkW-5,20-wetStart);
+   add("lounge-"+level,"Family landing","lounge",level,parkW,stairD,W-parkW,20-stairD);
    const doubleBeds=level===1&&b.bedrooms>b.floors;
-   if(doubleBeds){
+   if(frontSleeping){
+    add("bed-"+level+"a","Street-facing bedroom","bedroom",level,0,0,parkW,16);
+    if(doubleBeds)add("bed-"+level+"b","Rear bedroom","bedroom",level,0,20,W,17);
+    else add("rear-lounge-"+level,"Rear family lounge","lounge",level,0,20,W,17);
+   }else if(doubleBeds){
     add("bed-"+level+"a","Bedroom "+(level+1),"bedroom",level,0,20,W/2,17);
     add("bed-"+level+"b","Bedroom "+(level+2),"bedroom",level,W/2,20,W/2,17);
    }else add("bed-"+level+"a","Bedroom "+(level+1),"bedroom",level,0,20,W,17);
@@ -300,7 +318,11 @@ function buildArchitecturalFamily(
   if(family==="front-stair"){
    joins.push(["stairs-"+level,"lounge-"+level],
     ["lounge-"+level,"corridor-"+level],["corridor-"+level,"bath-"+level]);
-   if(level===1&&b.bedrooms>b.floors){
+   if(variation>=3&&(level===1||variation===4)){
+    joins.push(["lounge-"+level,"bed-"+level+"a"]);
+    if(level===1&&b.bedrooms>b.floors)joins.push(["lounge-"+level,"bed-"+level+"b"]);
+    else joins.push(["lounge-"+level,"rear-lounge-"+level]);
+   }else if(level===1&&b.bedrooms>b.floors){
     joins.push(["corridor-"+level,"bed-"+level+"a"],["lounge-"+level,"bed-"+level+"b"]);
    }else joins.push(["lounge-"+level,"bed-"+level+"a"]);
   }else{
@@ -310,16 +332,16 @@ function buildArchitecturalFamily(
   }
  }
  for(const [a,z] of joins)connect(rooms,openings,a,z);
- const porch=rooms.find(r=>r.id==="verandah")!,park=rooms.find(r=>r.id==="parking")!;
+ const porch=rooms.find(r=>r.id==="verandah")!,park=rooms.find(r=>r.id===(b.parking?"parking":"front-court"))!;
  openings.push({id:"pedestrian-entry",roomId:porch.id,side:"front",
   atFt:round((porch.w-3)/2),widthFt:3,sillFt:0,heightFt:7,kind:"door"});
  const p:PlanModel={
-  version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,variant,family,rearProgramme,...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.kind,b.siteShape.notchWidthFt+"x"+b.siteShape.notchDepthFt]:[])].join("-"),
+  version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,variant,family,rearProgramme,...(!b.parking?["pedestrian-v1"]:[]),...(variation?["bay-v2",variation]:[]),...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.kind,b.siteShape.notchWidthFt+"x"+b.siteShape.notchDepthFt]:[])].join("-"),
   variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},
   setbacks:{...sb,verified:false},walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},
-  floors:b.floors,rooms,openings,gate:{side:"front",xFt:round(park.x+.25),widthFt:8},
+  floors:b.floors,rooms,openings,gate:{side:"front",xFt:round(park.x+.25),widthFt:b.parking?8:0},
   pedestrianGate:{side:"front",xFt:round(porch.x+(porch.w-3)/2),widthFt:3},
-  parking:{roomId:"parking",clearWidthFt:park.w,clearDepthFt:park.d},
+  parking:b.parking?{roomId:"parking",clearWidthFt:park.w,clearDepthFt:park.d}:null,
   stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),
    note:"Conceptual stair shaft; tread/rise, headroom, escape routes unverified."},
   balcony:b.floors>1?{roomId:"balcony-1"}:null,
@@ -334,7 +356,117 @@ function buildArchitecturalFamily(
  return p;
 }
 
-function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
+/** Narrow-plot generator. Different room sequences, wet-core orientations
+ * and sleeping allocations are actual geometry; no dimension is relaxed. */
+function microPortfolio(b:PlanBrief,limit:number):PlanningResult|null{
+ const sb=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks),W=b.widthFt-sb.leftFt-sb.rightFt,D=b.depthFt-sb.frontFt-sb.rearFt,mode=microFamily(b,W,D);
+ if(!mode)return null;
+ const plans:PlanModel[]=[];
+ const up=(v:number)=>Math.ceil(v*10000)/10000;
+ const hab=(w:number,d:number)=>w>=8&&d>=8&&w*d>=95-1e-6&&Math.max(w,d)/Math.min(w,d)<=2.5;
+ const roomDepth=(w:number)=>up(Math.max(8,95/w,w/2.5));
+ const sideSetbacks={...sb,verified:false as const};
+ function candidate(mirror:boolean,recipe:string,layout:(add:(id:string,label:string,kind:RoomKind,floor:number,x:number,y:number,w:number,d:number)=>void,join:(a:string,z:string)=>void)=>boolean){
+  const rooms:Room[]=[],openings:Opening[]=[],joins:[string,string][]=[];
+  const add=(id:string,label:string,kind:RoomKind,floor:number,x:number,y:number,w:number,d:number)=>rooms.push(room(id,label,kind,floor,sb.leftFt+(mirror?W-x-w:x),sb.frontFt+y,w,d));
+  try{
+   if(!layout(add,(a,z)=>joins.push([a,z])))return;
+   for(const [a,z] of joins)connect(rooms,openings,a,z);
+   const porch=rooms.find(r=>r.id==="micro-entry")!,park=rooms.find(r=>r.kind==="parking"),entry=round(porch.x+(porch.w-3)/2);
+   openings.push({id:"micro-street-entry",roomId:porch.id,side:"front",atFt:round(entry-porch.x),widthFt:3,sillFt:0,heightFt:7,kind:"door"});
+   const p:PlanModel={version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,mode,"micro-v1",recipe,mirror?"right":"left",b.siteShape?.kind??"rectangle",...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.notchWidthFt,b.siteShape.notchDepthFt]:[])].join("-"),variant:mirror?"parking-right":"parking-left",plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},setbacks:sideSetbacks,walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},floors:b.floors,rooms,openings,gate:{side:"front",xFt:park?round(park.x+.25):porch.x,widthFt:park?8:0},pedestrianGate:{side:"front",xFt:entry,widthFt:3},parking:park?{roomId:park.id,clearWidthFt:park.w,clearDepthFt:park.d}:null,stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),note:"Compact stair reserve only; actual flights, landings, headroom and egress require review."},balcony:null,facade:{kit:recipe.includes("service-first")?"cladding-band":recipe.includes("parallel")?"stepped-band":recipe.includes("rear")?"jali-screen":"simple-parapet",massing:"box",main:"#e9e2d4",accent:"#8e755b"},score:80,notes:["Compact home · "+recipe.replaceAll("-"," "),"City rules, setbacks, legal daylight, finished clear room widths, structure and stairs require professional review.","Nominal concept geometry is not finished carpet area. Tight plots may require a different programme after wall thickness and local requirements are checked.",...(b.siteShape&&b.siteShape.kind!=="rectangle"?["Conservative L-plot envelope; a cadastral site survey must verify the boundary."]:[])],conceptOnly:true};
+   addWindow(p);if(!validateRequestedProgramme(p,b).length)plans.push(p);
+  }catch{/* No fabricated fit. */}
+ }
+ for(const mirror of [false,true]){
+  if(mode==="pedestrian"&&b.floors===1){
+   for(const porch of [2.5,2.25,3])for(const parallel of [false,true])for(const frontService of [false,true])for(const split of [.5,.43,.57]){
+    candidate(mirror,[frontService?"service-first":"living-first",parallel?"parallel":"serial",porch,split].join("-"),(add,join)=>{
+     const passage=3,kW=parallel?W-6:W-passage,bathW=parallel?3:kW;
+     if(kW<6)return false;
+     const kD=up(Math.max(6,48/kW)),bathD=up(Math.max(3,20/bathW)),service=parallel?Math.max(kD,bathD):kD+bathD;
+     const bedrooms=b.bedrooms,bedW=bedrooms===1?W:W-passage,bedMin=roomDepth(bedW),liveMin=roomDepth(W);
+     if(bedW<8)return false;
+     const slack=D-porch-service-liveMin-bedrooms*bedMin;if(slack<-1e-6)return false;
+     const live=liveMin+Math.max(0,slack)*split,bedD=(D-porch-service-live)/bedrooms;
+     if(!hab(W,live)||!hab(bedW,bedD))return false;
+     const serviceY=frontService?porch:porch+live,livingY=frontService?porch+service:porch,rearY=porch+service+live;
+     add("micro-entry","Front porch","verandah",0,0,0,W,porch);
+     add("micro-living","Living and dining","living",0,0,livingY,W,live);
+     if(parallel){add("micro-kitchen","Kitchen","kitchen",0,0,serviceY,kW,service);add("micro-hall","Service passage","corridor",0,kW,serviceY,3,service);add("micro-bath","Bath / WC","bath",0,kW+3,serviceY,3,service);}
+     else{add("micro-kitchen","Kitchen","kitchen",0,0,serviceY,kW,kD);add("micro-bath","Bath / WC","bath",0,0,serviceY+kD,bathW,bathD);add("micro-hall","Service passage","corridor",0,kW,serviceY,3,service);}
+     join("micro-entry",frontService?"micro-hall":"micro-living");join("micro-hall","micro-living");join("micro-hall","micro-kitchen");join("micro-hall","micro-bath");
+     if(bedrooms>1)add("micro-rear-hall","Private bedroom access","corridor",0,bedW,rearY,3,D-rearY);
+     for(let i=0;i<bedrooms;i++){const id="micro-bed-"+i;add(id,"Bedroom "+(i+1),"bedroom",0,0,rearY+i*bedD,bedW,bedD);join(bedrooms>1?"micro-rear-hall":frontService?"micro-living":"micro-hall",id);}
+     if(bedrooms>1)join(frontService?"micro-living":"micro-hall","micro-rear-hall");
+     return true;
+    });
+   }
+  }else if(mode==="pedestrian"){
+   for(const porch of [2.5,3])for(const stairW of [3.5,4])for(const coreD of [10,12])for(const allocation of [0,1,2]){
+    candidate(mirror,["stacked",porch,stairW,coreD,allocation].join("-"),(add,join)=>{
+     const wetW=W-stairW,kD=up(Math.max(6,48/wetW)),bathD=coreD-kD,front=porch+roomDepth(W),rear=D-front-coreD;
+     if(wetW<6||bathD<3||wetW*bathD<20||rear<0||!hab(W,front-porch))return false;
+     const slots:{floor:number;front:boolean;depth:number}[]=[];
+     if(hab(W,rear))slots.push({floor:0,front:false,depth:rear});
+     for(let level=1;level<b.floors;level++){if(hab(W,front))slots.push({floor:level,front:true,depth:front});if(hab(W,rear))slots.push({floor:level,front:false,depth:rear});}
+     if(slots.length<b.bedrooms)return false;
+     const sorted=[...slots].sort((a,z)=>allocation===0?z.floor-a.floor||Number(z.front)-Number(a.front):allocation===1?a.floor-z.floor||Number(z.front)-Number(a.front):Number(z.front)-Number(a.front)||a.floor-z.floor);
+     const selected=new Set(sorted.slice(0,b.bedrooms).map(s=>s.floor+":"+s.front));
+     let n=0;
+     add("micro-entry","Front porch","verandah",0,0,0,W,porch);
+     add("micro-living","Living and dining","living",0,0,porch,W,front-porch);join("micro-entry","micro-living");
+     for(let level=0;level<b.floors;level++){
+      const stair="micro-stair-"+level,wet="micro-wet-"+level,bath="micro-bath-"+level;
+      add(stair,"Aligned stair reserve","stairs",level,0,front,stairW,coreD);
+      add(wet,level===0?"Kitchen":"Utility / landing",level===0?"kitchen":"utility",level,stairW,front,wetW,kD);
+      add(bath,"Bath / WC","bath",level,stairW,front+kD,wetW,bathD);join(stair,bath);join(stair,wet);
+      if(level===0){join("micro-living",stair);join("micro-living",wet);}
+      else{const frontId="micro-front-"+level,bed=selected.has(level+":true");add(frontId,bed?"Bedroom "+(++n):"Family room",bed?"bedroom":"lounge",level,0,0,W,front);join(stair,frontId);}
+      if(rear>=.1){const id="micro-rear-"+level,bed=selected.has(level+":false");add(id,bed?"Bedroom "+(++n):"Open rear court / terrace",bed?"bedroom":"terrace",level,0,front+coreD,W,rear);if(bed)join(stair,id);}
+     }
+     return true;
+    });
+   }
+  }else{
+   for(const porch of [3,3.5,4])for(const parkW of [8.5,8.75])for(const allocation of [0,1,2]){
+    candidate(mirror,["duplex",porch,parkW,allocation].join("-"),(add,join)=>{
+     const stairW=W-parkW-3,live=roomDepth(W),service=D-16-live,bedW=W-3;
+     if(stairW<3.25||service<6||!hab(W,live)||W-4<6||(W-4)*service<48||!hab(parkW,16))return false;
+     const slots:{level:number;front:boolean}[]=[];
+     for(let level=1;level<b.floors;level++){slots.push({level,front:true});if(hab(bedW,live))slots.push({level,front:false});}
+     if(slots.length<b.bedrooms)return false;
+     const ordered=[...slots].sort((a,z)=>allocation===0?a.level-z.level||Number(z.front)-Number(a.front):allocation===1?Number(a.front)-Number(z.front)||a.level-z.level:z.level-a.level||Number(z.front)-Number(a.front));
+     const selected=new Set(ordered.slice(0,b.bedrooms).map(s=>s.level+":"+s.front));let n=0;
+     add("micro-car","Car parking","parking",0,0,0,parkW,16);
+     add("micro-entry","Independent front porch","verandah",0,parkW,0,W-parkW,porch);
+     add("micro-living","Living and dining","living",0,0,16,W,live);
+     add("micro-kitchen","Kitchen","kitchen",0,0,16+live,W-4,service);
+     add("micro-bath-0","Bath / WC","bath",0,W-4,16+live,4,service);
+     join("micro-living","micro-kitchen");join("micro-living","micro-bath-0");
+     for(let level=0;level<b.floors;level++){
+      const stair="micro-stair-"+level,hall="micro-hall-"+level;
+      add(stair,"Aligned side stair","stairs",level,parkW,porch,stairW,16-porch);
+      add(hall,"Independent pedestrian passage","corridor",level,W-3,porch,3,16-porch);join(stair,hall);
+      if(!level){join("micro-entry",hall);join(hall,"micro-living");continue;}
+      const frontId="micro-front-"+level,rearId="micro-rear-"+level,rearHall="micro-rear-hall-"+level,bath="micro-bath-"+level,utility="micro-utility-"+level;
+      const frontBed=selected.has(level+":true"),rearBed=selected.has(level+":false");
+      add(frontId,frontBed?"Bedroom "+(++n):"Family lounge",frontBed?"bedroom":"lounge",level,0,0,parkW,16);join(stair,frontId);
+      add(rearId,rearBed?"Bedroom "+(++n):"Family room",rearBed?"bedroom":"lounge",level,0,16,bedW,live);
+      add(rearHall,"Private access passage","corridor",level,bedW,16,3,live);join(hall,rearHall);join(rearHall,rearId);
+      add(bath,"Shared bath / WC","bath",level,W-4,16+live,4,service);join(rearHall,bath);
+      add(utility,"Utility / wash","utility",level,0,16+live,W-4,service);join(rearId,utility);
+     }
+     return true;
+    });
+   }
+  }
+ }
+ const unique=uniquePlanGeometry(plans),selected=prioritizeArchitecturalOptions(unique.slice(0,1),unique,limit);
+ return {plans:selected,blockers:selected.length?[]:["No compact layout passes the exact room sizes, independent access, requested floors, setbacks and parking. Increase usable dimensions or explicitly revise the programme; no inputs have been changed."]};
+}
+
+function compactPedestrianPlans(b:PlanBrief,limit:number,legacy=false):PlanningResult|null{
  const sb=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
  const width=b.widthFt-sb.leftFt-sb.rightFt,depth=b.depthFt-sb.frontFt-sb.rearFt;
  // A dedicated stair-free 1 BHK is also useful on larger plots. Keep the
@@ -371,15 +503,62 @@ function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
   addWindow(plan);
   if(validateRequestedProgramme(plan,b).length===0)plans.push(plan);
  }
- return {plans:pickDiverse(plans,limit),blockers:plans.length?[]:["Room sizes or access could not be validated within the available footprint."]};
+ const baseline=pickDiverse(plans,limit);
+ // Independent side passage and front bedroom: a different programme, not a resized living-first plan.
+ if(!legacy&&baseline.length>=3){
+  const alternatives:PlanModel[]=[];
+  for(const left of [true,false]){
+   const seed=baseline.find(p=>p.variant===(left?"parking-left":"parking-right"))??baseline[0];
+   const ox=sb.leftFt,oy=sb.frontFt,bedDepth=Math.floor((d-11)/2),serviceY=3+bedDepth,rearY=serviceY+8;
+   const rooms:Room[]=[],openings:Opening[]=[];
+   const add=(id:string,label:string,kind:RoomKind,x:number,y:number,rw:number,rd:number)=>rooms.push(room(id,label,kind,0,ox+(left?x:w-x-rw),oy+y,rw,rd));
+   add("verandah","Front porch","verandah",0,0,w,3);
+   add("bed-g","Private front bedroom","bedroom",0,3,w-3.5,bedDepth);
+   add("hall-front","Independent side passage","corridor",w-3.5,3,3.5,bedDepth);
+   add("kitchen","Kitchen","kitchen",0,serviceY,w-8,8);
+   add("bath-g","Bath / WC","bath",w-8,serviceY,4.5,8);
+   add("hall-g","Service passage","corridor",w-3.5,serviceY,3.5,8);
+   add("living","Rear living and dining","living",0,rearY,w,d-rearY);
+   try{
+    for(const [a,z] of [["verandah","hall-front"],["hall-front","bed-g"],["hall-front","hall-g"],["hall-g","bath-g"],["hall-g","living"],["living","kitchen"]])connect(rooms,openings,a,z);
+    const porch=rooms.find(r=>r.id==="verandah")!,hall=rooms.find(r=>r.id==="hall-front")!,entry=round(hall.x+hall.w/2-1.5);
+    openings.push({id:"entry",roomId:porch.id,kind:"door",side:"front",atFt:entry-porch.x,widthFt:3,heightFt:7,sillFt:0});
+    const p:PlanModel={...seed,id:seed.id+"-private-front-v1",rooms,openings,pedestrianGate:{side:"front",xFt:entry,widthFt:3},facade:{...seed.facade,kit:"stepped-band"},notes:["Private street bedroom and independent side passage",...seed.notes]};
+    addWindow(p);if(!validateRequestedProgramme(p,b).length&&!plans.some(q=>planSignature(q)===planSignature(p)))alternatives.push(p);
+   }catch{/* Reject invalid compact layouts. */}
+  }
+  // A third compact programme places the wet/service rooms at the street,
+  // living centrally and the bedroom in a private rear zone.
+  for(const left of [true,false]){
+   const seed=baseline.find(p=>p.variant===(left?"parking-left":"parking-right"))??baseline[0];
+   const ox=sb.leftFt,oy=sb.frontFt,k=Math.max(6,w-8),mid=Math.floor((d-11)/2);
+   const rooms:Room[]=[],openings:Opening[]=[];
+   const add=(id:string,label:string,kind:RoomKind,x:number,y:number,rw:number,rd:number)=>rooms.push(room(id,label,kind,0,ox+(left?x:w-x-rw),oy+y,rw,rd));
+   add("verandah","Front porch","verandah",0,0,w,3);
+   add("kitchen","Street-side kitchen","kitchen",0,3,k,8);
+   add("hall-g","Entry passage","corridor",k,3,3.5,8);
+   add("bath-g","Bath / WC","bath",k+3.5,3,w-k-3.5,8);
+   add("living","Central living and dining","living",0,11,w,mid);
+   add("bed-g","Private rear bedroom","bedroom",0,11+mid,w,d-11-mid);
+   try{
+    for(const [a,z] of [["verandah","hall-g"],["hall-g","kitchen"],["hall-g","bath-g"],["hall-g","living"],["living","bed-g"]])connect(rooms,openings,a,z);
+    const porch=rooms.find(r=>r.id==="verandah")!,hall=rooms.find(r=>r.id==="hall-g")!,entry=round(hall.x+hall.w/2-1.5);
+    openings.push({id:"entry",roomId:porch.id,kind:"door",side:"front",atFt:entry-porch.x,widthFt:3,heightFt:7,sillFt:0});
+    const p:PlanModel={...seed,id:seed.id+"-front-service-v1",rooms,openings,pedestrianGate:{side:"front",xFt:entry,widthFt:3},facade:{...seed.facade,kit:"cladding-band"},notes:["Street-side service core and central living",...seed.notes]};
+    addWindow(p);if(!validateRequestedProgramme(p,b).length&&!plans.some(q=>planSignature(q)===planSignature(p)))alternatives.push(p);
+   }catch{/* Discard infeasible candidates. */}
+  }
+  if(alternatives.length){const pool=uniquePlanGeometry([baseline[0],...alternatives,...baseline.slice(1)]);return {plans:pool.slice(0,limit),blockers:[]};}
+ }
+ return {plans:baseline,blockers:plans.length?[]:["Room sizes or access could not be validated within the available footprint."]};
 }
 /** Never display a valid geometry that silently changes the customer's room programme. */
 
 // A wider access-spine family for larger homes. No candidate bypasses the PlanModel validator.
-function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
+function widePortfolio(b:PlanBrief,limit:number,frontCore=false,pedestrianFront=false):PlanModel[]{
  const base=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
  const aw=b.widthFt-base.leftFt-base.rightFt,ad=b.depthFt-base.frontFt-base.rearFt;
- if(aw<26||ad<40)return [];
+ if(aw<(frontCore?24:26)||ad<40)return [];
  const W=Math.min(36,aw),D=Math.min(85,ad),sb={...base,leftFt:base.leftFt+(aw-W)/2,rightFt:base.rightFt+(aw-W)/2,rearFt:base.rearFt+ad-D,verified:false};
  const plans:PlanModel[]=[],seen=new Set<string>(),meshes=new Set<string>();
  type Slot={floor:number;x:number;y:number;w:number;d:number;capacity:number;count:number;key:string};
@@ -398,11 +577,14 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
   }
   for(let floor=0;floor<b.floors;floor++){
    const hall="wide-hall-"+floor;
-   add(hall,"Access passage","corridor",floor,left,floor===0?16:0,spine,D-(floor===0?16:0));
+   const hallStart=frontCore?10:floor===0?16:0;
+   add(hall,"Access passage","corridor",floor,left,hallStart,spine,D-hallStart);
    if(floor===0){
-    add("wide-front",b.parking?"Car parking":"Front garden",b.parking?"parking":"terrace",0,0,0,left,16);
-    add("wide-entry","Front verandah","verandah",0,left,0,W-left,entryDepth);
-    add("wide-living","Living room","living",0,left,entryDepth,W-left,16-entryDepth);
+    if(pedestrianFront)slot(0,0,0,left,16,"private-front");
+    else add("wide-front",b.parking?"Car parking":"Front garden",b.parking?"parking":"terrace",0,0,0,left,16);
+    const entryX=frontCore?left+spine:left,entryW=frontCore?right:W-left;
+    add("wide-entry","Front verandah","verandah",0,entryX,0,entryW,entryDepth);
+    add("wide-living","Living room","living",0,entryX,entryDepth,entryW,16-entryDepth);
     joins.push(["wide-entry","wide-living"],["wide-living",hall]);
     add("wide-kitchen","Kitchen","kitchen",0,left+spine,16,right,kitchenDepth);
     add("wide-bath-0","Bath / WC","bath",0,left+spine,16+kitchenDepth,right,6);
@@ -414,8 +596,9 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
     slot(floor,left+spine,24,right,D-24,"right-rear");
    }
    const stair="wide-stair-"+floor;
-   add(stair,"Stairs / landing","stairs",floor,0,16,left,stairDepth);joins.push([hall,stair]);
-   slot(floor,0,16+stairDepth,left,D-16-stairDepth,"left-rear");
+   add(stair,frontCore?"Street-side stair bay":"Stairs / landing","stairs",floor,frontCore?left:0,frontCore?0:16,frontCore?spine:left,frontCore?10:stairDepth);joins.push([hall,stair]);
+   const leftRear=frontCore?16:16+stairDepth;
+   slot(floor,0,leftRear,left,D-leftRear,"left-rear");
   }
   const order=slots.filter(s=>s.capacity>0).sort((a,z)=>{
    const mode=Math.floor(recipe/4)%4;
@@ -424,22 +607,23 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
   if(!order.length)continue;
   const offset=Math.floor(recipe/16)%order.length,rotated=[...order.slice(offset),...order.slice(0,offset)];
   let remaining=b.bedrooms;
+  if(pedestrianFront){const front=slots.find(s=>s.key==="private-front");if(!front||front.capacity<1)continue;front.capacity=1;front.count=1;remaining--;}
   while(remaining){let progress=false;for(const s of rotated){if(s.count<s.capacity&&remaining){s.count++;remaining--;progress=true}}if(!progress)break}
   if(remaining)continue;
   let n=0;
   for(const s of slots){
    const openId="wide-open-"+s.floor+"-"+s.key;
    if(!s.count){add(openId,"Open court / terrace","terrace",s.floor,s.x,s.y,s.w,s.d);continue}
-   const minDepth=Math.max(10,Math.ceil(96/s.w),s.w/2.5),bedDepth=Math.min(Math.floor(s.d/s.count),Math.max(minDepth,bedTarget));
+   const minDepth=Math.max(10,Math.ceil(96/s.w),s.w/2.5),bedDepth=s.key==="private-front"?16:Math.min(Math.floor(s.d/s.count),Math.max(minDepth,bedTarget));
    for(let i=0;i<s.count;i++){const id="wide-bed-"+(++n);add(id,"Bedroom "+n,"bedroom",s.floor,s.x,s.y+i*bedDepth,s.w,bedDepth);joins.push(["wide-hall-"+s.floor,id])}
    const extra=s.d-s.count*bedDepth;
    if(extra>.1)add(openId,"Open court / terrace","terrace",s.floor,s.x,s.y+s.count*bedDepth,s.w,extra);
   }
-  const entry=rooms.find(r=>r.id==="wide-entry")!,park=rooms.find(r=>r.id==="wide-front")!;
+  const entry=rooms.find(r=>r.id==="wide-entry")!,park=rooms.find(r=>r.id==="wide-front")??entry;
   try{
    for(const [a,z] of joins)connect(rooms,openings,a,z);
    openings.push({id:"wide-entry-door",roomId:entry.id,side:"front",atFt:round((entry.w-3)/2),widthFt:3,sillFt:0,heightFt:7,kind:"door"});
-   const p:PlanModel={version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,b.parking?"car":"garden",b.siteShape?.kind??"rectangle",...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.notchWidthFt,b.siteShape.notchDepthFt]:[]),"wide",recipe].join("-"),variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},setbacks:sb,walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},floors:b.floors,rooms,openings,gate:{side:"front",xFt:round(park.x+.25),widthFt:b.parking?8:0},pedestrianGate:{side:"front",xFt:round(entry.x+(entry.w-3)/2),widthFt:3},parking:b.parking?{roomId:park.id,clearWidthFt:park.w,clearDepthFt:park.d}:null,stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),note:"Concept stairs; tread, headroom and fire safety unverified."},balcony:null,facade:{kit:recipe%3===0?"stepped-band":recipe%3===1?"jali-screen":"simple-parapet",massing:"box",main:"#e9e2d4",accent:"#8e755b"},score:80,notes:["Wide circulation layout · "+(mirror?"right":"left")+" entry court","City rules, setbacks, structural design, stairs, parking and ventilation require professional review.","Open areas are intentionally unbuilt; not a certified floor plan."],conceptOnly:true};
+   const p:PlanModel={version:1,id:[b.widthFt+"x"+b.depthFt,b.roadSide,b.floors,b.bedrooms,b.parking?"car":"garden",b.siteShape?.kind??"rectangle",...(b.siteShape&&b.siteShape.kind!=="rectangle"?[b.siteShape.notchWidthFt,b.siteShape.notchDepthFt]:[]),"wide",recipe,...(frontCore?["front-core-v1"]:[]),...(pedestrianFront?["private-front-v1"]:[])].join("-"),variant,plot:{widthFt:b.widthFt,depthFt:b.depthFt,roadSide:b.roadSide,siteShape:b.siteShape},setbacks:sb,walls:{externalFt:.75,internalFt:.375,heightFt:9.5,parapetFt:3},floors:b.floors,rooms,openings,gate:{side:"front",xFt:round(park.x+.25),widthFt:b.parking?8:0},pedestrianGate:{side:"front",xFt:round(entry.x+(entry.w-3)/2),widthFt:3},parking:b.parking?{roomId:park.id,clearWidthFt:park.w,clearDepthFt:park.d}:null,stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),note:"Concept stairs; tread, headroom and fire safety unverified."},balcony:null,facade:{kit:recipe%3===0?"stepped-band":recipe%3===1?"jali-screen":"simple-parapet",massing:"box",main:"#e9e2d4",accent:"#8e755b"},score:80,notes:[(frontCore?"Street-side aligned stair and independent entry":"Wide circulation layout")+" · "+(mirror?"right":"left")+" entry court","City rules, setbacks, structural design, stairs, parking and ventilation require professional review.","Open areas are intentionally unbuilt; not a certified floor plan."],conceptOnly:true};
    addWindow(p);if(validateRequestedProgramme(p,b).length)continue;
    const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
    if(seen.has(signature)||!mesh||meshes.has(mesh))continue;
@@ -448,8 +632,11 @@ function widePortfolio(b:PlanBrief,limit:number):PlanModel[]{
  }
  return plans;
 }
-function wideResult(b:PlanBrief,limit:number):PlanningResult{
- const plans=widePortfolio(b,Math.max(1,Math.min(24,Math.floor(limit))));
+function wideResult(b:PlanBrief,limit:number,legacy=false):PlanningResult{
+ const max=Math.max(1,Math.min(24,Math.floor(limit))),baseline=widePortfolio(b,max);
+ const alternatives=legacy||max===1&&baseline.length?[]:[...widePortfolio(b,max,true),...(!b.parking?widePortfolio(b,max,true,true):[])];
+ const pool=uniquePlanGeometry([...baseline,...alternatives]);
+ const plans=legacy?baseline:prioritizeArchitecturalOptions(baseline,pool,max);
  return {plans,blockers:plans.length?[]:["No geometry-checked "+b.bedrooms+" BHK concept fits your selected "+b.widthFt+" × "+b.depthFt+" ft plot, levels and parking. Try more usable space or floors, or fewer bedrooms. Your input has not been changed."]};
 }
 
@@ -462,6 +649,14 @@ export function validateRequestedProgramme(p:PlanModel,b:PlanBrief):string[]{
  for(const side of ["frontFt","rearFt","leftFt","rightFt"] as const)if(p.setbacks[side]+.00001<b.setbacks[side])errors.push("Plan encroaches on requested "+side+" setback.");
  for(let floor=0;floor<b.floors;floor++)if(!p.rooms.some(r=>r.floor===floor&&!["parking","terrace","balcony","verandah"].includes(r.kind)))errors.push("Requested floor has no enclosed room or circulation.");
  return errors;
+}
+function uniquePlanGeometry(plans:readonly PlanModel[]):PlanModel[]{
+ const geometry=new Set<string>(),meshes=new Set<string>();
+ return plans.filter(p=>{
+  const key=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
+  if(!mesh||geometry.has(key)||meshes.has(mesh))return false;
+  geometry.add(key);meshes.add(mesh);return true;
+ });
 }
 export function planSignature(p:PlanModel):string{
  // IDs, labels, room names and exterior finishes cannot manufacture a new floor plan.
@@ -476,7 +671,8 @@ export function pickDiverse(plans:readonly PlanModel[],limit=3):PlanModel[]{
 export function generateRoadPlans(brief:PlanBrief):PlanningResult{
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
- if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,3);
+ const micro=microPortfolio(brief,3);if(micro)return micro;
+ if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,3,true);
  const compact=compactPedestrianPlans(brief,2);if(compact)return compact;
  const candidates:PlanModel[]=[];
  for(const variant of ["parking-left","parking-right"] as const){
@@ -520,14 +716,15 @@ function prioritizeSpatialDiversity(plans:PlanModel[]):PlanModel[]{
  * Smaller or awkward plots may return fewer than 24; no fake room or local-law
  * compliance is manufactured to hit a marketing number.
  */
-export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResult{
+export function generateSpatialPortfolio(brief:PlanBrief,limit=24,legacy=false):PlanningResult{
  // Bound all generator paths, including compact plans, for malformed caller input.
  limit=Number.isFinite(limit)?Math.max(1,Math.min(24,Math.floor(limit))):24;
  const blockers=explainImpossible(brief);
  if(blockers.length)return {plans:[],blockers};
- if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,limit);
- if(brief.bedrooms===1&&brief.widthFt>=26&&brief.depthFt>=40){const wide=wideResult(brief,limit);if(wide.plans.length)return wide;}
- const compact=compactPedestrianPlans(brief,Math.max(1,Math.floor(limit)));if(compact)return compact;
+ const micro=microPortfolio(brief,limit);if(micro)return micro;
+ if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,limit,legacy);
+ if(brief.bedrooms===1&&brief.widthFt>=26&&brief.depthFt>=40){const wide=wideResult(brief,limit,legacy);if(wide.plans.length)return wide;}
+ const compact=compactPedestrianPlans(brief,Math.max(1,Math.floor(limit)),legacy);if(compact)return compact;
  const envelope=houseEnvelope(brief);
  const W=brief.widthFt-envelope.leftFt-envelope.rightFt;
  const baseParking=Math.max(8.5,Math.min(10,round(W*.46)));
@@ -549,7 +746,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
     kitchenWidthFt:kitchen,rearBedWidthFt:bedWidth,upperBedRatio:ratio,rearProgramme:prog,
     frontProgramme:family,familyLabel:"spatial-"+i+"-"+prog+"-"+family};
    try{
-    const family=brief.bedrooms<brief.floors?null:i%3===1?"front-stair":i%3===2&&W>=20?"front-bedroom":null;
+    const family=brief.bedrooms<brief.floors||(!brief.parking&&legacy)?null:i%3===1?"front-stair":i%3===2&&W>=20?"front-bedroom":null;
     const p=family?buildArchitecturalFamily(brief,variant,family,prog):build(brief,variant,recipe),
      errors=validateRequestedProgramme(p,brief);
     if(errors.length)continue;
@@ -573,13 +770,26 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24):PlanningResul
  }
  // Larger 2–3 BHK plots also deserve actual central-spine architecture, not only mirrored narrow-house recipes.
  if(brief.bedrooms>=2&&brief.floors>1){
-  for(const p of widePortfolio(brief,normalized)){
+  for(const p of [...widePortfolio(brief,normalized),...(!legacy&&normalized>1?[...widePortfolio(brief,normalized,true),...(!brief.parking?widePortfolio(brief,normalized,true,true):[])]:[])]){
    const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
    if(!mesh||seen.has(signature)||seenMeshes.has(mesh)||validateRequestedProgramme(p,brief).length)continue;
    seen.add(signature);seenMeshes.add(mesh);ordered.push(p);
   }
  }
- return {plans:prioritizeSpatialDiversity(ordered).slice(0,normalized),
+ const original=prioritizeSpatialDiversity(ordered).slice(0,normalized);
+ if(!legacy&&normalized>1&&brief.floors>1&&brief.bedrooms>=brief.floors){
+  // Add real aligned front stair bays, not relabelled rear stairs. Keep
+  // baseline options accessible by persisted ID via the legacy resolver.
+  for(const variant of ["parking-left","parking-right"] as const)for(const variation of [1,2,3,4])for(const programme of ["wash","rear-courtyard"] as const){
+   try{const p=buildArchitecturalFamily(brief,variant,"front-stair",programme,variation);
+    if(validateRequestedProgramme(p,brief).length)continue;
+    const signature=planSignature(p),mesh=buildingWallCells(studioDesignFromPlan(p)).map(c=>[c.floorIndex,c.axis,c.planeFt,c.startFt,c.endFt,c.bottomFt,c.topFt].join(":")).sort().join("|");
+    if(!mesh||seen.has(signature)||seenMeshes.has(mesh))continue;
+    seen.add(signature);seenMeshes.add(mesh);ordered.push(p);
+   }catch{/* Invalid bay geometry remains excluded. */}
+  }
+ }
+ return {plans:legacy?original:prioritizeArchitecturalOptions(original,ordered,normalized),
   blockers:ordered.length?[]:["No validated distinct spatial layout fits these dimensions, rooms, parking and setbacks."]};
 }
 
@@ -620,5 +830,36 @@ export function generateStairReadyPortfolio(b:PlanBrief,limit=24):PlanningResult
  return {plans,blockers:plans.length?[]:["No dog-leg stair candidate fits the exact requested programme and door alignment. Try the standard concepts or review usable frontage with an architect."]};
 }
 export function portfolioForPlanId(b:PlanBrief,planId:string):PlanningResult{
- return /-stair-v1-[01]$/.test(planId)?generateStairReadyPortfolio(b,24):generateSpatialPortfolio(b,24);
+ if(planId.endsWith("-ots-v1")){const base=portfolioForPlanId(b,planId.slice(0,-7));return {...base,plans:base.plans.map(p=>p.id===planId.slice(0,-7)?otsVariant(p):p)};}
+ if(planId.endsWith("-vent-v1")){const base=portfolioForPlanId(b,planId.slice(0,-8));return {...base,plans:base.plans.map(ventilationVariant)};}
+ if(/-stair-v1-[01]$/.test(planId))return generateStairReadyPortfolio(b,24);
+ const current=generateSpatialPortfolio(b,24);return current.plans.some(p=>p.id===planId)?current:generateSpatialPortfolio(b,24,true);
+}
+
+/** First show meaningful entrance/room-programme alternatives; dimensional
+ * variants remain selectable, with balanced parking sides when possible. */
+function prioritizeArchitecturalOptions(original:PlanModel[],pool:PlanModel[],limit:number){
+ if(!original.length){if(!pool.length)return [];original=pool.slice(0,1);}
+ if(limit===1)return original.slice(0,1);
+ const result=[original[0]],used=new Set([original[0].id]),topologies=new Set([architectureTopology(original[0])]);
+ const arrangementCounts=new Map<string,number>([[entranceArrangement(original[0]),1]]);
+ const sideCounts=new Map<string,number>([[original[0].variant,1]]);
+ const candidates=[...new Map([...original,...pool].map(p=>[p.id,p])).values()];
+ const profiles=new Map(candidates.map(p=>[p.id,{topology:architectureTopology(p),front:frontageComposition(p),arrangement:entranceArrangement(p)}]));
+ const fronts=new Set([profiles.get(original[0].id)!.front]),baseline=new Set(original.map(p=>p.id));
+ while(result.length<limit){
+  const side=result.length%2===1?(original[0].variant==="parking-left"?"parking-right":"parking-left"):original[0].variant;
+  const remaining=candidates.filter(p=>!used.has(p.id));
+  if(!remaining.length)break;
+  const sidePool=remaining.filter(p=>p.variant===side);
+  const eligible=sidePool.length?sidePool:remaining;
+  const score=(p:PlanModel)=>{
+   const profile=profiles.get(p.id)!,arrangement=profile.arrangement,count=arrangementCounts.get(arrangement)??0;
+   return (count===0?100:arrangement==="front-bedroom"&&count<2?65:arrangement==="front-stair"&&count<4?45:0)+(!topologies.has(profile.topology)?30:0)+(!fronts.has(profile.front)?15:0)+(baseline.has(p.id)?1:0)-(sideCounts.get(p.variant)??0)*.01;
+  };
+  const next=eligible.reduce((a,b)=>score(b)>score(a)?b:a);
+  result.push(next);used.add(next.id);topologies.add(profiles.get(next.id)!.topology);fronts.add(profiles.get(next.id)!.front);
+  const k=entranceArrangement(next);arrangementCounts.set(k,(arrangementCounts.get(k)??0)+1);sideCounts.set(next.variant,(sideCounts.get(next.variant)??0)+1);
+ }
+ return result;
 }

@@ -22,3 +22,13 @@ test("furniture uses identical plan footprints and never occupies a reserved ope
   }
  }
 });
+
+test("interior search supports compact homes without obstructing doors or inventing furniture",()=>{
+ for(const [widthFt,depthFt] of [[10.5,30],[15,30],[18,50]]){
+  const brief:PlanBrief={...base,widthFt,depthFt,floors:1,bedrooms:1,parking:false};
+  for(const p of generateSpatialPortfolio(brief).plans){
+   const items=planFurniture(p);assert.deepEqual(items,planFurniture(p));
+   for(const item of items){const room=p.rooms.find(r=>r.id===item.roomId)!;assert.ok(Math.abs(overlapArea(item,room)-area(item))<1e-6);assert.ok(openingClearances(p,room).every(r=>overlapArea(item,r)<1e-6));}
+  }
+ }
+});

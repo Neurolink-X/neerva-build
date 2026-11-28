@@ -4,6 +4,7 @@ import AxeBuilder from "@axe-core/playwright";
 import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
+import {verifyWallArtwork} from "./wall-art-regression.mjs";
 import {assessPerformance,resourceSummary} from "./performance-budget.mjs";
 import {verifyInvalidPhotoUpload,visualCases} from "./photo-upload-regression.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
@@ -76,7 +77,7 @@ async function main(){
        }
       };
       if(await capture("cutaway")){
-       if(purpose==="shops"){const tools=studio.locator(".purpose-view-tools");if(await tools.getAttribute("open")===null)await tools.locator("summary").click();await studio.getByRole("button",{name:"Hide space-use guidance",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Show space-use guidance",exact:true}).click();}
+       if(purpose==="shops"){const tools=studio.locator(".purpose-view-tools");if(await tools.getAttribute("open")===null)await tools.locator("summary").click();await studio.getByRole("button",{name:"Show 3D furniture",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Hide 3D furniture",exact:true}).click();}
        await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
        await capture("exterior");
        await studio.getByRole("button",{name:"Show selected floor",exact:true}).click();
@@ -1256,8 +1257,8 @@ async function main(){
  await page.getByRole("button",{name:"Nature",exact:true}).click();await page.getByRole("button",{name:"Floral vine feature wall",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),orbit,"floral artwork differs from the circle mural");
  let visibleDesigns=0;for(const group of ["Signature","Nature","Murals","Classic","Modern","Geometry","Printed","3D effects","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,72,"curated collection must not contain retired filler designs");
  await page.getByRole("button",{name:"3D effects",exact:true}).click();
- await page.getByRole("button",{name:"3D isometric cube",exact:true}).click();const relief=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(relief,plainBeforePattern);
- await page.getByRole("button",{name:"Printed",exact:true}).click();await page.getByRole("button",{name:"Printed lotus repeat",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),relief);
+ await page.getByRole("button",{name:"Faceted diamond relief",exact:true}).click();const relief=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(relief,plainBeforePattern);
+ await page.getByRole("button",{name:"Printed",exact:true}).click();await page.getByRole("button",{name:"Silk botanical inlay",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),relief);
  await page.getByRole("button",{name:"Classic",exact:true}).click();await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
@@ -1265,6 +1266,7 @@ async function main(){
  const combo=await png();await page.getByRole("button",{name:"View original"}).click();assert.notEqual(await png(),combo);
  await page.getByRole("button",{name:"Show new colour"}).click();assert.equal(await png(),combo);
  const download=page.waitForEvent("download");await page.getByRole("button",{name:"Save colour preview"}).click();assert.match((await download).suggestedFilename(),/png$/);
+    await verifyWallArtwork(page);
     // Tested road-correct 18x50 PlanModel: one source for geometry, 3D and paint quantities.
     // A gallery deep link must choose the SAME plan for both 2D geometry and 3D.
     await page.goto(base+"/design-studio/portfolio?width=18&depth=50&road=N&floors=2&bedrooms=3&parking=true&option=5",{waitUntil:"load"});
@@ -1380,15 +1382,15 @@ async function main(){
     assert.match(await page.locator(".nroad-plan-summary").innerText(),/1\s*Bedrooms on this floor/);
     await page.goto(base+"/design-studio/portfolio?width=18&depth=50&floors=1&bedrooms=1&road=N&parking=false",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on N side/}).waitFor();
-    assert.equal(await page.locator(".nroad-variants button").count(),10,"standard plot has ten geometry-validated 1 BHK choices");
+    assert.equal(await page.locator(".nroad-variants button").count(),14,"standard plot has fourteen geometry-validated 1 BHK choices");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");
-    assert.match(await page.locator(".nroad-selection-feedback").innerText(),/Layout 10 of 10 selected/);
+    assert.match(await page.locator(".nroad-selection-feedback").innerText(),/Layout 14 of 14 selected/);
     await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
     await page.waitForFunction(()=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")});
     await page.goto(base+"/design-studio/portfolio?width=15&depth=30&floors=1&bedrooms=1&road=W&parking=false",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
-    assert.equal(await page.locator(".nroad-variants button").count(),6,"compact 1 BHK has six validated room allocations and orientations");
+    assert.equal(await page.locator(".nroad-variants button").count(),10,"compact 1 BHK has ten validated room allocations and orientations");
     const compactFirstId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
     await page.locator(".nroad-variants button").last().click();
     assert.equal(await page.locator(".nroad-variants button").last().getAttribute("aria-pressed"),"true");

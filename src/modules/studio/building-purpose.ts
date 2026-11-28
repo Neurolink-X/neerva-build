@@ -72,6 +72,9 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
   if(ids.has(z.id))e.push("Duplicate zone ID");ids.add(z.id);
   if(![z.x,z.y,z.w,z.d].every(finite)||z.w<=0||z.d<=0||z.x<-EPS||z.y<-EPS||z.x+z.w>b.widthFt+EPS||z.y+z.d>b.depthFt+EPS||!Number.isInteger(z.floor)||z.floor<0||z.floor>=b.floors)e.push("Zone outside plot: "+z.id);
   if(z.kind!=="open"&&z.kind!=="parking"&&(z.x<b.sideFt-EPS||z.x+z.w>b.widthFt-b.sideFt+EPS||z.y<b.frontFt-EPS||z.y+z.d>b.depthFt-b.rearFt+EPS))e.push("Building zone outside selected margins: "+z.id);
+  if(z.kind==="parking"&&(z.floor!==0||z.w<9-EPS||z.d<18-EPS||z.y>EPS||z.y+z.d>b.frontFt+EPS||z.x<b.sideFt-EPS||z.x+z.w>b.widthFt-b.sideFt+EPS))e.push("Parking bay lacks clear street-side reserve: "+z.id);
+  if(z.kind==="toilet"&&(area(z)<20-EPS||Math.min(z.w,z.d)<3-EPS))e.push("Toilet below advisory size: "+z.id);
+  if(z.kind==="circulation"&&Math.min(z.w,z.d)<4-EPS)e.push("Circulation below advisory width: "+z.id);
   if(z.kind==="primary"&&(z.w<p.minW-EPS||z.d<p.minD-EPS||area(z)<p.minArea-EPS))e.push("Primary zone below concept size: "+z.id);
  }
 
@@ -241,16 +244,24 @@ function crossGalleryConcepts(b:BuildingBrief,limit:number):{plans:BuildingConce
 /** Versioned internal programme: keep the exact brief and select only
  * candidates whose room and service reservations pass geometric access checks.
  * Never change the saved legacy recipes or pretend to engineer the core. */
-function internalConcepts(b:BuildingBrief,limit:number){
+function internalConcepts(b:BuildingBrief,limit:number,legacy=false){
  const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,plans:BuildingConcept[]=[],seen=new Set<string>();
  const candidates=generateBuildingConcepts(b,24,"purpose-led").plans;
  // Try each internal variant across the same envelope before changing it.
- for(const base of candidates)for(const variant of (b.purpose==="rental"?[2,0,3]:[2,0])){
-  const p:BuildingConcept={...base,id:base.id+"-internal-v1-"+variant,layout:b.purpose==="rental"?["Private passage","Rear living / entry","Living-first family flat","Living-first · exterior kitchen"][variant]:variant===2?"Shared service passage":"Independent service rooms"};
+ for(const base of candidates)for(const variant of (b.purpose==="rental"?[2,0,3]:legacy?[2,0]:[2,0,3,1])){
+  const p:BuildingConcept={...base,id:base.id+"-internal-v1-"+variant,layout:b.purpose==="rental"?["Private passage","Rear living / entry","Living-first family flat","Living-first · exterior kitchen"][variant]:["Independent service rooms","Asymmetric service rooms","Shared service passage","Wide service passage"][variant]};
   if(validateBuildingConcept(p).length)continue;
   const internal=commercialInternalSpaces(p).map(r=>[r.floor,r.kind,fmt(r.x),fmt(r.y),fmt(r.w),fmt(r.d)]).sort();
   p.signature=JSON.stringify([base.signature,internal]);if(seen.has(p.signature))continue;
   seen.add(p.signature);if(plans.length<max)plans.push(p);if(plans.length>=max)return {plans,blockers:[]};
  }
  return {plans,blockers:plans.length?[]:["No detailed room and service-core layout fits this exact request. Try a different layout family or review the dimensions with an architect."]};
+}
+
+/** Restore old snapshots by exact signature, even if newer programmes replace
+ * a prior option in the bounded default comparison. */
+export function commercialPortfolioForId(b:BuildingBrief,id:string){
+ const family=buildingLayoutFamily(id),current=generateBuildingConcepts(b,24,family);
+ if(family!=="internal"||current.plans.some(p=>p.id===id))return current;
+ return internalConcepts(b,24,true);
 }

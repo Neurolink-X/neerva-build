@@ -16,6 +16,13 @@ export function visibleInteriorSignature(plan:BuildingConcept){
  ]);
  const a=signature(false),b=signature(true);return a<b?a:b;
 }
+/** Group by functional zoning and circulation orientation, ignoring small room
+ * resizing. Exact mirrored geometry is still deduplicated separately. */
+export function commercialTopology(p:BuildingConcept){
+ const W=p.brief.widthFt,D=p.brief.depthFt;
+ const signature=(mirror:boolean)=>JSON.stringify(p.zones.filter(z=>z.kind!=="open"&&z.kind!=="parking").map(z=>[z.floor,z.kind,Math.min(2,Math.floor((mirror?1-(z.x+z.w/2)/W:(z.x+z.w/2)/W)*3)),Math.min(2,Math.floor((z.y+z.d/2)/D*3)),z.kind==="circulation"?(z.w>z.d?"across":"lengthwise"):""].join(":")).sort());
+ const a=signature(false),b=signature(true);return a<b?a:b;
+}
 export const layoutFamilies=["internal","cross-gallery","purpose-led","classic","side-gallery"] as const;
 export type BuildingRecommendation={id:string;family:BuildingLayoutFamily;index:number;label:string;primaryAreaShare:number;accessAreaShare:number;coreSeparationFt:number;interiorRoomCount:number;detailed:boolean};
 function summarize(plan:BuildingConcept,index:number):BuildingRecommendation{
@@ -29,18 +36,25 @@ function summarize(plan:BuildingConcept,index:number):BuildingRecommendation{
  * Primary-area share is an indicator, not compliance, occupancy or quality certification.
  * Round-robin across families ensures the shortlist is not one repeated topology. */
 export function recommendBuildingConcepts(brief:BuildingBrief,limit=24){
- const seen=new Set<string>(),groups:BuildingRecommendation[][]=[],counts:Record<BuildingLayoutFamily,number>={"purpose-led":0,classic:0,"side-gallery":0,"cross-gallery":0,internal:0};
+ const seen=new Set<string>(),topologyById=new Map<string,string>(),groups:BuildingRecommendation[][]=[],counts:Record<BuildingLayoutFamily,number>={"purpose-led":0,classic:0,"side-gallery":0,"cross-gallery":0,internal:0};
  for(const family of layoutFamilies){
   const {plans}=generateBuildingConcepts(brief,24,family);counts[family]=plans.length;
   const group:BuildingRecommendation[]=[];
-  plans.forEach((p,i)=>{const key=visibleInteriorSignature(p);if(seen.has(key))return;seen.add(key);group.push(summarize(p,i));});
+  plans.forEach((p,i)=>{const key=visibleInteriorSignature(p);if(seen.has(key))return;seen.add(key);topologyById.set(p.id,commercialTopology(p));group.push(summarize(p,i));});
   group.sort((a,b)=>Number(b.detailed)-Number(a.detailed)||b.interiorRoomCount-a.interiorRoomCount||b.primaryAreaShare-a.primaryAreaShare||b.coreSeparationFt-a.coreSeparationFt||a.index-b.index);groups.push(group);
  }
  const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,options:BuildingRecommendation[]=[];
  // Prioritize validated detailed interiors; use zoning only to fill genuine gaps.
  for(const detailed of [true,false]){
   const eligible=groups.map(g=>g.filter(o=>o.detailed===detailed));
-  for(let i=0;i<24&&options.length<max;i++)for(const group of eligible){if(group[i]&&options.length<max)options.push(group[i]);}
+  const topologies=new Set(options.map(o=>topologyById.get(o.id)));
+  const ordered=Array.from({length:24},(_,i)=>eligible.flatMap(g=>g[i]?[g[i]]:[])).flat();
+  for(const distinct of [true,false])for(const option of ordered){
+   if(options.length>=max)break;
+   if(options.some(o=>o.id===option.id))continue;
+   const key=topologyById.get(option.id);if(distinct&&topologies.has(key))continue;
+   options.push(option);topologies.add(key);
+  }
  }
- return {counts,distinct:seen.size,options,detailedCount:options.filter(o=>o.detailed).length};
+ return {counts,distinct:seen.size,options,detailedCount:options.filter(o=>o.detailed).length,topologyCount:new Set(options.map(o=>topologyById.get(o.id))).size};
 }

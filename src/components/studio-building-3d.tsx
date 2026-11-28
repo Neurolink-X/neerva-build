@@ -11,7 +11,8 @@ import {PlanAxonometric} from "./plan-axonometric";
 import {DesignPlanArt} from "@/components/studio-design-gallery";
 import {finishSpaces,wallFaceOwners,wallShade,type FinishScheme,type FinishMaterial,type FinishSurface} from "@/modules/studio/finish-model";
 import type {Side} from "@/modules/studio/plan-model";
-import type {PlanModel} from "@/modules/studio/plan-model";
+import {isOtsRoom,type PlanModel} from "@/modules/studio/plan-model";
+import {otsGrilleBars} from "@/modules/studio/ots-ventilation";
 import {threeRoadRotation} from "@/modules/studio/plan-coordinate";
 import {residentialStairStudies,stairFloorPatches,stairStepDepthFt} from "@/modules/studio/stair-study";
 import {planFurniture} from "@/modules/studio/furniture";
@@ -102,7 +103,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
    const visible=(floor:number)=>mode==="exterior"||selectedFloor===undefined||floor===selectedFloor;
    if(planModel){
     // Phase 1 bridge: do not place a giant slab above the open parking bay or rear terrace.
-    for(const r of planModel.rooms.filter(r=>visible(r.floor)&&!["parking","verandah"].includes(r.kind))){
+    for(const r of planModel.rooms.filter(r=>visible(r.floor)&&!["parking","verandah"].includes(r.kind)&&(!isOtsRoom(r)||r.floor===0))){
      for(const patch of stairFloorPatches(r,stairReview?.studies??[]))box(xCoord(patch.x+patch.w/2),r.floor*height,zCoord(patch.y+patch.d/2),patch.w*FT,.14,patch.d*FT,concrete,false);
     }
    }else for(let f=0;f<design.floors;f++)if(visible(f))box(cx,f*height,cz,W,.14,D,concrete,false);
@@ -161,8 +162,20 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
       box(x,base+capped/2,z+d*.4,w,capped,d*.20,upholstery,false);
       for(const dx of [-1,1])box(x+dx*w*.45,base+.36,z,w*.10,.42,d,upholstery,false);
      }else{
-      box(x,base+capped/2,z,w,capped,d,p.kind==="bed"?linen:p.kind==="counter"?worktop:timber,false);
-      if(p.kind==="bed")box(x,base+capped+.05,z-d*.32,w*.8,.10,d*.22,upholstery,false);
+      if(p.kind==="bed"){
+       const frameH=capped*.48,mattress=capped-frameH;
+       box(x,base+frameH/2,z,w,frameH,d,timber,false);
+       box(x,base+frameH+mattress/2,z,w*.96,mattress,d*.97,linen,false);
+       box(x,base+capped+.035,z-d*.32,w*.75,.07,d*.19,upholstery,false);
+       box(x,base+frameH,z-d*.47,w,.32,d*.06,timber,false);
+      }else if(p.kind==="counter"){
+       const slab=Math.min(.045,capped*.1);box(x,base+(capped-slab)/2,z,w,capped-slab,d,timber,false);
+       box(x,base+capped-slab/2,z,w,slab,d,worktop,false);
+       for(const q of [-.3,0,.3])box(x+w*q,base+capped*.66,z+d*.49,w*.12,.025,.018,railingMat,false);
+      }else{
+       box(x,base+capped/2,z,w,capped,d,timber,false);
+       for(const q of [-.1,.1])box(x+w*q,base+capped*.55,z+d*.49,.025,.16,.018,railingMat,false);
+      }
      }
     }
    }
@@ -208,6 +221,7 @@ export function StudioBuilding3D({design,colour,planModel,selectedFloor,scheme}:
     roof(cx,top+parapet/2+.14,zCoord(fp.minZ),W+.25,parapet,.18);roof(cx,top+parapet/2+.14,zCoord(fp.maxZ),W+.25,parapet,.18);
     roof(xCoord(fp.minX),top+parapet/2+.14,cz,.18,parapet,D+.25);roof(xCoord(fp.maxX),top+parapet/2+.14,cz,.18,parapet,D+.25);
    }
+   if(planModel)for(const r of otsGrilleBars(planModel)){const m=new THREE.Mesh(shared,railingMat);m.position.set(xCoord(r.x+r.w/2),top+.17,zCoord(r.y+r.d/2));m.scale.set(r.w*FT,.045,r.d*FT);roofGroup.add(m);}
    roofGroup.visible=mode==="exterior";site.add(roofGroup);
    for(const r of design.layout.rooms.filter(r=>r.kind==="parking"&&visible(r.floorIndex))){
     box(xCoord(r.xFt+r.wFt/2),.015,zCoord(r.yFt+r.dFt/2),r.wFt*FT,.03,r.dFt*FT,material("#aaa69a"),false);

@@ -157,19 +157,23 @@ test("standard 18×50 and compact 15×30 no-parking ground 1 BHK share validated
 
 });
 
-test("expanded no-parking 1 BHK offers ten validated footprints and preserves legacy alternatives",()=>{
+test("expanded no-parking 1 BHK retains all ten legacy footprints plus real new programmes",()=>{
  const {plans,blockers}=generateSpatialPortfolio(brief({parking:false}));
- assert.deepEqual(blockers,[]);assert.equal(plans.length,10);
+ assert.deepEqual(blockers,[]);assert.equal(plans.length,14);
  assert.equal(new Set(plans.map(planSignature)).size,plans.length);
  assert.equal(new Set(plans.map(p=>p.id)).size,plans.length);
- assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size,5);
- assert.equal(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="bedroom")!.d)).size,5);
+ const legacy=generateSpatialPortfolio(brief({parking:false}),24,true).plans;
+ assert.equal(legacy.length,10);for(const p of legacy)assert.ok(plans.some(q=>q.id===p.id&&planSignature(q)===planSignature(p)));
+ assert.ok(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size>=5);
+ assert.ok(new Set(plans.map(p=>p.rooms.find(r=>r.kind==="bedroom")!.d)).size>=5);
  for(const side of ["left","right"])for(const suffix of ["","-living","-bedroom"])assert.ok(plans.some(p=>p.id==="18x50-N-pedestrian-"+side+suffix),"legacy saved ID remains available");
  for(const p of plans)assert.deepEqual(validatePlan(p),[]);
  for(const roadSide of ["N","E","S","W"] as const){
   const small=generateSpatialPortfolio(brief({parking:false,widthFt:15,depthFt:30,roadSide})).plans;
-  assert.equal(small.length,6);assert.equal(new Set(small.map(planSignature)).size,6);
-  assert.equal(new Set(small.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size,3);
+  assert.equal(small.length,10);assert.equal(new Set(small.map(planSignature)).size,10);
+  const old=generateSpatialPortfolio(brief({parking:false,widthFt:15,depthFt:30,roadSide}),24,true).plans;
+  assert.equal(old.length,6);for(const p of old)assert.ok(small.some(q=>q.id===p.id&&planSignature(q)===planSignature(p)));
+  assert.ok(new Set(small.map(p=>p.rooms.find(r=>r.kind==="living")!.d)).size>=3);
   for(const p of small)assert.deepEqual(validatePlan(p),[]);
  }
 });
@@ -191,12 +195,23 @@ test("1 BHK is one bedroom total, not one bedroom per floor; preserve G+1/G+2 an
    }
   }
  }
- const impossible=generateSpatialPortfolio(brief({widthFt:15,depthFt:30,floors:2,parking:false}));
- assert.equal(impossible.plans.length,0,"do not stretch compact plot or silently remove floors");
+ const compactBrief=brief({widthFt:15,depthFt:30,floors:2,parking:false});
+ const compact=generateSpatialPortfolio(compactBrief);assert.ok(compact.plans.length>0);
+ for(const p of compact.plans){assert.deepEqual(validatePlan(p),[]);assert.equal(p.plot.widthFt,15);assert.equal(p.plot.depthFt,30);assert.equal(p.floors,2);assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,1);assert.equal(p.parking,null);}
+ const impossible=generateSpatialPortfolio({...compactBrief,setbacks:{frontFt:6,rearFt:6,leftFt:3,rightFt:3}});assert.equal(impossible.plans.length,0);assert.ok(impossible.blockers.length);
 });
 test("ground parking 1 BHK is capped to six useful geometry-distinct choices",()=>{
  const {plans,blockers}=generateSpatialPortfolio(brief());
  assert.ok(plans.length>0,blockers.join("; "));assert.ok(plans.length<=6);
  assert.equal(new Set(plans.map(planSignature)).size,plans.length);
  for(const p of plans){assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,1);assert.ok(p.parking);assert.deepEqual(validatePlan(p),[])}
+});
+
+test("rejects malformed minimum bathroom, passage, stair order and car gate even when counts match",()=>{
+ const p=generateSpatialPortfolio(brief({floors:2,bedrooms:3}),1).plans[0];assert.ok(p);
+ const bad=structuredClone(p);bad.rooms.find(r=>r.kind==="bath")!.d=2;bad.rooms.find(r=>r.kind==="corridor")!.w=2;
+ bad.stairs.roomIds.reverse();bad.gate.xFt=bad.plot.widthFt-1;
+ const e=validatePlan(bad);
+ for(const token of ["Bathroom below","Corridor below","incorrect floor sequence","Road parking or straight gate"])assert.ok(e.some(x=>x.includes(token)),e.join(" / "));
+ const repeated=structuredClone(p);repeated.stairs.roomIds[1]=repeated.stairs.roomIds[0];assert.ok(validatePlan(repeated).some(x=>x.includes("incorrect floor sequence")));
 });

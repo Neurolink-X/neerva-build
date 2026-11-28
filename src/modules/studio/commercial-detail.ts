@@ -137,12 +137,22 @@ const frontageLanguage={
  rental:{style:"Quiet residential rhythm",materialMood:"Stone tones, slender frames and restrained glass",suitability:"Rental apartments and flats",finWidth:.35,finSpacing:5,finDepth:.5,canopyDepth:1.5}
 } as const;
 export function commercialFrontageLanguage(purpose:BuildingConcept["brief"]["purpose"]){return frontageLanguage[purpose];}
+/** Architectural rhythm follows actual circulation and street frontage. */
+export function commercialFrontageLanguageForPlan(plan:BuildingConcept){
+ const base=commercialFrontageLanguage(plan.brief.purpose);
+ const hall=plan.zones.find(z=>z.kind==="circulation"&&z.floor===0);
+ const cross=!!hall&&hall.w>hall.d;
+ const panels=commercialFrontPanels(plan).filter(p=>p.floor===0);
+ const primaryShare=panels.reduce((sum,p)=>sum+(p.kind==="primary"?p.w:0),0)/Math.max(1,panels.reduce((sum,p)=>sum+p.w,0));
+ const streetLed=primaryShare>.55;
+ return {...base,style:base.style+(cross?" · transverse gallery":streetLed?" · open frontage":" · framed frontage"),finSpacing:base.finSpacing*(cross?1.2:streetLed?1.12:.86),finDepth:base.finDepth*(cross?.85:1),canopyDepth:base.canopyDepth*(streetLed?1.1:1)};
+}
 export type FrontageDetail={id:string;kind:"fin"|"entry-hood"|"window-head"|"window-sill";floor:number;x:number;y:number;widthFt:number;depthFt:number;bottomFt:number;topFt:number};
 /** Shared elevation/render detail geometry in local, road-facing feet.
  * Place fins only on opaque frontage and entrance hoods above actual access openings.
  * Limit projections to the available front space; never create an opening or a floor. */
 export function commercialFrontageDetails(plan:BuildingConcept):FrontageDetail[]{
- const style=commercialFrontageLanguage(plan.brief.purpose),profile=commercialFacadeProfile(plan.brief.purpose);
+ const style=commercialFrontageLanguageForPlan(plan),profile=commercialFacadeProfile(plan.brief.purpose);
  const portals=commercialPortals(plan),panels=commercialFrontPanels(plan),out:FrontageDetail[]=[];
  for(const [i,p] of panels.entries()){
   const openings=portals.filter(a=>a.floor===p.floor&&a.axis==="x"&&Math.abs(a.y-p.y)<EPS);
