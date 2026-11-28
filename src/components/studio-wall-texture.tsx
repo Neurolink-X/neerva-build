@@ -1,10 +1,11 @@
 "use client";
 import {memo,useEffect,useLayoutEffect,useRef,useState} from "react";
-import {textureFor,texturePalette,wallTextureCrop,hasWallRaster} from "@/modules/studio/wall-textures";
+import {textureFor,texturePalette,paintTexturePalette,wallTextureCrop,hasWallRaster} from "@/modules/studio/wall-textures";
 import type {Pattern} from "@/modules/studio/wall-patterns";
+import {isPracticalPaintArt} from "@/modules/studio/practical-paint-art";
 import {isPremiumRaster} from "@/modules/studio/premium-wall-raster";
 import {generateWallRaster,isGeneratedWallPattern} from "@/modules/studio/generated-wall-raster";
-type Texture={width:number;height:number;values:Uint8Array};
+type Texture={width:number;height:number;values:Uint8Array;paintPigments?:boolean};
 type TextureState=Partial<Record<Pattern,Texture|null>>;
 // Share one in-flight request per design; keep only recently used decoded rasters.
 const pending=new Map<Pattern,Promise<Texture|null>>();
@@ -35,7 +36,7 @@ function loadTexture(key:Pattern):Promise<Texture|null>{
   img.src=meta.src;
  });
  else if(isGeneratedWallPattern(key))promise=new Promise(resolve=>{
-  window.setTimeout(()=>{try{resolve(generateWallRaster(key,isPremiumRaster(key)?360:600,isPremiumRaster(key)?240:400));}catch{resolve(null);}},0);
+  window.setTimeout(()=>{try{resolve({...generateWallRaster(key,isPremiumRaster(key)?360:600,isPremiumRaster(key)?240:400),paintPigments:isPracticalPaintArt(key)});}catch{resolve(null);}},0);
  });
  else return Promise.resolve(null);
  pending.set(key,promise);
@@ -71,7 +72,7 @@ export function useWallTextures(keys:string){
 export function colouredTexture(texture:Texture,base:string,accent:string,maxSide=960){
  const canvas=document.createElement("canvas"),scale=Math.min(1,maxSide/Math.max(texture.width,texture.height));canvas.width=Math.max(1,Math.round(texture.width*scale));canvas.height=Math.max(1,Math.round(texture.height*scale));
  const ctx=canvas.getContext("2d");if(!ctx)return canvas;
- const img=ctx.createImageData(canvas.width,canvas.height),palette=texturePalette(base,accent);
+ const img=ctx.createImageData(canvas.width,canvas.height),palette=(texture.paintPigments?paintTexturePalette:texturePalette)(base,accent);
  const columns=Array.from({length:canvas.width},(_,x)=>Math.min(texture.width-1,Math.floor(x/scale)));
  for(let y=0,j=0;y<canvas.height;y++){const row=Math.min(texture.height-1,Math.floor(y/scale))*texture.width;for(let x=0;x<canvas.width;x++,j++){const k=row+columns[x];const rgb=palette[texture.values[k]],i=j*4;img.data[i]=rgb[0];img.data[i+1]=rgb[1];img.data[i+2]=rgb[2];img.data[i+3]=255;}}
  ctx.putImageData(img,0,0);return canvas;

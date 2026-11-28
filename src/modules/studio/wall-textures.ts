@@ -93,6 +93,14 @@ export function texturePalette(base:string,accent:string){
   return b.map((c,k)=>{const pigment=c*(1-mix)+a[k]*mix;return Math.round(Math.max(0,Math.min(255,pigment*(1-.73*dark)+(255-pigment)*.88*light)));});});
 }
 
+/** Painted lines and flowers should use the chosen accent, not be bleached white.
+ * Map the neutral raster to the two pigments, retaining subtle directional shading. */
+export function paintTexturePalette(base:string,accent:string){
+ const rgb=(s:string)=>/^#[0-9a-f]{6}$/i.test(s)?[1,3,5].map(i=>parseInt(s.slice(i,i+2),16)):[160,160,160];
+ const b=rgb(base),a=rgb(accent);
+ return Array.from({length:256},(_,i)=>{const v=i/255,mix=Math.max(0,Math.min(1,(v-.32)/.48)),light=Math.max(0,v-.83)*.36,dark=Math.max(0,.32-v)*.3;return b.map((c,k)=>{const p=c*(1-mix)+a[k]*mix;return Math.round(Math.max(0,Math.min(255,p*(1-dark)+(255-p)*light)));});});
+}
+
 /** Only artwork that can actually appear in the current scene may block export.
  * Saved designs in another scene or the wall being replaced are not active. */
 export function appliedWallTextureKeys({scene,target,facadeStyles,walls,editing,valid,effectivePattern}:{scene:"room"|"facade"|"custom";target:FacadeTarget;facadeStyles:FacadeStyles;walls:readonly {pattern:Pattern}[];editing:number|null;valid:boolean;effectivePattern:Pattern}):Pattern[]{

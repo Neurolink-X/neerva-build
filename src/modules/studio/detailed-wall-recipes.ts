@@ -1,5 +1,6 @@
 import {isPremiumRaster,premiumRasterNames} from "./premium-wall-raster.ts";
 import type {Pattern} from "./wall-patterns.ts";
+import {textureFor} from "./wall-textures.ts";
 import type {MaterialDetail} from "./material-detail.ts";
 type Material="pigment"|"wash"|"stencil"|"inlay"|"relief"|"panel";
 type Recipe=readonly [Material,string,string];
@@ -86,6 +87,7 @@ const materialProfiles:Record<Material,MaterialDetail>={
  panel:{grain:.012,wash:.020,ridge:.012,edge:.11,axis:"vertical"}
 };
 export function wallMaterialDetail(key:Pattern):MaterialDetail|undefined{
+ if(textureFor(key))return;
  const recipe=detailedWallRecipe(key);if(!recipe)return;
  const profile=materialProfiles[recipe[0]];
  if(key==="herringbone"||key==="sculptDiamond"||key==="sculptPrism")return {...profile,axis:"diagonal"};
