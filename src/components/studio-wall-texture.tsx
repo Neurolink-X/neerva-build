@@ -2,13 +2,14 @@
 import {memo,useEffect,useLayoutEffect,useRef,useState} from "react";
 import {textureFor,texturePalette,wallTextureCrop,hasWallRaster} from "@/modules/studio/wall-textures";
 import type {Pattern} from "@/modules/studio/wall-patterns";
+import {isPremiumRaster} from "@/modules/studio/premium-wall-raster";
 import {generateWallRaster,isGeneratedWallPattern} from "@/modules/studio/generated-wall-raster";
 type Texture={width:number;height:number;values:Uint8Array};
 type TextureState=Partial<Record<Pattern,Texture|null>>;
 const pending=new Map<Pattern,Promise<Texture|null>>();
 function loadTexture(key:Pattern){
  const old=pending.get(key);if(old)return old;
- if(isGeneratedWallPattern(key)){const promise=Promise.resolve().then(()=>generateWallRaster(key));pending.set(key,promise);return promise;}
+ if(isGeneratedWallPattern(key)){const promise=Promise.resolve().then(()=>generateWallRaster(key,isPremiumRaster(key)?360:600,isPremiumRaster(key)?240:400));pending.set(key,promise);void promise.then(()=>{while(pending.size>16){const first=pending.keys().next().value;if(first===undefined)break;pending.delete(first);}});return promise;}
  const meta=textureFor(key);if(!meta)return Promise.resolve(null);
  const promise=new Promise<Texture|null>(resolve=>{
   const img=new Image();let settled=false;
@@ -32,7 +33,7 @@ function loadTexture(key:Pattern){
  * procedural rasters limit the cache; no stale photo or user data is stored. */
 export function useWallTextures(keys:string){
  const [textures,setTextures]=useState<TextureState>({});
- useEffect(()=>{let cancelled=false;for(const key of keys.split(",") as Pattern[]){if(!hasWallRaster(key))continue;void loadTexture(key).then(value=>{if(!cancelled)setTextures(old=>old[key]===value?old:{...old,[key]:value});});}return()=>{cancelled=true};},[keys]);
+ useEffect(()=>{let cancelled=false;const wanted=keys.split(",") as Pattern[];setTextures(old=>Object.fromEntries(Object.entries(old).filter(([k])=>wanted.includes(k as Pattern))));for(const key of wanted){if(!hasWallRaster(key))continue;void loadTexture(key).then(value=>{if(!cancelled)setTextures(old=>old[key]===value?old:{...old,[key]:value});});}return()=>{cancelled=true};},[keys]);
  return textures;
 }
 export function colouredTexture(texture:Texture,base:string,accent:string,maxSide=960){

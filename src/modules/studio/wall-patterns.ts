@@ -1,3 +1,4 @@
+import {premiumRasterNames} from "./premium-wall-raster.ts";
 import {decorativeArt,luxuryLattice} from "./decorative-wall-art.ts";
 import {premiumArt,enrichArtwork} from "./premium-wall-art.ts";
 import {refinedArtwork} from "./refined-wall-art.ts";
@@ -103,6 +104,7 @@ export const finishes = {
   softConcrete:{name:"Fine concrete patina",motifs:[...grain(64,43),...repeat(14,i=>wave(.04+i*.07,.018,i*.91,.10,3))]},...decorativeArt,...newPaintedArt,...premiumArt,...exteriorArt
 } satisfies Record<string,{name:string;motifs:Motif[]}>;
 export type Pattern = keyof typeof finishes;
+for(const [key,name] of Object.entries(premiumRasterNames))finishes[key as Pattern].name=name;
 export const patternKeys = Object.keys(finishes) as Pattern[];
 // Old IDs remain valid for previously selected walls; weak filler designs are
 // excluded from the new curated chooser rather than breaking restored selections.

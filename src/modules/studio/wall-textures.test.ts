@@ -12,4 +12,4 @@ test("inactive scenes and replaced walls cannot block export waiting for texture
 
 test("all eight image finishes are discoverable and full-wall crop preserves aspect",()=>{assert.equal(imageBasedWallPatterns.length,8);assert.equal(new Set(imageBasedWallPatterns).size,8);assert.deepEqual(wallTextureCrop(960,480,1),[.25,0,.5,1]);assert.deepEqual(wallTextureCrop(800,800,2),[0,.25,1,.5]);assert.deepEqual(wallTextureCrop(800,400,2),[0,0,1,1]);assert.deepEqual(wallTextureCrop(0,400,2),[0,0,1,1]);});
 
-test("procedural relief and mural rasters remain in the 64 original non-image designs",()=>{assert.equal(hasWallRaster("sculptDiamond"),true);assert.equal(hasWallRaster("oceanCliffs"),true);assert.equal(hasWallRaster("arch"),false);assert.equal(imageBasedWallPatterns.length,8);});
+test("procedural relief and mural rasters remain in the 64 original non-image designs",()=>{assert.equal(hasWallRaster("sculptDiamond"),true);assert.equal(hasWallRaster("oceanCliffs"),true);assert.equal(hasWallRaster("arch"),true);assert.equal(imageBasedWallPatterns.length,8);});

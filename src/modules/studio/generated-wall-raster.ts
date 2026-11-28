@@ -1,7 +1,9 @@
+import {premiumRasterNames,isPremiumRaster,premiumRasterShade,type PremiumRasterPattern} from "./premium-wall-raster.ts";
 import type {Pattern} from "./wall-patterns.ts";
 /** Original offline optical material studies. Height-field shading is a
  * two-dimensional preview of relief, not actual sculpted geometry. */
-export const generatedWallPatterns=["sculptFlute","sculptDiamond","sculptReed","sculptStone","sculptPrism","oceanCliffs","desertDunes","citySilhouette"] as const satisfies readonly Pattern[];
+const originalGeneratedWallPatterns=["sculptFlute","sculptDiamond","sculptReed","sculptStone","sculptPrism","oceanCliffs","desertDunes","citySilhouette"] as const satisfies readonly Pattern[];
+export const generatedWallPatterns=[...originalGeneratedWallPatterns,...Object.keys(premiumRasterNames) as PremiumRasterPattern[]] as const;
 type GeneratedPattern=typeof generatedWallPatterns[number];
 export function isGeneratedWallPattern(key:Pattern):key is GeneratedPattern{return (generatedWallPatterns as readonly Pattern[]).includes(key);}
 const clamp=(v:number,min=0,max=1)=>Math.min(max,Math.max(min,v));
@@ -46,6 +48,7 @@ export type GeneratedWallRaster={width:number;height:number;values:Uint8Array};
  * remote images, per-frame mesh or runtime graphics dependencies. */
 export function generateWallRaster(key:GeneratedPattern,width=600,heightPx=400):GeneratedWallRaster{
  width=Math.max(16,Math.min(720,Math.floor(width)));heightPx=Math.max(16,Math.min(480,Math.floor(heightPx)));const values=new Uint8Array(width*heightPx);
+ if(isPremiumRaster(key)){for(let y=0,j=0;y<heightPx;y++)for(let x=0;x<width;x++,j++)values[j]=Math.round(premiumRasterShade(key,x/(width-1),y/(heightPx-1))*255);return {width,height:heightPx,values};}
  const relief=key.startsWith("sculpt"),heights=relief?new Float32Array(width*heightPx):null;
  if(heights)for(let y=0,j=0;y<heightPx;y++)for(let x=0;x<width;x++,j++)heights[j]=height(key,x/(width-1),y/(heightPx-1));
  for(let y=0,j=0;y<heightPx;y++)for(let x=0;x<width;x++,j++){

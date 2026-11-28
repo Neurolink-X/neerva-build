@@ -61,11 +61,14 @@ function shaftCandidate(p:PlanModel,rect:Rect):PlanModel|null{
 /** Search real boundary-aligned rectangles. Prefer wet-core adjacency and
  * minimal loss of enclosed space. Never alter input dimensions or required rooms. */
 export function otsVariant(p:PlanModel):PlanModel{
+ return searchOts(p,[[3,3],[3,4],[4,3],[4,4]])??searchOts(p,[[3,5],[5,3],[4,5],[5,4],[5,5]])??p;
+}
+function searchOts(p:PlanModel,sizes:number[][]):PlanModel|null{
  if(p.rooms.some(isOtsRoom))return p;
  const shape=p.plot.siteShape??{kind:"rectangle"} as const,sb=p.setbacks;
  const W=p.plot.widthFt-sb.rightFt,D=p.plot.depthFt-sb.rearFt;
  const seen=new Set<string>(),pool:{r:Rect;score:number}[]=[];
- for(const target of p.rooms.filter(wet))for(const [w,d] of [[3,3],[3,4],[4,3],[4,4]]){
+ for(const target of p.rooms.filter(wet))for(const [w,d] of sizes){
   const x=[target.x-w,target.x+target.w,target.x,target.x+target.w-w,target.x+(target.w-w)/2];
   const y=[target.y-d,target.y+target.d,target.y,target.y+target.d-d,target.y+(target.d-d)/2];
   for(const a of x)for(const b of y){
@@ -86,7 +89,7 @@ export function otsVariant(p:PlanModel):PlanModel{
   const rank=report.rows.filter(q=>q.openings.some(o=>o.exposure==="ots")).length*100+report.score*30+score;
   if(rank>bestScore&&preservesEssentialInterior(before,interiorFitReport(candidate))){best=candidate;bestScore=rank;}
  }
- return best??p;
+ return best;
 }
 /** Deterministic roof grille geometry, feet. No solid cover; bar spacing is
  * illustrative, not a fall-protection specification. */

@@ -16,3 +16,7 @@ test("collection guidance is aligned with the only active catalogue",()=>{
 });
 
 test("focal art fits above the sample sofa without changing its aspect",()=>{const f=artworkFrame(rect(600,400),true,.7);assert.ok(f.v+f.h<=.7+1e-8);assert.ok(Math.abs(600*f.w/(400*f.h)-1.5)<1e-8);});
+
+import {isFeatureWall} from "./wall-design-guide.ts";
+import {premiumRasterNames} from "./premium-wall-raster.ts";
+test("all replacement artwork fills the selected wall; retain original orbit and blossom IDs",()=>{assert.equal(Object.keys(premiumRasterNames).length,27);assert.ok(patternGroups.Signature.filter(k=>k!=="orbit").every(k=>Object.hasOwn(premiumRasterNames,k)));assert.ok(patternGroups.Nature.filter(k=>k!=="blossomBranch").every(k=>Object.hasOwn(premiumRasterNames,k)));assert.ok(patternGroups.Modern.every(k=>Object.hasOwn(premiumRasterNames,k)));assert.equal(isFeatureWall("orbit"),true);for(const k of Object.keys(premiumRasterNames) as (keyof typeof premiumRasterNames)[])assert.equal(isFeatureWall(k),false);});
