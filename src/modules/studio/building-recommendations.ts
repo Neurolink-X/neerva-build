@@ -7,7 +7,8 @@ const round=(n:number)=>Math.round(n*1000)/1000;
 /** Compare actual displayed room and opening geometry, not family IDs, labels or colours.
  * A left/right reflection alone does not count as an additional interior option.
  * Keep persisted plan signatures unchanged for backward-compatible restoration. */
-export function visibleInteriorSignature(plan:BuildingConcept,portals=commercialPortals(plan)){
+export function visibleInteriorSignature(plan:BuildingConcept){return signatureWithPortals(plan,commercialPortals(plan));}
+function signatureWithPortals(plan:BuildingConcept,portals:ReturnType<typeof commercialPortals>){
  const detailed=commercialInternalSpaces(plan),rooms=detailed.length?detailed:rentalLayouts(plan).flatMap(u=>u.rooms.map(r=>({...r,parentId:u.unitId})));
  const parents=new Set(rooms.map(r=>r.parentId)),spaces=[...plan.zones.filter(z=>!parents.has(z.id)),...rooms];
  const width=plan.brief.widthFt;
@@ -45,7 +46,7 @@ export function recommendBuildingConcepts(brief:BuildingBrief,limit=24){
  for(const family of layoutFamilies){
   const {plans}=generateBuildingConcepts(brief,24,family);counts[family]=plans.length;
   const group:BuildingRecommendation[]=[];
-  plans.forEach((p,i)=>{const portals=commercialPortals(p);const key=visibleInteriorSignature(p,portals);if(seen.has(key))return;seen.add(key);topologyById.set(p.id,commercialTopology(p));group.push(summarize(p,i,portals));});
+  plans.forEach((p,i)=>{const portals=commercialPortals(p);const key=signatureWithPortals(p,portals);if(seen.has(key))return;seen.add(key);topologyById.set(p.id,commercialTopology(p));group.push(summarize(p,i,portals));});
   group.sort((a,b)=>Number(b.detailed)-Number(a.detailed)||b.screenedSpaceShare-a.screenedSpaceShare||a.wetServiceReviewCount-b.wetServiceReviewCount||b.interiorRoomCount-a.interiorRoomCount||b.primaryAreaShare-a.primaryAreaShare||b.coreSeparationFt-a.coreSeparationFt||a.index-b.index);groups.push(group);
  }
  const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,options:BuildingRecommendation[]=[];
