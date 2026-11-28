@@ -4,19 +4,18 @@ import {memo,useEffect,useLayoutEffect,useRef,useState} from "react";
 import {textureFor,texturePalette,paintTexturePalette,wallTextureFrame,hasWallRaster} from "@/modules/studio/wall-textures";
 import type {Pattern} from "@/modules/studio/wall-patterns";
 import {isPracticalPaintArt} from "@/modules/studio/practical-paint-art";
-import {isPremiumRaster} from "@/modules/studio/premium-wall-raster";
-import {generateWallRaster,isGeneratedWallPattern,generatePracticalRaster} from "@/modules/studio/generated-wall-raster";
+import {generateWallRasterCooperative,isGeneratedWallPattern} from "@/modules/studio/generated-wall-raster";
 type Texture={width:number;height:number;values:Uint8Array;paintPigments?:boolean};
 type TextureState=Partial<Record<Pattern,Texture|null>>;
 // Share one in-flight request per design; keep only recently used decoded rasters.
-const pending=new Map<Pattern,Promise<Texture|null>>();
-const decoded=new Map<Pattern,Texture>();
+const pending=new Map<string,Promise<Texture|null>>();
+const decoded=new Map<string,Texture>();
 const cacheLimit=16;
-function loadTexture(key:Pattern):Promise<Texture|null>{
- const cached=decoded.get(key);
- if(cached){decoded.delete(key);decoded.set(key,cached);return Promise.resolve(cached);}
- const old=pending.get(key);if(old)return old;
- const meta=textureFor(key);
+function loadTexture(key:Pattern,thumbnail=false):Promise<Texture|null>{
+ const meta=textureFor(key),cacheKey=key+(thumbnail&&!meta?":thumb":"");
+ const cached=decoded.get(cacheKey);
+ if(cached){decoded.delete(cacheKey);decoded.set(cacheKey,cached);return Promise.resolve(cached);}
+ const old=pending.get(cacheKey);if(old)return old;
  // A real local image is preferred over its procedural substitute.
  let promise:Promise<Texture|null>;
  if(meta)promise=new Promise<Texture|null>(resolve=>{
@@ -36,24 +35,22 @@ function loadTexture(key:Pattern):Promise<Texture|null>{
   }catch{done(null);}};
   img.src=meta.src;
  });
- else if(isPracticalPaintArt(key)){
+ else if(isGeneratedWallPattern(key)){
   const compact=window.innerWidth<600||navigator.hardwareConcurrency<=4;
-  promise=generatePracticalRaster(key,compact?480:600,compact?320:400,()=>new Promise(resolve=>window.setTimeout(resolve,0))).then(r=>({...r,paintPigments:true})).catch(()=>null);
+  const width=thumbnail?240:compact?480:600,height=thumbnail?160:compact?320:400;
+  promise=generateWallRasterCooperative(key,width,height,()=>new Promise(resolve=>window.setTimeout(resolve,0))).then(r=>({...r,paintPigments:isPracticalPaintArt(key)})).catch(()=>null);
  }
- else if(isGeneratedWallPattern(key))promise=new Promise(resolve=>{
-  window.setTimeout(()=>{try{resolve(generateWallRaster(key,isPremiumRaster(key)?360:600,isPremiumRaster(key)?240:400));}catch{resolve(null);}},0);
- });
  else return Promise.resolve(null);
- pending.set(key,promise);
+ pending.set(cacheKey,promise);
  void promise.then(value=>{
-  pending.delete(key);
-  if(value){decoded.set(key,value);while(decoded.size>cacheLimit){const first=decoded.keys().next().value;if(first===undefined)break;decoded.delete(first);}}
+  pending.delete(cacheKey);
+  if(value){decoded.set(cacheKey,value);while(decoded.size>cacheLimit){const first=decoded.keys().next().value;if(first===undefined)break;decoded.delete(first);}}
  });
  return promise;
 }
 /** Selected and applied walls take priority. Only the current category is
  * loaded, with at most three active tasks per view and a bounded shared cache. */
-export function useWallTextures(keys:string,concurrency=3){
+export function useWallTextures(keys:string,concurrency=3,thumbnail=false){
  const [textures,setTextures]=useState<TextureState>({});
  useEffect(()=>{
   let cancelled=false;
@@ -61,7 +58,7 @@ export function useWallTextures(keys:string,concurrency=3){
   let cursor=0;
   const worker=async()=>{
    while(!cancelled&&cursor<wanted.length){
-    const key=wanted[cursor++],value=await loadTexture(key);
+    const key=wanted[cursor++],value=await loadTexture(key,thumbnail);
     if(!cancelled)setTextures(old=>old[key]===value?old:{...old,[key]:value});
    }
   };
@@ -71,7 +68,7 @@ export function useWallTextures(keys:string,concurrency=3){
    for(let i=0;i<Math.min(concurrency,wanted.length);i++)void worker();
   });
   return()=>{cancelled=true;};
- },[keys,concurrency]);
+ },[keys,concurrency,thumbnail]);
  return textures;
 }
 export function colouredTexture(texture:Texture,base:string,accent:string,maxSide=960){
@@ -86,7 +83,8 @@ export const WallTextureSwatch=memo(function WallTextureSwatch({texture,base,acc
  const ref=useRef<SVGImageElement>(null);
  useLayoutEffect(()=>{const c=colouredTexture(texture,base,accent,detail?960:220);
  // Only pigment changes regenerate the small swatch; intensity is SVG opacity.
- ref.current?.setAttribute("href",c.toDataURL("image/webp",.82));c.width=0;c.height=0;
+ const target=ref.current;let cancelled=false,uri:string|undefined; c.toBlob(blob=>{c.width=0;c.height=0;if(cancelled||!blob||!target)return;uri=URL.createObjectURL(blob);target.setAttribute("href",uri);},"image/webp",.82);
+ return()=>{cancelled=true;if(uri)URL.revokeObjectURL(uri);};
  },[texture,base,accent,detail]);
  return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio={texture.paintPigments||detail||preserveComposition?"none":"xMidYMid slice"} opacity={intensity}/></svg>;
 });
