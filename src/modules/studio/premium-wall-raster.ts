@@ -40,7 +40,6 @@ export function premiumRasterShade(key:PremiumRasterPattern,x:number,y:number){
  switch(key){
  case "abstractLeaves":{v=.68;for(let i=0;i<5;i++){const dx=x-.12-i*.19,dy=y-.48-.09*Math.sin(i*2),d=((dx+dy*(i%2?.25:-.25))/.12)**2+(dy/.55)**2;if(d<1)v=.29+.46*Math.sqrt(1-d)+.08*Math.sin(d*28);}break;}
  case "aurora":v=.48+.24*Math.sin(y*17+4*Math.sin(x*4))+.15*ridge(y*9+.5*Math.sin(x*7));break;
- case "celestial":{const d=Math.hypot((x-.64)*1.5,y-.33);v=.34+.35*gaussian((d-.23)/.055)+.22*gaussian((d-.36)/.025)+.12*ridge(y*5+x*2);break;}
  case "floralScroll":v=plant(x,y,0);break;
  case "bamboo":v=plant(x,y,1);break;
  case "botanical":v=plant(x,y,2);break;

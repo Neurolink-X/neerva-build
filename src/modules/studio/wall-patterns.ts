@@ -107,6 +107,7 @@ export const finishes = {
 export type Pattern = keyof typeof finishes;
 for(const [key,name] of Object.entries(premiumRasterNames))finishes[key as Pattern].name=name;
 for(const [key,name] of Object.entries(practicalPaintNames))finishes[key as Pattern].name=name;
+finishes.meadowBloom.name="Botanical brushwork atelier";
 export const patternKeys = Object.keys(finishes) as Pattern[];
 // Old IDs remain valid for previously selected walls; weak filler designs are
 // excluded from the new curated chooser rather than breaking restored selections.

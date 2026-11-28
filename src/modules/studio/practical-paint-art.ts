@@ -5,8 +5,9 @@ export const practicalPaintNames={
  arch:"Sculpted arch and ribbons",split:"Champagne horizon",asymmetric:"Modern diagonal colour fields",scallop:"Art deco sweeping curves",
  steppedColourBlock:"Architectural colour cascade",modernRibbons:"Golden flowing ribbons",offsetCircles:"Celestial intersecting circles",
  facets:"Metallic architectural geometry",grid:"Asymmetric painted frames",diagonal:"Luxury diagonal bands",panels:"Gallery line composition",bands:"Vertical ombre accents",
- mural:"Silk brush panorama",herringbone:"Painted chevron linework",hexGrid:"Fine hexagonal linework",angularWeave:"Isometric cube linework",
- sculptDiamond:"Folded silk paint illusion",sculptPrism:"Sculpted wave paint illusion"
+ mural:"Silk brush panorama",herringbone:"Artisan interlocking inlay",hexGrid:"Fine hexagonal linework",angularWeave:"Isometric cube linework",
+ sculptDiamond:"Folded silk paint illusion",sculptPrism:"Sculpted wave paint illusion",
+ oceanCliffs:"Indigo ink-wash panorama",desertDunes:"Sienna pigment fresco",citySilhouette:"Heritage architectural ink mural",celestial:"Gilded silk calligraphy"
 } as const satisfies Partial<Record<Pattern,string>>;
 type Key=keyof typeof practicalPaintNames;
 export function isPracticalPaintArt(p:Pattern):p is Key{return Object.hasOwn(practicalPaintNames,p);}
@@ -44,9 +45,13 @@ export function practicalPaintShade(key:Key,x:number,y:number){
  case "diagonal":{const t=x+.72*y;v=.30+wash+.29*g((t-.47)/.11)+.31*g((t-1.18)/.12);for(const a of [.33,.36,.59,.62,1.07,1.30,1.33])v=Math.max(v,.33+.51*g((t-a)/.005));v+=.018*Math.sin(t*260+x*11);break;}
  case "panels":{v=.32+wash;for(const [cx,w,h] of [[.22,.32,.76],[.67,.47,.61],[.84,.19,.85]]){const d=rectLine(x,y,cx,.49,w,h);v=Math.max(v,.32+.52*g(d/.005),.32+.25*g((d-.018)/.004));}break;}
  case "bands":{v=.30+.26*g((x-.28)/.20)+.22*g((x-.75)/.17)+wash;for(const a of [.10,.13,.16,.19,.70,.73,.76,.79])v=Math.max(v,.32+.52*g((x-a)/.004));break;}
- case "herringbone":{const t=y-.65*Math.abs(x-.5);v=.32+wash;for(let i=-2;i<7;i++){const band=t-i*.18;v=Math.max(v,.32+.50*g(band/.006),.32+.27*g((band-.034)/.012));}break;}
+ case "herringbone":{v=.29+wash;for(let j=0;j<3;j++)for(let i=0;i<3;i++){const cx=.14+i*.36+(j%2)*.05,cy=.18+j*.34,dx=(x-cx)*1.4,dy=y-cy;const u=(dx+dy)*.707,w=(dy-dx)*.707;const d=Math.abs(Math.max(Math.abs(u)-.16,Math.abs(w)-.095));if(Math.abs(u)<.16&&Math.abs(w)<.095)v=Math.max(v,.49+.09*Math.cos(u*30+w*18));v=Math.max(v,.30+.53*g(d/.006),.30+.28*g((d-.017)/.004));}break;}
  case "hexGrid":
  case "angularWeave":{const cube=key==="angularWeave",r=cube?.114:.092,xx=x*1.5,yy=y,row=Math.round(yy/(1.5*r));v=.34+wash;let dist=1;for(let j=row-1;j<=row+1;j++){const cy=j*1.5*r,step=Math.sqrt(3)*r,cx0=(j%2)*step/2,col=Math.round((xx-cx0)/step);for(let i=col-1;i<=col+1;i++){const cx=cx0+i*step,dx=Math.abs(xx-cx),dy=Math.abs(yy-cy);dist=Math.min(dist,Math.abs(Math.max(dx*Math.sqrt(3)/2+dy*.5,dy)-r));if(cube&&dx<step*.50&&dy<r)dist=Math.min(dist,line(xx,yy,cx,cy,cx,cy+r),line(xx,yy,cx,cy,cx-step/2,cy-r/2),line(xx,yy,cx,cy,cx+step/2,cy-r/2));}}v=Math.max(v,.33+.47*g(dist/.0045));break;}
+ case "oceanCliffs":{v=.32+wash;for(let i=0;i<5;i++){const edge=.26+i*.155+.115*Math.sin(x*5.8+i*.8)+.045*Math.sin(x*13-i*.6),t=y-edge;if(t>=0)v=.44+i*.055+.10*Math.exp(-t*14)+.029*Math.sin(t*155+x*41);v=Math.max(v,.31+.52*g(t/.0055));}const ink=y-.30-.22*Math.sin(x*4.5+1);v+=.09*g(ink/.13)*Math.sin(x*112+y*57);break;}
+ case "desertDunes":{v=.30+wash;const a=x+.27*Math.sin(y*4),b=y+.10*Math.sin(x*8);for(let i=0;i<4;i++){const edge=.11+i*.25+.09*Math.sin(b*7+i*1.6)+.025*Math.cos(b*31+i);if(a>edge)v=.39+i*.105+.035*Math.sin(a*90+b*32);v=Math.max(v,.31+.50*g((a-edge)/.006));}v+=.035*Math.sin(x*177+y*123)*Math.cos(y*83-x*61);break;}
+ case "citySilhouette":{v=.31+wash;for(let i=0;i<3;i++){const cx=.18+i*.32,rx=.138-i*.012,top=.10+i*.09,join=.40+i*.06;const d=archDistance(x,y,cx,rx,top,join);const inside=y<join?Math.hypot((x-cx)/rx,(y-join)/(join-top))<1:Math.abs(x-cx)<rx;if(inside&&y<.92)v=Math.max(v,.45+.16*g((x-cx)/.08)+.035*Math.sin(y*82+x*20));v=Math.max(v,.31+.53*g(d/.0045),.31+.38*g((d-.024)/.005));}for(const yy of [.81,.87,.92])v=Math.max(v,.30+.45*g((y-yy)/.004));break;}
+ case "celestial":{v=.30+wash;for(let i=0;i<4;i++){const t=y-(.16+i*.20)-.15*Math.sin(x*(4.2+i*.3)+i*1.05);const width=.045+.02*Math.sin(x*5+i);v=Math.max(v,.33+.37*g(t/width),.33+.49*g((t-width)/.005));v+=.025*Math.cos(t*150+x*19)*g(t/(width*1.5));}break;}
  case "sculptDiamond":{const fold=x+.18*Math.sin(y*4);v=.48+.25*Math.sin(fold*19)+.08*Math.sin(fold*38+.5);break;}
  case "sculptPrism":{const fold=y+.19*Math.cos(x*5);v=.48+.26*Math.cos(fold*17)+.09*Math.sin(fold*31);break;}
  }

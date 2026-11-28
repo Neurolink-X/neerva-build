@@ -44,7 +44,7 @@ export function HomeShowcase({hindi}:{hindi:boolean}) {
     <div className="nbh-house-strip" ref={strip} onPointerDown={()=>setPlaying(false)} onScroll={e=>{
       const el=e.currentTarget;
       if(el.clientWidth){const next=Math.round(el.scrollLeft/el.clientWidth);if(next!==index)setIndex(next);}
-    }}>{heroGalleryPhotos.map(photo=><div key={photo.src}><Image src={photo.src} fill sizes="(max-width:760px) 95vw, 46vw" loading="lazy" fetchPriority="low" alt={photo.name}/></div>)}</div>
+    }}>{heroGalleryPhotos.map((photo,i)=><div key={photo.src}><Image src={photo.src} fill sizes="(max-width:760px) 95vw, 46vw" loading={i===0?"eager":"lazy"} fetchPriority={i===0?"high":"low"} alt={photo.name}/></div>)}</div>
     <div className="nbh-house-controls">{heroGalleryPhotos.map((photo,i)=><button type="button" key={photo.src} aria-current={i===index?"true":undefined} aria-label={(hindi?"घर ":"House ")+(i+1)} onClick={()=>{setPlaying(false);slide(i,true);}}>{i+1}</button>)}</div>
     <figure ref={figure} className="home-stage-comparison" data-journey="premium" aria-label={hindi?"निर्माण सामग्री से तैयार घर तक":"From construction materials to finished home"}>
       <figcaption className="nbh-stage-heading"><strong>{hindi?"निर्माण सामग्री से तैयार घर तक":"From materials to a finished home"}</strong><small>{hindi?"घर का उदाहरण · खींचकर तुलना करें":"Illustrative home · Drag to compare"}</small></figcaption>

@@ -26,9 +26,10 @@ import {fitFacadeArtwork,managedFacadeStyles,recommendedFacadeZone} from "@/modu
 import {useWallTextures,colouredTexture,WallTextureSwatch,drawTextureQuad} from "./studio-wall-texture";
 import {colourPairings} from "@/modules/studio/colour-families";
 import {ShadeReferenceCard} from "./shade-reference-card";
-import {StudioPremiumTools} from "./studio-premium-tools";
+import dynamic from "next/dynamic";
 import {cornerRoomAsset,cornerRoomInitialWalls,cornerRoomWalls} from "@/modules/studio/corner-room";
 import {facadeSamples,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
+const StudioPremiumTools=dynamic(()=>import("./studio-premium-tools").then(m=>m.StudioPremiumTools),{loading:()=> <p role="status">Loading report options…</p>});
 const roomPhotos={corner:cornerRoomAsset.src,feature:"/images/studio/paint-room.webp",daylight:"/images/studio/daylight-living-room.webp"} as const;
 type RoomPhoto=keyof typeof roomPhotos;
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
@@ -121,6 +122,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  const [history,setHistory]=useState(emptyMaskHistory),[ready,setReady]=useState(false);
  const [closeUp,setCloseUp]=useState(false);
  const [keepShades,setKeepShades]=useState(false);
+ const [reportOpen,setReportOpen]=useState(false);
  const tapStart=useRef<{x:number;y:number;id:number}|null>(null);
  const [allInterior,setAllInterior]=useState(false),[interiorWholeShade,setInteriorWholeShade]=useState(colour);
  const [patchMode,setPatchMode]=useState(false),[extraPaintAreas,setExtraPaintAreas]=useState<MaskCorner[][]>([]);
@@ -416,7 +418,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
    <button type="button" className="paint-quiet" onClick={()=>{setAllInterior(false);setCloseUp(false);setHistory(emptyMaskHistory());setEditing(null);setShowOriginal(false)}}>Reset wall selection ({points.length}/4)</button>
    </div></details>
   </div>}
-  {showReport&&<details className="paint-more"><summary>Detailed Studio report</summary><StudioPremiumTools product="colour_studio" base={base} accent={mode==="design"?renderedAccent:base} room={exterior?"Selected exterior colour":scene==="room"&&roomPhoto==="corner"&&!allInterior&&editing!==null?wallLabel(editing):"Selected interior colour"}/></details>}
+  {showReport&&<details className="paint-more" onToggle={e=>setReportOpen(e.currentTarget.open)}><summary>Detailed Studio report</summary>{reportOpen&&<StudioPremiumTools product="colour_studio" base={base} accent={mode==="design"?renderedAccent:base} room={exterior?"Selected exterior colour":scene==="room"&&roomPhoto==="corner"&&!allInterior&&editing!==null?wallLabel(editing) :"Selected interior colour"}/>}</details>}
   <p className="nbd-disclaimer">Corner, feature-wall and exterior samples have pre-marked surfaces. Other photos require manual wall selection. The 100 gaj sample is design inspiration, not a verified construction drawing. Full exterior colours all marked areas, not glass, timber, plants or neighbouring buildings. For your own photo, mark a flat wall and avoid openings. Preview shades retain lighting; edges and colours are approximate. Verify physical shade cards and measured wall area before buying.</p>
  </section>;
 }
