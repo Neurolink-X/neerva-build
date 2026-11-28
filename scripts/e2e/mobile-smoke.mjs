@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
 import {assessPerformance,resourceSummary} from "./performance-budget.mjs";
+import {verifyInvalidPhotoUpload} from "./photo-upload-regression.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
 const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/learn/property-guide","/learn/future-homes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
@@ -303,10 +304,7 @@ async function main(){
     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="compact-family"&&!!document.querySelector(".paint-preview-actions button")&&c.getBoundingClientRect().height>0});
     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect(),p=c.parentElement.getBoundingClientRect();return Math.abs(r.width/r.height-c.width/c.height)<.025&&r.left>=p.left-1&&r.right<=p.right+1&&p.right<=innerWidth+1}),v.w+"px full facade fits its source aspect ratio");
     if(v.w<=430&&v.h>560){
-     await page.locator(".paint-source input[type=file]").setInputFiles({name:"broken.png",mimeType:"image/png",buffer:Buffer.from("not an image")});
-     await page.getByRole("alert").filter({hasText:"Choose a still photo"}).waitFor();
-     assert.equal(await page.locator(".nbd-photo canvas").getAttribute("data-sample"),"compact-family");
-     assert.ok(await page.locator(".nbd-photo canvas").isVisible(),"invalid upload preserves the working photo");
+     await verifyInvalidPhotoUpload(page);
      await page.getByRole("button",{name:"Paint + design",exact:true}).click();
      await page.getByRole("button",{name:"Signature",exact:true}).click();
      const pattern=page.getByRole("button",{name:"Soft marble veining",exact:true});
