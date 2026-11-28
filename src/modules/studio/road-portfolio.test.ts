@@ -205,3 +205,13 @@ test("separate exact plans, meaningful room programmes and street compositions",
   console.log("architecture-coverage "+JSON.stringify({kind:"residential",roadSide,checked:plans.length,programmes:groups.length,frontCompositions:fronts.length,frontStairs:plans.filter(p=>entranceArrangement(p)==="front-stair").length}));
  }
 });
+
+test("compact pedestrian homes offer an independently accessible private front bedroom",()=>{
+ const b={...standard,widthFt:15,depthFt:30,floors:1 as const,bedrooms:1,parking:false};
+ const plans=generateSpatialPortfolio(b).plans;
+ const p=plans.find(p=>p.id.endsWith("-private-front-v1"));assert.ok(p);
+ assert.deepEqual(validatePlan(p),[]);
+ assert.ok(p.rooms.find(r=>r.kind==="bedroom")!.y<p.rooms.find(r=>r.kind==="living")!.y);
+ assert.ok(p.openings.some(o=>o.roomId==="hall-front"&&o.connectsTo==="bed-g"));
+ assert.equal(new Set(plans.map(geometrySignature)).size,plans.length);
+});

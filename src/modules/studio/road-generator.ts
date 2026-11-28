@@ -346,7 +346,7 @@ function buildArchitecturalFamily(
  return p;
 }
 
-function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
+function compactPedestrianPlans(b:PlanBrief,limit:number,legacy=false):PlanningResult|null{
  const sb=conservativeEnvelope(b.widthFt,b.depthFt,b.siteShape??{kind:"rectangle"},b.setbacks);
  const width=b.widthFt-sb.leftFt-sb.rightFt,depth=b.depthFt-sb.frontFt-sb.rearFt;
  // A dedicated stair-free 1 BHK is also useful on larger plots. Keep the
@@ -383,7 +383,33 @@ function compactPedestrianPlans(b:PlanBrief,limit:number):PlanningResult|null{
   addWindow(plan);
   if(validateRequestedProgramme(plan,b).length===0)plans.push(plan);
  }
- return {plans:pickDiverse(plans,limit),blockers:plans.length?[]:["Room sizes or access could not be validated within the available footprint."]};
+ const baseline=pickDiverse(plans,limit);
+ // Independent side passage and front bedroom: a different programme, not a resized living-first plan.
+ if(!legacy&&baseline.length>=3){
+  const alternatives:PlanModel[]=[];
+  for(const left of [true,false]){
+   const seed=baseline.find(p=>p.variant===(left?"parking-left":"parking-right"))??baseline[0];
+   const ox=sb.leftFt,oy=sb.frontFt,bedDepth=Math.floor((d-11)/2),serviceY=3+bedDepth,rearY=serviceY+8;
+   const rooms:Room[]=[],openings:Opening[]=[];
+   const add=(id:string,label:string,kind:RoomKind,x:number,y:number,rw:number,rd:number)=>rooms.push(room(id,label,kind,0,ox+(left?x:w-x-rw),oy+y,rw,rd));
+   add("verandah","Front porch","verandah",0,0,w,3);
+   add("bed-g","Private front bedroom","bedroom",0,3,w-3.5,bedDepth);
+   add("hall-front","Independent side passage","corridor",w-3.5,3,3.5,bedDepth);
+   add("kitchen","Kitchen","kitchen",0,serviceY,w-8,8);
+   add("bath-g","Bath / WC","bath",w-8,serviceY,4.5,8);
+   add("hall-g","Service passage","corridor",w-3.5,serviceY,3.5,8);
+   add("living","Rear living and dining","living",0,rearY,w,d-rearY);
+   try{
+    for(const [a,z] of [["verandah","hall-front"],["hall-front","bed-g"],["hall-front","hall-g"],["hall-g","bath-g"],["hall-g","living"],["living","kitchen"]])connect(rooms,openings,a,z);
+    const porch=rooms.find(r=>r.id==="verandah")!,hall=rooms.find(r=>r.id==="hall-front")!,entry=round(hall.x+hall.w/2-1.5);
+    openings.push({id:"entry",roomId:porch.id,kind:"door",side:"front",atFt:entry-porch.x,widthFt:3,heightFt:7,sillFt:0});
+    const p:PlanModel={...seed,id:seed.id+"-private-front-v1",rooms,openings,pedestrianGate:{side:"front",xFt:entry,widthFt:3},facade:{...seed.facade,kit:"stepped-band"},notes:["Private street bedroom and independent side passage",...seed.notes]};
+    addWindow(p);if(!validateRequestedProgramme(p,b).length&&!plans.some(q=>planSignature(q)===planSignature(p)))alternatives.push(p);
+   }catch{/* Reject invalid compact layouts. */}
+  }
+  if(alternatives.length)return {plans:[baseline[0],...alternatives,...baseline.slice(1)].slice(0,baseline.length),blockers:[]};
+ }
+ return {plans:baseline,blockers:plans.length?[]:["Room sizes or access could not be validated within the available footprint."]};
 }
 /** Never display a valid geometry that silently changes the customer's room programme. */
 
@@ -539,7 +565,7 @@ export function generateSpatialPortfolio(brief:PlanBrief,limit=24,legacy=false):
  if(blockers.length)return {plans:[],blockers};
  if(brief.bedrooms>3||(brief.bedrooms===3&&brief.floors===1))return wideResult(brief,limit);
  if(brief.bedrooms===1&&brief.widthFt>=26&&brief.depthFt>=40){const wide=wideResult(brief,limit);if(wide.plans.length)return wide;}
- const compact=compactPedestrianPlans(brief,Math.max(1,Math.floor(limit)));if(compact)return compact;
+ const compact=compactPedestrianPlans(brief,Math.max(1,Math.floor(limit)),legacy);if(compact)return compact;
  const envelope=houseEnvelope(brief);
  const W=brief.widthFt-envelope.leftFt-envelope.rightFt;
  const baseParking=Math.max(8.5,Math.min(10,round(W*.46)));
