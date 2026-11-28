@@ -1226,7 +1226,28 @@ async function main(){
     assert.ok(await airControls.evaluate(el=>{const boxes=[...el.querySelectorAll(".nroad-air-choice")].map(x=>x.getBoundingClientRect());return boxes.length===2&&boxes[0].bottom<=boxes[1].top+1&&boxes.every(b=>b.left>=0&&b.right<=document.documentElement.clientWidth+1&&b.height>=44)}),"ventilation choices are structured touch targets");
     const sameAir=()=>page.waitForFunction(()=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")&&a.getAttribute("data-ventilation-windows")===b.getAttribute("data-ventilation-windows")&&a.getAttribute("data-roof-jaal")===b.getAttribute("data-roof-jaal")});
     await sameAir();await airControls.getByRole("checkbox").first().check();await sameAir();await airControls.getByRole("checkbox").nth(1).check();await sameAir();
-    const roofStatus=await plan2D.getAttribute("data-roof-jaal");if(roofStatus==="modeled"){assert.equal(await plan3D.getByRole("button",{name:"See roof jaal from above",exact:true}).count(),1);}else assert.match(await airControls.innerText(),/No feasible shaft/);
+    // Assert the actual modeled state, not translatable prose. An infeasible
+    // shaft must never be reported as modeled or offered a fake roof camera.
+    const roofStatus=await plan2D.getAttribute("data-roof-jaal");
+    const shaftStatus=airControls.locator(".nroad-air-status");
+    const roofCamera=plan3D.getByRole("button",{name:"See roof jaal from above",exact:true});
+    const findShaft=airControls.getByRole("button",{name:"Find a layout with roof jaal",exact:true});
+    assert.ok(["modeled","not-modeled"].includes(roofStatus),"2D reports an explicit roof state");
+    assert.equal(await plan3D.getAttribute("data-roof-jaal"),roofStatus);
+    assert.equal(await shaftStatus.getAttribute("data-shaft-state"),roofStatus==="modeled"?"modeled":"unavailable");
+    if(roofStatus==="modeled"){
+      assert.equal(await roofCamera.isVisible(),true);assert.equal(await findShaft.count(),0);
+    }else{
+      assert.equal(await roofCamera.count(),0);assert.equal(await findShaft.isEnabled(),true);
+      // The 18×50 G+1 benchmark has a feasible alternative. Exercise recovery
+      // and require synchronized modeled geometry before restoring option #6.
+      await findShaft.click();
+      await page.waitForFunction(()=>document.querySelector(".nroad-air-status")?.getAttribute("data-shaft-state")==="modeled",{},{timeout:120000});
+      await sameAir();
+      assert.equal(await plan2D.getAttribute("data-roof-jaal"),"modeled");assert.equal(await roofCamera.isVisible(),true);
+      await page.locator(".nroad-variants button").nth(5).click();await sameAir();
+      assert.equal(await plan2D.getAttribute("data-plan-id"),sixthId);
+    }
     await plan3D.getByRole("button",{name:"Highlight ventilation in 3D",exact:true}).click();assert.equal(await plan3D.getByRole("button",{name:"Hide ventilation highlights",exact:true}).getAttribute("aria-pressed"),"true");
     await plan3D.getByRole("button",{name:"Hide ventilation highlights",exact:true}).click();await airControls.getByRole("checkbox").nth(1).uncheck();await airControls.getByRole("checkbox").first().uncheck();await sameAir();await page.getByRole("button",{name:"Selected floor cutaway",exact:true}).click();
     await plan2D.screenshot({path:path.join("test-results/mobile","390-residential-2d.png"),animations:"disabled"});
