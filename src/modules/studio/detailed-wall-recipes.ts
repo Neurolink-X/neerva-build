@@ -1,4 +1,4 @@
-import {isPremiumRaster} from "./premium-wall-raster.ts";
+import {isPremiumRaster,premiumRasterNames} from "./premium-wall-raster.ts";
 import type {Pattern} from "./wall-patterns.ts";
 import type {MaterialDetail} from "./material-detail.ts";
 type Material="pigment"|"wash"|"stencil"|"inlay"|"relief"|"panel";
@@ -71,7 +71,7 @@ export const detailedWallRecipes={
  contemporaryPanel:["panel","Living room","Keep the central frame aligned with furniture."],
  grandSalon:["panel","Formal living","Use subtle moulding highlights with a calm base tone."]
 } as const satisfies Partial<Record<Pattern,Recipe>>;
-export function detailedWallRecipe(key:Pattern):Recipe|undefined{if(isPremiumRaster(key))return ["relief","Living, bedroom or feature wall","Use an uninterrupted wall and test the optical finish on a sample; this is not physical relief."];return (detailedWallRecipes as Partial<Record<Pattern,Recipe>>)[key];}
+export function detailedWallRecipe(key:Pattern):Recipe|undefined{if(isPremiumRaster(key))return ["relief","Living, bedroom or feature wall",premiumRasterNames[key]+": use an uninterrupted wall and verify the optical finish on a sample board; not physical relief."];return (detailedWallRecipes as Partial<Record<Pattern,Recipe>>)[key];}
 export function wallFinishStrength(key:Pattern){const recipe=detailedWallRecipe(key);return recipe?{pigment:.016,wash:.035,stencil:.021,inlay:.013,relief:.028,panel:.022}[recipe[0]]:0;}
 
 /** Different finish families require different texture frequency and depth.
