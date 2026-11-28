@@ -1238,6 +1238,7 @@ async function main(){
     assert.ok(await airControls.evaluate(el=>{const boxes=[...el.querySelectorAll(".nroad-air-choice")].map(x=>x.getBoundingClientRect());return boxes.length===2&&boxes[0].bottom<=boxes[1].top+1&&boxes.every(b=>b.left>=0&&b.right<=document.documentElement.clientWidth+1&&b.height>=44)}),"ventilation choices are structured touch targets");
     const sameAir=()=>page.waitForFunction(()=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")&&a.getAttribute("data-ventilation-windows")===b.getAttribute("data-ventilation-windows")&&a.getAttribute("data-roof-jaal")===b.getAttribute("data-roof-jaal")});
     await sameAir();await airControls.getByRole("checkbox").first().check();await sameAir();await airControls.getByRole("checkbox").nth(1).check();await sameAir();
+    const locationControl=airControls.getByLabel("Roof-jaal position");assert.equal(await locationControl.locator("option").count(),6);await locationControl.selectOption("middle");await sameAir();await locationControl.selectOption("auto");await sameAir();
     // Assert the actual modeled state, not translatable prose. An infeasible
     // shaft must never be reported as modeled or offered a fake roof camera.
     const roofStatus=await plan2D.getAttribute("data-roof-jaal");
@@ -1248,7 +1249,7 @@ async function main(){
     assert.equal(await plan3D.getAttribute("data-roof-jaal"),roofStatus);
     assert.equal(await shaftStatus.getAttribute("data-shaft-state"),roofStatus==="modeled"?"modeled":"unavailable");
     if(roofStatus==="modeled"){
-      assert.equal(await roofCamera.isVisible(),true);assert.equal(await findShaft.count(),0);
+      assert.equal(await roofCamera.isVisible(),true);assert.equal(await findShaft.isEnabled(),true);
     }else{
       assert.equal(await roofCamera.count(),0);assert.equal(await findShaft.isEnabled(),true);
       // The 18×50 G+1 benchmark has a feasible alternative. Exercise recovery
@@ -1315,6 +1316,7 @@ async function main(){
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
     await roadPlan.waitFor({state:"visible",timeout:15000});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
+    await page.getByLabel("Terrace preference").selectOption("all");
     {const cards=page.locator(".nroad-variants button");const count=await cards.count();assert.ok(count>=24&&count<=38,"24 baseline options plus feasible upper-floor alternatives");
     const ids=await cards.evaluateAll(nodes=>nodes.map(node=>node.getAttribute("data-plan-id")));assert.equal(new Set(ids).size,count,"No duplicated plan IDs");}
     assert.ok((await page.locator(".nroad-variants button").first().locator(".nroad-mini-plan").count())>=1,"every option has real floor previews");
@@ -1407,6 +1409,7 @@ async function main(){
     // Large-home input, full 24-option gallery and the exact selected 3D floor.
     await page.goto(base+"/design-studio/portfolio?width=36&depth=65&floors=2&bedrooms=6&road=W&parking=true",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
+    await page.getByLabel("Terrace preference").selectOption("all");
     {const count=await page.locator(".nroad-variants button").count();assert.ok(count>=24&&count<=38,"six-bedroom brief retains validated portfolio plus feasible covered alternatives");}
     assert.match(await page.locator(".nroad-plan-summary").innerText(),/6\s*Bedrooms total/);
     const firstLargeId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
