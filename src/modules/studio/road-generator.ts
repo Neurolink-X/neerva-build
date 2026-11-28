@@ -144,11 +144,12 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   put(`bath-${level}`,"Bath / WC","bath",level,0,26,stairW,8);
   if(recipe.upperProgramme&&D>=47&&W-stairW>=9&&D-34>=8&&W/(D-34)<=2.5){
    const passage=3.5,serviceWidth=W-stairW-passage;
-   put(`utility-${level}`,recipe.upperProgramme==="rear-service"&&serviceWidth>=6?"Upper kitchen":"Wash / service",recipe.upperProgramme==="rear-service"&&serviceWidth>=6?"kitchen":"utility",level,stairW,26,serviceWidth,8);
+   put(`utility-${level}`,"Wash / service","utility",level,stairW,26,serviceWidth,8);
    put(`rear-passage-${level}`,"Private rear access","corridor",level,W-passage,26,passage,8);
    if(recipe.upperProgramme==="rear-service"&&W-rearBedW>=3.5&&rearBedW>=8){
     put(`rear-family-${level}`,"Rear family room / study","lounge",level,0,34,rearBedW,D-34);
-    put(`rear-wash-${level}`,"Rear wash / ventilation reserve","utility",level,rearBedW,34,W-rearBedW,D-34);
+    const kitchenFits=W-rearBedW>=6&&(W-rearBedW)*(D-34)>=48&&(D-34)/(W-rearBedW)<=2.5;
+    put(`rear-wash-${level}`,kitchenFits?"Rear upper kitchen":"Rear wash / ventilation reserve",kitchenFits?"kitchen":"utility",level,rearBedW,34,W-rearBedW,D-34);
    }else put(`rear-family-${level}`,"Rear family room / study","lounge",level,0,34,W,D-34);
   }else if(recipe.coveredUpper&&D>=47&&W-stairW>=9&&D-39>=8&&W/(D-39)<=2.5){
    const passage=3.5;
@@ -199,7 +200,7 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   if(rooms.some(r=>r.id===`balcony-${level}`))joins.push([`balcony-${level}`,frontRoom]);
   if(rooms.some(r=>r.id===`rear-family-${level}`)){
    joins.push([`lounge-${level}`,`rear-passage-${level}`]);
-   if(rooms.some(r=>r.id===`rear-wash-${level}`))joins.push([`rear-passage-${level}`,`rear-wash-${level}`],[`rear-wash-${level}`,`rear-family-${level}`]);
+   if(rooms.some(r=>r.id===`rear-wash-${level}`))joins.push([`rear-passage-${level}`,`rear-wash-${level}`],[`utility-${level}`,`rear-family-${level}`]);
    else joins.push([`rear-passage-${level}`,`rear-family-${level}`]);
   }
   if(rooms.some(r=>r.id===`rear-family-${level}`)&&rooms.some(r=>r.id===`terrace-${level}`))joins.push([`rear-family-${level}`,`terrace-${level}`]);
@@ -884,7 +885,7 @@ export function generateEnclosedUpperPortfolio(b:PlanBrief):PlanModel[]{
  const plans:PlanModel[]=[];
  for(const upperProgramme of ["full","front-terrace","rear-service"] as const)for(const variant of ["parking-left","parking-right"] as const)for(const option of [0,1]){
   try{
-   const p=build(b,variant,{upperProgramme,upperBedRatio:option?.52:.48,stairWidthFt:option?5.25:5.5,frontProgramme:option?"family-hall":"dining",rearProgramme:"wash",familyLabel:"upper-v2-"+upperProgramme+"-"+option});
+   const p=build(b,variant,{upperProgramme,upperBedRatio:option?.52:.48,rearBedWidthFt:upperProgramme==="rear-service"?11:undefined,stairWidthFt:option?5.25:5.5,frontProgramme:option?"family-hall":"dining",rearProgramme:"wash",familyLabel:"upper-v2-"+upperProgramme+"-"+option});
    if(p.rooms.some(r=>r.id.startsWith("rear-family-"))&&!validateRequestedProgramme(p,b).length)plans.push(p);
   }catch{/* Only feasible complete programmes are offered. */}
  }
