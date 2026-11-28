@@ -1,10 +1,11 @@
+import {isPracticalPaintArt,practicalPaintShade} from "./practical-paint-art.ts";
 import type {Pattern} from "./wall-patterns.ts";
 // Original optical material artwork, not a photograph or physical relief.
 export const premiumRasterNames={
- sunDisc:"Gilded mineral strata",layeredArches:"Travertine vault relief",abstractLeaves:"Sculpted silk petals",eclipse:"Midnight onyx veins",aurora:"Brushed champagne waves",galleryArc:"Art deco brass fan",celestial:"Celestial plaster relief",
+ sunDisc:"Brushed mineral wash",layeredArches:"Layered painted arches",abstractLeaves:"Sculpted silk petals",eclipse:"Metallic floral frames",aurora:"Brushed champagne waves",galleryArc:"Art deco painted fan",celestial:"Celestial plaster relief",
  floralScroll:"Magnolia garden fresco",bamboo:"Bamboo grove in mist",botanical:"Tropical leaf fresco",forest:"Misty woodland panorama",mountain:"Alpine panorama",waterflow:"Waterfall silk mural",fernStencil:"Fern canopy botanical",
- arch:"Contemporary fluted arch",split:"Bronze and limestone dado",asymmetric:"Asymmetric stone inlay",mural:"Organic plaster contours",scallop:"Ceramic fan relief",steppedColourBlock:"Architectural stepped relief",modernRibbons:"Satin ribbon sculpture",offsetCircles:"Terrazzo medallion inlay",
- facets:"Continuous faceted geometry",grid:"Bevelled stone mosaic",diagonal:"Diagonal brass inlay",panels:"Modern inset panelling",bands:"Fine reeded timber effect"
+ arch:"Soft painted arch",split:"Two-tone metallic dado",asymmetric:"Asymmetric colour fields",mural:"Organic plaster contours",scallop:"Hand-painted scallop border",steppedColourBlock:"Stepped colour accent",modernRibbons:"Flowing brush ribbons",offsetCircles:"Overlapping painted circles",
+ facets:"Intersecting metallic lines",grid:"Open rectangular line mural",diagonal:"Diagonal painted ribbons",panels:"Oversized painted frames",bands:"Vertical tonal brushwork"
 } as const satisfies Partial<Record<Pattern,string>>;
 export type PremiumRasterPattern=keyof typeof premiumRasterNames;
 export function isPremiumRaster(key:Pattern):key is PremiumRasterPattern{return Object.hasOwn(premiumRasterNames,key);}
@@ -35,6 +36,7 @@ function landscape(x:number,y:number,kind:number){
  return v;
 }
 export function premiumRasterShade(key:PremiumRasterPattern,x:number,y:number){
+ if(isPracticalPaintArt(key))return practicalPaintShade(key,x,y);
  let v=.5;
  switch(key){
  case "sunDisc":v=.42+.22*Math.sin(y*19+3*Math.sin(x*6))+.22*ridge(y*6+.3*Math.sin(x*8));break;

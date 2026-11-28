@@ -4,10 +4,7 @@ import type {FacadeStyles,FacadeTarget} from "./facade-paint.ts";
 export type WallTexture={src:string;width:number;height:number;bytes:number;sha256:string;crop?:readonly [number,number,number,number]};
 export const wallTextures:Partial<Record<Pattern,WallTexture>>={
  // Original AI-generated wall concept artwork, optimized as local grayscale WebP.
- eclipse:{src:"/images/studio/walls/eclipse-art-v1.webp",width:320,height:214,bytes:3504,sha256:"f0c4299547edf6e8b0136bd8d79b630ac1b54c940ef215e850054dfada60ba3f"},
- arch:{src:"/images/studio/walls/arch-art-v1.webp",width:320,height:214,bytes:2814,sha256:"6efab8802c04d51abd7cff7070114c54188bd13e956dc319bfc47e448cd3b556"},
  botanical:{src:"/images/studio/walls/botanical-art-v1.webp",width:320,height:214,bytes:4766,sha256:"fa7ee2ea241cbcf192cebbf5c80948df1719166e14f1bf2dd0d4c0b0fcdff06f"},
- facets:{src:"/images/studio/walls/facets-art-v1.webp",width:320,height:214,bytes:2606,sha256:"97e5aad6ecbe8f96a4adef3c4ad4118dd3a8bd27710405f7aacd5dcb174bd47e"},
  "sculptWave": {
   "src": "/images/studio/walls/sculptWave.webp",
   "width": 960,

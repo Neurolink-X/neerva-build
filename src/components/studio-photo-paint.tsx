@@ -11,6 +11,7 @@ import {isSurfaceProfile} from "@/modules/studio/surface-texture";
 import {surfaceCanvas,StudioSurfaceSwatch} from "./studio-surface-swatch";
 import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide";
 import {exteriorCollections,exteriorGuide,exteriorGroupFor,isExteriorPattern} from "@/modules/studio/exterior-wall-art";
+import {paintExecution} from "@/modules/studio/paint-execution";
 import {artworkFrame} from "@/modules/studio/wall-design-layout";
 import {shadeArtworkPixels} from "@/modules/studio/artwork-lighting";
 import {detailedWallRecipe,wallMaterialDetail} from "@/modules/studio/detailed-wall-recipes";
@@ -132,6 +133,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
  const guide=exterior?exteriorGuide[exteriorGroup]:collectionGuide[activeGroup];
  const effectivePattern=activePattern(mode,selectedPattern);
  const designRecipe=detailedWallRecipe(selectedPattern);
+ const execution=exterior?undefined:paintExecution(selectedPattern);
  const appliedTextures=appliedWallTextureKeys({scene,target,facadeStyles,walls,editing,valid,effectivePattern});
  const textureKeys=[...new Set<Pattern>([...(mode==="design"?[effectivePattern]:[]),...appliedTextures,...(mode==="design"?shownPatterns:[])])].filter(hasWallRaster).join(",");
  const textures=useWallTextures(textureKeys);
@@ -370,7 +372,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls,showRepor
    {shownPatterns.map(key=><button type="button" key={key} aria-pressed={selectedPattern===key} onClick={()=>{setPattern(key);setShowOriginal(false)}}>
     {textures[key]?<WallTextureSwatch texture={textures[key]} base={base} accent={accent} intensity={opacity}/>:hasWallRaster(key)&&textures[key]===undefined?<span className="paint-texture-pending" style={{background:base}} aria-hidden="true">Loading finish…</span>:isSurfaceProfile(key)?<StudioSurfaceSwatch profile={key} base={base} accent={accent} intensity={opacity}/>:<WallArtworkSwatch pattern={key} base={base} accent={accent} intensity={opacity}/>}<span>{finishes[key].name}</span>{textures[key]===null&&hasWallRaster(key)&&<small aria-hidden="true" className="paint-finish-type">Illustrated fallback</small>}
    </button>)}
-  </div>{designRecipe?<p className="paint-collection-tip"><strong>{designRecipe[1]}:</strong> {designRecipe[2]}</p>:<p className="paint-collection-tip">{guide.tip}</p>}<label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
+  </div>{designRecipe?<p className="paint-collection-tip"><strong>{designRecipe[1]}:</strong> {designRecipe[2]}</p>:<p className="paint-collection-tip">{guide.tip}</p>}{execution&&<details className="paint-more"><summary>How to paint this design</summary><p><strong>{execution.method}</strong> · {execution.difficulty} · {execution.coverage}</p><p>{execution.finish}</p><p>{execution.execution}</p><small>{execution.maintenance}</small></details>}<label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>
   </>}
 </div></div>
   <ShadeReferenceCard entries={shadeEntries} compact quoteValue={base} application={exterior?"exterior":"interior"}/>

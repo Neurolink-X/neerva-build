@@ -105,6 +105,8 @@ export const finishes = {
 } satisfies Record<string,{name:string;motifs:Motif[]}>;
 export type Pattern = keyof typeof finishes;
 for(const [key,name] of Object.entries(premiumRasterNames))finishes[key as Pattern].name=name;
+finishes.sculptDiamond.name="Folded silk paint illusion";
+finishes.sculptPrism.name="Sculpted wave paint illusion";
 export const patternKeys = Object.keys(finishes) as Pattern[];
 // Old IDs remain valid for previously selected walls; weak filler designs are
 // excluded from the new curated chooser rather than breaking restored selections.

@@ -31,11 +31,12 @@ export async function verifyWallArtwork(page){
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="feature");
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     assert.equal(await page.getByRole("button",{name:/Image-based premium finishes/i}).count(),0,"no duplicate image-only collection");
-    for(const [group,name] of [["Signature","Midnight onyx veins"],["Nature","Tropical leaf fresco"],["Modern","Contemporary fluted arch"],["Geometry","Continuous faceted geometry"]]){
+    for(const [group,name] of [["Signature","Metallic floral frames"],["Nature","Tropical leaf fresco"],["Modern","Soft painted arch"],["Geometry","Intersecting metallic lines"]]){
      await page.getByRole("button",{name:group,exact:true}).click();
      const card=page.getByRole("button",{name,exact:true});await card.click();
      await card.locator(".paint-texture-swatch").waitFor({state:"visible"});
      await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");
+     assert.equal(await page.getByText("How to paint this design",{exact:true}).count(),1);
     }
     await page.getByRole("button",{name:"Signature",exact:true}).click();
     await page.getByRole("button",{name:"3D effects",exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll(".wall-pattern-options .paint-texture-swatch").length===8);await page.getByRole("button",{name:"Signature",exact:true}).click();

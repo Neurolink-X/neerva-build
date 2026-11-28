@@ -1,5 +1,5 @@
-# Original wall concept images
+# Practical wall paint artwork
 
-Four original AI-generated decorative wall concept textures supplement the eight existing local images. They are integrated into Signature (eclipse), Nature (botanical), Modern (arch), and Geometry (facets), not a separate image collection. These are visual finish concepts, not photographs of installed products or physical relief specifications.
+The curated studio prioritizes paint, stencil, metallic accents, decorative wash and tonal illusions, rather than tiles or physical panels. The new tropical foliage image and eight prior local textures remain available in their relevant categories. Three recently added stone/panel-style image assets have been removed from active storage and replaced with original paint-specific raster recipes using the same design IDs. All previews are concepts, not a specification for physical relief or a guaranteed reproduction of an installed finish.
 
-Each new 320 × 214 grayscale WebP is a separate crop from the original four-panel artwork, with its own verified checksum. Combined new payload: 13,690 bytes. The existing 960 px assets are unchanged. The renderer recolours the images locally, projects into the selected wall mask, and preserves furniture exclusion regions. Browser checks cover real image loading in each category; vector fallback remains available on a failed image load. Higher-resolution close-up artwork may be reviewed separately rather than inflating the mobile catalogue.
+Paint application guidance is available for every curated interior design. The client loads the selected texture first, keeps a bounded cache and uses the existing wall masks. Furniture remains protected by the existing mask system.
