@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import {buildingFloorSnapshot,buildingRenderSnapshot} from "@/modules/studio/building-render";
+import {projectCommercialScene} from "@/modules/studio/commercial-lightweight";
 import {memo,useMemo,useState,useSyncExternalStore,type FormEvent} from "react";
 import Link from "@/components/intent-link";
 import {preferLitePreview,preferLiteDevice,type NetworkHint} from "@/modules/navigation/intent";
@@ -50,6 +51,10 @@ const PlanDrawing=memo(function PlanDrawing({plan,floor,scheme,showFurniture,tec
  </svg>;
 });
 const Massing=memo(function Massing({plan,floor,angle,scheme,showFurniture}:{plan:BuildingConcept;floor:number|null;angle:number;scheme:FinishScheme;showFurniture:boolean}){
+ const scene=floor===null?buildingRenderSnapshot(plan,"limestone",false,"front",scheme):buildingFloorSnapshot(plan,floor,scheme,false,showFurniture);
+ const projected=projectCommercialScene(scene,angle);
+ if(projected)return <svg viewBox={projected.viewBox} role="img" aria-label={floor===null?"All floors three-dimensional building":"Selected floor three-dimensional building"} data-plan-id={plan.id} data-floor={floor??"all"} data-geometry="shared-render-boxes">{projected.faces.map(f=><polygon key={f.id} points={f.points} fill={f.fill} fillOpacity={f.opacity} stroke={f.fill} strokeWidth=".025"/>)}</svg>;
+ // Very large scenes retain the bounded zoning fallback rather than exhausting a low-end device.
  const b=plan.brief,dim=siteDimensions(b.widthFt,b.depthFt,b.roadSide);
  const rotate=(x:number,y:number)=>{const X=x-dim.w/2,Y=y-dim.d/2,t=angle*Math.PI/2;return [X*Math.cos(t)-Y*Math.sin(t),X*Math.sin(t)+Y*Math.cos(t)]};
  const project=(x:number,y:number,z:number)=>{const [X,Y]=rotate(x,y);return [(X-Y)*.86,(X+Y)*.44-z].join(",")};
