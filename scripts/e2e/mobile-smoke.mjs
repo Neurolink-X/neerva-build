@@ -1429,12 +1429,23 @@ async function main(){
       await drawing.waitFor({state:"visible"});
       const selectedId=await drawing.getAttribute("data-plan-id");
       assert.ok(selectedId,bedrooms+" BHK has a valid source plan");
+      // The published default is a stable recommendation, never a temporary
+      // candidate that a delayed shaft search can replace while inspecting it.
+      assert.equal(await page.locator(".nroad-plan-summary").getAttribute("data-plan-id"),selectedId);
+      const selectedCard=page.locator('.nroad-variants button[aria-pressed="true"]');
+      const selectedBaseId=await selectedCard.getAttribute("data-plan-id");
+      assert.ok(selectedBaseId,"exactly one active gallery choice");
+      assert.equal(await selectedCard.count(),1);
       const cards=page.locator(".nroad-variants button");
       assert.ok(await cards.count()>0,bedrooms+" BHK has real layout choices");
       assert.equal(await cards.first().locator(".nroad-mini-plan").count(),levels,"all levels shown in each option");
       await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
       const viewer=page.locator(".nbd-building");
       await viewer.waitFor({state:"visible",timeout:30000});
+      assert.equal(await drawing.getAttribute("data-plan-id"),selectedId,"initial layout remains stable while 3D loads");
+      assert.equal(await selectedCard.getAttribute("data-plan-id"),selectedBaseId,"initial gallery choice remains stable");
+      await selectedCard.click();
+      assert.equal(await drawing.getAttribute("data-plan-id"),selectedId,"reselecting active card pins the existing geometry");
       let total=0,halls=0,kitchens=0;const roomIds=[];
       for(let floor=0;floor<levels;floor++){
         await page.getByRole("group",{name:"Select floor"}).getByRole("button",{name:["Ground floor","First floor","Second floor"][floor],exact:true}).click();
@@ -1448,6 +1459,9 @@ async function main(){
         halls+=await drawing.locator('svg g[data-room-kind="living"]').count();
         kitchens+=await drawing.locator('svg g[data-room-kind="kitchen"]').count();
       }
+      assert.equal(await selectedCard.getAttribute("data-plan-id"),selectedBaseId,"floor switching never changes selected layout");
+      assert.equal(await drawing.getAttribute("data-plan-id"),selectedId,"2D identity remains stable across every floor");
+      assert.equal(await viewer.getAttribute("data-plan-id"),selectedId,"3D identity remains stable across every floor");
       assert.equal(total,bedrooms,"exact bedroom count across all floors");
       assert.equal(new Set(roomIds).size,bedrooms,"no duplicate bedroom IDs across floors");
       assert.ok(halls>=1&&kitchens>=1,"BHK must contain living room and kitchen");
