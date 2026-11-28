@@ -76,7 +76,20 @@ export function otsVariant(p:PlanModel):PlanModel{
  }
  return searchOts(p,compact)??searchOts(p,expanded)??searchOts(p,[...compact,...expanded],true)??p;
 }
-function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):PlanModel|null{
+export const otsPositions=["middle","left-middle","right-middle","front","rear"] as const;
+export type OtsPosition=typeof otsPositions[number];
+export function otsPositionOf(p:PlanModel,r:Rect):OtsPosition{
+ const sb=p.setbacks,w=p.plot.widthFt-sb.leftFt-sb.rightFt,d=p.plot.depthFt-sb.frontFt-sb.rearFt;
+ const x=(r.x+r.w/2-sb.leftFt)/Math.max(1,w),y=(r.y+r.d/2-sb.frontFt)/Math.max(1,d);
+ return y<.28?"front":y>.72?"rear":x<.36?"left-middle":x>.64?"right-middle":"middle";
+}
+export function otsVariantAt(p:PlanModel,position:OtsPosition):PlanModel{
+ if(p.rooms.some(isOtsRoom))return p;
+ const sizes=[[3,3],[3,4],[4,3],[4,4],[3,5],[5,3],[4,5],[5,4],[5,5]];
+ const candidate=searchOts(p,sizes,true,position);
+ return candidate?{...candidate,id:p.id+"-ots-v2-"+position}:p;
+}
+function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false,position?:OtsPosition):PlanModel|null{
  if(p.rooms.some(isOtsRoom))return p;
  const shape=p.plot.siteShape??{kind:"rectangle"} as const,sb=p.setbacks;
  const W=p.plot.widthFt-sb.rightFt,D=p.plot.depthFt-sb.rearFt;
@@ -87,6 +100,7 @@ function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):Pla
   for(const a of x)for(const b of y){
    const r={x:fixed(a),y:fixed(b),w,d},key=JSON.stringify(r);if(seen.has(key))continue;seen.add(key);
    if(r.x<sb.leftFt-EPS||r.y<sb.frontFt-EPS||r.x+w>W+EPS||r.y+d>D+EPS||!rectInsideShape(r,p.plot.widthFt,p.plot.depthFt,shape))continue;
+   if(position&&otsPositionOf(p,r)!==position)continue;
    const affected=p.rooms.filter(q=>overlapArea(q,r)>EPS);if(affected.some(q=>!permitted(q)))continue;
    const benefit=p.rooms.filter(q=>wet(q)&&sharedEdge(q,r)).length+affected.filter(q=>wet(q)&&subtractRect(q,r).some(rest=>sharedEdge(rest,r))).length;
    const cost=affected.filter(q=>q.kind!=="terrace").reduce((n,q)=>n+overlapArea(q,r)*(wet(q)?1:3),0);
@@ -124,12 +138,12 @@ export function otsGrilleBars(p:PlanModel):Rect[]{
 // Immutable generated PlanModels have a bounded four-mode cache. Weak keys
 // allow discarded portfolios to be collected; no cross-brief stale geometry.
 const airPlanCache=new WeakMap<PlanModel,Map<number,PlanModel>>();
-export function airOptimizedPlan(p:PlanModel,shaft:boolean,windows:boolean):PlanModel{
- const key=Number(shaft)*2+Number(windows);
+export function airOptimizedPlan(p:PlanModel,shaft:boolean,windows:boolean,position?:OtsPosition):PlanModel{
+ const key=Number(shaft)*2+Number(windows)+(position?4*(otsPositions.indexOf(position)+1):0);
  let modes=airPlanCache.get(p);
  if(!modes){modes=new Map();airPlanCache.set(p,modes);}
  const cached=modes.get(key);if(cached)return cached;
- const base=shaft?otsVariant(p):p;
+ const base=shaft?(position?otsVariantAt(p,position):otsVariant(p)):p;
  const revised=windows?ventilationVariant(base):base;
  const result=revised===base||preservesEssentialInterior(interiorFitReport(base),interiorFitReport(revised))?revised:base;
  modes.set(key,result);return result;
