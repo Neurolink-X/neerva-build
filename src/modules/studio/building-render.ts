@@ -6,6 +6,7 @@ import {stairStepDepthFt} from "./stair-study.ts";
 import {commercialFixtureBoxes} from "./commercial-fixture-render.ts";
 import {floorPreviewFixtures,commercialFrontPanels,commercialFacadeProfile,commercialFrontageDetails} from "./commercial-detail.ts";
 import {commercialElements} from "./commercial-elements.ts";
+import {commercialAirReport} from "./commercial-ventilation.ts";
 import type {BuildingConcept} from "./building-purpose.ts";
 import {glazingBayCount} from "./core/elevation-appearance.ts";
 import {FEET_TO_METRES as ft,normalize,cross} from "./core/geometry-primitives.ts";
@@ -81,11 +82,12 @@ export function buildingRenderSnapshot(plan:BuildingConcept,finish:BuildingFinis
 }
 
 /** Selected floor preview: keep the actual opening-aware wall/slab model, not the roof or adjacent storeys. */
-export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:FinishScheme,fullHeight=false,showFurniture=false):RenderSnapshot{
+export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:FinishScheme,fullHeight=false,showFurniture=false,showAir=false):RenderSnapshot{
  const {widthFt,depthFt}=plan.brief,boxes:RenderBox[]=[];
  const x=(v:number)=>(v-widthFt/2)*ft,z=(v:number)=>(v-depthFt/2)*ft;
  const add=(lo:Vec3,hi:Vec3,color:Vec3,rough=.82,opacity=1,finish?:FinishScheme["cladding"])=>{if(hi.every((v,i)=>Number.isFinite(v)&&Number.isFinite(lo[i])&&v>lo[i]))boxes.push({lo,hi,color,rough,metal:0,opacity,finish});};
  const elements=commercialElements(plan),cut=fullHeight?13:7;
+ const air=showAir?new Map(commercialAirReport(plan,elements.portals,floor).flatMap(r=>r.glazing.map(p=>[p.id,p.exposure] as const))):new Map<string,string>();
  const rooms=finishSpaces({kind:"commercial",plan}).filter(r=>r.floor===floor);
  const selected=scheme.planId===plan.id?scheme:undefined;
  for(const s of elements.slabs.filter(s=>s.floor===floor&&s.bottom===0)){
@@ -119,7 +121,8 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
    if(p.axis==="x")add([a,l,plane-t],[b,h,plane+t],colour,rough,opacity);
    else add([plane-t,l,a],[plane+t,h,b],colour,rough,opacity);
   };
-  const frameTone:Vec3=glass?commercialFacadeProfile(plan.brief.purpose).frame:[.42,.35,.28];
+  const exposure=air.get(p.id);
+  const frameTone:Vec3=glass?(exposure?shadeRgb(exposure==="review"?"#b47825":"#16865d"):commercialFacadeProfile(plan.brief.purpose).frame):[.42,.35,.28];
   frame(start,start+bar,bottom,top,frameTone);frame(end-bar,end,bottom,top,frameTone);
   // A cutaway must not invent a header across a doorway/window below its real head.
   if(cut>=8)frame(start+bar,end-bar,top-bar,top,frameTone);
@@ -133,6 +136,12 @@ export function buildingFloorSnapshot(plan:BuildingConcept,floor:number,scheme:F
  for(const z0 of plan.zones.filter(r=>r.floor===floor&&["open","parking"].includes(r.kind)))add([x(z0.x),0,z(z0.y)],[x(z0.x+z0.w),.08,z(z0.y+z0.d)],shadeRgb(z0.kind==="open"?"#bdcdb1":"#b8bcb9"));
  for(const s of commercialStairStudies(plan).studies.filter(s=>s.floor===floor))for(const r of [...s.steps,...s.landings.filter(l=>l.topFt>0)]){
   if(r.topFt<=cut)add([x(r.x),Math.max(0,r.topFt-.45)*ft,z(r.y)],[x(r.x+r.w),r.topFt*ft,z(r.y+r.d)],shadeRgb("#b4a48d"));
+ }
+ if(showAir)for(const r of commercialInternalSpaces(plan).filter(r=>r.floor===floor&&r.kind==="shaft")){
+  // Amber perimeter = modeled service reserve, not an open-to-sky vent or duct.
+  const tone=shadeRgb("#b47825"),t=Math.min(.08,r.w*ft/5,r.d*ft/5),x0=x(r.x),x1=x(r.x+r.w),z0=z(r.y),z1=z(r.y+r.d),h=.13;
+  add([x0,h,z0],[x1,h+.045,z0+t],tone);add([x0,h,z1-t],[x1,h+.045,z1],tone);
+  add([x0,h,z0+t],[x0+t,h+.045,z1-t],tone);add([x1-t,h,z0+t],[x1,h+.045,z1-t],tone);
  }
  if(showFurniture)for(const item of floorPreviewFixtures(plan,floor))boxes.push(...commercialFixtureBoxes(item,widthFt/2,depthFt/2));
  const distance=Math.max(widthFt,depthFt)*ft,origin:Vec3=[distance*.8,distance*1.4,-distance*1.2];
