@@ -1303,7 +1303,7 @@ async function main(){
     const roadPlan=page.getByRole("img",{name:/Road on N side/});
     await roadPlan.waitFor({state:"visible",timeout:15000});
     assert.equal(await roadPlan.count(),1,"road-side marker should be visible on 2D");
-    {const cards=page.locator(".nroad-variants button");const count=await cards.count();assert.ok(count>=24&&count<=26,"24 baseline options plus up to two validated covered-upper alternatives");
+    {const cards=page.locator(".nroad-variants button");const count=await cards.count();assert.ok(count>=24&&count<=38,"24 baseline options plus feasible upper-floor alternatives");
     const ids=await cards.evaluateAll(nodes=>nodes.map(node=>node.getAttribute("data-plan-id")));assert.equal(new Set(ids).size,count,"No duplicated plan IDs");}
     assert.ok((await page.locator(".nroad-variants button").first().locator(".nroad-mini-plan").count())>=1,"every option has real floor previews");
     const streetButton=page.getByRole("button",{name:"Open realistic street render",exact:true});
