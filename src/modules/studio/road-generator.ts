@@ -323,7 +323,7 @@ function buildArchitecturalFamily(
    if(doubleBeds){
     add("bed-"+level+"a","Bedroom "+(level+1),"bedroom",level,0,4,W/2,12);
     add("bed-"+level+"b","Bedroom "+(level+2),"bedroom",level,W/2,4,W/2,12);
-   }else add("bed-"+level+"a","Bedroom "+(level+1),"bedroom",level,0,frontOpen,W,16-frontOpen);
+   }else add("bed-"+level+"a","Bedroom "+(level+1),"bedroom",level,0,4,W,12);
    add("stairs-"+level,"Stairs / landing","stairs",level,0,16,stairsW,10);
    add("lounge-"+level,"Family lounge","lounge",level,stairsW,16,W-stairsW,10);
    add("bath-"+level,"Bath / WC","bath",level,0,26,stairsW,8);
