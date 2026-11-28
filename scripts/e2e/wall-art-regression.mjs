@@ -20,7 +20,7 @@ export async function verifyWallArtwork(page){
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     const designPicker=page.getByRole("group",{name:"Choose which wall gets the design"});
     await designPicker.waitFor({state:"visible"});
-    assert.equal(await page.locator(".wall-pattern-options").count(),0,"no artwork applied before choosing a wall");
+    assert.equal(await page.locator(".wall-pattern-options").count(),1,"design library remains visible while choosing a wall");
     await designPicker.getByRole("button",{name:"Sofa wall",exact:true}).click();
     assert.equal(await designPicker.count(),0);
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")!=="loading");
@@ -33,14 +33,11 @@ export async function verifyWallArtwork(page){
     await canvas.screenshot({path:path.join("test-results/mobile","corner-room-two-walls.png")});
     // Clicking an active sample tab must not reload or reset the selected artwork.
     await page.getByRole("button",{name:"Sample room",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),design);
-    // Clean daylight study is paint-ready and supports explicit manual marking.
+    // Daylight sample requires confirmed manual marking before enabling paint.
     await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("daylight");
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="daylight");
-    assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isEnabled(),true);
-    const daylight=await canvas.evaluate(c=>c.toDataURL());
-    await page.locator(".paint-custom-shade input[type=color]").fill("#385c71");
-    await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,daylight);
-    await page.getByRole("button",{name:"Mark wall manually",exact:true}).click();
+    assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isDisabled(),true);
+    assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).isDisabled(),true);
     const manual=page.getByRole("group",{name:"Manual wall marking"});
     await manual.waitFor();
     assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isDisabled(),true);
@@ -53,8 +50,12 @@ export async function verifyWallArtwork(page){
     assert.match(await manual.innerText(),/0\/4/);
     const updated=await canvas.boundingBox();
     for(const [x,y] of [[.1,.2],[.9,.2],[.9,.7],[.1,.7]])await canvas.click({position:{x:x*updated.width,y:y*updated.height}});
+    assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isDisabled(),true);
     await page.getByRole("button",{name:"Confirm wall",exact:true}).click();
     assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isEnabled(),true);
+    const daylight=await canvas.evaluate(c=>c.toDataURL());
+    await page.locator(".paint-custom-shade input[type=color]").fill("#385c71");
+    await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,daylight);
     await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("feature");
     // Actual full-wall sample, not only the small selection fixture. Record
     // all visible designs' rendered pixels and representative screenshots.
@@ -125,7 +126,7 @@ export async function verifyWallArtwork(page){
     assert.equal(await page.getByRole("button",{name:"Wall 1",exact:true}).count(),1);assert.equal(await page.getByRole("button",{name:"Wall 2",exact:true}).count(),1);
     await page.getByText("Shade details & purchase reference",{exact:true}).click();assert.equal((await page.locator(".neerva-shade-row small").allTextContents()).filter(s=>s.includes("NB-B6C7A3")).length,2);await page.getByText("Shade details & purchase reference",{exact:true}).click();
     await page.getByRole("button",{name:"Sample house exterior",exact:true}).click();
-    for(const house of ["family","contemporary","villa","compact-family","modern-courtyard"]){await page.locator(`[data-facade-sample="${house}"]`).click();await page.waitForFunction(id=>{const c=document.querySelector(".paint-canvas-frame[aria-busy=false] canvas");return c?.dataset.sample===id},house);await page.getByRole("button",{name:"Paint + design",exact:true}).click();assert.equal(await page.locator(".paint-targets button[aria-pressed=true]").count(),1);assert.match(await page.locator(".paint-targets button[aria-pressed=true]").innerText(),/Best for design/);await page.getByRole("button",{name:"Geometry",exact:true}).click();const before=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"Rectangular stone-block effect",exact:true}).click();await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,before);const design=await canvas.evaluate(c=>c.toDataURL());assert.equal(await page.getByRole("button",{name:"3D effects",exact:true}).count(),0);assert.equal(await page.getByRole("button",{name:"Murals",exact:true}).count(),0);await page.getByRole("button",{name:"Full exterior",exact:true}).click();await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()===old,design);}
+    for(const house of ["family","contemporary","villa","compact-family","modern-courtyard"]){await page.locator(`[data-facade-sample="${house}"]`).click();await page.waitForFunction(id=>{const c=document.querySelector(".paint-canvas-frame[aria-busy=false] canvas");return c?.dataset.sample===id},house);await page.getByRole("button",{name:"Paint + design",exact:true}).click();assert.equal(await page.locator(".paint-targets button[aria-pressed=true]").count(),1);assert.match(await page.locator(".paint-targets button[aria-pressed=true]").innerText(),/Full exterior/);await page.getByRole("button",{name:"Geometry",exact:true}).click();const before=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"Rectangular stone-block effect",exact:true}).click();await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,before);const design=await canvas.evaluate(c=>c.toDataURL());assert.match(await page.locator(".paint-targets button[aria-pressed=true]").innerText(),/Best for design/);assert.equal(await page.getByRole("button",{name:"3D effects",exact:true}).count(),0);assert.equal(await page.getByRole("button",{name:"Murals",exact:true}).count(),0);await page.getByRole("button",{name:"Full exterior",exact:true}).click();await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()===old,design);assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).getAttribute("aria-pressed"),"true","return to full exterior keeps design mode available");assert.ok(await page.locator(".wall-pattern-options button").count()>0,"full exterior keeps the artwork choices visible");await page.getByRole("button",{name:"Modern",exact:true}).click();await page.getByRole("button",{name:"Vertical accent pier",exact:true}).click();await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,design);await page.getByRole("button",{name:"Full exterior",exact:true}).click();await page.getByRole("button",{name:"Plain paint",exact:true}).click();assert.equal(await page.locator(".wall-pattern-options").count(),0,"plain paint intentionally closes designs");}
     fs.writeFileSync("test-results/mobile/wall-art-evidence.json",JSON.stringify({scope:"Full sample wall, local Chromium; pixel diversity and screenshots, not photorealism certification or field INP",designCount:wallEvidence.length,uniqueRenders:pixelDigests.size,designs:wallEvidence},null,2));
     assert.equal(pixelDigests.size,72,"all 72 active wall designs must produce different full-wall pixels");
 }

@@ -7,7 +7,7 @@ import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {residentialStairStudies} from "./stair-study.ts";
 import {architectureTopology,entranceArrangement} from "./architecture-profile.ts";
 import {ventilationVariant,windowExposure} from "./ventilation.ts";
-import {otsVariant} from "./ots-ventilation.ts";
+import {otsVariant,otsVariantAt,type OtsPosition} from "./ots-ventilation.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;
@@ -936,6 +936,8 @@ export function generateUsableUpperPortfolio(b:PlanBrief,base:readonly PlanModel
 export function portfolioForPlanId(b:PlanBrief,planId:string):PlanningResult{
  if(planId.endsWith("-usable-upper-v3")){const id=planId.slice(0,-16),base=portfolioForPlanId(b,id);return {...base,plans:base.plans.filter(p=>p.id===id).map(p=>usableUpperVariant(p,b))};}
  if(/-upper-v2-(?:full|front-terrace|rear-service)-[01]$/.test(planId))return {plans:generateEnclosedUpperPortfolio(b),blockers:[]};
+ const location=planId.match(/-ots-v2-(middle|left-middle|right-middle|front|rear)$/);
+ if(location){const id=planId.slice(0,-location[0].length),base=portfolioForPlanId(b,id);return {...base,plans:base.plans.map(p=>p.id===id?otsVariantAt(p,location[1] as OtsPosition):p)};}
  if(planId.endsWith("-ots-v1")){const base=portfolioForPlanId(b,planId.slice(0,-7));return {...base,plans:base.plans.map(p=>p.id===planId.slice(0,-7)?otsVariant(p):p)};}
  if(planId.endsWith("-vent-v1")){const base=portfolioForPlanId(b,planId.slice(0,-8));return {...base,plans:base.plans.map(ventilationVariant)};}
  if(planId.endsWith("-covered-upper-v1"))return {plans:generateCoveredUpperPortfolio(b),blockers:[]};

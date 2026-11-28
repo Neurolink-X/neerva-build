@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {isOtsRoom,overlapArea,validatePlan,type PlanBrief,type PlanModel} from "./plan-model.ts";
 import {generateSpatialPortfolio,generateCoveredUpperPortfolio,generateEnclosedUpperPortfolio,planSignature,portfolioForPlanId,validateRequestedProgramme} from "./road-generator.ts";
-import {otsVariant,otsGrilleBars,otsGrilleLevel,airOptimizedPlan} from "./ots-ventilation.ts";
+import {otsVariant,otsGrilleBars,otsGrilleLevel,airOptimizedPlan,otsPositions,otsPositionOf,otsVariantAt} from "./ots-ventilation.ts";
 import {exposedRoofPatches} from "./plan-surfaces.ts";
 import {windowExposure} from "./ventilation.ts";
 const brief:PlanBrief={widthFt:30,depthFt:60,roadSide:"N",floors:2,bedrooms:4,parking:true,setbacks:{frontFt:0,rearFt:0,leftFt:0,rightFt:0}};
@@ -102,4 +102,27 @@ test("full-covered upper programmes preserve bedrooms, exact input and restorabl
   assert.ok(portfolioForPlanId(b,p.id).plans.some(q=>q.id===p.id));
   assert.ok(p.rooms.some(r=>r.floor===1&&r.id.startsWith("rear-family-")));
  }
+});
+
+test("location-specific shaft search never fabricates a shaft or changes saved geometry",()=>{
+ const b={...brief,widthFt:30,depthFt:60,bedrooms:4};
+ const plans=generateSpatialPortfolio(b,4).plans;assert.ok(plans.length);
+ let count=0;
+ for(const p of plans)for(const position of otsPositions){
+  const q=otsVariantAt(p,position);if(q===p)continue;count++;
+  const shafts=q.rooms.filter(isOtsRoom);
+  assert.equal(shafts.length,q.floors);
+  assert.ok(shafts.every(r=>otsPositionOf(q,r)===position));
+  assert.deepEqual(validateRequestedProgramme(q,b),[]);
+  assert.ok(shafts.every(r=>exposedRoofPatches(q).every(s=>overlapArea(r,s)<1e-5)));
+  const restored=portfolioForPlanId(b,q.id).plans.find(x=>x.id===q.id);
+  assert.ok(restored);assert.equal(planSignature(restored),planSignature(q));
+  assert.equal(airOptimizedPlan(p,true,true,position),airOptimizedPlan(p,true,true,position));
+ }
+ const reference=plans[0],r={x:0,y:0,w:3,d:3};
+ assert.equal(otsPositionOf(reference,{...r,x:13.5,y:28.5}),"middle");
+ assert.equal(otsPositionOf(reference,{...r,x:3,y:28.5}),"left-middle");
+ assert.equal(otsPositionOf(reference,{...r,x:24,y:28.5}),"right-middle");
+ assert.equal(otsPositionOf(reference,{...r,x:13.5,y:55}),"rear");
+ console.log("location-specific-shafts "+count);
 });
