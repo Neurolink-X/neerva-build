@@ -12,7 +12,6 @@ import {planMetrics,planSiteReview,planGeometryDigest,type PlanBrief,type PlanMo
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
 import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {siteOutline,siteAreaSqFt} from "@/modules/studio/site-shape";
-import {frontageComposition} from "@/modules/studio/frontage";
 import {entranceArrangement,architectureTopology,representativeIndices} from "@/modules/studio/architecture-profile";
 import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
@@ -42,7 +41,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const saveLock=useRef(false),retryKey=useRef<{fingerprint:string;key:string}|null>(null);
  const [stairReady,setStairReady]=useState(false);
  const result=useMemo(()=>stairReady?generateStairReadyPortfolio(brief,24):generateSpatialPortfolio(brief,24),[brief,stairReady]);
- const facadeGroups=useMemo(()=>{const groups=new Map<string,number>();return result.plans.map(p=>{const sig=frontageComposition(p);if(!groups.has(sig))groups.set(sig,groups.size+1);return groups.get(sig)!})},[result]);
+
  const [entranceFilter,setEntranceFilter]=useState<"all"|ReturnType<typeof entranceArrangement>>("all");
  const [representativesOnly,setRepresentativesOnly]=useState(false);
  const matching=result.plans.map((p,i)=>({p,i})).filter(({p})=>entranceFilter==="all"||entranceArrangement(p)===entranceFilter);
@@ -177,10 +176,10 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      {!fewerLevels&&<p>{str("Try more usable space, another floor, fewer bedrooms, or review parking and setbacks. Your selected inputs have not been changed. We never shrink rooms below the geometry checks to fabricate a fit.",
        "G+1, कम बेडरूम या पार्किंग/सेटबैक बदलें। गलत नाप वाला नक्शा नहीं दिखाएंगे।")}</p>}
     </section>:<>
-     <p className="nroad-jump"><a href="#selected-plan-drawing">Jump to the selected exact 2D + 3D plan ↓</a></p>
-     <div className="nroad-head nroad-choices"><h2>{str("House layouts matching your requirements","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} distinct layouts · {new Set(result.plans.map(architectureTopology)).size} room programmes · {new Set(result.plans.map(frontageComposition)).size} front compositions · {brief.bedrooms} BHK · {brief.floors} level(s)</span></div>
-     <p className="nroad-small nroad-bhk-explanation">{str("BHK = bedrooms, hall (living room) and kitchen. "+brief.bedrooms+" BHK means "+brief.bedrooms+" bedrooms total across all selected floors, plus a living room and kitchen. B = bedroom, H = hall, K = kitchen, WC = bathroom, S = stairs.","BHK = बेडरूम, हॉल और किचन। चुनी गई सभी मंज़िलों में कुल "+brief.bedrooms+" बेडरूम, साथ में हॉल और किचन। B = बेडरूम, H = हॉल, K = किचन, WC = बाथरूम, S = सीढ़ी।")}</p>
-     <div className="nroad-layout-filters"><label>Entrance arrangement <select aria-label="Filter entrance arrangement" value={entranceFilter} onChange={e=>{setEntranceFilter(e.target.value as typeof entranceFilter);setKit(null);setSaveInfo("")}}><option value="all">All layouts ({result.plans.length})</option>{(["front-stair","front-bedroom","front-verandah","pedestrian"] as const).map(k=>{const count=result.plans.filter(p=>entranceArrangement(p)===k).length;return <option key={k} value={k} disabled={!count}>{({ "front-stair":"Stairs beside parking","front-bedroom":"Street-facing bedroom","front-verandah":"Verandah / other entry","pedestrian":"Pedestrian only"} as const)[k]} ({count})</option>})}</select></label><label className="nroad-representative-toggle"><input type="checkbox" checked={representativesOnly} onChange={e=>{setRepresentativesOnly(e.target.checked);setKit(null);setSaveInfo("")}}/> Show different room programmes only ({representativeSet.size})</label></div>{filtered.length===0&&<p role="status">No layout matches this entrance filter. Select All layouts.</p>}
+     
+     <div className="nroad-head nroad-choices"><h2>{str("House layouts matching your requirements","ज्यामिति जाँचे गए ड्राफ्ट")}</h2><span>{result.plans.length} layouts · {brief.bedrooms} BHK · {brief.floors} level(s)</span></div>
+     <p className="nroad-small nroad-bhk-explanation">{str("BHK = bedrooms, hall and kitchen. Bedrooms are counted across all floors.","BHK = बेडरूम, हॉल और किचन। बेडरूम सभी मंज़िलों के मिलाकर गिने जाते हैं।")}</p>
+     <details className="nroad-advanced nroad-filter-panel"><summary>{str("Filter layouts","नक्शे फ़िल्टर करें")}</summary><div className="nroad-layout-filters"><label>Entrance arrangement <select aria-label="Filter entrance arrangement" value={entranceFilter} onChange={e=>{setEntranceFilter(e.target.value as typeof entranceFilter);setKit(null);setSaveInfo("")}}><option value="all">All layouts ({result.plans.length})</option>{(["front-stair","front-bedroom","front-verandah","pedestrian"] as const).map(k=>{const count=result.plans.filter(p=>entranceArrangement(p)===k).length;return <option key={k} value={k} disabled={!count}>{({ "front-stair":"Stairs beside parking","front-bedroom":"Street-facing bedroom","front-verandah":"Verandah / other entry","pedestrian":"Pedestrian only"} as const)[k]} ({count})</option>})}</select></label><label className="nroad-representative-toggle"><input type="checkbox" checked={representativesOnly} onChange={e=>{setRepresentativesOnly(e.target.checked);setKit(null);setSaveInfo("")}}/> Show different room programmes only ({representativeSet.size})</label></div></details>{filtered.length===0&&<p role="status">No layout matches this entrance filter. Select All layouts.</p>}
      <div className="nroad-variants" role="group" aria-label="Choose plan layout">{filtered.map(({p:v,i})=>{const {widthFt:w,depthFt:d,roadSide:side}=v.plot;const dim=siteDimensions(w,d,side),road=roadSegment(w,d,side);const boundary=siteOutline(w,d,v.plot.siteShape??{kind:"rectangle"}).map(p=>roadPoint(p,w,d,side));return <button key={v.id} type="button" aria-pressed={i===activeOption} data-plan-id={v.id}
        onClick={()=>{setChosen(i);setKit(null);setSaveInfo("")}}><div className="nroad-mini-wrap">{Array.from({length:v.floors},(_,level)=><div key={level}><svg className="nroad-mini-plan" viewBox={`-1 -1 ${dim.w+2} ${dim.d+2}`} role="img" aria-label={`Floor ${level+1} layout preview ${i+1}: ${w} by ${d} feet, road ${side}`}>
        <polygon points={boundary.map(p=>p.x+","+p.y).join(" ")} fill="#f7f5ec" stroke="#55765a" strokeWidth=".45"/>
@@ -189,7 +188,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
       </svg><small>{level===0?"G":`F${level}`} · {v.rooms.filter(r=>r.floor===level&&r.kind==="bedroom").length}B</small></div>)}</div>
       <strong>{i+1}. {v.rooms.filter(r=>r.kind==="bedroom").length} BHK · {v.floors===1?"Ground":`G+${v.floors-1}`}</strong>
       <span>{!v.parking?str("No car parking","बिना पार्किंग"):v.variant==="parking-left"?str("Parking left","बाईं पार्किंग"):str("Parking right","दाईं पार्किंग")} · {v.rooms.some(r=>r.kind==="stairs"&&r.floor===0&&Math.abs(r.y-v.setbacks.frontFt)<.01)?str("Front stairs","सामने सीढ़ी"):v.rooms.some(r=>r.kind==="bedroom"&&r.floor===0&&Math.abs(r.y-v.setbacks.frontFt)<.01)?str("Front bedroom","सामने बेडरूम"):str("Shared home entry","घर का प्रवेश")}</span>
-      <small>Front group {facadeGroups[i]} · {str("Kitchen","किचन")} {v.rooms.some(r=>r.kind==="kitchen"&&r.floor===0&&r.x+r.w/2<v.plot.widthFt/2)?str("left","बाएँ"):str("right","दाएँ")} · {v.plot.widthFt} × {v.plot.depthFt} ft</small></button>})}</div>
+      <small>{str("Kitchen","किचन")} {v.rooms.some(r=>r.kind==="kitchen"&&r.floor===0&&r.x+r.w/2<v.plot.widthFt/2)?str("left","बाएँ"):str("right","दाएँ")}</small></button>})}</div>
      <p className="nroad-small nroad-selection-feedback" role="status">{str("Layout "+(activeOption+1)+" of "+result.plans.length+" selected. Your matching 2D and 3D views are below.","नक्शा "+(activeOption+1)+" / "+result.plans.length+" चुना गया। नीचे इसी नक्शे के 2D और 3D व्यू हैं।")} <a href="#selected-plan-drawing">{str("View selected plan ↓","चुना नक्शा देखें ↓")}</a></p>
      {result.plans.length<24&&<p className="nroad-small">{str("Only "+result.plans.length+" of the target 24 distinct concepts fit this exact request. We will not duplicate a plan or change your bedroom count to fill the gallery.","इस प्लॉट के लिए 24 के लक्ष्य में से "+result.plans.length+" अलग नक्शे मिले। संख्या पूरी करने के लिए नक्शे दोहराए नहीं जाएंगे।")}</p>}
      <div className="nroad-save"><button type="button" disabled={saving} onClick={()=>void saveDraft()}>{saving?"Saving…":str("Save this plot-specific concept privately","अपना नक्शा सुरक्षित सेव करें")}</button>{saveInfo&&<p role="status">{saveInfo} {saveInfo.startsWith("Sign in")&&<Link href="/account">Sign in →</Link>}</p>}</div>
@@ -197,16 +196,16 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{["Ground floor","First floor","Second floor"][i]}</button>)}
      </div>
-     <div className="nroad-plan-summary" data-plan-id={plan.id} data-selected-floor={floor} aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.floor===floor).length}</strong> Spaces on this floor</span><span><strong>{plan.plot.widthFt} × {plan.plot.depthFt}</strong> Plot (ft)</span><span><strong>{plan.floors}</strong> Level(s)</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom").length}</strong> Bedrooms total</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===floor).length}</strong> Bedrooms on this floor</span></div>
+     <div className="nroad-plan-summary" data-plan-id={plan.id} data-selected-floor={floor} aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.floor===floor).length}</strong> Spaces on this floor</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===floor).length}</strong> Bedrooms on this floor</span></div>
      <OrientedPlanDrawing plan={plan} floor={floor} scheme={scheme??undefined}/>
+
+     <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Same selected floor</span></div>
+     <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Open interactive 3D when needed.","ज़रूरत होने पर 3D व्यू खोलें।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
      <VentilationPanel plan={plan} floor={floor} enhanced={enhanceVentilation} ots={includeOts} onOts={v=>{setIncludeOts(v);setSaveInfo("")}} onEnhance={v=>{setEnhanceVentilation(v);setSaveInfo("")}} onBest={()=>{const ranked=filtered.map(({p,i})=>({i,score:ventilationReport(airOptimizedPlan(p,includeOts,enhanceVentilation)).score})).sort((a,b)=>b.score-a.score||a.i-b.i);if(ranked[0]){setChosen(ranked[0].i);setKit(null);setSaveInfo("")}}} changed={baseDraft?.id!==draft?.id}/>
-     <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
-     <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. On slow connections or low-resource devices, open interactive 3D when needed.","2D नक्शा तैयार है। धीमे इंटरनेट पर जरूरत होने पर 3D व्यू खोलें।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
-     <p className="nroad-small">Same floor and room geometry as 2D. Concept only; professional verification required.</p>
      <details className="nroad-advanced nroad-shortlist-panel"><summary>{str("Compare or shortlist layouts","नक्शों की तुलना करें")}</summary>
      <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={baseDraft?.id??plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0){setEntranceFilter("all");setRepresentativesOnly(false);setChosen(i);setKit(null)}}}/>
      </details>
-     <StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/>
+
      <div className="nroad-head"><h2>{str("Roadside exterior concept","सड़क की तरफ घर का रूप")}</h2><span>Same front gate geometry</span></div>
      <div className="nroad-exterior-workspace"><label>{str("Exterior finish style","बाहरी डिज़ाइन")}<select name="facadeKit" aria-label={str("Balcony front style","बालकनी का डिज़ाइन")} value={kit} onChange={e=>setKit(e.target.value as typeof kit)}><option value="simple-parapet">Minimal trim</option><option value="cladding-band">Broad cladding band</option><option value="stepped-band">Stepped facade band</option><option value="jali-screen">Vertical accents</option>{plan.rooms.some(r=>r.kind==="balcony")&&<option value="pergola">Pergola shade</option>}{kit==="cantilever"&&<option value="cantilever">Concept finish</option>}</select></label>
      <RoadElevation plan={plan} main={shade.main} accent={shade.accent} glass={scheme?.glass}/>
@@ -215,20 +214,19 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
        <i style={{background:x.main}}/><span>{hindi?x.hi:x.en}</span></button>)}</div>
       <p className="nroad-small">Digital colours are approximate; check an actual shade card. Finishes and room paint are not physically simulated here.</p><Link href="/design-studio/visualizer" className="nroad-secondary-link">{str("Try paint on sample homes or your own photo →","सैंपल घर या अपनी फोटो पर रंग आज़माएँ →")}</Link>
      </div>
-     </div>{metrics&&<section className="nroad-metrics"><h2>{str("Preliminary quantities — not a BOQ","प्रारंभिक अनुमान — अंतिम BOQ नहीं")}</h2>
+     </div>{metrics&&<details className="nroad-advanced nroad-metrics"><summary>{str("Quick material estimate","प्रारंभिक सामग्री अनुमान")}</summary>
       <div><span><strong>{metrics.roomFloorSqFt.toFixed(0)} ft²</strong><small>Room-floor rectangles, all levels</small></span>
        {plan.parking&&<span><strong>{metrics.parkingSqFt.toFixed(0)} ft²</strong><small>Car bay rectangle</small></span>}
        <span><strong>{metrics.netPaintSqM.toFixed(1)} m²</strong><small>Room-facing painted area</small></span>
        <span><strong>{metrics.paintLitres} L</strong><small>Illustrative 2 coats, 10 m²/L</small></span></div>
-      <p className="nroad-small">{metrics.note}</p>
-      <Link href="/basket" className="nroad-quote">{str("Build my material list →","सामग्री सूची बनाएं →")}</Link>
-      <p className="nroad-small">Review the quantities in Project data & material planning below before opening a quote draft.</p></section>}
+      <p className="nroad-small">{metrics.note}</p></details>}
      <InteriorFitPanel plan={plan} floor={floor}/>
      {scheme&&<PlanFinishStudio key={plan.id+":"+floor} source={{kind:"residential",plan}} floor={floor} scheme={scheme} onChange={next=>{setFinishHistory(h=>rememberFinish(h,finishKey,next));setSaveInfo("")}} showExterior={false}/>}
      <StudioProjectExchange key={plan.id} source={{kind:"residential",plan}} scheme={scheme??undefined}/>
-     <section className="nroad-notes"><h2>{str("What still needs a professional?","क्या-क्या जाँचना बाकी है?")}</h2>
+     <details className="nroad-advanced nroad-notes"><summary>{str("Professional review & safety","पेशेवर जाँच और सुरक्षा")}</summary>
       {siteReview&&<p className="nroad-small">{siteReview.parking}</p>}
-      <ul>{plan.notes.map(x=><li key={x}>{x}</li>)}</ul></section>
+      <ul>{plan.notes.map(x=><li key={x}>{x}</li>)}</ul></details>
+     <details className="nroad-advanced"><summary>{str("Detailed Studio report","विस्तृत स्टूडियो रिपोर्ट")}</summary><StudioPremiumTools key={JSON.stringify([brief,plan.id])} product="home_studio" brief={brief} option={activeOption} planId={plan.id} selectedPlan={plan}/></details>
     </>}
    </div>
   </div>

@@ -155,3 +155,6 @@
 .nroad-layout-filters .nroad-representative-toggle{display:flex;align-items:center;gap:8px;min-height:44px;flex:1 1 210px;font-weight:500}
 .nroad-representative-toggle input{width:18px;height:18px;flex:none;accent-color:#215e41}
 @media(max-width:540px){.nroad-layout-filters{gap:4px}.nroad-layout-filters label,.nroad-layout-filters .nroad-representative-toggle{flex-basis:100%}}
+
+/* Compact workflow: the actual plan and 3D stay adjacent; secondary tools expand on demand. */
+.nroad .nroad-filter-panel{margin:8px 0}.nroad .nroad-filter-panel .nroad-layout-filters{margin:8px 0}.nroad .nroad-plan-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:8px}.nroad .nroad-plan-summary>span{min-width:0;overflow-wrap:anywhere}.nroad .nroad-notes summary,.nroad .nroad-metrics summary,.nroad .nroad-advanced summary{min-height:44px;align-content:center;cursor:pointer}.nroad .nroad-bhk-explanation{background:transparent;padding:0;margin:4px 0 8px}.nroad .nroad-floor-tabs button,.nroad .nroad-save button{min-height:44px}.nroad .nroad-save{margin-block:8px}.nroad .nroad-metrics:not([open])>div{display:none}@media(max-width:540px){.nroad .nroad-plan-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.nroad .nroad-plan-summary span{font-size:11px}.nroad .nroad-plan-summary strong{font-size:15px}}
