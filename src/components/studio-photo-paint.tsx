@@ -9,6 +9,7 @@ import {WallArtworkSwatch} from "./studio-wall-artwork-swatch";
 import {houseJourneyImageUrl} from "@/modules/studio/house-journey";
 import {isSurfaceProfile} from "@/modules/studio/surface-texture";
 import {surfaceCanvas,StudioSurfaceSwatch} from "./studio-surface-swatch";
+import {isPracticalPaintArt} from "@/modules/studio/practical-paint-art";
 import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide";
 import {exteriorCollections,exteriorGuide,exteriorGroupFor,isExteriorPattern} from "@/modules/studio/exterior-wall-art";
 import {paintExecution} from "@/modules/studio/paint-execution";
@@ -66,7 +67,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
   brush.strokeStyle=brush.fillStyle=wall.accent;const weight=Math.max(1,Math.hypot(b.x-a.x,b.y-a.y)*frame.w*.006);brush.lineCap="round";brush.lineJoin="round";
   // Organic finishes use a continuous material mask rather than stripes or flat line art.
   const tile=layer&&isSurfaceProfile(wall.pattern)?surfaceCanvas(wall.pattern):null;
-  if(texture&&layer){brush.globalAlpha=1;drawTextureQuad(brush,texture,at(0,0),at(1,0),at(1,1),at(0,1));}
+  if(texture&&layer){brush.globalAlpha=1;drawTextureQuad(brush,texture,at(0,0),at(1,0),at(1,1),at(0,1),isPracticalPaintArt(wall.pattern));}
   else if(tile){
    const left=Math.min(...corners.map(p=>p.x)),top=Math.min(...corners.map(p=>p.y)),right=Math.max(...corners.map(p=>p.x)),bottom=Math.max(...corners.map(p=>p.y));
    brush.save();brush.beginPath();corners.forEach((p,i)=>i?brush.lineTo(p.x,p.y):brush.moveTo(p.x,p.y));brush.closePath();brush.clip();

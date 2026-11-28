@@ -1,10 +1,10 @@
 "use client";
 import {memo,useEffect,useLayoutEffect,useRef,useState} from "react";
-import {textureFor,texturePalette,paintTexturePalette,wallTextureCrop,hasWallRaster} from "@/modules/studio/wall-textures";
+import {textureFor,texturePalette,paintTexturePalette,wallTextureFrame,hasWallRaster} from "@/modules/studio/wall-textures";
 import type {Pattern} from "@/modules/studio/wall-patterns";
 import {isPracticalPaintArt} from "@/modules/studio/practical-paint-art";
 import {isPremiumRaster} from "@/modules/studio/premium-wall-raster";
-import {generateWallRaster,isGeneratedWallPattern} from "@/modules/studio/generated-wall-raster";
+import {generateWallRaster,isGeneratedWallPattern,generatePracticalRaster} from "@/modules/studio/generated-wall-raster";
 type Texture={width:number;height:number;values:Uint8Array;paintPigments?:boolean};
 type TextureState=Partial<Record<Pattern,Texture|null>>;
 // Share one in-flight request per design; keep only recently used decoded rasters.
@@ -35,8 +35,12 @@ function loadTexture(key:Pattern):Promise<Texture|null>{
   }catch{done(null);}};
   img.src=meta.src;
  });
+ else if(isPracticalPaintArt(key)){
+  const compact=window.innerWidth<600||navigator.hardwareConcurrency<=4;
+  promise=generatePracticalRaster(key,compact?480:600,compact?320:400,()=>new Promise(resolve=>window.setTimeout(resolve,0))).then(r=>({...r,paintPigments:true})).catch(()=>null);
+ }
  else if(isGeneratedWallPattern(key))promise=new Promise(resolve=>{
-  window.setTimeout(()=>{try{resolve({...generateWallRaster(key,isPracticalPaintArt(key)?600:isPremiumRaster(key)?360:600,isPracticalPaintArt(key)?400:isPremiumRaster(key)?240:400),paintPigments:isPracticalPaintArt(key)});}catch{resolve(null);}},0);
+  window.setTimeout(()=>{try{resolve(generateWallRaster(key,isPremiumRaster(key)?360:600,isPremiumRaster(key)?240:400));}catch{resolve(null);}},0);
  });
  else return Promise.resolve(null);
  pending.set(key,promise);
@@ -83,15 +87,15 @@ export const WallTextureSwatch=memo(function WallTextureSwatch({texture,base,acc
  // Only pigment changes regenerate the small swatch; intensity is SVG opacity.
  ref.current?.setAttribute("href",c.toDataURL("image/webp",.82));c.width=0;c.height=0;
  },[texture,base,accent]);
- return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio="xMidYMid slice" opacity={intensity}/></svg>;
+ return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio={texture.paintPigments?"none":"xMidYMid slice"} opacity={intensity}/></svg>;
 });
 type Point={x:number;y:number};
 /** Two clipped affine triangles share the same wall diagonal. This is a
  * bounded photo projection, not a physical relief mesh or a ray tracer. */
-export function drawTextureQuad(ctx:CanvasRenderingContext2D,source:HTMLCanvasElement,a:Point,b:Point,c:Point,d:Point){
+export function drawTextureQuad(ctx:CanvasRenderingContext2D,source:HTMLCanvasElement,a:Point,b:Point,c:Point,d:Point,preserveComposition=false){
  const length=(p:Point,q:Point)=>Math.hypot(p.x-q.x,p.y-q.y);
  const aspect=(length(a,b)+length(d,c))/Math.max(1,length(a,d)+length(b,c));
- const [u,v,cw,ch]=wallTextureCrop(source.width,source.height,aspect);
+ const [u,v,cw,ch]=wallTextureFrame(source.width,source.height,aspect,preserveComposition);
  const triangle=(p:Point,q:Point,r:Point,flip:boolean)=>{
   ctx.save();ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.lineTo(r.x,r.y);ctx.closePath();ctx.clip();
   const w=source.width,h=source.height;

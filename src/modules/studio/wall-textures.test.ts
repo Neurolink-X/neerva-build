@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {createHash} from "node:crypto";
-import {wallTextures,texturePalette,paintTexturePalette,appliedWallTextureKeys,imageBasedWallPatterns,wallTextureCrop,hasWallRaster} from "./wall-textures.ts";
+import {wallTextures,texturePalette,paintTexturePalette,appliedWallTextureKeys,imageBasedWallPatterns,wallTextureCrop,wallTextureFrame,hasWallRaster} from "./wall-textures.ts";
 import {encodedPhotoDimensions} from "./photo-budget.ts";
 import {patternGroups} from "./wall-patterns.ts";
 test("nine verified local textures are distinct, within budget and attached to visible patterns",()=>{const entries=Object.entries(wallTextures);assert.equal(entries.length,9);let total=0;const hashes=new Set<string>();for(const [key,m] of entries){assert.ok(Object.values(patternGroups).flat().some(p=>p===key));const bytes=readFileSync(new URL("../../../public"+m.src,import.meta.url));assert.equal(bytes.length,m.bytes);assert.equal(createHash("sha256").update(bytes).digest("hex"),m.sha256);assert.deepEqual(encodedPhotoDimensions(bytes),{width:m.width,height:m.height});hashes.add(m.sha256);total+=m.bytes;}assert.equal(hashes.size,9);assert.ok(total<260000);});
@@ -17,3 +17,5 @@ test("procedural relief and mural rasters coexist with original images",()=>{ass
 test("new artwork belongs to its existing collection, without duplicated pattern IDs",()=>{const expected={Nature:"botanical"} as const;for(const [group,key] of Object.entries(expected)){const cards=patternGroups[group as keyof typeof patternGroups] as readonly string[];assert.ok(cards.includes(key));assert.ok(imageBasedWallPatterns.includes(key));assert.equal(wallTextures[key]?.width,320);assert.equal(wallTextures[key]?.height,214);}assert.equal(Object.values(patternGroups).flat().filter(k=>imageBasedWallPatterns.includes(k)).length,9);});
 
 test("paint accents preserve chosen pigment on dark and light bases",()=>{const p=paintTexturePalette("#102039","#cca040");assert.deepEqual(p[82],[16,32,57]);assert.deepEqual(p[204],[204,160,64]);const q=paintTexturePalette("#ecebe6","#284d42");assert.ok(q[204][0]<q[82][0]);assert.ok(p.flat().every(v=>Number.isInteger(v)&&v>=0&&v<=255));});
+
+test("full paint compositions preserve every edge on wide, tall and irregular wall projections",()=>{for(const ratio of [.45,.75,1,1.5,2,3.5])assert.deepEqual(wallTextureFrame(600,400,ratio,true),[0,0,1,1]);assert.deepEqual(wallTextureFrame(960,480,1,false),[.25,0,.5,1]);});

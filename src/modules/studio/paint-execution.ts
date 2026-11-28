@@ -4,10 +4,10 @@ import {isFeatureWall} from "./wall-design-guide.ts";
 type Method="Masking-tape paint"|"Stencil paint"|"Hand-painted mural"|"Decorative texture paint"|"Metallic accent paint"|"Tonal paint illusion";
 export type PaintExecution={method:Method;difficulty:"Easy"|"Moderate"|"Specialist";finish:string;maintenance:string;coverage:string;execution:string};
 const groups:Record<Method,readonly Pattern[]>={
- "Masking-tape paint":["arch","split","asymmetric","scallop","steppedColourBlock","offsetCircles","facets","grid","diagonal","panels","herringbone","hexGrid","angularWeave","diamonds","inset","layeredArches","atelierPanel","regencyPanel","palazzoPanel","artHotelPanel","contemporaryPanel","grandSalon","archGallery"],
+ "Masking-tape paint":["split","asymmetric","scallop","steppedColourBlock","offsetCircles","facets","grid","diagonal","panels","herringbone","hexGrid","angularWeave","diamonds","inset","layeredArches","atelierPanel","regencyPanel","palazzoPanel","artHotelPanel","contemporaryPanel","grandSalon","archGallery"],
  "Stencil paint":["floralScroll","bamboo","fernStencil","heritage","decoFan","royalRosette","jaliMedallion","ogee","silkBotanical","imperialVine","indigoMedallion","magnoliaRepeat","moroccanFiligree","palaceFloral","japaneseKamon"],
  "Hand-painted mural":["botanical","forest","mountain","waterflow","blossomBranch","flyingBirds","gardenTree","riverSunset","meadowBloom","lotusPond","desertDunes","oceanCliffs","citySilhouette","abstractLeaves","celestial"],
- "Decorative texture paint":["sunDisc","aurora","mural","modernRibbons","bands","walnutPanel"],
+ "Decorative texture paint":["sunDisc","aurora","mural","modernRibbons","bands","walnutPanel","arch"],
  "Metallic accent paint":["orbit","eclipse","galleryArc","artDecoSunburst","decoInlay"],
  "Tonal paint illusion":["sculptFlute","sculptWave","sculptDiamond","sculptFold","sculptReed","sculptRibbon","sculptStone","sculptPrism"]
 };

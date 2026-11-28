@@ -60,3 +60,11 @@ export function generateWallRaster(key:GeneratedPattern,width=600,heightPx=400):
   values[j]=Math.round(clamp(shade+grain*.017)*255);
  }return {width,height:heightPx,values};
 }
+
+/** Yield between short row batches on the browser main thread. The output is identical
+ * to synchronous generation; callers can keep interactive paint controls responsive. */
+export async function generatePracticalRaster(key:Parameters<typeof practicalPaintShade>[0],width:number,heightPx:number,yieldControl:()=>Promise<void>,now:()=>number=()=>performance.now()):Promise<GeneratedWallRaster>{
+ width=Math.max(16,Math.min(720,Math.floor(width)));heightPx=Math.max(16,Math.min(480,Math.floor(heightPx)));const values=new Uint8Array(width*heightPx);let start=now();
+ for(let y=0,j=0;y<heightPx;y++){for(let x=0;x<width;x++,j++)values[j]=Math.round(practicalPaintShade(key,x/(width-1),y/(heightPx-1))*255);if(y<heightPx-1&&now()-start>=6){await yieldControl();start=now();}}
+ return {width,height:heightPx,values};
+}
