@@ -33,7 +33,7 @@ function loadTexture(key:Pattern){
  * procedural rasters limit the cache; no stale photo or user data is stored. */
 export function useWallTextures(keys:string){
  const [textures,setTextures]=useState<TextureState>({});
- useEffect(()=>{let cancelled=false;const wanted=keys.split(",") as Pattern[];setTextures(old=>Object.fromEntries(Object.entries(old).filter(([k])=>wanted.includes(k as Pattern))));for(const key of wanted){if(!hasWallRaster(key))continue;void loadTexture(key).then(value=>{if(!cancelled)setTextures(old=>old[key]===value?old:{...old,[key]:value});});}return()=>{cancelled=true};},[keys]);
+ useEffect(()=>{let cancelled=false;const wanted=keys.split(",") as Pattern[];void Promise.resolve().then(()=>{if(!cancelled)setTextures(old=>{const entries=Object.entries(old);return entries.every(([k])=>wanted.includes(k as Pattern))?old:Object.fromEntries(entries.filter(([k])=>wanted.includes(k as Pattern)));});});for(const key of wanted){if(!hasWallRaster(key))continue;void loadTexture(key).then(value=>{if(!cancelled)setTextures(old=>old[key]===value?old:{...old,[key]:value});});}return()=>{cancelled=true};},[keys]);
  return textures;
 }
 export function colouredTexture(texture:Texture,base:string,accent:string,maxSide=960){
