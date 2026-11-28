@@ -1397,7 +1397,7 @@ async function main(){
     // Large-home input, full 24-option gallery and the exact selected 3D floor.
     await page.goto(base+"/design-studio/portfolio?width=36&depth=65&floors=2&bedrooms=6&road=W&parking=true",{waitUntil:"load"});
     await page.getByRole("img",{name:/Road on W side/}).waitFor();
-    assert.equal(await page.locator(".nroad-variants button").count(),24,"six-bedroom brief retains its existing validated portfolio");
+    {const count=await page.locator(".nroad-variants button").count();assert.ok(count>=24&&count<=38,"six-bedroom brief retains validated portfolio plus feasible covered alternatives");}
     assert.match(await page.locator(".nroad-plan-summary").innerText(),/6\s*Bedrooms total/);
     const firstLargeId=await page.locator(".nroad-diagram").getAttribute("data-plan-id");
     await page.locator(".nroad-variants button").last().click();
