@@ -80,7 +80,7 @@ jobs:
             if curl -fsS http://127.0.0.1:3000/ >/dev/null; then break; fi
             sleep 2
           done
-          cp scripts/e2e/mobile-smoke.mjs scripts/e2e/photo-upload-regression.mjs "$RUNNER_TEMP/neerva-browser/"
+          cp scripts/e2e/mobile-smoke.mjs scripts/e2e/photo-upload-regression.mjs scripts/e2e/wall-art-regression.mjs "$RUNNER_TEMP/neerva-browser/"
           cp scripts/release/performance-budget.mjs "$RUNNER_TEMP/neerva-browser/performance-budget.mjs"
           node "$RUNNER_TEMP/neerva-browser/mobile-smoke.mjs"
       - name: Store mobile evidence

@@ -24,3 +24,5 @@ This is an implementation checklist, not a certificate of design quality or stat
 - Browser gate exercises all 72 actual full-wall canvas renders, hashes each image and records nine representative screenshots; distinctness is a mechanical check, not aesthetic approval.
 - Responsive entrance filters now share the same frontage-composition grouping as the count, and shortlist selection resets incompatible filters.
 - Isolated capacity rehearsal covers twelve public/API routes at 5/15/30 workers; per-route latency and failures are included. Sequential read benchmark covers additional Studio and knowledge pages. Neither simulates signed-in production traffic or measures real-user field INP.
+
+- Browser artwork checks moved to a dedicated regression module; existing reviewed source-size budget unchanged.
