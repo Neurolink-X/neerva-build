@@ -1,5 +1,5 @@
 "use client";
-import {useEffect,useMemo,useRef,useState} from "react";
+import {useEffect,useLayoutEffect,useMemo,useRef,useState} from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import {SiteFooter} from "@/components/site-chrome";
@@ -9,7 +9,7 @@ import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/st
 import {StudioProjectExchange} from "./studio-project-exchange";
 import {StudioPremiumTools} from "./studio-premium-tools";
 import {generateSpatialPortfolio,generateStairReadyPortfolio} from "@/modules/studio/road-generator";
-import {planMetrics,planSiteReview,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
+import {isOtsRoom,planMetrics,planSiteReview,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
 import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {siteOutline,siteAreaSqFt} from "@/modules/studio/site-shape";
@@ -51,7 +51,34 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const activeOption=filtered.some(({i})=>i===chosen)?chosen:filtered[0]?.i??(result.plans[chosen]?chosen:0);
  const baseDraft=result.plans[activeOption]??null;
  const [enhanceVentilation,setEnhanceVentilation]=useState(false),[includeOts,setIncludeOts]=useState(false);
+ const [airFeedback,setAirFeedback]=useState<{scope:string;message:string}|null>(null),[airBusy,setAirBusy]=useState(false);
+ const airLock=useRef(false),airScopeRef=useRef("");
+ const airScope=JSON.stringify([briefKey(brief),stairReady,entranceFilter,representativesOnly,includeOts,enhanceVentilation,activeOption]);
+ useLayoutEffect(()=>{airScopeRef.current=airScope;return()=>{airScopeRef.current="";}},[airScope]);
  const draft=useMemo(()=>baseDraft?airOptimizedPlan(baseDraft,includeOts,enhanceVentilation):null,[baseDraft,includeOts,enhanceVentilation]);
+ const addedWindows=draft?.openings.filter(o=>o.id.startsWith("vent-v1-")).length??0;
+ const shaftModeled=!!draft?.rooms.some(isOtsRoom);
+ function changeAir(option:"windows"|"shaft",value:boolean){if(option==="windows")setEnhanceVentilation(value);else setIncludeOts(value);setAirFeedback(null);setSaveInfo("");}
+ async function bestAir(requireShaft=false){
+  if(airLock.current)return;
+  airLock.current=true;setAirBusy(true);setAirFeedback(null);const scope=airScope;
+  try{
+   const ranked:{i:number;shaft:boolean;score:number}[]=[];
+   for(const {p,i} of filtered){
+    // Yield between bounded geometry searches so input and scrolling stay responsive.
+    await new Promise<void>(resolve=>window.setTimeout(resolve,0));
+    if(airScopeRef.current!==scope)return;
+    const candidate=airOptimizedPlan(p,requireShaft||includeOts,true),shaft=candidate.rooms.some(isOtsRoom);
+    if(!requireShaft||shaft)ranked.push({i,shaft,score:ventilationReport(candidate).score});
+   }
+   if(airScopeRef.current!==scope)return;
+   ranked.sort((a,b)=>Number(b.shaft)-Number(a.shaft)||b.score-a.score||a.i-b.i);
+   if(!ranked.length){setAirFeedback({scope,message:requireShaft?"No feasible aligned roof-jaal reserve in the displayed layouts. Change filters, plot clearance or room requirements.":"No layout available to compare."});return;}
+   const next=ranked[0];setEnhanceVentilation(true);if(requireShaft)setIncludeOts(true);setChosen(next.i);setKit(null);setSaveInfo("");
+   setAirFeedback({scope:JSON.stringify([briefKey(brief),stairReady,entranceFilter,representativesOnly,requireShaft||includeOts,true,next.i]),message:"Selected layout "+(next.i+1)+" with screened ventilation"+(next.shaft?" and modeled roof-jaal reserve.":"; shaft is not modeled.")});
+  }finally{airLock.current=false;setAirBusy(false);}
+ }
+
  const kit=kitOverride??draft?.facade.kit??"simple-parapet";
  const shade=colours.find(c=>c.id===palette)??colours[0];
  const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,kit,main:shade.main,accent:shade.accent}}:null,[draft,shade,kit]);
@@ -163,7 +190,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
        <input min="0" max="20" step=".5" type="number" value={brief.setbacks[side]} onChange={e=>changeSetback(side,Number(e.target.value))}/></label>)}
      </details>
     </form>
-    <fieldset className="nroad-advanced"><legend>{str("Ventilation & roof jaal","हवादारी और छत का जाल")}</legend><label><input type="checkbox" checked={enhanceVentilation} onChange={e=>{setEnhanceVentilation(e.target.checked);setSaveInfo("")}}/> {str("Add feasible ventilation windows","संभव हवादार खिड़कियाँ जोड़ें")}</label><label><input type="checkbox" checked={includeOts} onChange={e=>{setIncludeOts(e.target.checked);setSaveInfo("")}}/> {str("Open-to-sky shaft / roof jaal","खुला वेंटिलेशन शाफ्ट / छत का जाल")}</label><small>{str("Room sizes and access are preserved; an infeasible shaft is never forced.","कमरों की जगह और रास्ते सुरक्षित रहेंगे। जगह न होने पर जाल जबरन नहीं जोड़ा जाएगा।")}</small></fieldset>
+    <fieldset className="nroad-advanced nroad-air-controls"><legend>{str("Ventilation & roof jaal","हवादारी और छत का जाल")}</legend><label className="nroad-air-choice"><input type="checkbox" checked={enhanceVentilation} onChange={e=>changeAir("windows",e.target.checked)}/><span><strong>{str("Add feasible ventilation windows","संभव हवादार खिड़कियाँ जोड़ें")}</strong><small>{str("Recommended · checks actual open space","अनुशंसित · वास्तविक खुली जगह जाँचे")}</small></span></label><label className="nroad-air-choice"><input type="checkbox" checked={includeOts} onChange={e=>changeAir("shaft",e.target.checked)}/><span><strong>{str("Open-to-sky shaft / roof jaal","खुला वेंटिलेशन शाफ्ट / छत का जाल")}</strong><small>{str("Aligned reserve from ground to roof, only where feasible","जगह होने पर सभी मंज़िलों में खुला शाफ्ट")}</small></span></label><p className="nroad-air-status" role="status">{enhanceVentilation?(addedWindows?addedWindows+" additional windows modeled.":"No additional screened window fits this layout."):"Extra windows are off; existing modeled windows remain."} {includeOts?(shaftModeled?"Roof jaal modeled.":"No feasible shaft in this layout."):"Roof jaal is optional."}</p>{includeOts&&!shaftModeled&&<button type="button" className="nroad-recovery-action" disabled={!filtered.length||airBusy} onClick={()=>void bestAir(true)}>Find a layout with roof jaal</button>}<small>{str("Existing room access and required programme are protected. No unsafe opening is forced.","कमरों की आवश्यक जगह और रास्ते सुरक्षित रखे जाते हैं।")}</small>{airBusy?<p role="status">Checking displayed layouts for actual open exposure…</p>:airFeedback?.scope===airScope&&<p role="status">{airFeedback.message}</p>}</fieldset>
     {brief.floors>=2&&<label><input type="checkbox" checked={stairReady} onChange={e=>{setEntranceFilter("all");setStairReady(e.target.checked);setChosen(0);setFloor(0);setKit(null);setSaveInfo("")}}/> {str("Show dog-leg stair footprint options","मुड़ने वाली सीढ़ी के विकल्प")}</label>}
     {stairReady&&<p className="nroad-small">These concepts check flight footprints and door landings. Three-level studies also check modeled overhead separation; full headroom, railing and structural review remain required.</p>}
     <p className="nroad-disclaimer">0 ft setbacks are an input placeholder, NOT confirmed legal permission to build to a boundary. Verify all local regulations and car access.</p>
@@ -202,7 +229,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
 
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Same selected floor</span></div>
      <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Open interactive 3D when needed.","ज़रूरत होने पर 3D व्यू खोलें।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
-     <VentilationPanel plan={plan} floor={floor} enhanced={enhanceVentilation} ots={includeOts} onOts={v=>{setIncludeOts(v);setSaveInfo("")}} onEnhance={v=>{setEnhanceVentilation(v);setSaveInfo("")}} onBest={()=>{const ranked=filtered.map(({p,i})=>({i,score:ventilationReport(airOptimizedPlan(p,includeOts,enhanceVentilation)).score})).sort((a,b)=>b.score-a.score||a.i-b.i);if(ranked[0]){setChosen(ranked[0].i);setKit(null);setSaveInfo("")}}} changed={baseDraft?.id!==draft?.id}/>
+     <VentilationPanel plan={plan} floor={floor} enhanced={enhanceVentilation} ots={includeOts} onOts={v=>changeAir("shaft",v)} onEnhance={v=>changeAir("windows",v)} onBest={()=>void bestAir()} onFindShaft={()=>void bestAir(true)} searching={airBusy} addedWindows={addedWindows}/>
      <details className="nroad-advanced nroad-shortlist-panel"><summary>{str("Compare or shortlist layouts","नक्शों की तुलना करें")}</summary>
      <PlanShortlist key={briefKey(brief)} brief={briefKey(brief)} plans={result.plans} selected={baseDraft?.id??plan.id} floor={floor} onChoose={id=>{const i=result.plans.findIndex(p=>p.id===id);if(i>=0){setEntranceFilter("all");setRepresentativesOnly(false);setChosen(i);setKit(null)}}}/>
      </details>

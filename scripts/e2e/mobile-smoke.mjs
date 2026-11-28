@@ -1222,6 +1222,13 @@ async function main(){
     }
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"0","3D cutaway must start on the selected ground floor");
     assert.ok(Number(await plan3D.getAttribute("data-wall-cells"))>0,"3D selected floor must contain actual mesh walls");
+    const airControls=page.locator("fieldset.nroad-air-controls");assert.equal(await airControls.getByRole("checkbox").count(),2);
+    assert.ok(await airControls.evaluate(el=>{const boxes=[...el.querySelectorAll(".nroad-air-choice")].map(x=>x.getBoundingClientRect());return boxes.length===2&&boxes[0].bottom<=boxes[1].top+1&&boxes.every(b=>b.left>=0&&b.right<=document.documentElement.clientWidth+1&&b.height>=44)}),"ventilation choices are structured touch targets");
+    const sameAir=()=>page.waitForFunction(()=>{const a=document.querySelector(".nroad-diagram"),b=document.querySelector(".nbd-building");return !!a&&!!b&&a.getAttribute("data-plan-id")===b.getAttribute("data-plan-id")&&a.getAttribute("data-ventilation-windows")===b.getAttribute("data-ventilation-windows")&&a.getAttribute("data-roof-jaal")===b.getAttribute("data-roof-jaal")});
+    await sameAir();await airControls.getByRole("checkbox").first().check();await sameAir();await airControls.getByRole("checkbox").nth(1).check();await sameAir();
+    const roofStatus=await plan2D.getAttribute("data-roof-jaal");if(roofStatus==="modeled"){assert.equal(await plan3D.getByRole("button",{name:"See roof jaal from above",exact:true}).count(),1);}else assert.match(await airControls.innerText(),/No feasible shaft/);
+    await plan3D.getByRole("button",{name:"Highlight ventilation in 3D",exact:true}).click();assert.equal(await plan3D.getByRole("button",{name:"Hide ventilation highlights",exact:true}).getAttribute("aria-pressed"),"true");
+    await plan3D.getByRole("button",{name:"Hide ventilation highlights",exact:true}).click();await airControls.getByRole("checkbox").nth(1).uncheck();await airControls.getByRole("checkbox").first().uncheck();await sameAir();await page.getByRole("button",{name:"Selected floor cutaway",exact:true}).click();
     await plan2D.screenshot({path:path.join("test-results/mobile","390-residential-2d.png"),animations:"disabled"});
     const comparisonCanvas=plan3D.locator(".nbd-webgl canvas");
     if(await comparisonCanvas.count()&&await comparisonCanvas.isVisible()){

@@ -1,4 +1,5 @@
 import type {Pattern} from "./wall-patterns.ts";
+import {isGeneratedWallPattern} from "./generated-wall-raster.ts";
 import type {FacadeStyles,FacadeTarget} from "./facade-paint.ts";
 export type WallTexture={src:string;width:number;height:number;bytes:number;sha256:string;crop?:readonly [number,number,number,number]};
 export const wallTextures:Partial<Record<Pattern,WallTexture>>={
@@ -71,14 +72,23 @@ export const wallTextures:Partial<Record<Pattern,WallTexture>>={
   ]
  }
 };
+export const imageBasedWallPatterns=Object.keys(wallTextures) as Pattern[];
 export function textureFor(pattern:Pattern){return wallTextures[pattern];}
+export function hasWallRaster(pattern:Pattern){return !!textureFor(pattern)||isGeneratedWallPattern(pattern);}
+/** Crop without squeezing the selected artwork to the photographed plane. */
+export function wallTextureCrop(width:number,height:number,aspect:number){
+ const ratio=width/height;if(!(width>0&&height>0&&aspect>0&&Number.isFinite(aspect)))return [0,0,1,1] as const;
+ const w=Math.min(1,aspect/ratio),h=Math.min(1,ratio/aspect);return [(1-w)/2,(1-h)/2,w,h] as const;
+}
 /** Recolour the original grayscale artwork with base and accent, retaining its
  * highlights, shadows and fine detail. No external image service. */
 export function texturePalette(base:string,accent:string){
  const rgb=(s:string)=>/^#[0-9a-f]{6}$/i.test(s)?[1,3,5].map(i=>parseInt(s.slice(i,i+2),16)):[160,160,160];
  const b=rgb(base),a=rgb(accent);
- return Array.from({length:256},(_,i)=>{const v=i/255,mix=Math.max(0,Math.min(1,(.78-v)*1.8)),light=v<.5?.35+1.3*v:1;
-  return b.map((c,k)=>Math.round(Math.min(255,Math.max(0,(c*(1-mix)+a[k]*mix)*light+(255-(c*(1-mix)+a[k]*mix))*Math.max(0,v-.5)*.65))));});
+ return Array.from({length:256},(_,i)=>{const v=i/255,mix=Math.max(0,Math.min(1,(.85-v)*1.35));
+  // Keep shadows deep and specular highlights bright even on a dark base.
+  const dark=Math.max(0,1-v*2),light=Math.max(0,v*2-1);
+  return b.map((c,k)=>{const pigment=c*(1-mix)+a[k]*mix;return Math.round(Math.max(0,Math.min(255,pigment*(1-.73*dark)+(255-pigment)*.88*light)));});});
 }
 
 /** Only artwork that can actually appear in the current scene may block export.
@@ -86,5 +96,5 @@ export function texturePalette(base:string,accent:string){
 export function appliedWallTextureKeys({scene,target,facadeStyles,walls,editing,valid,effectivePattern}:{scene:"room"|"facade"|"custom";target:FacadeTarget;facadeStyles:FacadeStyles;walls:readonly {pattern:Pattern}[];editing:number|null;valid:boolean;effectivePattern:Pattern}):Pattern[]{
  const keys=scene==="facade"?Object.entries(facadeStyles).filter(([id])=>id!==target).map(([,style])=>style.pattern):walls.filter((_,i)=>i!==editing).map(w=>w.pattern);
  if(scene==="facade"?target!=="all":valid)keys.push(effectivePattern);
- return [...new Set(keys)].filter(key=>textureFor(key));
+ return [...new Set(keys)].filter(hasWallRaster);
 }

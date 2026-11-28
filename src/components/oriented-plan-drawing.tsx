@@ -29,7 +29,7 @@ export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?
  const mid={x:(road.start.x+road.end.x)/2,y:(road.start.y+road.end.y)/2};
  const gates=(g:{xFt:number;widthFt:number})=>[point(g.xFt,0),point(g.xFt+g.widthFt,0)];
  const roadLabel={x:mid.x+(side==="E"?2.6:side==="W"?-2.6:0),y:mid.y+(side==="N"?-1.7:side==="S"?2.2:0)};
- return <section className="nroad-diagram" aria-label="Single-source geographical floor plan" data-plan-id={plan.id} data-selected-floor={floor} data-room-count={rooms.length} data-bedroom-count={rooms.filter(r=>r.kind==="bedroom").length} data-total-bedrooms={plan.rooms.filter(r=>r.kind==="bedroom").length}>
+ return <section className="nroad-diagram" aria-label="Single-source geographical floor plan" data-plan-id={plan.id} data-selected-floor={floor} data-room-count={rooms.length} data-bedroom-count={rooms.filter(r=>r.kind==="bedroom").length} data-total-bedrooms={plan.rooms.filter(r=>r.kind==="bedroom").length} data-ventilation-windows={plan.openings.filter(o=>o.kind==="window"&&ids.has(o.roomId)).length} data-roof-jaal={rooms.some(isOtsRoom)?"modeled":"not-modeled"}>
   <label className="nroad-small"><input type="checkbox" checked={showFurniture} onChange={e=>setShowFurniture(e.target.checked)}/> Indicative furniture layout</label>
   <label className="nroad-small"><input type="checkbox" checked={showVentilation} onChange={e=>setShowVentilation(e.target.checked)}/> Highlight ventilation openings</label>
   <svg role="img" aria-label={`Road on ${side} side. Floor ${floor+1} with matching doors and rooms.`} viewBox={[-5,-5,dim.w+10,dim.d+10].join(" ")}>
