@@ -60,3 +60,6 @@ This is an implementation checklist, not a certificate of design quality or stat
 
 ## Clean architectural drawings
 - Remove furniture overlays from residential and commercial 2D floor plans. Keep dimensions, room boundaries, openings, stairs, parking and ventilation information intact. Furniture is an optional 3D interior feature only; commercial generation no longer forces it on. Move the indicative interior fit report alongside the interior finish section.
+
+## Residential drawing preference
+- Restore the original subtle residential 2D furniture guides (25% fill opacity, default on, user-toggleable). Keep new validated furniture placements, ventilation overlays and all geometry intact. Furniture calculations are skipped in the drawing when hidden. Commercial drawing remains unchanged by this residential-specific adjustment.

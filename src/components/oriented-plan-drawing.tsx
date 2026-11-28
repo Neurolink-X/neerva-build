@@ -1,6 +1,7 @@
 "use client";
 import type {FinishScheme} from "@/modules/studio/finish-model";
 import {useMemo,useState} from "react";
+import {planFurniture} from "@/modules/studio/furniture";
 import {residentialStairStudies,stairFloorPatches} from "@/modules/studio/stair-study";
 import {isOtsRoom,type Opening,type PlanModel,type Room} from "@/modules/studio/plan-model";
 import {roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
@@ -15,7 +16,8 @@ function ends(o:Opening,r:Room){
  return [[r.x+r.w,r.y+o.atFt],[r.x+r.w,r.y+o.atFt+o.widthFt]];
 }
 export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?:number;scheme?:FinishScheme}){
- const [showVentilation,setShowVentilation]=useState(false);
+ const [showFurniture,setShowFurniture]=useState(true),[showVentilation,setShowVentilation]=useState(false);
+ const furniture=useMemo(()=>showFurniture?planFurniture(plan):[],[plan,showFurniture]);
  const stairs=useMemo(()=>residentialStairStudies(plan),[plan]);
  const {widthFt:w,depthFt:d,roadSide:side}=plan.plot,dim=siteDimensions(w,d,side);
  const rooms=plan.rooms.filter(r=>r.floor===floor),ids=new Set(rooms.map(r=>r.id));
@@ -28,6 +30,7 @@ export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?
  const gates=(g:{xFt:number;widthFt:number})=>[point(g.xFt,0),point(g.xFt+g.widthFt,0)];
  const roadLabel={x:mid.x+(side==="E"?2.6:side==="W"?-2.6:0),y:mid.y+(side==="N"?-1.7:side==="S"?2.2:0)};
  return <section className="nroad-diagram" aria-label="Single-source geographical floor plan" data-plan-id={plan.id} data-selected-floor={floor} data-room-count={rooms.length} data-bedroom-count={rooms.filter(r=>r.kind==="bedroom").length} data-total-bedrooms={plan.rooms.filter(r=>r.kind==="bedroom").length}>
+  <label className="nroad-small"><input type="checkbox" checked={showFurniture} onChange={e=>setShowFurniture(e.target.checked)}/> Indicative furniture layout</label>
   <label className="nroad-small"><input type="checkbox" checked={showVentilation} onChange={e=>setShowVentilation(e.target.checked)}/> Highlight ventilation openings</label>
   <svg role="img" aria-label={`Road on ${side} side. Floor ${floor+1} with matching doors and rooms.`} viewBox={[-5,-5,dim.w+10,dim.d+10].join(" ")}>
    <rect width={dim.w} height={dim.d} fill="#f1eee6" stroke="#b0b0a7" strokeDasharray=".6 .3" strokeWidth=".15"/>
@@ -43,6 +46,7 @@ export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?
      <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={(scheme?.planId===plan.id?scheme.rooms[r.id]?.floor:undefined)??(isOtsRoom(r)?"#c6e9e4":colors[r.kind])??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
      {isOtsRoom(r)&&<g stroke="#287a73" strokeWidth=".13" strokeDasharray=".35 .2"><path d={`M${rect.x} ${rect.y} L${rect.x+rect.w} ${rect.y+rect.d} M${rect.x+rect.w} ${rect.y} L${rect.x} ${rect.y+rect.d}`}/><title>Open vertical void; roof grille above, not a floor</title></g>}
      {r.kind==="stairs"&&stairs.studies.some(s=>s.upperRoomId===r.id)&&<><rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill="#faf9f6" stroke="#826b50" strokeDasharray=".3 .2" strokeWidth=".12"/>{stairFloorPatches(r,stairs.studies).map((patch,i)=>{const b=roadRect(patch,w,d,side);return <rect key={i} x={b.x} y={b.y} width={b.w} height={b.d} fill="#a9c4ab" stroke="#516b52" strokeWidth=".12"><title>Landing at selected floor</title></rect>})}</>}
+     {showFurniture&&furniture.filter(p=>p.roomId===r.id).map(p=>{const b=roadRect(p,w,d,side);return <g key={p.id} data-furniture-id={p.id}><rect x={b.x} y={b.y} width={b.w} height={b.d} rx=".12" fill="#a38970" fillOpacity=".25" stroke="#806b58" strokeWidth=".09"/><title>{`${p.kind} · illustrative placement`}</title></g>})}
      <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font} data-room-label="true">{label.toUpperCase()}</text>
      <text x={cx} y={cy+(small?.6:.95)} textAnchor="middle" fill="#526955" fontSize={Math.min(small?.52:.84,rect.w*.1,rect.d*.18)}>{r.w.toFixed(1)} × {r.d.toFixed(1)} ft</text>
     </g>;
