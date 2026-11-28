@@ -1,3 +1,4 @@
+import {boundedFetch} from "@/modules/http/bounded-fetch";
 import {parseFeedPage,takeFeedPage,parseFeedCategory} from "@/modules/catalog/feed-pagination";
 import {createClient} from "@supabase/supabase-js";
 export const dynamic="force-dynamic";
@@ -10,8 +11,8 @@ export async function GET(request:Request){
  if(!url||!key)return unavailable();
  const prices=[];
  try{
-  const db=createClient(url,key,{auth:{persistSession:false}});
   const now=new Date().toISOString(),deadline=AbortSignal.any([request.signal,AbortSignal.timeout(7000)]);
+  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:boundedFetch(deadline,7000)}});
   let query=db.from("pricing_rules").select("id,amount_paise,unit,city,pincode_prefix,minimum_quantity,valid_to,variant:product_variants!inner(sku,status,unit,product:products!inner(slug,status,category:categories!inner(slug,status)))")
    .is("tenant_id",null).eq("visibility","public").eq("status","published").eq("currency","INR").eq("variant.status","published").eq("variant.product.status","published").eq("variant.product.category.status","published")
    .gt("amount_paise",0).lte("valid_from",now).or("valid_to.is.null,valid_to.gt."+now).order("id").limit(page.paginated?page.limit+1:page.limit);
