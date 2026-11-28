@@ -19,7 +19,8 @@ export function validWallMask(points:readonly MaskCorner[]):boolean{
  const distinct=points.every((p,i)=>points.every((q,j)=>i===j||Math.hypot(p.x-q.x,p.y-q.y)>.008));
  if(!distinct||polygonArea(points)<.002)return false;
  if(intersect(points[0],points[1],points[2],points[3])||intersect(points[1],points[2],points[3],points[0]))return false;
- return true;
+ const turns=points.map((p,i)=>cross(p,points[(i+1)%4],points[(i+2)%4]));
+ return turns.every(t=>t>1e-6)||turns.every(t=>t< -1e-6);
 }
 export function addCorner(history:MaskHistory,point:MaskCorner):MaskHistory{
  if(history.points.length>=4||!finite(point))return history;

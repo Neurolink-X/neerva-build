@@ -19,3 +19,5 @@ test("undo, redo and new selection clear redo history",()=>{
  s=undoCorner(s);s=addCorner(s,{x:.2,y:.8});assert.equal(s.redo.length,0);
  assert.equal(validWallMask(s.points),true);
 });
+
+test("rejects concave and collinear perspective planes",()=>{assert.equal(validWallMask([{x:.1,y:.1},{x:.8,y:.1},{x:.35,y:.3},{x:.1,y:.8}]),false);assert.equal(validWallMask([{x:.1,y:.1},{x:.4,y:.1},{x:.8,y:.1},{x:.1,y:.8}]),false);});

@@ -1,6 +1,6 @@
 "use client";
 import {memo,useEffect,useLayoutEffect,useRef,useState} from "react";
-import {textureFor,texturePalette} from "@/modules/studio/wall-textures";
+import {textureFor,texturePalette,wallTextureCrop} from "@/modules/studio/wall-textures";
 import type {Pattern} from "@/modules/studio/wall-patterns";
 type Texture={width:number;height:number;values:Uint8Array};
 type TextureState=Partial<Record<Pattern,Texture|null>>;
@@ -47,18 +47,21 @@ export const WallTextureSwatch=memo(function WallTextureSwatch({texture,base,acc
  // Only pigment changes regenerate the small swatch; intensity is SVG opacity.
  ref.current?.setAttribute("href",c.toDataURL("image/webp",.82));c.width=0;c.height=0;
  },[texture,base,accent]);
- return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio="xMidYMid meet" opacity={intensity}/></svg>;
+ return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio="xMidYMid slice" opacity={intensity}/></svg>;
 });
 type Point={x:number;y:number};
 /** Two clipped affine triangles share the same wall diagonal. This is a
  * bounded photo projection, not a physical relief mesh or a ray tracer. */
 export function drawTextureQuad(ctx:CanvasRenderingContext2D,source:HTMLCanvasElement,a:Point,b:Point,c:Point,d:Point){
+ const length=(p:Point,q:Point)=>Math.hypot(p.x-q.x,p.y-q.y);
+ const aspect=(length(a,b)+length(d,c))/Math.max(1,length(a,d)+length(b,c));
+ const [u,v,cw,ch]=wallTextureCrop(source.width,source.height,aspect);
  const triangle=(p:Point,q:Point,r:Point,flip:boolean)=>{
   ctx.save();ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.lineTo(r.x,r.y);ctx.closePath();ctx.clip();
   const w=source.width,h=source.height;
   if(!flip)ctx.transform((q.x-p.x)/w,(q.y-p.y)/w,(r.x-q.x)/h,(r.y-q.y)/h,p.x,p.y);
   else ctx.transform((q.x-r.x)/w,(q.y-r.y)/w,(r.x-p.x)/h,(r.y-p.y)/h,p.x,p.y);
-  ctx.drawImage(source,0,0);ctx.restore();
+  ctx.drawImage(source,u*w,v*h,cw*w,ch*h,0,0,w,h);ctx.restore();
  };
  triangle(a,b,c,false);triangle(a,c,d,true);
 }
