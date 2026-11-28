@@ -263,6 +263,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  }
  function selectInterior(index:number|"all"|"new"){
   if(index==="all"&&allInterior)return;
+  if(!allInterior&&points.length>0&&!valid){setMessage("Finish the four corners, or reset the incomplete wall before switching.");return;}
   const saved=snapshotInterior();setWalls(saved);setCloseUp(false);setShowOriginal(false);
   if(index==="all"){setAllInterior(true);setInteriorWholeShade(base);setMode("paint");setEditing(null);setHistory(emptyMaskHistory());return;}
   if(index==="new"){setAllInterior(false);setEditing(null);setHistory(emptyMaskHistory());setMode("paint");setMessage("Mark four corners of the next visible wall, avoiding openings.");return;}
@@ -302,7 +303,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   if((scene==="facade"&&!patchMode)||!ready||interiorDetail)return;
   const el=canvas.current;if(!el)return;const r=el.getBoundingClientRect();
   const point:MaskCorner={x:Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y:Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))};
-  if(!exterior&&(valid||allInterior)){const saved=snapshotInterior(),hit=saved.findIndex(w=>wallContainsPoint(w.points,point)&&(!w.mask||wallContainsPoint(w.mask.outline.map(([x,y])=>({x,y})),point)&&!(w.mask.holes??[]).some(h=>wallContainsPoint(h.map(([x,y])=>({x,y})),point))));if(hit>=0){setWalls(saved);applyInteriorStyle(saved[hit],hit);}return;}
+  if(!exterior&&(valid||allInterior)){const saved=snapshotInterior(),hit=saved.findIndex(w=>wallContainsPoint(w.points,point)&&(!w.mask||wallContainsPoint(w.mask.outline.map(([x,y])=>({x,y})),point)&&!(w.mask.holes??[]).some(h=>wallContainsPoint(h.map(([x,y])=>({x,y})),point))));if(hit>=0){if(!allInterior&&((editing!==null&&hit===editing)||(editing===null&&valid&&hit===walls.length)))return;setWalls(saved);applyInteriorStyle(saved[hit],hit);}return;}
   if(points.length>=4)return;
   setHistory(prev=>addCorner(prev,point));
  }

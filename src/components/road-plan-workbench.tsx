@@ -196,7 +196,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      <div className="nroad-floor-tabs" role="group" aria-label="Select floor">
       {Array.from({length:plan.floors},(_,i)=><button key={i} aria-pressed={floor===i} onClick={()=>setFloor(i)}>{["Ground floor","First floor","Second floor"][i]}</button>)}
      </div>
-     <div className="nroad-plan-summary" data-plan-id={plan.id} data-selected-floor={floor} aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.floor===floor).length}</strong> Spaces on this floor</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===floor).length}</strong> Bedrooms on this floor</span></div>
+     <div className="nroad-plan-summary" data-plan-id={plan.id} data-selected-floor={floor} aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom").length}</strong> Bedrooms total</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===floor).length}</strong> Bedrooms on this floor</span></div>
      <OrientedPlanDrawing plan={plan} floor={floor} scheme={scheme??undefined}/>
 
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Same selected floor</span></div>
