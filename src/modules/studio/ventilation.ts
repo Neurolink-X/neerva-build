@@ -1,4 +1,4 @@
-import {overlapArea,validatePlan,type Opening,type PlanModel,type Rect,type Room,type Side} from "./plan-model.ts";
+import {overlapArea,validatePlan,isOtsRoom,type Opening,type PlanModel,type Rect,type Room,type Side} from "./plan-model.ts";
 import {rectInsideShape} from "./site-shape.ts";
 const EPS=1e-6,sides:Side[]=["front","rear","left","right"];
 const occupied=(r:Room)=>!["terrace","balcony","parking","verandah"].includes(r.kind);
@@ -8,7 +8,7 @@ const length=(r:Room,s:Side)=>s==="front"||s==="rear"?r.w:r.d;
 export const compassWall=(s:Side,road:PlanModel["plot"]["roadSide"])=>{const dirs=["N","E","S","W"] as const;return dirs[(dirs.indexOf(road)+({front:0,right:1,rear:2,left:3}[s]))%4];};
 /** Screen the actual aperture, not just the existence of a window. The 3 ft
  * open strip is a conservative concept study, NOT a statutory requirement. */
-export function windowExposure(plan:PlanModel,r:Room,o:Pick<Opening,"side"|"atFt"|"widthFt">):"road"|"open-strip"|"review"{
+export function windowExposure(plan:PlanModel,r:Room,o:Pick<Opening,"side"|"atFt"|"widthFt">):"road"|"open-strip"|"ots"|"review"{
  const {side,atFt,widthFt}=o;if(!Number.isFinite(atFt)||!Number.isFinite(widthFt)||atFt<0||widthFt<=0||atFt+widthFt>length(r,side)+EPS)return "review";
  const t=3,shape=plan.plot.siteShape??{kind:"rectangle"} as const;
  const strip:Rect=side==="front"?{x:r.x+atFt,y:Math.max(0,r.y-t),w:widthFt,d:Math.min(r.y,t)}:side==="rear"?{x:r.x+atFt,y:r.y+r.d,w:widthFt,d:t}:side==="left"?{x:r.x-t,y:r.y+atFt,w:t,d:widthFt}:{x:r.x+r.w,y:r.y+atFt,w:t,d:widthFt};
@@ -17,7 +17,10 @@ export function windowExposure(plan:PlanModel,r:Room,o:Pick<Opening,"side"|"atFt
  const roadPath:Rect={x:r.x+atFt,y:0,w:widthFt,d:r.y};
  const blocked=(a:Rect,sky:boolean)=>plan.rooms.some(q=>q.id!==r.id&&q.floor>=r.floor&&(sky||q.floor===r.floor)&&occupied(q)&&overlapArea(q,a)>EPS);
  if(side==="front"&&(r.y<=EPS||rectInsideShape(roadPath,plan.plot.widthFt,plan.plot.depthFt,shape)&&!blocked(roadPath,false)))return "road";
- if(strip.w>EPS&&strip.d>=Math.min(t,widthFt)-EPS&&rectInsideShape(strip,plan.plot.widthFt,plan.plot.depthFt,shape)&&!blocked(strip,true))return "open-strip";
+ if(strip.w>EPS&&strip.d>=Math.min(t,widthFt)-EPS&&rectInsideShape(strip,plan.plot.widthFt,plan.plot.depthFt,shape)&&!blocked(strip,true)){
+  if(plan.rooms.some(q=>q.floor===r.floor&&isOtsRoom(q)&&overlapArea(q,strip)>=strip.w*strip.d-EPS))return "ots";
+  return "open-strip";
+ }
  return "review";
 }
 function candidates(p:PlanModel,r:Room,existing:readonly Opening[]){

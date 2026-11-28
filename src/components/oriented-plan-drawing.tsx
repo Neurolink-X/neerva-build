@@ -3,7 +3,7 @@ import type {FinishScheme} from "@/modules/studio/finish-model";
 import {useMemo,useState} from "react";
 import {residentialStairStudies,stairFloorPatches} from "@/modules/studio/stair-study";
 import {planFurniture} from "@/modules/studio/furniture";
-import type {Opening,PlanModel,Room} from "@/modules/studio/plan-model";
+import {isOtsRoom,type Opening,type PlanModel,type Room} from "@/modules/studio/plan-model";
 import {roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {siteOutline} from "@/modules/studio/site-shape";
 import {windowExposure} from "@/modules/studio/ventilation";
@@ -40,10 +40,11 @@ export function OrientedPlanDrawing({plan,floor=0,scheme}:{plan:PlanModel;floor?
    <g><path d={`M ${dim.w-1.5} 3.5 V 1.6 l -.7 .9 M ${dim.w-1.5} 1.6 l .7 .9`} fill="none" stroke="#284735" strokeWidth=".3"/>
     <text x={dim.w-1.5} y=".9" textAnchor="middle" fontSize="1" fontWeight="800">N</text></g>
    {([["left",plan.setbacks.leftFt,plan.setbacks.leftFt/2,d/2],["right",plan.setbacks.rightFt,w-plan.setbacks.rightFt/2,d/2]] as const).filter(([,ft])=>ft>=2).map(([edge,ft,x,y])=>{const p=point(x,y);return <text key={edge} x={p.x} y={p.y} transform={`rotate(${side==="N"||side==="S"?-90:0} ${p.x} ${p.y})`} textAnchor="middle" fontSize=".85" fill="#526955">{ft.toFixed(1)} ft open strip</text>})}
-   {rooms.map(r=>{const rect=roadRect(r,w,d,side),cx=rect.x+rect.w/2,cy=rect.y+rect.d/2,small=Math.min(rect.w,rect.d)<5,label=r.kind==="stairs"&&stairs.unresolved.includes(r.id)?"Stair reserve":r.kind==="bedroom"?r.label:(shortLabels[r.kind]??r.label),font=Math.min(small?.65:1.07,rect.w/(Math.max(label.length,1)*.64),rect.d*.20);
+   {rooms.map(r=>{const rect=roadRect(r,w,d,side),cx=rect.x+rect.w/2,cy=rect.y+rect.d/2,small=Math.min(rect.w,rect.d)<5,label=r.kind==="stairs"&&stairs.unresolved.includes(r.id)?"Stair reserve":isOtsRoom(r)?"OTS / roof jaal":r.kind==="bedroom"?r.label:(shortLabels[r.kind]??r.label),font=Math.min(small?.65:1.07,rect.w/(Math.max(label.length,1)*.64),rect.d*.20);
     return <g key={r.id} data-room-id={r.id} data-room-kind={r.kind}>
      <title>{r.label}</title>
-     <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={(scheme?.planId===plan.id?scheme.rooms[r.id]?.floor:undefined)??colors[r.kind]??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
+     <rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill={(scheme?.planId===plan.id?scheme.rooms[r.id]?.floor:undefined)??(isOtsRoom(r)?"#c6e9e4":colors[r.kind])??"#ecece6"} stroke="#4e6854" strokeWidth=".20"/>
+     {isOtsRoom(r)&&<g stroke="#287a73" strokeWidth=".13" strokeDasharray=".35 .2"><path d={`M${rect.x} ${rect.y} L${rect.x+rect.w} ${rect.y+rect.d} M${rect.x+rect.w} ${rect.y} L${rect.x} ${rect.y+rect.d}`}/><title>Open vertical void; roof grille above, not a floor</title></g>}
      {r.kind==="stairs"&&stairs.studies.some(s=>s.upperRoomId===r.id)&&<><rect x={rect.x} y={rect.y} width={rect.w} height={rect.d} fill="#faf9f6" stroke="#826b50" strokeDasharray=".3 .2" strokeWidth=".12"/>{stairFloorPatches(r,stairs.studies).map((patch,i)=>{const b=roadRect(patch,w,d,side);return <rect key={i} x={b.x} y={b.y} width={b.w} height={b.d} fill="#a9c4ab" stroke="#516b52" strokeWidth=".12"><title>Landing at selected floor</title></rect>})}</>}
      {showFurniture&&furniture.filter(p=>p.roomId===r.id).map(p=>{const b=roadRect(p,w,d,side);return <g key={p.id} data-furniture-id={p.id}><rect x={b.x} y={b.y} width={b.w} height={b.d} rx=".12" fill="#a38970" fillOpacity=".25" stroke="#806b58" strokeWidth=".09"/><title>{`${p.kind} · illustrative placement`}</title></g>})}
      <text x={cx} y={cy-(small?.12:.28)} textAnchor="middle" fill="#253f33" fontWeight="800" fontSize={font} data-room-label="true">{label.toUpperCase()}</text>

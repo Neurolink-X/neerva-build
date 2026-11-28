@@ -31,6 +31,8 @@ export type PlanBrief={widthFt:number;depthFt:number;roadSide:RoadSide;floors:1|
 const EPS=1e-6;
 export const snap=(n:number)=>Math.round(n*2)/2;
 export const area=(r:Rect)=>r.w*r.d;
+/** Versioned terrace reserve: a continuous open-to-sky void, not a usable floor. */
+export const isOtsRoom=(r:Room)=>r.kind==="terrace"&&/^ots-v1-floor-\d+$/.test(r.id);
 export const overlapArea=(a:Rect,b:Rect)=>Math.max(0,Math.min(a.x+a.w,b.x+b.w)-Math.max(a.x,b.x))*
  Math.max(0,Math.min(a.y+a.d,b.y+b.d)-Math.max(a.y,b.y));
 export function sharedEdge(a:Rect,b:Rect):{aSide:Side;bSide:Side;from:number;length:number}|null{
@@ -99,6 +101,12 @@ export function validatePlan(p:PlanModel):string[]{
  }
  for(let i=0;i<p.rooms.length;i++)for(let j=i+1;j<p.rooms.length;j++)
   if(p.rooms[i].floor===p.rooms[j].floor&&overlapArea(p.rooms[i],p.rooms[j])>.01)errors.push("Rooms overlap "+p.rooms[i].id+"/"+p.rooms[j].id);
+ const shafts=p.rooms.filter(isOtsRoom);
+ if(shafts.length){
+  const base=shafts[0];
+  if(shafts.length!==p.floors||new Set(shafts.map(r=>r.floor)).size!==p.floors||shafts.some(r=>r.w<3-EPS||r.d<3-EPS||!near(r.x,base.x)||!near(r.y,base.y)||!near(r.w,base.w)||!near(r.d,base.d)))errors.push("OTS reserve must remain open and aligned from ground to roof");
+  if(p.openings.some(o=>shafts.some(r=>r.id===o.roomId||r.id===o.connectsTo)))errors.push("OTS void is not a walkable room");
+ }
  const byId=new Map(p.rooms.map(r=>[r.id,r]));
  for(const o of p.openings){
   const r=byId.get(o.roomId),len=r?(o.side==="front"||o.side==="rear"?r.w:r.d):0;

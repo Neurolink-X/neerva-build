@@ -7,6 +7,7 @@ import {studioDesignFromPlan} from "./plan-model-adapter.ts";
 import {residentialStairStudies} from "./stair-study.ts";
 import {architectureTopology,entranceArrangement} from "./architecture-profile.ts";
 import {ventilationVariant} from "./ventilation.ts";
+import {otsVariant} from "./ots-ventilation.ts";
 
 export type PlanningResult={plans:PlanModel[];blockers:string[]};
 const eps=.01;
@@ -829,6 +830,7 @@ export function generateStairReadyPortfolio(b:PlanBrief,limit=24):PlanningResult
  return {plans,blockers:plans.length?[]:["No dog-leg stair candidate fits the exact requested programme and door alignment. Try the standard concepts or review usable frontage with an architect."]};
 }
 export function portfolioForPlanId(b:PlanBrief,planId:string):PlanningResult{
+ if(planId.endsWith("-ots-v1")){const base=portfolioForPlanId(b,planId.slice(0,-7));return {...base,plans:base.plans.map(p=>p.id===planId.slice(0,-7)?otsVariant(p):p)};}
  if(planId.endsWith("-vent-v1")){const base=portfolioForPlanId(b,planId.slice(0,-8));return {...base,plans:base.plans.map(ventilationVariant)};}
  if(/-stair-v1-[01]$/.test(planId))return generateStairReadyPortfolio(b,24);
  const current=generateSpatialPortfolio(b,24);return current.plans.some(p=>p.id===planId)?current:generateSpatialPortfolio(b,24,true);

@@ -16,7 +16,8 @@ import {frontageComposition} from "@/modules/studio/frontage";
 import {entranceArrangement,architectureTopology,representativeIndices} from "@/modules/studio/architecture-profile";
 import {RoadElevation} from "./road-plan-diagram";
 import {OrientedPlanDrawing} from "./oriented-plan-drawing";
-import {ventilationReport,ventilationVariant} from "@/modules/studio/ventilation";
+import {ventilationReport} from "@/modules/studio/ventilation";
+import {airOptimizedPlan} from "@/modules/studio/ots-ventilation";
 import {VentilationPanel} from "./ventilation-panel";
 import {PlanShortlist} from "./plan-shortlist";
 import {briefKey} from "@/modules/studio/plan-shortlist";
@@ -48,8 +49,8 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const filtered=matching.filter((_,i)=>!representativesOnly||representativeSet.has(i));
  const activeOption=filtered.some(({i})=>i===chosen)?chosen:filtered[0]?.i??(result.plans[chosen]?chosen:0);
  const baseDraft=result.plans[activeOption]??null;
- const [enhanceVentilation,setEnhanceVentilation]=useState(false);
- const draft=useMemo(()=>baseDraft&&enhanceVentilation?ventilationVariant(baseDraft):baseDraft,[baseDraft,enhanceVentilation]);
+ const [enhanceVentilation,setEnhanceVentilation]=useState(false),[includeOts,setIncludeOts]=useState(false);
+ const draft=useMemo(()=>baseDraft?airOptimizedPlan(baseDraft,includeOts,enhanceVentilation):null,[baseDraft,includeOts,enhanceVentilation]);
  const kit=kitOverride??draft?.facade.kit??"simple-parapet";
  const shade=colours.find(c=>c.id===palette)??colours[0];
  const plan=useMemo<PlanModel|null>(()=>draft?{...draft,facade:{...draft.facade,kit,main:shade.main,accent:shade.accent}}:null,[draft,shade,kit]);
@@ -193,7 +194,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      </div>
      <div className="nroad-plan-summary" data-plan-id={plan.id} data-selected-floor={floor} aria-label="Selected layout summary"><span><strong>#{activeOption+1}</strong> Selected layout</span><span><strong>{plan.rooms.filter(r=>r.floor===floor).length}</strong> Spaces on this floor</span><span><strong>{plan.plot.widthFt} × {plan.plot.depthFt}</strong> Plot (ft)</span><span><strong>{plan.floors}</strong> Level(s)</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom").length}</strong> Bedrooms total</span><span><strong>{plan.rooms.filter(r=>r.kind==="bedroom"&&r.floor===floor).length}</strong> Bedrooms on this floor</span></div>
      <OrientedPlanDrawing plan={plan} floor={floor} scheme={scheme??undefined}/>
-     <VentilationPanel plan={plan} floor={floor} enhanced={enhanceVentilation} onEnhance={v=>{setEnhanceVentilation(v);setSaveInfo("")}} onBest={()=>{const ranked=filtered.map(({p,i})=>({i,score:ventilationReport(enhanceVentilation?ventilationVariant(p):p).score})).sort((a,b)=>b.score-a.score||a.i-b.i);if(ranked[0]){setChosen(ranked[0].i);setKit(null);setSaveInfo("")}}} changed={baseDraft?.id!==draft?.id}/>
+     <VentilationPanel plan={plan} floor={floor} enhanced={enhanceVentilation} ots={includeOts} onOts={v=>{setIncludeOts(v);setSaveInfo("")}} onEnhance={v=>{setEnhanceVentilation(v);setSaveInfo("")}} onBest={()=>{const ranked=filtered.map(({p,i})=>({i,score:ventilationReport(airOptimizedPlan(p,includeOts,enhanceVentilation)).score})).sort((a,b)=>b.score-a.score||a.i-b.i);if(ranked[0]){setChosen(ranked[0].i);setKit(null);setSaveInfo("")}}} changed={baseDraft?.id!==draft?.id}/>
      <div className="nroad-head"><h2>{str("Plan-matched 3D","इसी प्लान का 3D")}</h2><span>Follows selected 2D floor · full building is optional</span></div>
      <div ref={threeSection} className="nroad-3d-slot" data-warm-state="idle">{design&&(threeReady?<Building3D key={`${plan.id}-floor-${floor}`} design={design} colour={shade.main} planModel={plan} selectedFloor={floor} scheme={scheme??undefined}/>:<div className="nroad-loading"><p>{str("Your 2D plan is ready. On slow connections or low-resource devices, open interactive 3D when needed.","2D नक्शा तैयार है। धीमे इंटरनेट पर जरूरत होने पर 3D व्यू खोलें।")}</p><button type="button" onClick={()=>setThreeReady(true)}>{str("Load interactive 3D","3D व्यू खोलें")}</button></div>)}</div>
      <p className="nroad-small">Same floor and room geometry as 2D. Concept only; professional verification required.</p>
