@@ -1,6 +1,6 @@
 "use client";
 import {useId} from "react";
-import {commercialPortals,commercialFrontPanels,commercialFacadeProfile,commercialFrontageDetails,commercialFrontageLanguage} from "@/modules/studio/commercial-detail";
+import {commercialPortals,commercialFrontPanels,commercialFacadeProfile,commercialFrontageDetails,commercialFrontageLanguageForPlan} from "@/modules/studio/commercial-detail";
 import {glazingBayCount} from "@/modules/studio/core/elevation-appearance";
 import {ElevationDefs} from "./elevation-appearance";
 import type {BuildingConcept} from "@/modules/studio/building-purpose";
@@ -8,7 +8,7 @@ import type {FinishScheme} from "@/modules/studio/finish-model";
 export function CommercialFront({plan,scheme}:{plan:BuildingConcept;scheme:FinishScheme}){
  const id=useId().replace(/:/g,""),panels=commercialFrontPanels(plan),portals=commercialPortals(plan).filter(p=>p.axis==="x"&&panels.some(a=>a.floor===p.floor&&Math.abs(a.y-p.y)<1e-5&&p.x>=a.x-1e-5&&p.x+p.length<=a.x+a.w+1e-5)),w=plan.brief.widthFt,h=plan.brief.floors*13;
  const profile=commercialFacadeProfile(plan.brief.purpose),frame="rgb("+profile.frame.map(v=>Math.round(v*255)).join(",")+")";
- const language=commercialFrontageLanguage(plan.brief.purpose),details=commercialFrontageDetails(plan);
+ const language=commercialFrontageLanguageForPlan(plan),details=commercialFrontageDetails(plan);
  const font=Math.max(1.5,Math.min(3.4,w/48)),nearest=Math.min(...panels.map(p=>p.y)),pad=Math.max(8,w*.045),ground=Math.max(4,w*.035),url=(key:string)=>"url(#"+id+key+")";
  return <section className="purpose-front"><h3>Street-facing elevation</h3><p className="purpose-caption">{language.style} · {w} ft frontage · {plan.brief.floors} level(s) · Road {plan.brief.roadSide}</p><svg viewBox={[-pad,-6,w+2*pad,h+ground+6].join(" ")} role="img" aria-label="Street-facing conceptual elevation" data-plan-id={plan.id}>
  <ElevationDefs id={id} wall={scheme.exterior} accent={scheme.accent} glass={scheme.glass}/>

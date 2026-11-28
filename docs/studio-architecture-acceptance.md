@@ -14,3 +14,8 @@ This is an implementation checklist, not a certificate of design quality or stat
 | Production | Build, lint, unit tests, authenticated isolated E2E, mobile browser regression, preview review | Pending |
 
 24 geometry-checked variants are a target, not a guarantee of 24 independent architecture families. Show the actual meaningful programme count. Never silently change an input or duplicate a plan to fill the gallery. A mirrored plan can be useful for site access but is not a new architecture family. No code compliance, photorealism, or structural certification is implied. Review actual artwork at 360, 768 and 1440 px and on a low-end device before claiming premium visual quality.
+
+## Follow-up implementation
+- Added compact private-bedroom / side-passage candidates, additional commercial service-room programmes, six bespoke mural compositions, a 16-entry derived artwork cache and plan-aware commercial frontage rhythm.
+- Legacy commercial snapshot reconstruction and UI restore use exact saved identities.
+- Remaining release evidence: latest CI and authenticated E2E, mobile/browser screenshot inspection, user-perceived artwork quality, full-platform field metrics and load testing. These changes are not proof of ultra-photorealism or universal 24-family coverage.
