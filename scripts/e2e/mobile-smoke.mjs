@@ -1256,8 +1256,8 @@ async function main(){
  await page.getByRole("button",{name:"Nature",exact:true}).click();await page.getByRole("button",{name:"Floral vine feature wall",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),orbit,"floral artwork differs from the circle mural");
  let visibleDesigns=0;for(const group of ["Signature","Nature","Murals","Classic","Modern","Geometry","Printed","3D effects","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,72,"curated collection must not contain retired filler designs");
  await page.getByRole("button",{name:"3D effects",exact:true}).click();
- await page.getByRole("button",{name:"3D isometric cube",exact:true}).click();const relief=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(relief,plainBeforePattern);
- await page.getByRole("button",{name:"Printed",exact:true}).click();await page.getByRole("button",{name:"Printed lotus repeat",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),relief);
+ await page.getByRole("button",{name:"Faceted diamond relief",exact:true}).click();const relief=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(relief,plainBeforePattern);
+ await page.getByRole("button",{name:"Printed",exact:true}).click();await page.getByRole("button",{name:"Silk botanical inlay",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),relief);
  await page.getByRole("button",{name:"Classic",exact:true}).click();await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
  await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
