@@ -13,9 +13,10 @@ import {collectionGuide,isFeatureWall} from "@/modules/studio/wall-design-guide"
 import {artworkFrame} from "@/modules/studio/wall-design-layout";
 import {shadeArtworkPixels} from "@/modules/studio/artwork-lighting";
 import {textureFor} from "@/modules/studio/wall-textures";
+import {fitFacadeArtwork,managedFacadeStyles,recommendedFacadeZone} from "@/modules/studio/facade-design-management";
 import {useWallTextures,colouredTexture,WallTextureSwatch,drawTextureQuad} from "./studio-wall-texture";
 import {colourPairings} from "@/modules/studio/colour-families";
-import {facadeSamples,stylesForTarget,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
+import {facadeSamples,activePattern,shadedPixel,type PhotoMask,type PaintStyle,type FacadeStyles,type FacadeTarget,type FacadeSampleId} from "@/modules/studio/facade-paint";
 const roomMask:PhotoMask={outline:[[40,34],[373,37],[373,215],[361,215],[360,188],[354,177],[345,174],[326,175],[332,164],[295,164],[290,169],[151,168],[145,162],[125,164],[95,161],[99,177],[85,178],[72,181],[66,188],[65,215],[40,215]].map(([x,y])=>[x/420,y/280])};
 type Wall={mask?:PhotoMask;points:MaskCorner[];colour:string;accent:string;pattern:Pattern;opacity?:number};
 function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinted?:HTMLCanvasElement,patternSurface?:HTMLCanvasElement,accentTint?:HTMLCanvasElement,sourceLuma?:Uint8Array|null,texture?:HTMLCanvasElement){
@@ -38,7 +39,8 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
  if(wall.pattern!=="plain"){
   if(corners.length!==4){ctx.restore();return;}
   const [a,b,c,d]=corners;
-  const frame=texture?artworkFrame(corners,true,wall.mask===roomMask?.70:1,texture.width/texture.height):artworkFrame(corners,isFeatureWall(wall.pattern),wall.mask===roomMask?.70:1);
+  const focal=!!texture||isFeatureWall(wall.pattern),reference=texture?texture.width/texture.height:1.5;
+  const frame=wall.mask&&wall.mask!==roomMask&&focal?fitFacadeArtwork(wall.mask,wall.points,corners,reference):artworkFrame(corners,focal,wall.mask===roomMask?.70:1,reference);
   const at=(x:number,y:number)=>{const u=frame.u+x*frame.w,v=frame.v+y*frame.h;return {
    x:(1-v)*(a.x+(b.x-a.x)*u)+v*(d.x+(c.x-d.x)*u),
    y:(1-v)*(a.y+(b.y-a.y)*u)+v*(d.y+(c.y-d.y)*u)
@@ -107,6 +109,8 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
  const effectivePattern=activePattern(mode,pattern);
  const textureKeys=mode==="design"?[...new Set<Pattern>([effectivePattern,...patternGroups[patternGroup],...walls.map(w=>w.pattern),...Object.values(facadeStyles).map(s=>s.pattern)])].filter(key=>textureFor(key)).sort().join(","):[...new Set<Pattern>([...walls.map(w=>w.pattern),...Object.values(facadeStyles).map(s=>s.pattern)])].filter(key=>textureFor(key)).sort().join(",");
  const textures=useWallTextures(textureKeys);
+ const appliedTextures=[effectivePattern,...walls.map(w=>w.pattern),...Object.values(facadeStyles).map(s=>s.pattern)].filter(key=>textureFor(key));
+ const awaitingArtwork=appliedTextures.some(key=>textures[key]===undefined);
  const textureStatus=mode==="design"&&textureFor(effectivePattern)?textures[effectivePattern]?"ready":textures[effectivePattern]===null?"fallback":"loading":"none";
  const currentStyle:PaintStyle={colour:base,accent,pattern:effectivePattern,opacity};
  const styleKey=JSON.stringify([base,accent,effectivePattern,opacity,target,sampleId,extraPaintAreas,patchMode,wholeShade,walls,editing,points,facadeStyles]);
@@ -148,7 +152,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   }
   if(!originalVisible){
    if(scene==="facade"){
-    const styles=stylesForTarget(facadeStyles,target,{colour:base,accent,pattern:effectivePattern,opacity},facadeZones);
+    const styles=managedFacadeStyles(facadeStyles,target,{colour:base,accent,pattern:effectivePattern,opacity},wholeShade,facadeZones);
     // Group by base shade, so a single whole-exterior selection renders one tint.
     const colours=new Set(facadeZones.map(z=>styles[z.id]?.colour).filter((s):s is string=>!!s));
     for(const colour of colours)for(const zone of facadeZones){const style=styles[zone.id];if(style?.colour===colour)paintWall({...style,points:zone.points,mask:zone.mask});}
@@ -214,16 +218,19 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   if(next===target)return;
   if(target==="all")setWholeShade(base);
   setPatchMode(false);setHistory(emptyMaskHistory());
-  const saved=stylesForTarget(facadeStyles,target,currentStyle,facadeZones);
+  const saved=managedFacadeStyles(facadeStyles,target,currentStyle,wholeShade,facadeZones);
   setFacadeStyles(saved);setTarget(next);setShowOriginal(false);setCloseUp(false);
-  const style=next==="all"?undefined:saved[next];
+  const style=next==="all"?{colour:target==="all"?base:wholeShade,accent,opacity,pattern:"plain" as const}:saved[next];
   if(style){setAccent(style.accent);setOpacity(style.opacity);setMode(style.pattern==="plain"?"paint":"design");if(style.pattern!=="plain"){setPattern(style.pattern);setPatternGroup(groupForPattern(style.pattern));}
    if(onColourChange){onColourChange(style.colour);setOverride(null)}else setOverride({source:colour,value:style.colour});}
  }
  function chooseMode(next:"paint"|"design"){
   setPatchMode(false);if(scene==="facade")setHistory(emptyMaskHistory());
   if(next==="design"&&mode==="paint"&&scene==="facade"&&target==="all"){
-   setWholeShade(base);setFacadeStyles(stylesForTarget(facadeStyles,target,currentStyle,facadeZones));setTarget(facadeZones.find(z=>z.id==="right")?.id??facadeZones[0].id);setCloseUp(false);
+   const saved=managedFacadeStyles(facadeStyles,target,currentStyle,wholeShade,facadeZones);
+   const selected=recommendedFacadeZone(facadeZones)??facadeZones[0].id;
+   setWholeShade(base);setFacadeStyles(saved);setTarget(selected);setCloseUp(false);
+   const style=saved[selected];if(style){if(onColourChange){onColourChange(style.colour);setOverride(null)}else setOverride({source:colour,value:style.colour});}
   }
   setMode(next);setShowOriginal(false);
  }
@@ -252,7 +259,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   setHistory(prev=>addCorner(prev,point));
  }
  function saveImage(){
-  const el=canvas.current;if(!el||!ready||patchMode||(scene!=="facade"&&!valid&&(points.length>0||!walls.length))||originalVisible)return;
+  const el=canvas.current;if(!el||!ready||awaitingArtwork||patchMode||(scene!=="facade"&&!valid&&(points.length>0||!walls.length))||originalVisible)return;
   el.toBlob(blob=>{if(!blob){setMessage("Could not export the photo. Try again.");return;}
    const address=URL.createObjectURL(blob),a=document.createElement("a");
    a.href=address;a.download="neerva-wall-colour-concept.png";a.click();
@@ -265,7 +272,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   {scene==="facade"&&<div className="paint-sample-gallery" data-journey="premium" role="group" aria-label="Choose sample house">{[...facadeSamples].sort((a,b)=>(["compact-family","modern-courtyard","family","contemporary","villa"].indexOf(a.id)-["compact-family","modern-courtyard","family","contemporary","villa"].indexOf(b.id))).map(s=><button key={s.id} data-facade-sample={s.id} type="button" aria-pressed={s.id===sampleId} onClick={()=>openFacade(s.id)}><span className="paint-sample-photo"><NextImage src={houseJourneyImageUrl(s.src)} alt="" fill sizes={s.id==="compact-family"?"(max-width:900px) 90vw, 440px":"(max-width:600px) 46vw, (max-width:1100px) 42vw, 240px"} loading="lazy"/></span><strong>{s.label}</strong><small>{s.description}</small></button>)}</div>}
   {scene==="facade"&&<p className="paint-sample-feedback" role="status">{ready?"Previewing: ":message==="Loading photo…"?"Preparing: ":"Selected: "}<strong>{sample.label}</strong>{ready?" · Try a colour or wall design.":""}</p>}
   <div className="paint-mode" role="group" aria-label="Paint preview mode"><button type="button" aria-pressed={mode==="paint"} onClick={()=>chooseMode("paint")}>Plain paint</button><button type="button" aria-pressed={mode==="design"} onClick={()=>chooseMode("design")}>Paint + design</button></div>
-  {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}</button>)}</div>}
+  {scene==="facade"&&<div className="paint-targets" role="group" aria-label="Choose exterior paint area"><button type="button" aria-pressed={target==="all"} onClick={()=>chooseTarget("all")}>Full exterior</button>{facadeZones.map(z=><button key={z.id} type="button" aria-pressed={target===z.id} onClick={()=>chooseTarget(z.id)}>{z.label}{z.id===recommendedFacadeZone(facadeZones)?" · Best for design":""}</button>)}</div>}
   <p className="paint-preview-status" role="status">{scene==="facade"&&ready?"Paint marked walls together or select one area. Visible plaster behind transparent railings is included; frames, timber and plants are protected where marked.":points.length===4&&!valid?"Corners cross or cover too little of the wall. Undo a corner and try again.":message}</p>
   <div className="paint-live-workspace"><div className="paint-live-preview" data-can-stick={ready&&(scene==="facade"||valid)?"true":"false"}>
   {ready&&canInspect&&<button type="button" aria-pressed={closeUp} onClick={()=>setCloseUp(v=>!v)}>{closeUp?"See whole scene":"Inspect selected wall"}</button>}
@@ -276,8 +283,8 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   </div>
   {!ready&&message!=="Loading photo…"&&scene!=="custom"&&<button type="button" className="paint-retry" onClick={()=>scene==="room"?openRoom():openFacade()}>Retry photo</button>}
   {ready&&scene==="facade"&&(sampleId==="compact-family"||sampleId==="modern-courtyard"||sampleId==="family")&&<p className="paint-reference-note">AI-generated architectural concept · full elevation shown. Not an approved construction drawing.</p>}
-  {ready&&<div className="paint-actions paint-compact-actions paint-preview-actions" role="group" aria-label="Live preview actions"><button type="button" disabled={scene!=="facade"&&!valid&&!walls.length} aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?(scene==="facade"?"Show new paint":"Show new colour"):"View original"}</button><button type="button" className="paint-primary" disabled={patchMode||originalVisible||textureStatus==="loading"||(scene!=="facade"&&!valid&&(points.length>0||!walls.length))} onClick={saveImage}>Save colour preview</button></div>}
-  </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><details className="paint-more"><summary>Curated colour combinations</summary><div className="paint-pairings">{colourPairings.map(pair=><button key={pair.id} type="button" aria-pressed={base===pair.base&&accent===pair.accent} onClick={()=>{if(onColourChange){onColourChange(pair.base);setOverride(null)}else setOverride({source:colour,value:pair.base});setAccent(pair.accent);setShowOriginal(false)}}><span aria-hidden="true"><i style={{background:pair.base}}/><i style={{background:pair.accent}}/></span>{pair.label}</button>)}</div><small>Digital base and pattern colours, not physical shade samples.</small></details><h3 className="paint-pattern-title">Wall Design Collections</h3><p className="paint-design-hint">Choose one feature-wall design. Furniture and openings stay protected in sample photos.</p><div className="paint-pattern-groups" role="group" aria-label="Design collections">{(Object.keys(patternGroups) as PatternGroup[]).map(group=><button type="button" key={group} aria-pressed={patternGroup===group} onClick={()=>setPatternGroup(group)}>{group}</button>)}</div><div className="paint-collection-intro"><strong>{collectionGuide[patternGroup].title}</strong><p>{collectionGuide[patternGroup].description}</p></div><p className="paint-pattern-current" role="status">{textureStatus==="loading"?"Loading detailed texture · vector preview available. ":textureStatus==="fallback"?"Detailed texture unavailable · vector preview active. ":""}Selected: {finishes[pattern].name}{isRetiredPattern(pattern)?" · previous design preserved":""}</p><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
+  {ready&&<div className="paint-actions paint-compact-actions paint-preview-actions" role="group" aria-label="Live preview actions"><button type="button" disabled={scene!=="facade"&&!valid&&!walls.length} aria-pressed={originalVisible} onClick={toggleOriginal}>{originalVisible?(scene==="facade"?"Show new paint":"Show new colour"):"View original"}</button><button type="button" className="paint-primary" disabled={patchMode||originalVisible||awaitingArtwork||(scene!=="facade"&&!valid&&(points.length>0||!walls.length))} onClick={saveImage}>Save colour preview</button></div>}
+  </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><details className="paint-more"><summary>Curated colour combinations</summary><div className="paint-pairings">{colourPairings.map(pair=><button key={pair.id} type="button" aria-pressed={base===pair.base&&accent===pair.accent} onClick={()=>{if(onColourChange){onColourChange(pair.base);setOverride(null)}else setOverride({source:colour,value:pair.base});setAccent(pair.accent);setShowOriginal(false)}}><span aria-hidden="true"><i style={{background:pair.base}}/><i style={{background:pair.accent}}/></span>{pair.label}</button>)}</div><small>Digital base and pattern colours, not physical shade samples.</small></details><h3 className="paint-pattern-title">Wall Design Collections</h3><p className="paint-design-hint">{scene==="facade"?"Choose one exterior wall for artwork; full exterior controls base paint.":"Choose one feature-wall design. Furniture and openings stay protected in sample photos."}</p><div className="paint-pattern-groups" role="group" aria-label="Design collections">{(Object.keys(patternGroups) as PatternGroup[]).map(group=><button type="button" key={group} aria-pressed={patternGroup===group} onClick={()=>setPatternGroup(group)}>{group}</button>)}</div><div className="paint-collection-intro"><strong>{collectionGuide[patternGroup].title}</strong><p>{collectionGuide[patternGroup].description}</p></div><p className="paint-pattern-current" role="status">{textureStatus==="loading"?"Loading detailed texture · vector preview available. ":textureStatus==="fallback"?"Detailed texture unavailable · vector preview active. ":""}Selected: {finishes[pattern].name}{isRetiredPattern(pattern)?" · previous design preserved":""}</p><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
    {([...(patternGroups[patternGroup] as readonly Pattern[]),...(isRetiredPattern(pattern)&&patternGroup===groupForPattern(pattern)?[pattern]:[])]).map(key=><button type="button" key={key} aria-pressed={pattern===key} onClick={()=>{setPattern(key);setShowOriginal(false)}}>
     {textures[key]?<WallTextureSwatch texture={textures[key]} base={base} accent={accent} intensity={opacity}/>:isSurfaceProfile(key)?<StudioSurfaceSwatch profile={key} base={base} accent={accent} intensity={opacity}/>:<WallArtworkSwatch pattern={key} base={base} accent={accent} intensity={opacity}/>}<span>{finishes[key].name}</span>
    </button>)}
