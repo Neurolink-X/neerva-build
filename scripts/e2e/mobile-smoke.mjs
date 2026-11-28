@@ -1188,6 +1188,8 @@ async function main(){
     await chosenLayout.first().waitFor({state:"visible",timeout:20000});
     assert.equal(await chosenLayout.count(),1,"exactly one linked gallery option selected");
     assert.match((await chosenLayout.locator("strong").innerText()),/^6\./,"gallery card #6 opens option #6, not the default plan");
+    const linkedBaseId=await chosenLayout.getAttribute("data-plan-id");
+    const linkedCard=page.locator(`.nroad-variants button[data-plan-id="${linkedBaseId}"]`);
     assert.equal(await page.locator(".nbd-building").count(),0,"3D does not mount before the visitor reaches it");
     await page.getByRole("button",{name:"Ground floor"}).click();
     await page.locator(".nroad-3d-slot").scrollIntoViewIfNeeded();
@@ -1245,7 +1247,7 @@ async function main(){
       await page.waitForFunction(()=>document.querySelector(".nroad-air-status")?.getAttribute("data-shaft-state")==="modeled",{},{timeout:120000});
       await sameAir();
       assert.equal(await plan2D.getAttribute("data-roof-jaal"),"modeled");assert.equal(await roofCamera.isVisible(),true);
-      await page.locator(".nroad-variants button").nth(5).click();await sameAir();
+      await linkedCard.click();await sameAir();
       assert.equal(await plan2D.getAttribute("data-plan-id"),sixthId);
     }
     await plan3D.getByRole("button",{name:"Highlight ventilation in 3D",exact:true}).click();assert.equal(await plan3D.getByRole("button",{name:"Hide ventilation highlights",exact:true}).getAttribute("aria-pressed"),"true");
@@ -1289,7 +1291,7 @@ async function main(){
     assert.equal(await plan3D.getAttribute("data-selected-floor"),"1","return to cutaway follows the same 2D floor");
     await page.locator("details.nroad-shortlist-panel > summary").click();
     await page.getByRole("button",{name:"Save selected layout locally",exact:true}).click();
-    await page.locator(".nroad-variants button").nth(5).click();
+    await linkedCard.click();
     await page.getByRole("button",{name:"Save selected layout locally",exact:true}).click();
     await page.getByRole("button",{name:"Show shortlist (2)",exact:true}).click();
     await page.locator(".nroad-shortlist-choices input").nth(0).check();
@@ -1306,6 +1308,10 @@ async function main(){
     {const cards=page.locator(".nroad-variants button");const count=await cards.count();assert.ok(count>=24&&count<=38,"24 baseline options plus feasible upper-floor alternatives");
     const ids=await cards.evaluateAll(nodes=>nodes.map(node=>node.getAttribute("data-plan-id")));assert.equal(new Set(ids).size,count,"No duplicated plan IDs");}
     assert.ok((await page.locator(".nroad-variants button").first().locator(".nroad-mini-plan").count())>=1,"every option has real floor previews");
+    await page.getByRole("button",{name:"Roof / jaal plan",exact:true}).click();
+    await page.getByRole("img",{name:"Roof slabs, terraces and roof jaal"}).waitFor();
+    assert.equal(await page.getByRole("region",{name:"Roof and ventilation plan"}).getAttribute("data-plan-id"),await page.locator(".nroad-plan-summary").getAttribute("data-plan-id"));
+    await page.getByRole("button",{name:"Ground floor",exact:true}).click();
     const streetButton=page.getByRole("button",{name:"Open realistic street render",exact:true});
     await streetButton.click();
     const street=page.getByRole("region",{name:"Plan-matched realistic street preview"});
