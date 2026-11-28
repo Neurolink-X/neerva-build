@@ -81,13 +81,13 @@ export function colouredTexture(texture:Texture,base:string,accent:string,maxSid
  for(let y=0,j=0;y<canvas.height;y++){const row=Math.min(texture.height-1,Math.floor(y/scale))*texture.width;for(let x=0;x<canvas.width;x++,j++){const k=row+columns[x];const rgb=palette[texture.values[k]],i=j*4;img.data[i]=rgb[0];img.data[i+1]=rgb[1];img.data[i+2]=rgb[2];img.data[i+3]=255;}}
  ctx.putImageData(img,0,0);return canvas;
 }
-export const WallTextureSwatch=memo(function WallTextureSwatch({texture,base,accent,intensity}:{texture:Texture;base:string;accent:string;intensity:number}){
+export const WallTextureSwatch=memo(function WallTextureSwatch({texture,base,accent,intensity,detail=false}:{texture:Texture;base:string;accent:string;intensity:number;detail?:boolean}){
  const ref=useRef<SVGImageElement>(null);
- useLayoutEffect(()=>{const c=colouredTexture(texture,base,accent,220);
+ useLayoutEffect(()=>{const c=colouredTexture(texture,base,accent,detail?960:220);
  // Only pigment changes regenerate the small swatch; intensity is SVG opacity.
  ref.current?.setAttribute("href",c.toDataURL("image/webp",.82));c.width=0;c.height=0;
- },[texture,base,accent]);
- return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio={texture.paintPigments?"none":"xMidYMid slice"} opacity={intensity}/></svg>;
+ },[texture,base,accent,detail]);
+ return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio={texture.paintPigments||detail?"none":"xMidYMid slice"} opacity={intensity}/></svg>;
 });
 type Point={x:number;y:number};
 /** Two clipped affine triangles share the same wall diagonal. This is a
