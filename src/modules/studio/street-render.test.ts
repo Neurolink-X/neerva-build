@@ -21,3 +21,14 @@ test("street geometry changes with a distinct checked plan, not merely a facade 
  const [p,q]=generateSpatialPortfolio(brief,2).plans;assert.ok(p&&q);
  assert.notDeepEqual(streetRenderSnapshot(p).boxes,streetRenderSnapshot(q).boxes);
 });
+
+test("road-facing scene respects all four orientations and supported storey counts",()=>{
+ for(const roadSide of ["N","E","S","W"] as const)for(const floors of [1,2,3] as const){
+  const b:PlanBrief={...brief,widthFt:30,depthFt:55,roadSide,floors,bedrooms:floors+1};
+  const p=generateSpatialPortfolio(b,1).plans[0];if(!p)continue;
+  const snapshot=streetRenderSnapshot(p);
+  assert.ok(snapshot.boxes.length>0&&snapshot.boxes.length<=2500);
+  assert.ok(snapshot.camera.forward[2]>0&&snapshot.camera.origin[2]<0);
+  assert.ok(snapshot.boxes.every(o=>o.lo.every((v,i)=>Number.isFinite(v)&&v<o.hi[i])));
+ }
+});
