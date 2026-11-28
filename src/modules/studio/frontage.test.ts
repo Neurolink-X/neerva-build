@@ -19,7 +19,7 @@ test("frontage is based on actual visible geometry, not paint or room names",()=
   for(const {o,r,a,w} of frontageOpenings(p,panels)){
    assert.equal(o.side,"front");assert.ok(w>0&&a>=r.x+o.atFt-1e-5&&a+w<=r.x+o.atFt+o.widthFt+1e-5);
   }
-  for(const kit of ["simple-parapet","stepped-band","jali-screen","cladding-band"] as const){
+  for(const kit of ["simple-parapet","stepped-band","jali-screen","cladding-band","pergola","cantilever"] as const){
    for(const a of facadeAccents({...p,facade:{...p.facade,kit}},panels)){
     assert.ok(a.w>0&&a.h>0&&a.d>0&&a.d<=.12);
     const support=panels.find(q=>q.floor===a.floor&&a.x>=q.x-1e-5&&a.x+a.w<=q.x+q.w+1e-5);assert.ok(support);
@@ -33,3 +33,5 @@ test("frontage is based on actual visible geometry, not paint or room names",()=
   }
  }
 });
+
+test("residential finish kits are deterministic without creating extra floor plans",()=>{const a=generateSpatialPortfolio(brief,24).plans,b=generateSpatialPortfolio(brief,24).plans;assert.ok(a.length>1);assert.deepEqual(a.map(p=>[p.id,p.facade.kit]),b.map(p=>[p.id,p.facade.kit]));assert.ok(new Set(a.map(p=>p.facade.kit)).size>1);});
