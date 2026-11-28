@@ -52,6 +52,15 @@ async function main(){
      const massing=studio.locator(".purpose-views svg").nth(1);
      assert.equal(await massing.getAttribute("data-plan-id"),planId);
      assert.ok(await studio.locator(".purpose-views svg").nth(1).locator("polygon").count()>0,"3D view has actual geometry");
+     const airToggle=studio.getByRole("button",{name:"Highlight ventilation in 3D",exact:true});
+     await airToggle.click();assert.equal(await airToggle.getAttribute("aria-pressed"),"true");
+     assert.equal(await massing.getAttribute("data-plan-id"),planId);
+     await studio.getByRole("button",{name:"Screened openings only",exact:true}).click();
+     await studio.getByRole("button",{name:"Opening exposure links",exact:true}).click();
+     assert.equal(await plan.getAttribute("data-plan-id"),planId);
+     await studio.getByRole("button",{name:"Screened openings only",exact:true}).click();
+     await studio.getByRole("button",{name:"Opening exposure links",exact:true}).click();
+     await airToggle.click();
      if(viewport.width===390){
       const prefix="390-commercial-"+purpose,front=studio.locator(".purpose-front svg");
       await plan.screenshot({path:path.join("test-results/mobile",prefix+"-2d.png"),animations:"disabled"});
@@ -77,6 +86,7 @@ async function main(){
        }
       };
       if(await capture("cutaway")){
+       await airToggle.click();await capture("ventilation");await airToggle.click();
        if(purpose==="shops"){const tools=studio.locator(".purpose-view-tools");if(await tools.getAttribute("open")===null)await tools.locator("summary").click();await studio.getByRole("button",{name:"Show 3D furniture",exact:true}).click();assert.equal(await studio.locator(".purpose-views [data-room-viewer]").getAttribute("data-plan-id"),planId);await studio.getByRole("button",{name:"Hide 3D furniture",exact:true}).click();}
        await studio.getByRole("button",{name:"Show all floors",exact:true}).click();
        await capture("exterior");
