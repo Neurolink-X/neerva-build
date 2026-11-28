@@ -15,11 +15,26 @@ export function applyMaterialDetail(data:Uint8ClampedArray,width:number,height:n
  if(width<=0||height<=0||data.length!==width*height*4)return;
  const alpha=profile.edge?new Uint8Array(width*height):null;
  if(alpha)for(let j=0;j<alpha.length;j++)alpha[j]=data[j*4+3];
- for(let y=0,i=0;y<height;y++)for(let x=0;x<width;x++,i+=4){
-  if(!data[i+3])continue;
-  let factor=materialDetail(x+left,y+top,profile);
-  if(alpha){const at=(u:number,v:number)=>alpha[Math.max(0,Math.min(height-1,v))*width+Math.max(0,Math.min(width-1,u))];factor+=profile.edge*(at(x+1,y+1)-at(x-1,y-1))/255;}
-  factor=Math.max(.72,Math.min(1.28,factor));
-  data[i]=Math.round(data[i]*factor);data[i+1]=Math.round(data[i+1]*factor);data[i+2]=Math.round(data[i+2]*factor);
+ // Precompute separable trigonometric terms: O(width+height) trig calls,
+ // rather than O(width*height). No per-pixel allocations or closures.
+ const stepX=profile.axis==="horizontal"?0:profile.axis==="vertical"?1:.71;
+ const stepY=profile.axis==="vertical"?0:profile.axis==="horizontal"?1:.71;
+ const terms=(length:number,offset:number,first:number,second:number)=>Array.from({length},(_,i)=>{const a=(i+offset)*first,b=(i+offset)*second;return [Math.sin(a),Math.cos(a),Math.sin(b),Math.cos(b)]});
+ const bx=terms(width,left,.071,-.027),by=terms(height,top,.049,.092);
+ const rx=terms(width,left,.82*stepX,.33*stepX),ry=terms(height,top,.82*stepY,.33*stepY);
+ for(let y=0,i=0;y<height;y++){
+  const [ys,yc,yt,yu]=by[y],[rs,rc,rt,ru]=ry[y],prev=Math.max(0,y-1)*width,next=Math.min(height-1,y+1)*width;
+  const yHash=Math.imul(y+top+1,19349663);
+  for(let x=0;x<width;x++,i+=4){
+   if(!data[i+3])continue;
+   const [xs,xc,xt,xu]=bx[x],[ps,pc,pt,pu]=rx[x];
+   const noise=(((Math.imul(x+left+1,73856093)^yHash)>>>0)%257)/128-1;
+   const broad=(xs*yc+xc*ys)*(xu*yu-xt*yt);
+   const ridge=.68*(ps*rc+pc*rs)+.32*(pt*ru+pu*rt);
+   let factor=1+profile.grain*noise+profile.wash*broad+profile.ridge*ridge;
+   if(alpha)factor+=profile.edge*(alpha[next+Math.min(width-1,x+1)]-alpha[prev+Math.max(0,x-1)])/255;
+   factor=Math.max(.72,Math.min(1.28,factor));
+   data[i]=Math.round(data[i]*factor);data[i+1]=Math.round(data[i+1]*factor);data[i+2]=Math.round(data[i+2]*factor);
+  }
  }
 }
