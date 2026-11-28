@@ -8,7 +8,7 @@ import {ShadeReferenceCard} from "./shade-reference-card";
 import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/studio/finish-model";
 import {StudioProjectExchange} from "./studio-project-exchange";
 import {StudioPremiumTools} from "./studio-premium-tools";
-import {generateSpatialPortfolio,generateStairReadyPortfolio,generateCoveredUpperPortfolio,generateEnclosedUpperPortfolio,planSignature,kitchenZone} from "@/modules/studio/road-generator";
+import {generateSpatialPortfolio,generateStairReadyPortfolio,generateCoveredUpperPortfolio,generateEnclosedUpperPortfolio,generateUsableUpperPortfolio,physicalPlanSignature,kitchenZone} from "@/modules/studio/road-generator";
 import {isOtsRoom,planMetrics,planSiteReview,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
 import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
@@ -60,7 +60,7 @@ function RoofJaalPlan({plan}:{plan:PlanModel}){
  </svg><p className="nroad-small">Grey: slab · cream: open terrace / balcony · green grid: actual modeled shaft. Concept only; engineered grille and drainage require professional review.</p>
  </section>;
 }
-function terraceShare(p:PlanModel){const upper=p.rooms.filter(r=>r.floor>0&&!isOtsRoom(r));const total=upper.reduce((n,r)=>n+r.w*r.d,0);return total?upper.filter(r=>r.kind==="terrace").reduce((n,r)=>n+r.w*r.d,0)/total:0;}
+function terraceShare(p:PlanModel){let highest=0;for(let floor=1;floor<p.floors;floor++){const rooms=p.rooms.filter(r=>r.floor===floor&&!isOtsRoom(r)),total=rooms.reduce((n,r)=>n+r.w*r.d,0);if(total)highest=Math.max(highest,rooms.filter(r=>r.kind==="terrace").reduce((n,r)=>n+r.w*r.d,0)/total);}return highest;}
 export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?:PlanBrief;initialOption?:number}={}){
  const [brief,setBrief]=useState<PlanBrief>(()=>initialBrief??initial),[chosen,setChosen]=useState(Number.isInteger(initialOption)&&initialOption>=0&&initialOption<38?initialOption:-1);
  const [floor,setFloor]=useState(0),[roofView,setRoofView]=useState(false),[hindi,setHindi]=useState(false),[palette,setPalette]=useState<(typeof colours)[number]["id"]>("ivory");
@@ -73,8 +73,10 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
  const result=useMemo(()=>{
   if(stairReady)return generateStairReadyPortfolio(brief,24);
   const base=generateSpatialPortfolio(brief,24);
-  const seen=new Set(base.plans.map(planSignature));
-  const extra=[...generateCoveredUpperPortfolio(brief),...generateEnclosedUpperPortfolio(brief)].filter(p=>{const signature=planSignature(p);if(seen.has(signature))return false;seen.add(signature);return true;});
+  const seen=new Set(base.plans.map(physicalPlanSignature));
+  const specific=[...generateCoveredUpperPortfolio(brief),...generateEnclosedUpperPortfolio(brief)];
+  const generic=generateUsableUpperPortfolio(brief,base.plans,Math.max(0,14-specific.length));
+  const extra=[...specific,...generic].filter(p=>{const signature=physicalPlanSignature(p);if(seen.has(signature))return false;seen.add(signature);return true;}).slice(0,14);
   return {...base,plans:[...base.plans,...extra]};
  },[brief,stairReady]);
 
@@ -89,7 +91,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
  const filtered=useMemo(()=>{
   const choices=matching.filter((_,i)=>!representativesOnly||representativeSet.has(i)).filter(({p})=>terracePreference==="all"||(terracePreference==="compact"?terraceShare(p)<=.2:terraceShare(p)>.2));
   const openArea=(p:PlanModel)=>p.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0);
-  return preferCovered?[...choices].sort((a,b)=>openArea(a.p)-openArea(b.p)||a.i-b.i):choices;
+  return preferCovered?[...choices].sort((a,b)=>terraceShare(a.p)-terraceShare(b.p)||openArea(a.p)-openArea(b.p)||a.i-b.i):choices;
  },[matching,representativesOnly,representativeSet,preferCovered,terracePreference]);
  const activeOption=filtered.some(({i})=>i===chosen)?chosen:filtered[0]?.i??(result.plans[chosen]?chosen:0);
  const baseDraft=result.plans[activeOption]??null;
@@ -277,7 +279,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=-1}:{initialBrief?
        onClick={()=>{if(i!==activeOption){setChosen(i);setKit(null);setSaveInfo("")}}}><PlanMiniPreview v={v} i={i}/>
       <strong>{i+1}. {v.rooms.filter(r=>r.kind==="bedroom").length} BHK · {v.floors===1?"Ground":`G+${v.floors-1}`}</strong>
       <span>{!v.parking?str("No car parking","बिना पार्किंग"):v.variant==="parking-left"?str("Parking left","बाईं पार्किंग"):str("Parking right","दाईं पार्किंग")} · {v.rooms.some(r=>r.kind==="stairs"&&r.floor===0&&Math.abs(r.y-v.setbacks.frontFt)<.01)?str("Front stairs","सामने सीढ़ी"):v.rooms.some(r=>r.kind==="bedroom"&&r.floor===0&&Math.abs(r.y-v.setbacks.frontFt)<.01)?str("Front bedroom","सामने बेडरूम"):str("Shared home entry","घर का प्रवेश")}</span>
-      {v.floors>1&&<small>{terraceShare(v)>.2?"Large terrace":"Covered / compact"} · {Math.round(terraceShare(v)*100)}% terrace · {Math.round(v.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0))} sq ft</small>}
+      {v.floors>1&&<small>{terraceShare(v)>.2?"Large terrace":"Covered / compact"} · {Math.round(terraceShare(v)*100)}% max-floor terrace · {Math.round(v.rooms.filter(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r)).reduce((n,r)=>n+r.w*r.d,0))} sq ft</small>}
       <small>{str("Kitchen","किचन")} · {kitchenZone(v)} · {v.rooms.some(r=>r.kind==="kitchen"&&r.floor===0&&r.x+r.w/2<v.plot.widthFt/2)?str("left","बाएँ"):str("right","दाएँ")}</small></button>})}</div>
      <p className="nroad-small nroad-selection-feedback" role="status">{str("Layout "+(activeOption+1)+" of "+result.plans.length+" selected. Your matching 2D and 3D views are below.","नक्शा "+(activeOption+1)+" / "+result.plans.length+" चुना गया। नीचे इसी नक्शे के 2D और 3D व्यू हैं।")} <a href="#selected-plan-drawing">{str("View selected plan ↓","चुना नक्शा देखें ↓")}</a></p>
      {result.plans.length<24&&<p className="nroad-small">{str("Only "+result.plans.length+" of the target 24 distinct concepts fit this exact request. We will not duplicate a plan or change your bedroom count to fill the gallery.","इस प्लॉट के लिए 24 के लक्ष्य में से "+result.plans.length+" अलग नक्शे मिले। संख्या पूरी करने के लिए नक्शे दोहराए नहीं जाएंगे।")}</p>}
