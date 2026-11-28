@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
 import {assessPerformance,resourceSummary} from "./performance-budget.mjs";
+import {verifyInvalidPhotoUpload,visualCases} from "./photo-upload-regression.mjs";
 const base=process.env.SMOKE_BASE_URL||"http://127.0.0.1:3000";
 const views=[{w:360,h:800},{w:390,h:844},{w:430,h:932},{w:768,h:1024},{w:1440,h:900}];
 const routes=["/","/room-lab","/build-iq","/inspiration","/design-studio","/design-studio/library","/design-studio/fit","/design-studio/visualizer","/design-studio/workbench","/design-studio/road-planner","/design-studio/portfolio","/design-studio/buildings","/materials","/checkout","/account/orders","/basket","/quotes","/learn/property-guide","/learn/future-homes","/install","/account","/account/addresses","/account/dealer","/terms","/returns","/studio-pricing","/learn","/admin","/admin/orders","/admin/rfqs","/admin/fulfilment","/admin/catalog","/admin/pricing","/admin/marketing","/admin/dealers","/admin/studio-settings","/admin/studio-payments","/admin/studio","/admin/users","/admin/system-health","/admin/audit","/admin/account-recovery","/dealer/dashboard","/dealer/inventory","/dealer/quotes","/dealer/orders"];
@@ -290,19 +291,20 @@ async function main(){
     assert.equal(await page.getByRole("link",{name:"Building Studio →",exact:true}).count(),1);
     await page.getByRole("button",{name:"Sample house exterior"}).click();
     const gallery=page.locator(".paint-sample-gallery");await gallery.waitFor({state:"visible"});
-    assert.equal(await gallery.locator("button").count(),4,"all facade choices remain available");
+    assert.equal(await gallery.locator("button").count(),5,"all facade choices remain available");
      assert.equal(await gallery.locator("button").first().getAttribute("data-facade-sample"),"compact-family","broad-wall sample is the first facade");
      assert.equal(await gallery.locator("button").first().getAttribute("aria-pressed"),"true","first facade is selected by default");
     assert.equal(await gallery.locator("button[aria-pressed=true]").count(),1,"selection semantics remain accessible without a visual badge");
     assert.ok(await gallery.evaluate(el=>{const active=el.querySelector("button[aria-pressed=true]"),other=el.querySelector("button[aria-pressed=false]");return active&&other&&getComputedStyle(active).borderColor!==getComputedStyle(other).borderColor}),"active house is visually distinguishable without a badge");
     for(const img of await gallery.locator("img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(el=>el.decode());}
-    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-(b.dataset.facadeSample==="family"?2:b.dataset.facadeSample==="compact-family"?1.5:4/3))<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="cover";})};});
-    assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=900?2:3),v.w+"px facade gallery: "+JSON.stringify(geometry));
+    const geometry=await gallery.evaluate(el=>{const frame=el.getBoundingClientRect();const cards=[...el.querySelectorAll("button")];return {overflow:el.scrollWidth>el.clientWidth+2,columns:new Set(cards.map(b=>Math.round(b.getBoundingClientRect().left))).size,fit:cards.every(b=>{const r=b.getBoundingClientRect(),slot=b.querySelector(".paint-sample-photo").getBoundingClientRect(),img=b.querySelector("img");return r.left>=frame.left-1&&r.right<=frame.right+1&&slot.left>=r.left-1&&slot.right<=r.right+1&&Math.abs(slot.width/slot.height-(b.dataset.facadeSample==="family"?3:b.dataset.facadeSample==="compact-family"?1.5:4/3))<.04&&img.naturalWidth>0&&getComputedStyle(img).objectFit==="contain";})};});
+    assert.ok(!geometry.overflow&&geometry.fit&&geometry.columns===(v.w<=1100?2:4),v.w+"px facade gallery: "+JSON.stringify(geometry));
     await page.getByRole("button",{name:/100 gaj family home/}).click();
     assert.match(await page.locator(".paint-sample-feedback").innerText(),/100 gaj family home/);
     await page.waitForFunction(()=>{const c=document.querySelector(".nbd-photo canvas");return c?.dataset.sample==="compact-family"&&!!document.querySelector(".paint-preview-actions button")&&c.getBoundingClientRect().height>0});
     assert.ok(await page.locator(".nbd-photo canvas").evaluate(c=>{const r=c.getBoundingClientRect(),p=c.parentElement.getBoundingClientRect();return Math.abs(r.width/r.height-c.width/c.height)<.025&&r.left>=p.left-1&&r.right<=p.right+1&&p.right<=innerWidth+1}),v.w+"px full facade fits its source aspect ratio");
     if(v.w<=430&&v.h>560){
+     await verifyInvalidPhotoUpload(page);
      await page.getByRole("button",{name:"Paint + design",exact:true}).click();
      await page.getByRole("button",{name:"Signature",exact:true}).click();
      const pattern=page.getByRole("button",{name:"Soft marble veining",exact:true});
@@ -672,7 +674,7 @@ async function main(){
       "/admin/catalog","/admin/rfqs","/admin/fulfilment","/admin/pricing","/admin/orders",
       "/admin/studio","/admin/studio-payments","/admin/system-health","/admin/users",
       "/dealer/inventory","/dealer/quotes","/dealer/orders","/account/orders","/account/quotes",
-      "/support","/privacy","/brands","/business-model","/calculators","/blog",
+      "/support","/privacy","/brands","/business-model","/calculators","/blog","/my-project","/family-homes","/contractors",
       "/learn/plot-size-in-gaj","/learn/2d-to-3d-house-layout","/learn/wall-paint-pattern-ideas",
       "/materials/cement","/materials/steel","/materials/tiles","/materials/plumbing",
       "/materials/bricks-blocks","/materials/electrical","/materials/paint",
@@ -1201,12 +1203,7 @@ async function main(){
     assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
     assert.equal(await page.getByRole("group",{name:"Wall design samples",exact:true}).count(),0,"plain mode hides patterns");
     // Test actual painted canvas pixels, not merely sample labels or changed image hashes.
-    const visualCases=[
-      {id:"family",label:/Modern family home/,w:1200,h:600,paint:[[350,60],[1045,110],[257,150],[565,160],[500,285],[565,350],[1042,365],[160,420]],protect:[[980,190],[450,205],[880,180],[720,190],[750,440],[1100,170]]},
-      {id:"contemporary",label:/Contemporary home/,w:880,h:738,paint:[[130,470],[575,414],[270,490]],protect:[[575,365],[365,190],[750,620]]},
-      {id:"villa",label:/Premium villa/,w:880,h:584,paint:[[790,320],[640,300],[390,320]],protect:[[520,210],[500,460],[100,100]]},
-      {id:"compact-family",label:/100 gaj family home/,w:1536,h:1024,paint:[[402,240],[800,145],[840,290],[790,285],[820,540],[460,730],[800,645],[370,850],[1244,850]],protect:[[480,250],[570,380],[699,350],[965,365],[700,450],[950,470],[620,635],[555,745],[700,740],[950,720],[430,850],[275,865],[970,850],[1120,850],[100,200],[1300,420],[700,55],[700,640]]}
-    ];
+    // All reviewed image fixtures live in the photo regression module.
     assert.equal(await page.locator(".paint-sample-gallery button").count(),visualCases.length,"every house must have a pixel regression case");
     assert.ok(await page.locator(".paint-sample-gallery").evaluate(el=>el.scrollWidth<=el.clientWidth+2&&[...el.querySelectorAll("button")].every(b=>b.getBoundingClientRect().right<=el.getBoundingClientRect().right+1)),"all house cards fit without horizontal clipping");
     const evidence=[];
@@ -1257,7 +1254,7 @@ async function main(){
  await page.getByRole("button",{name:"Signature",exact:true}).click();await page.getByRole("button",{name:"Luxury orbit rings",exact:true}).click();
  const orbit=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(orbit,plainBeforePattern,"circular mural must alter actual canvas pixels");
  await page.getByRole("button",{name:"Nature",exact:true}).click();await page.getByRole("button",{name:"Floral vine feature wall",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),orbit,"floral artwork differs from the circle mural");
- let visibleDesigns=0;for(const group of ["Signature","Nature","Classic","Modern","Textures","Artisan","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,37,"curated collection must not contain retired filler designs");
+ let visibleDesigns=0;for(const group of ["Signature","Nature","Murals","Classic","Modern","Textures","Artisan","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,41,"curated collection must not contain retired filler designs");
  await page.getByRole("button",{name:"Artisan",exact:true}).click();
  const artisan=page.getByRole("button",{name:"Venetian polished plaster",exact:true});await artisan.click();
  const venetian=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(venetian,plainBeforePattern,"continuous texture changes actual wall pixels");
@@ -1498,15 +1495,15 @@ async function main(){
      assert.equal(await page.locator(".nbh-photo-hero img").count(),1,"licensed real-house hero replaces old animation");
      assert.equal(await page.locator(".home-stage-comparison img").count(),2,"paired construction-stage renders");
      const comparisonGeometry=await page.locator(".nbh-compare-frame").evaluate(el=>{const r=el.getBoundingClientRect();return {ratio:r.width/r.height,fit:[...el.querySelectorAll("img")].map(img=>getComputedStyle(img).objectFit)}});
-     assert.ok(Math.abs(comparisonGeometry.ratio-2)<.08,"centered facade crop removes peripheral context");
-     assert.ok(comparisonGeometry.fit.every(f=>f==="cover"),"both comparison images must share the same centered crop");
-     const stage=page.locator(".home-stage-comparison"),slider=stage.getByRole("slider");await stage.getByRole("button",{name:"Under construction",exact:true}).click();assert.equal(await slider.inputValue(),"100");await stage.getByRole("button",{name:"Finished home",exact:true}).click();assert.equal(await slider.inputValue(),"0");await stage.getByRole("button",{name:"Compare",exact:true}).click();assert.equal(await slider.inputValue(),"50");assert.equal(await stage.locator("a[href=\"/materials/bricks-blocks\"]").count(),1);
+     assert.ok(Math.abs(comparisonGeometry.ratio-3)<.08,"centered facade crop removes peripheral context");
+     assert.ok(comparisonGeometry.fit.every(f=>f==="contain"),"both comparison images must share the same centered crop");
+     const stage=page.locator(".home-stage-comparison"),slider=stage.getByRole("slider");await stage.getByRole("button",{name:"Under construction",exact:true}).click();assert.equal(await slider.inputValue(),"100");await stage.getByRole("button",{name:"Finished home",exact:true}).click();assert.equal(await slider.inputValue(),"0");await stage.getByRole("button",{name:"Compare",exact:true}).click();assert.equal(await slider.inputValue(),"50");assert.equal(await stage.locator("a").count(),0,"no duplicate material links below comparison");assert.ok(await page.locator(".nbh-category-grid a[href=\"/materials/bricks-blocks\"]").count()>0,"material navigation preserved in category grid");
      const cardRows=await categories.locator(".nbh-material-card").evaluateAll(cards=>cards.slice(0,2).map(card=>{const add=card.querySelector(".nb-shop-add"),product=card.querySelector(".nbh-category-cart-product"),options=card.querySelector(".nbh-material-options"),rect=add?.getBoundingClientRect();return {top:rect?.top,productBottom:product?.getBoundingClientRect().bottom,optionsBottom:options?.getBoundingClientRect().bottom,productTop:product?.getBoundingClientRect().top}}));
      if(cardRows.every(r=>r.top!=null)&&await page.evaluate(()=>CSS.supports("grid-template-rows","subgrid")&&innerWidth>350)){assert.ok(Math.abs(cardRows[0].top-cardRows[1].top)<3,"adjacent cart actions align");}
 
     assert.equal(await page.getByRole("button",{name:/Replay illustration/}).count(),0,"do not fabricate manual state before dragging");
     assert.equal(await page.locator(".home-stage-comparison").count(),1,"construction stages replace static colour mood");
-    const quick=page.locator(".nbh-quick-quote");
+    const quick=page.locator(".nbh-quick-quote");await quick.locator("select[name=category]").selectOption("cement");assert.equal(await quick.locator("input[name=quantity]").getAttribute("step"),"1");
     await quick.locator("select[name=category]").selectOption("steel");
     assert.match(await quick.locator("input[name=material]").getAttribute("placeholder"),/TMT/);
     assert.equal(await quick.locator("select[name=unit]").inputValue(),"kg");

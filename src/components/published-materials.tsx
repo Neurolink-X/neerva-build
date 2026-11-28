@@ -24,14 +24,14 @@ function PublishedMaterialsPage({category,initiallyOpen=false}:PublishedMaterial
   if(!open)return;
   const controller=new AbortController();
   let disposed=false;
-  const timeout=setTimeout(()=>controller.abort(),10000);
+  const timeout=setTimeout(()=>{controller.abort();if(!disposed)setFailed(true);},10000);
   const params=new URLSearchParams({limit:"24"});
   if(category)params.set("category",category);
   if(cursor)params.set("after",cursor);
   fetch("/api/catalog?"+params,{signal:controller.signal}).then(async response=>{
    if(!response.ok)throw Error();
    const body=await response.json();
-   if(!["published_database","reference_only"].includes(body.source)||!Array.isArray(body.products))throw Error();
+   if(body.source!=="published_database"||!Array.isArray(body.products))throw Error("Published catalog unavailable");
    if(!disposed&&!controller.signal.aborted){setProducts(body.products);setNextCursor(typeof body.nextCursor==="string"?body.nextCursor:null);setFailed(false);}
   }).catch(()=>{if(!disposed)setFailed(true)}).finally(()=>clearTimeout(timeout));
   return ()=>{disposed=true;clearTimeout(timeout);controller.abort();};

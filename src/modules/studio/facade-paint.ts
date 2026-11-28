@@ -42,22 +42,39 @@ const compactFamilyZones=[
  zone("boundary","Left boundary wall",[[200,775],[355,775],[355,765],[402,765],[402,968],[200,968]],[rect(255,804,63,132),[[200,832],[230,828],[276,835],[310,860],[332,920],[335,968],[200,968]],rect(362,785,31,30)],undefined,1536,1024),
  zone("boundary-right","Right boundary wall",[[784,767],[823,767],[823,775],[1265,775],[1265,974],[784,974]],[rect(790,786,27,30),rect(864,804,55,140),rect(1050,805,169,136),[[850,912],[865,861],[885,824],[888,790],[902,770],[927,764],[950,755],[986,754],[1017,770],[1048,801],[1050,862],[1036,911],[1020,974],[850,974]],[[1017,940],[1060,932],[1120,921],[1170,922],[1225,913],[1250,937],[1250,974],[1017,974]]],undefined,1536,1024)
 ] as const;
-// Dedicated 1200×600 paint geometry for the reviewed premium house asset.
+// Dedicated 1200×400 paint geometry for the replacement comparison pair.
 export const facadeZones=[
- zone("roof","Roof plaster band",[[243,37],[573,50],[573,80],[243,73]],[],undefined,1200,600),
- zone("right","Right facade frame",[[925,22],[1062,24],[1062,269],[1032,269],[1032,43],[925,38]],[],undefined,1200,600),
- zone("left","Left upper column",rect(244,98,26,158),[],undefined,1200,600),
- zone("upper-recess","Centre balcony column",rect(550,123,30,85),[],undefined,1200,600),
- zone("balcony","Front balcony plaster",rect(240,266,611,39),[],undefined,1200,600),
- zone("entry","Ground floor centre column",rect(551,317,28,67),[],undefined,1200,600),
- zone("lower-recess","Ground floor right wall",rect(1030,325,28,79),[],undefined,1200,600),
- zone("boundary","Left boundary plaster",rect(82,410,122,18),[],undefined,1200,600)
+ zone("roof","Upper plaster band",[[83,22],[434,22],[434,12],[795,12],[795,23],[1111,23],[1111,45],[83,45]],[],undefined,1200,400),
+ zone("left","Upper left wall",rect(160,56,273,78),[rect(223,79,133,55)],undefined,1200,400),
+ zone("right","Upper right wall",rect(799,56,277,78),[rect(864,79,130,55)],undefined,1200,400),
+ zone("upper-recess","Upper central wall",rect(479,59,277,75),[rect(551,98,125,36),rect(510,105,15,17),rect(698,105,15,17)],undefined,1200,400),
+ zone("balcony","Balcony slab",rect(64,193,1067,21),[],undefined,1200,400),
+ zone("entry","Entrance wall",rect(480,223,276,69),[rect(550,248,127,44),rect(510,259,15,17),rect(698,259,15,17)],undefined,1200,400),
+ zone("lower-recess","Ground right wall",rect(812,225,261,72),[rect(874,244,129,53)],undefined,1200,400),
+ zone("garden-left","Ground left wall",rect(78,225,348,72),[rect(218,244,137,53)],undefined,1200,400),
+ zone("boundary","Left boundary wall",rect(1,308,412,81),[],undefined,1200,400),
+ zone("boundary-right","Right boundary wall",rect(806,308,393,81),[],undefined,1200,400)
+] as const;
+// Dedicated geometry for the 1408×1056 source, resized proportionally to 1200×900.
+const courtyardZones=[
+ zone("roof","Upper plaster band",rect(110,244,758,50),[],undefined,1408,1056),
+ zone("left","Upper left wall",rect(209,330,467,137),[rect(329,349,269,119),rect(211,405,105,63)],undefined,1408,1056),
+ zone("right","Tall accent wall",rect(874,70,313,569),[rect(986,195,201,51),rect(1009,244,178,361),rect(937,403,19,34)],undefined,1408,1056),
+ zone("upper-recess","Balcony recess",rect(683,331,168,136),[rect(713,373,119,94)],undefined,1408,1056),
+ zone("balcony","Balcony plaster",rect(119,556,749,65),[],undefined,1408,1056),
+ zone("entry","Ground entrance wall",rect(641,646,211,146),[rect(657,674,158,118)],undefined,1408,1056),
+ zone("lower-recess","Ground right wall",rect(859,650,327,119),[rect(943,668,225,101)],undefined,1408,1056),
+ zone("garden-left","Ground left wall",rect(209,644,427,126),[rect(294,667,249,103)],undefined,1408,1056),
+ zone("boundary","Left boundary wall",rect(89,808,331,96),[],undefined,1408,1056),
+ zone("boundary-right","Right boundary wall",rect(1019,808,295,96),[],undefined,1408,1056),
+ zone("garden-right","Upper parapet",rect(208,185,636,44),[],undefined,1408,1056)
 ] as const;
 export const facadeSamples=[
  {id:"family",label:"Modern family home",description:"Premium two-storey family residence",src:houseJourney.finished.src,zones:facadeZones},
  {id:"contemporary",label:"Contemporary home",description:"Clean lines and contrasting cladding",src:"/images/studio/house-3.webp",zones:contemporaryZones},
  {id:"villa",label:"Premium villa",description:"Modern facade with terraces",src:"/images/studio/house-2.webp",zones:villaZones},
- {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 photorealistic concept",src:"/images/studio/family/neerva-100gaj-photorealistic.webp",zones:compactFamilyZones}
+ {id:"compact-family",label:"100 gaj family home",description:"18 × 50 ft · G+1 photorealistic concept",src:"/images/studio/family/neerva-100gaj-photorealistic.webp",zones:compactFamilyZones},
+ {id:"modern-courtyard",label:"Modern accent residence",description:"Broad plaster walls · vertical timber accent",src:"/images/studio/neerva-modern-courtyard.webp",zones:courtyardZones}
 ] as const;
 export type FacadeSampleId=typeof facadeSamples[number]["id"];
 export type FacadeZone=typeof facadeZones[number];

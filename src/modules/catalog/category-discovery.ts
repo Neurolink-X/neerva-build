@@ -5,6 +5,12 @@ export const categoryChoices:Record<string,readonly {en:string;hi:string;slug:st
  tiles:[{en:"Floor tile",hi:"फर्श टाइल",slug:"vitrified-tile-600x600"},{en:"Wall tile",hi:"दीवार टाइल",slug:"wall-tile-300x600"},{en:"Marble look",hi:"मार्बल लुक",slug:"orientbell-calacatta-marble"},{en:"Wood look",hi:"वुड लुक",slug:"orientbell-lumber-oak"},{en:"Bathroom tile",hi:"बाथरूम टाइल",slug:"orientbell-safegrip-creama"}],
  hardware:[{en:"Tile adhesive",hi:"टाइल एडहेसिव",slug:"roff-t01-nca"},{en:"Grout",hi:"ग्राउट",slug:"myk-sp100-grout"},{en:"Block adhesive",hi:"ब्लॉक एडहेसिव",slug:"jsw-aac-block-adhesive-block-grip-40-kg-bag-1"},{en:"Door lock",hi:"दरवाज़े का लॉक",slug:"door-mortise-lock"},{en:"Hinges",hi:"कब्जे",slug:"ss-butt-hinge-3in"},{en:"Site tools",hi:"औज़ार",slug:"notched-trowel"}]
 };
+/** Keep useful specialized search routes inside their own category card. */
+export const categorySearchChoices:Record<string,readonly {en:string;hi:string;search:string}[]>={
+ plumbing:[{en:"uPVC pressure",hi:"uPVC प्रेशर",search:"uPVC cold water pressure pipe"},{en:"SWR drainage",hi:"SWR ड्रेनेज",search:"uPVC SWR"}],
+ electrical:[{en:"PVC conduit",hi:"PVC कंड्यूट",search:"Rigid electrical conduit"},{en:"Flexible conduit",hi:"फ्लेक्सिबल कंड्यूट",search:"Flexible corrugated electrical conduit"},{en:"Cable ducts",hi:"केबल डक्ट",search:"DWC HDPE cable duct"}]
+};
+export function categorySearchHref(category:string,search:string){return "/materials?"+new URLSearchParams({category,search})+"#catalog-results";}
 export const categoryGuidance:Record<string,{en:string;hi:string}>={
  "bricks-blocks":{en:"Choose brick type, dimensions and quantity in pieces.",hi:"ईंट का प्रकार, नाप और संख्या चुनें।"},
  plumbing:{en:"Choose pipe material, diameter, application and matching fittings.",hi:"पाइप का प्रकार, नाप, उपयोग और फिटिंग चुनें।"},

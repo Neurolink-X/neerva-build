@@ -1,3 +1,4 @@
+import {boundedFetch} from "@/modules/http/bounded-fetch";
 import {parseFeedPage,takeFeedPage,parseFeedCategory} from "@/modules/catalog/feed-pagination";
 import {createClient} from "@supabase/supabase-js";
 import {hasRealActiveDiscount} from "@/modules/catalog/offer-eligibility";
@@ -11,8 +12,8 @@ export async function GET(request:Request){
  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
  if(!url||!key)return Response.json({offers:[],error:"Published offers temporarily unavailable."},{status:503,headers:{"Cache-Control":"no-store","x-neerva-service-state":"degraded"}});
  try{
-  const db=createClient(url,key,{auth:{persistSession:false}});
   const now=new Date().toISOString(),deadline=AbortSignal.any([request.signal,AbortSignal.timeout(7000)]);
+  const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{fetch:boundedFetch(deadline,7000)}});
   let query=db.from("catalog_campaigns").select(
    "id,title,terms,base_amount_paise,offer_amount_paise,starts_at,ends_at,price:pricing_rules!inner(id,amount_paise,unit,city,minimum_quantity,pincode_prefix,valid_from,valid_to,status,visibility,currency,tenant_id,variant:product_variants!inner(sku,status,unit,product:products!inner(slug,status,category:categories!inner(slug,status))))"
   ).eq("status","published").lte("starts_at",now).gt("ends_at",now).order("id").limit(page.paginated?page.limit+1:page.limit);

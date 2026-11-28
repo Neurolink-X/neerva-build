@@ -25,7 +25,14 @@ const rolling=(y:number,amp:number,phase:number,alpha:number)=>fill([[0,1],...Ar
 const floralStem=join(curve([.08,.98],[.11,.73],[.36,.72],[.29,.46]),curve([.29,.46],[.23,.24],[.5,.2],[.44,.05]));
 const bambooStems=[{x:.14,y:.09,end:.52},{x:.29,y:0,end:.7},{x:.43,y:.03,end:.47}];
 const forestTrunks=[.11,.27,.46,.66,.85];
+const bird=(x:number,y:number,s:number):Motif=>fill(join(curve([x-s,y],[x-s*.5,y-s*.7],[x-s*.3,y-s*.6],[x,y]),curve([x,y],[x+s*.3,y-s*.6],[x+s*.5,y-s*.7],[x+s,y]),curve([x+s,y],[x+s*.48,y-s*.2],[x+s*.28,y+s*.35],[x,y+s*.15]),curve([x,y+s*.15],[x-s*.28,y+s*.35],[x-s*.48,y-s*.2],[x-s,y])),.78);
+const treeBranch=(a:P,b:P,c:P,d:P,weight=1.4)=>stroke(curve(a,b,c,d),.75,weight);
 export const decorativeArt={
+  flyingBirds:{name:"Birds in flight",motifs:[oval(.75,.28,.10,.20),...[[.22,.37,.065],[.37,.27,.045],[.51,.39,.07],[.65,.18,.034],[.80,.47,.052]].map(([x,y,s])=>bird(x,y,s)),rolling(.87,.045,1,.18)]},
+  gardenTree:{name:"Garden tree silhouette",motifs:[treeBranch([.50,.96],[.43,.70],[.55,.43],[.48,.16],3),...Array.from({length:7},(_,i)=>{const side=i%2?1:-1,y=.73-i*.077,x=.5+side*(.20+(i%3)*.045),end:P=[x,y-.16];return [treeBranch([.50,y],[.5+side*.07,y-.04],[x-side*.06,y-.12],end,1.8),leaf(end,[x+side*.045,y-.23],.04,.62),leaf([x-side*.04,y-.10],[x-side*.10,y-.21],.035,.45)]}).flat(),rolling(.96,.018,1,.22)]},
+  riverSunset:{name:"River and sunset landscape",motifs:[oval(.69,.30,.13,.61),fill([[0,1],[0,.57],[.19,.42],[.37,.60],[.51,.46],[.70,.63],[.89,.51],[1,.62],[1,1]],.22),fill([[0,1],[0,.74],[.20,.67],[.39,.72],[.51,.65],[.63,.72],[.8,.68],[1,.78],[1,1]],.45),...Array.from({length:5},(_,i)=>stroke([[.35-i*.035,.76+i*.036],[.62+i*.035,.76+i*.036]],.55,1.2)),bird(.33,.27,.045),bird(.43,.20,.034)]},
+  meadowBloom:{name:"Wildflower meadow stencil",motifs:[rolling(.92,.025,1,.20),...Array.from({length:6},(_,i)=>{const x=.10+i*.155,y=.47+(i%3)*.10;return [treeBranch([x,.96],[x-.03,.77],[x+.035,y+.12],[x,y],1.4),leaf([x,.82],[x-.065,.72],.025,.52),leaf([x,.73],[x+.065,.63],.025,.62),...blossom(x,y,.043)]}).flat()]},
+
  sunDisc:{name:"Sun and circle mural",motifs:[oval(.64,.38,.22,.72),rolling(.68,.10,1.5,.25),rolling(.81,.07,-.7,.62),arc(.64,.38,.255,-1.1,2.4,.55,1.15)]},
  orbit:{name:"Luxury orbit rings",motifs:[oval(.42,.48,.28,.10),oval(.60,.46,.225,.46,false,2.1),arc(.42,.48,.29,-2.4,2.4,.85,2),arc(.42,.48,.24,-.3,2.75,.48,1.1),oval(.70,.29,.065,.85)]},
  eclipse:{name:"Soft eclipse composition",motifs:[oval(.43,.46,.25,.22),oval(.58,.49,.235,.70),arc(.43,.46,.29,Math.PI*.6,Math.PI*1.85,.75,1.3),oval(.77,.18,.045,.55)]},

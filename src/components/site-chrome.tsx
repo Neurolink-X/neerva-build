@@ -5,7 +5,7 @@ import {ShopCartLink} from "@/components/shop-cart";
 import {footerGroups,footerPolicies} from "@/modules/navigation/footer-links";
 
 export function SiteHeader(){
- return <><div className="topline" aria-label="Delivery disclaimer"><span>Made for India’s builders</span><span>Availability checked at quotation · no automatic location selection</span></div>
+ return <><div className="topline" aria-label="Delivery disclaimer"><span>Made for India’s builders</span><span>Confirm delivery availability with your quotation</span></div>
  <header className="site-header"><Link className="brand" href="/" aria-label="NEERVA BUILD home"><span className="brand-mark">N</span><span>NEERVA <b>BUILD</b></span></Link>
   <nav className="desktop-nav" aria-label="Main navigation"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/design-studio">Plan my home</Link><Link href="/quotes" prefetch={false}>Get a quote</Link><Link href="/blog">Blog & guides</Link></nav>
   <MobileNavigation className="site-mobile-menu"><Link href="/materials">Materials</Link><Link href="/brands">Brands</Link><Link href="/design-studio">Plan my home</Link><Link href="/quotes" prefetch={false}>Prepare quote</Link><InstallLink recoveryLabel="App help">Install app</InstallLink><Link href="/account" prefetch={false}>Account</Link><Link href="/checkout?cart=1" prefetch={false}>Cart</Link><Link href="/basket?view=planner" prefetch={false}>Project material planner</Link><Link href="/my-project">My Project</Link><Link href="/account/orders" prefetch={false}>My Orders</Link><Link href="/build-iq">Academy</Link><Link href="/blog">Blog & guides</Link></MobileNavigation>

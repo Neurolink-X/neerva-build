@@ -1,6 +1,6 @@
 /** One matched, locally bundled AI illustration pair. Never activate just one image. */
 export const houseJourney={
- finished:{src:"/images/studio/journey-finished.webp",bytes:90956,sha256:"a98fff3f28d9aedc86eb3e73604d2c38049e03357a89000f422e208b55fea1a6"},
- shell:{src:"/images/studio/journey-shell.webp",bytes:116840,sha256:"9f10c25485d51a1beeb571404c0a44785af7d73e57b6dc66db8a4c384e1f4636"},
- width:1200,height:600
+ finished:{src:"/images/studio/journey-finished.webp",bytes:35098,sha256:"3c706308c2beaaef3560253deccdd4b3e37ba15e5d16f1119c0e90a88d8c2269"},
+ shell:{src:"/images/studio/journey-shell.webp",bytes:97174,sha256:"9cd326b9f40b27abac5bf301d7e7a8eae5850b6f55b290e878648ba48cbaa4c7"},
+ width:1200,height:400
 } as const;

@@ -193,7 +193,8 @@ function build(b:PlanBrief,variant:"parking-left"|"parking-right",recipe:Spatial
   stairs:{roomIds:rooms.filter(r=>r.kind==="stairs").map(r=>r.id),
    note:"Staircase is a conceptual volume, NOT a checked tread/rise/headroom or fire escape."},
   balcony:b.floors>1?{roomId:"balcony-1"}:null,
-  facade:{kit:"simple-parapet",massing:"box",main:variant==="parking-left"?"#e9e2d4":"#e7e6df",accent:"#8e755b"},
+  // Vary the finish kit by the actual front programme, not by a random ID.
+  facade:{kit:recipe.frontProgramme==="family-hall"?"stepped-band":recipe.frontProgramme==="family-lounge"?"cladding-band":recipe.reverseService?"jali-screen":"simple-parapet",massing:"box",main:variant==="parking-left"?"#e9e2d4":"#e7e6df",accent:"#8e755b"},
   score:0,notes:[
    ...(recipe.familyLabel?["Spatial programme: "+recipe.familyLabel+" · "+rearLabel+" · "+(recipe.frontProgramme==="family-hall"?"family hall":recipe.frontProgramme==="family-lounge"?"lounge / drawing":"dining")]:[]),
    ...(b.siteShape&&b.siteShape.kind!=="rectangle"?["L-plot rear corner omitted. Entire adjacent strip is kept unbuilt as a conservative construction envelope; a cadastral site survey and licensed architect must verify the actual boundary."]:[]),

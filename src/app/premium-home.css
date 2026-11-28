@@ -478,3 +478,6 @@
 /* Native slider uses a local CSS variable; gallery React tree is not re-rendered for each drag. */
 .nbh .nbh-compare-frame .nbh-construction-layer{clip-path:inset(0 calc(100% - var(--reveal,50%)) 0 0)}
 .nbh .nbh-compare-frame>span{left:var(--reveal,50%);pointer-events:none}
+
+/* Exact local image ratio; neither comparison stage is cropped. */
+.nbh .nbh-compare-frame{aspect-ratio:3/1}.nbh .nbh-compare-frame img{object-fit:contain}
