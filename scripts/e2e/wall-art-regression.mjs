@@ -63,6 +63,7 @@ export async function verifyWallArtwork(page){
       await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")!=="loading");
       if(await card.locator(".paint-texture-swatch").count())assert.equal(await canvas.getAttribute("data-wall-texture"),"ready");
       const pixels=await canvas.evaluate(c=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(c.toDataURL())))));
+      if(group==="Geometry"){const opacity=page.getByLabel(/Design intensity/);const previous=await opacity.inputValue();await opacity.fill("0.65");await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,pixels);const edited=await canvas.evaluate(c=>c.toDataURL());await card.click();assert.equal(await opacity.inputValue(),"0.65");assert.equal(await canvas.evaluate(c=>c.toDataURL()),edited);await opacity.fill(previous);await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()===old,pixels);}
       const digest=createHash("sha256").update(pixels).digest("hex");
       assert.notEqual(pixels,baseline.digest,name+" must visibly change the wall");
       assert.deepEqual(await canvas.evaluate(c=>[...c.getContext("2d").getImageData(Math.floor(c.width*.5),Math.floor(c.height*.72),1,1).data]),baseline.protected,name+" must preserve the protected sofa");
