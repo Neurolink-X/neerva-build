@@ -1,5 +1,6 @@
 import type {MaskCorner} from "./mask-editor.ts";
 import type {PaintStyle,PhotoMask} from "./facade-paint.ts";
+import {isExteriorPattern} from "./exterior-wall-art.ts";
 export type InteriorWall=Omit<PaintStyle,"opacity">&{opacity?:number;points:MaskCorner[];mask?:PhotoMask};
 /** Commit the active wall before moving selection. Never duplicate an edited wall. */
 export function commitInteriorWall(walls:readonly InteriorWall[],editing:number|null,wall:InteriorWall|null):InteriorWall[]{
@@ -23,3 +24,8 @@ export function wallContainsPoint(points:readonly MaskCorner[],p:MaskCorner){
 
 /** A saved exclusion mask belongs to its original four corners, never a changed selection. */
 export function matchingWallCorners(a:readonly MaskCorner[],b:readonly MaskCorner[]){return a.length===4&&b.length===4&&a.every((p,i)=>p.x===b[i].x&&p.y===b[i].y);}
+
+/** One committed scene snapshot for rendering, export, selection and context switches. */
+export function snapshotWalls(walls:readonly InteriorWall[],editing:number|null,active:InteriorWall|null,all:{colour:string;initial:string}|null){return all?repaintInteriorWalls(walls,all.colour,all.initial):commitInteriorWall(walls,editing,active);}
+export function compatibleWallPattern(pattern:InteriorWall["pattern"],outside:boolean):InteriorWall["pattern"]{return pattern==="plain"||isExteriorPattern(pattern)===outside?pattern:"plain";}
+export function changeWallContext(walls:readonly InteriorWall[],outside:boolean):InteriorWall[]{return walls.map(w=>({...w,pattern:compatibleWallPattern(w.pattern,outside)}));}
