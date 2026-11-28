@@ -20,3 +20,6 @@ export function wallDetailCorners(points:readonly MaskCorner[],width:number,heig
 export function wallContainsPoint(points:readonly MaskCorner[],p:MaskCorner){
  let inside=false;for(let i=0,j=points.length-1;i<points.length;j=i++){const a=points[i],b=points[j];if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)inside=!inside;}return inside;
 }
+
+/** A saved exclusion mask belongs to its original four corners, never a changed selection. */
+export function matchingWallCorners(a:readonly MaskCorner[],b:readonly MaskCorner[]){return a.length===4&&b.length===4&&a.every((p,i)=>p.x===b[i].x&&p.y===b[i].y);}

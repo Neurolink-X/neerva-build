@@ -5,6 +5,12 @@ import {createHash} from "node:crypto";
 
 export async function verifyWallArtwork(page){
  const canvas=page.locator(".nbd-photo .paint-canvas-frame[aria-busy=false] canvas");
+    // Existing local daylight asset is selectable without assigning an unverified mask.
+    await page.getByRole("button",{name:"Sample room",exact:true}).click();
+    await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("daylight");
+    await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="daylight");
+    assert.equal(await page.getByRole("button",{name:"Save colour preview",exact:true}).isDisabled(),true);
+    await page.getByRole("combobox",{name:"Room sample",exact:true}).selectOption("feature");
     // Actual full-wall sample, not only the small selection fixture. Record
     // all visible designs' rendered pixels and representative screenshots.
     await page.getByRole("button",{name:"Sample room",exact:true}).click();

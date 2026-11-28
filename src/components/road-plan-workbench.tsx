@@ -219,7 +219,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
        {plan.parking&&<span><strong>{metrics.parkingSqFt.toFixed(0)} ft²</strong><small>Car bay rectangle</small></span>}
        <span><strong>{metrics.netPaintSqM.toFixed(1)} m²</strong><small>Room-facing painted area</small></span>
        <span><strong>{metrics.paintLitres} L</strong><small>Illustrative 2 coats, 10 m²/L</small></span></div>
-      <p className="nroad-small">{metrics.note}</p></details>}
+      <p className="nroad-small">{metrics.note}</p><Link href="/basket" className="nroad-secondary-link">{str("Open material list →","सामग्री सूची खोलें →")}</Link></details>}
      <InteriorFitPanel plan={plan} floor={floor}/>
      {scheme&&<PlanFinishStudio key={plan.id+":"+floor} source={{kind:"residential",plan}} floor={floor} scheme={scheme} onChange={next=>{setFinishHistory(h=>rememberFinish(h,finishKey,next));setSaveInfo("")}} showExterior={false}/>}
      <StudioProjectExchange key={plan.id} source={{kind:"residential",plan}} scheme={scheme??undefined}/>
