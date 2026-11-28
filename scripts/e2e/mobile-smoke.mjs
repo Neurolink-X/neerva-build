@@ -307,14 +307,15 @@ async function main(){
     if(v.w<=430&&v.h>560){
      await verifyInvalidPhotoUpload(page);
      await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-     await page.getByRole("button",{name:"Signature",exact:true}).click();
-     const pattern=page.getByRole("button",{name:"Sun and circle mural",exact:true});
+     await page.getByRole("button",{name:"Modern",exact:true}).click();
+     assert.equal(await page.getByRole("button",{name:"3D effects",exact:true}).count(),0);
+     const pattern=page.getByRole("button",{name:"Vertical accent pier",exact:true});
      await pattern.evaluate(e=>e.scrollIntoView({block:"end",behavior:"instant"}));
      await pattern.click();
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
      await pattern.locator("svg polyline").first().waitFor({state:"attached"});assert.ok(await pattern.locator("svg polyline").count()>1,"painting swatch has actual procedural motif geometry");
      const intensity=page.getByLabel(/Design intensity/);await intensity.fill("0.45");assert.ok(Number(await pattern.locator("svg g").getAttribute("opacity"))<=.45,"painting swatch intensity follows the wall control");await intensity.press("End");assert.equal(await intensity.inputValue(),"1","keyboard reaches maximum intensity");await intensity.press("ArrowLeft");assert.equal(await intensity.inputValue(),"0.95","keyboard follows the declared step");
-     await page.getByRole("button",{name:"Geometry",exact:true}).click();const geo=page.getByRole("button",{name:"Chevron herringbone",exact:true});await geo.click();assert.equal(await geo.getAttribute("aria-pressed"),"true");
+     await page.getByRole("button",{name:"Geometry",exact:true}).click();const geo=page.getByRole("button",{name:"Horizontal elevation bands",exact:true});await geo.click();assert.equal(await geo.getAttribute("aria-pressed"),"true");
      const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
      assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");
     }
@@ -1234,9 +1235,9 @@ async function main(){
     fs.writeFileSync("test-results/mobile/facade-pixel-evidence.json",JSON.stringify({scope:"390px Chromium canvas sample points; elapsed includes browser automation and is not field INP",samples:evidence},null,2));
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
     await page.getByRole("button",{name:"Classic",exact:true}).click();
-    const patternButton=page.getByRole("button",{name:"Diamond lattice",exact:true});
+    const patternButton=page.getByRole("button",{name:"Sandstone-toned bands",exact:true});
     await patternButton.evaluate(el=>el.scrollIntoView({block:"end",behavior:"instant"}));
-    await page.waitForFunction(()=>{const b=[...document.querySelectorAll(".wall-pattern-options button")].find(e=>e.textContent?.trim()==="Diamond lattice");if(!b)return false;const r=b.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;return y>0&&y<innerHeight&&b.contains(document.elementFromPoint(x,y));});
+    await page.waitForFunction(()=>{const b=[...document.querySelectorAll(".wall-pattern-options button")].find(e=>e.textContent?.trim()==="Sandstone-toned bands");if(!b)return false;const r=b.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;return y>0&&y<innerHeight&&b.contains(document.elementFromPoint(x,y));});
     const stableScroll=await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(window.scrollY)))));
     const hit=await patternButton.boundingBox();assert.ok(hit);
     await page.mouse.click(hit.x+hit.width/2,hit.y+hit.height/2);
