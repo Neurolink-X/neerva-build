@@ -241,11 +241,11 @@ function crossGalleryConcepts(b:BuildingBrief,limit:number):{plans:BuildingConce
 /** Versioned internal programme: keep the exact brief and select only
  * candidates whose room and service reservations pass geometric access checks.
  * Never change the saved legacy recipes or pretend to engineer the core. */
-function internalConcepts(b:BuildingBrief,limit:number){
+function internalConcepts(b:BuildingBrief,limit:number,legacy=false){
  const max=Number.isFinite(limit)?Math.max(0,Math.min(24,Math.floor(limit))):24,plans:BuildingConcept[]=[],seen=new Set<string>();
  const candidates=generateBuildingConcepts(b,24,"purpose-led").plans;
  // Try each internal variant across the same envelope before changing it.
- for(const base of candidates)for(const variant of (b.purpose==="rental"?[2,0,3]:[2,0,3,1])){
+ for(const base of candidates)for(const variant of (b.purpose==="rental"?[2,0,3]:legacy?[2,0]:[2,0,3,1])){
   const p:BuildingConcept={...base,id:base.id+"-internal-v1-"+variant,layout:b.purpose==="rental"?["Private passage","Rear living / entry","Living-first family flat","Living-first · exterior kitchen"][variant]:["Independent service rooms","Asymmetric service rooms","Shared service passage","Wide service passage"][variant]};
   if(validateBuildingConcept(p).length)continue;
   const internal=commercialInternalSpaces(p).map(r=>[r.floor,r.kind,fmt(r.x),fmt(r.y),fmt(r.w),fmt(r.d)]).sort();
@@ -253,4 +253,12 @@ function internalConcepts(b:BuildingBrief,limit:number){
   seen.add(p.signature);if(plans.length<max)plans.push(p);if(plans.length>=max)return {plans,blockers:[]};
  }
  return {plans,blockers:plans.length?[]:["No detailed room and service-core layout fits this exact request. Try a different layout family or review the dimensions with an architect."]};
+}
+
+/** Restore old snapshots by exact signature, even if newer programmes replace
+ * a prior option in the bounded default comparison. */
+export function commercialPortfolioForId(b:BuildingBrief,id:string){
+ const family=buildingLayoutFamily(id),current=generateBuildingConcepts(b,24,family);
+ if(family!=="internal"||current.plans.some(p=>p.id===id))return current;
+ return internalConcepts(b,24,true);
 }

@@ -119,4 +119,10 @@ export function groupForPattern(pattern:Pattern):PatternGroup{return (Object.key
 export function isRetiredPattern(pattern:Pattern){return (retiredPatterns as readonly Pattern[]).includes(pattern);}
 
 // Upgrade visible artwork without duplicating assets or changing saved legacy IDs.
-export const displayMotifs=Object.fromEntries(patternKeys.map(k=>[k,(Object.hasOwn(premiumArt,k)||isRetiredPattern(k)||k==="plain")?finishes[k].motifs:enrichArtwork(k,finishes[k].motifs)])) as Record<Pattern,Motif[]>;
+const motifCache=new Map<Pattern,Motif[]>();
+export function artworkMotifs(key:Pattern):Motif[]{
+ const cached=motifCache.get(key);if(cached)return cached;
+ const motifs=(Object.hasOwn(premiumArt,key)||isRetiredPattern(key)||key==="plain")?finishes[key].motifs:enrichArtwork(key,finishes[key].motifs);
+ if(motifCache.size>=16){const first=motifCache.keys().next().value;if(first!==undefined)motifCache.delete(first);}
+ motifCache.set(key,motifs);return motifs;
+}

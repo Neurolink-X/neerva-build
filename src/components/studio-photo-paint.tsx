@@ -2,7 +2,7 @@
 import {useCallback,useEffect,useLayoutEffect,useRef,useState,type ChangeEvent,type PointerEvent as ReactPointerEvent,type ReactNode} from "react";
 import {addCorner,emptyMaskHistory,redoCorner,undoCorner,validWallMask,type MaskCorner} from "@/modules/studio/mask-editor";
 import {encodedPhotoDimensions,photoDimensionsAllowed,paintPreviewDimensions} from "@/modules/studio/photo-budget";
-import {finishes,displayMotifs,patternGroups,groupForPattern,isRetiredPattern,type PatternGroup,type Pattern} from "@/modules/studio/wall-patterns";
+import {finishes,artworkMotifs,patternGroups,groupForPattern,isRetiredPattern,type PatternGroup,type Pattern} from "@/modules/studio/wall-patterns";
 import NextImage from "next/image";
 import {artworkShade,motifTone} from "@/modules/studio/premium-wall-art";
 import {houseJourneyImageUrl} from "@/modules/studio/house-journey";
@@ -52,7 +52,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
    const left=Math.min(...corners.map(p=>p.x)),top=Math.min(...corners.map(p=>p.y)),right=Math.max(...corners.map(p=>p.x)),bottom=Math.max(...corners.map(p=>p.y));
    brush.save();brush.beginPath();corners.forEach((p,i)=>i?brush.lineTo(p.x,p.y):brush.moveTo(p.x,p.y));brush.closePath();brush.clip();
    brush.globalAlpha=wall.opacity??.78;brush.drawImage(tile,left,top,right-left,bottom-top);brush.restore();
-  }else{  for(const motif of displayMotifs[wall.pattern]){
+  }else{  for(const motif of artworkMotifs(wall.pattern)){
    brush.globalAlpha=(wall.opacity??.78)*(motif.alpha??1);brush.lineWidth=weight*(motif.weight??1);brush.beginPath();
    motif.points.forEach(([u,v],i)=>{const p=at(u,v);if(i===0)brush.moveTo(p.x,p.y);else brush.lineTo(p.x,p.y)});
    if(motif.filled){brush.closePath();brush.fill()}else brush.stroke();
@@ -63,7 +63,7 @@ function drawWall(ctx:CanvasRenderingContext2D,wall:Wall,w:number,h:number,tinte
   if(layer&&patternSurface){ctx.globalCompositeOperation="source-over";ctx.globalAlpha=1;ctx.drawImage(patternSurface,0,0,w,h);}
   // A second clipped pass restores directional light/dark pigment values.
   // Screen/multiply preserve the source photo's luminance and existing masking.
-  if(!tile){ctx.lineCap="round";ctx.lineJoin="round";for(const motif of displayMotifs[wall.pattern]){
+  if(!tile){ctx.lineCap="round";ctx.lineJoin="round";for(const motif of artworkMotifs(wall.pattern)){
    const tone=motifTone(motif);if(!tone)continue;
    ctx.globalCompositeOperation=tone<0?"multiply":"screen";
    ctx.strokeStyle=ctx.fillStyle=tone<0?"#000000":"#ffffff";
@@ -271,7 +271,7 @@ export function StudioPhotoPaint({colour,onColourChange,colourControls}:{colour:
   </div><div className="paint-live-tools">{colourControls}  {mode==="design"&&<><details className="paint-more"><summary>Curated colour combinations</summary><div className="paint-pairings">{colourPairings.map(pair=><button key={pair.id} type="button" aria-pressed={base===pair.base&&accent===pair.accent} onClick={()=>{if(onColourChange){onColourChange(pair.base);setOverride(null)}else setOverride({source:colour,value:pair.base});setAccent(pair.accent);setShowOriginal(false)}}><span aria-hidden="true"><i style={{background:pair.base}}/><i style={{background:pair.accent}}/></span>{pair.label}</button>)}</div><small>Digital base and pattern colours, not physical shade samples.</small></details><h3 className="paint-pattern-title">Wall Design Collections</h3><p className="paint-design-hint">Choose a collection, then a design.</p><div className="paint-pattern-groups" role="group" aria-label="Design collections">{(Object.keys(patternGroups) as PatternGroup[]).map(group=><button type="button" key={group} aria-pressed={patternGroup===group} onClick={()=>setPatternGroup(group)}>{group}</button>)}</div><div className="paint-collection-intro"><strong>{collectionGuide[patternGroup].title}</strong><p>{collectionGuide[patternGroup].description}</p></div><p className="paint-pattern-current" role="status">Applied: {finishes[pattern].name}{isRetiredPattern(pattern)?" · previous design preserved":""}</p><div className="wall-pattern-options" role="group" aria-label="Wall design samples">
    {([...(patternGroups[patternGroup] as readonly Pattern[]),...(isRetiredPattern(pattern)&&patternGroup===groupForPattern(pattern)?[pattern]:[])]).map(key=><button type="button" key={key} aria-pressed={pattern===key} onClick={()=>{setPattern(key);setShowOriginal(false)}}>
     {isSurfaceProfile(key)?<StudioSurfaceSwatch profile={key} base={base} accent={accent} intensity={opacity}/>:<svg viewBox="0 0 150 100" aria-hidden="true" style={{background:base}}>
-     {displayMotifs[key].map((motif,i)=><polyline key={i} points={motif.points.map(([x,y])=>[x*150,y*100].join(",")).join(" ")} fill={motif.filled?artworkShade(accent,motifTone(motif)):"none"} stroke={motif.filled?"none":artworkShade(accent,motifTone(motif))} opacity={(motif.alpha??1)*opacity} strokeWidth={.9*(motif.weight??1)} strokeLinecap="round" strokeLinejoin="round"/>)}
+     {artworkMotifs(key).map((motif,i)=><polyline key={i} points={motif.points.map(([x,y])=>[x*150,y*100].join(",")).join(" ")} fill={motif.filled?artworkShade(accent,motifTone(motif)):"none"} stroke={motif.filled?"none":artworkShade(accent,motifTone(motif))} opacity={(motif.alpha??1)*opacity} strokeWidth={.9*(motif.weight??1)} strokeLinecap="round" strokeLinejoin="round"/>)}
     </svg>}<span>{finishes[key].name}</span>
    </button>)}
   </div><p className="paint-collection-tip">{collectionGuide[patternGroup].tip}</p><label>Pattern colour <input type="color" value={accent} onChange={e=>{setAccent(e.target.value);setShowOriginal(false)}}/></label><label>Design intensity · {Math.round(opacity*100)}% <input type="range" min=".2" max="1" step=".05" value={opacity} onChange={e=>{setOpacity(Number(e.target.value));setShowOriginal(false)}}/></label>

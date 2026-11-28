@@ -73,7 +73,24 @@ export const premiumArt={
  archGallery:entry("Architectural arch gallery",panel(7))
 } satisfies Record<string,{name:string;motifs:Motif[]}>;
 /** Replace sparse artwork with dense layered originals, keeping legacy selection IDs. */
+function detailedScene(id:string):Motif[]|null{
+ if(id==="oceanCliffs"){
+  const coast=(side:number)=>seq(8,i=>{const x=side===0?0:1,dir=side===0?1:-1,reach=.12+i*.023;
+   return fill([[x,1],[x,.22+i*.035],[x+dir*reach,.31+i*.032],[x+dir*(reach+.035),.52+i*.025],[x+dir*(reach+.09),1]],.9,.55-i*.13);});
+  return [oval(.58,.21,.085,.12,.74,.6),...coast(0),...coast(1),...seq(13,i=>ribbon(.24,.48+i*.037,.52,.065,i*.29,.55,.30-i*.045)),...seq(16,i=>stroke([[.3+i*.022,.86],[.34+i*.022,.88]],.5,.6,.6))];
+ }
+ if(id==="citySilhouette"){
+  return [oval(.73,.22,.09,.13,.75,.5),...seq(15,i=>{const x=.025+i*.064,w=.048+(i%3)*.004,y=.25+((i*7)%9)*.045;
+   return [rect(x,y,w,1-y,.88,-.25+(i%4)*.14),rect(x+w*.74,y,w*.26,1-y,.8,-.55),...seq(6,j=>rect(x+.008,y+.025+j*(.84-y)/6,w*.45,.012,.72,j%2?.5:.2))];}).flat(),...seq(3,i=>ribbon(0,.85+i*.035,1,.05,i,.8,.34))];
+ }
+ if(id==="aurora")return [...seq(9,i=>ribbon(-.06,.12+i*.085,1.12,.27,i*.22,.78,.52-i*.115)),...seq(18,i=>oval(.08+(i*17%83)/100,.05+(i*13%71)/100,.003,.0045,.66,.55))];
+ if(id==="waterflow")return [...seq(10,i=>ribbon(-.06,.34+i*.065,1.12,.23,1.8-i*.20,.82,.56-i*.10)),...seq(20,i=>stroke([[.1+i*.042,.82],[.13+i*.042,.84]],.5,.65,.55))];
+ if(id==="lotusPond")return [...seq(10,i=>ribbon(-.04,.40+i*.06,1.08,.11,i*.43,.72,.33-i*.065)),...seq(5,i=>{const x=.14+i*.18,y=.65+(i%2)*.19;return [oval(x,y+.075,.085,.045,.86,-.38),...blossom(x,y,.048+(i%2)*.012,9)];}).flat()];
+ if(id==="bamboo")return seq(5,i=>{const x=.08+i*.205,dx=i%2?.035:-.025;return [stroke([[x,.98],[x+dx,.03]],.93,3,-.4),...seq(6,j=>{const y=.14+j*.135,p:P=[x+dx*(1-y),y],side=j%2?1:-1;return [stroke([[p[0]-.018,y],[p[0]+.018,y]],.9,1.1,.55),...seq(3,k=>petal(p,[p[0]+side*(.08+k*.025),y-.08+k*.04],.014,k%2?.37:-.18))];}).flat()];}).flat();
+ return null;
+}
 export function enrichArtwork(id:string,motifs:Motif[]):Motif[]{
+ const original=detailedScene(id);if(original)return original;
  const seed=Array.from(id).reduce((s,c)=>s+c.charCodeAt(0),0);
  if(["riverSunset","mountain","oceanCliffs","desertDunes","mural","waterflow","forest","citySilhouette","flyingBirds","lotusPond"].includes(id))return [...landscape(seed),...(id==="forest"?branch(.15,.95,.18,-.69,seed):id==="lotusPond"?[...blossom(.25,.81,.07,8),...blossom(.75,.84,.06,8)]:motifs.map(m=>({...m,alpha:(m.alpha??1)*.55,tone:.2})))];
  if(["gardenTree","meadowBloom","abstractLeaves","floralScroll","bamboo","botanical","fernStencil","blossomBranch"].includes(id))return [...seq(3,i=>branch(.14+i*.30,.98,(i%2?-.05:.12),-.78+(i%3)*.10,seed+i)).flat(),...motifs.map(m=>({...m,alpha:(m.alpha??1)*.48,tone:.26}))];
