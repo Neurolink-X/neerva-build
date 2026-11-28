@@ -73,7 +73,7 @@ function externalSide(room:Room,plot:PlanModel["plot"],sb:PlanModel["setbacks"])
 }
 export function validatePlan(p:PlanModel):string[]{
  const errors:string[]=[];
- if(p.version!==1||!["N","E","S","W"].includes(p.plot.roadSide))errors.push("Invalid plan version or road side");
+ if(p.version!==1||!Number.isInteger(p.floors)||p.floors<1||p.floors>3||!["N","E","S","W"].includes(p.plot.roadSide))errors.push("Invalid plan version or road side");
  const {widthFt:w,depthFt:d}=p.plot,sb=p.setbacks;
  if(![w,d,sb.frontFt,sb.rearFt,sb.leftFt,sb.rightFt,p.walls.externalFt,p.walls.internalFt,p.walls.heightFt].every(Number.isFinite)||
   w<10||d<15||Object.values(sb).some(x=>typeof x==="number"&&x<0)||p.walls.externalFt<=0||p.walls.internalFt<=0)errors.push("Invalid plot, setbacks or wall thickness");
@@ -83,7 +83,7 @@ export function validatePlan(p:PlanModel):string[]{
  const ids=new Set<string>();
  for(const r of p.rooms){
   if(ids.has(r.id))errors.push("Duplicate room id "+r.id);ids.add(r.id);
-  if(![r.x,r.y,r.w,r.d].every(Number.isFinite)||r.w<=0||r.d<=0||r.floor<0||r.floor>=p.floors||
+  if(![r.x,r.y,r.w,r.d].every(Number.isFinite)||r.w<=0||r.d<=0||!Number.isInteger(r.floor)||r.floor<0||r.floor>=p.floors||
     r.x<U.x-EPS||r.y<U.y-EPS||r.x+r.w>U.x+U.w+EPS||r.y+r.d>U.y+U.d+EPS||
     !rectInsideShape(r,w,d,shape))errors.push("Room outside usable plot "+r.id);
   const clear=Math.min(r.w,r.d);
@@ -91,6 +91,8 @@ export function validatePlan(p:PlanModel):string[]{
   if(r.kind==="living"&&(area(r)<95||clear<8))errors.push("Living below advisory space minimum "+r.id);
   if(r.kind==="kitchen"&&(area(r)<48||clear<6))errors.push("Kitchen below advisory space minimum "+r.id);
   if(r.kind==="parking"&&(r.w<8||r.d<16||!near(r.y,U.y)))errors.push("Parking lacks 8 × 16 ft road-side clearance "+r.id);
+  if(r.kind==="bath"&&(area(r)<20-EPS||clear<3-EPS))errors.push("Bathroom below 20 sq ft / 3 ft advisory size "+r.id);
+  if(r.kind==="corridor"&&clear<3-EPS)errors.push("Corridor below 3 ft modeled width "+r.id);
   if(r.kind==="stairs"&&clear<3.25)errors.push("Stair bay below 3.25 ft advisory width "+r.id);
   if(["living","bedroom","kitchen","dining","lounge"].includes(r.kind)&&clear>0&&Math.max(r.w,r.d)/clear>2.5)
    errors.push("Unusable long/narrow habitable room aspect "+r.id);
@@ -100,7 +102,7 @@ export function validatePlan(p:PlanModel):string[]{
  const byId=new Map(p.rooms.map(r=>[r.id,r]));
  for(const o of p.openings){
   const r=byId.get(o.roomId),len=r?(o.side==="front"||o.side==="rear"?r.w:r.d):0;
-  if(!r||o.atFt<0||o.widthFt<=0||o.atFt+o.widthFt>len+EPS||o.sillFt<0||o.heightFt<=0||
+  if(!r||![o.atFt,o.widthFt,o.sillFt,o.heightFt].every(Number.isFinite)||o.atFt<0||o.widthFt<=0||o.atFt+o.widthFt>len+EPS||o.sillFt<0||o.heightFt<=0||
      o.sillFt+o.heightFt>p.walls.heightFt+EPS)errors.push("Invalid door/window "+o.id);
   if(o.kind==="door"&&o.widthFt<2.5)errors.push("Narrow access opening "+o.id);
   if(o.connectsTo&&(!byId.has(o.connectsTo)||byId.get(o.connectsTo)?.floor!==r?.floor))errors.push("Invalid room connection "+o.id);
@@ -122,15 +124,18 @@ export function validatePlan(p:PlanModel):string[]{
  const ground=p.rooms.filter(r=>r.floor===0);
  const verandah=ground.find(r=>r.kind==="verandah");
  if(!verandah||!near(verandah.y,U.y))errors.push("Verandah not on road-facing front edge");
- if(p.gate.side!=="front"||p.gate.xFt<0||p.gate.xFt+p.gate.widthFt>w+EPS)errors.push("Road-side car gate missing or invalid");
- if(p.pedestrianGate.side!=="front"||p.pedestrianGate.xFt<0||p.pedestrianGate.widthFt<2.5||
+ if(p.gate.side!=="front"||![p.gate.xFt,p.gate.widthFt].every(Number.isFinite)||p.gate.widthFt<0||p.gate.xFt<0||p.gate.xFt+p.gate.widthFt>w+EPS)errors.push("Road-side car gate missing or invalid");
+ if(p.pedestrianGate.side!=="front"||![p.pedestrianGate.xFt,p.pedestrianGate.widthFt].every(Number.isFinite)||p.pedestrianGate.xFt<0||p.pedestrianGate.widthFt<2.5||
     p.pedestrianGate.xFt+p.pedestrianGate.widthFt>w+EPS)errors.push("Road-side pedestrian gate missing or invalid");
  if(verandah&&(p.pedestrianGate.xFt<verandah.x-EPS||p.pedestrianGate.xFt+p.pedestrianGate.widthFt>verandah.x+verandah.w+EPS))
   errors.push("Pedestrian gate must connect directly to front verandah");
  if(Math.max(p.gate.xFt,p.pedestrianGate.xFt)<Math.min(p.gate.xFt+p.gate.widthFt,p.pedestrianGate.xFt+p.pedestrianGate.widthFt)-EPS)
   errors.push("Car and pedestrian gates overlap");
- if(p.parking){const park=byId.get(p.parking.roomId);if(!park||park.kind!=="parking"||park.floor!==0||!near(park.y,U.y)||p.parking.clearWidthFt<8||p.parking.clearDepthFt<16)errors.push("Road parking invalid");}
- if((p.stairs.roomIds.length!==p.floors && !(p.floors===1&&!p.parking&&p.stairs.roomIds.length===0))||p.stairs.roomIds.some(id=>byId.get(id)?.kind!=="stairs"))errors.push("Stair circulation missing floor");
+ if(p.parking){const park=byId.get(p.parking.roomId);if(!park||park.kind!=="parking"||park.floor!==0||!near(park.y,U.y)||![p.parking.clearWidthFt,p.parking.clearDepthFt].every(Number.isFinite)||p.parking.clearWidthFt<8||p.parking.clearDepthFt<16||p.parking.clearWidthFt>park.w+EPS||p.parking.clearDepthFt>park.d+EPS||p.gate.widthFt<8-EPS||p.gate.xFt<park.x-EPS||p.gate.xFt+p.gate.widthFt>park.x+park.w+EPS)errors.push("Road parking or straight gate alignment invalid");
+  if(park&&park.y>EPS){const approach={x:p.gate.xFt,y:0,w:p.gate.widthFt,d:park.y};if(!rectInsideShape(approach,w,d,shape)||ground.some(r=>r.id!==park.id&&overlapArea(r,approach)>EPS))errors.push("Parking approach obstructed or outside site");}
+ }else if(p.gate.widthFt!==0||ground.some(r=>r.kind==="parking"))errors.push("Unexpected car parking in pedestrian plan");
+ const stairIds=p.stairs.roomIds,stairRooms=p.rooms.filter(r=>r.kind==="stairs");
+ if((stairIds.length!==p.floors&&!(p.floors===1&&!p.parking&&stairIds.length===0))||new Set(stairIds).size!==stairIds.length||stairRooms.length!==stairIds.length||stairIds.some((id,floor)=>byId.get(id)?.kind!=="stairs"||byId.get(id)?.floor!==floor))errors.push("Stair circulation missing floor or incorrect floor sequence");
  // Connectivity graph uses actual reciprocal door coordinates; mere wall-touching is insufficient.
  const links=new Map<string,Set<string>>();
  for(const r of p.rooms)links.set(r.id,new Set());
@@ -152,7 +157,7 @@ export function validatePlan(p:PlanModel):string[]{
  for(let i=1;i<p.stairs.roomIds.length;i++){
   const a=byId.get(p.stairs.roomIds[i-1]),b=byId.get(p.stairs.roomIds[i]);
   if(!a||!b||!near(a.x,b.x)||!near(a.y,b.y)||!near(a.w,b.w)||!near(a.d,b.d))errors.push("Stair shafts do not align");
-  if(a&&b){links.get(a.id)?.add(b.id);links.get(b.id)?.add(a.id)}
+  if(a&&b&&a.kind==="stairs"&&b.kind==="stairs"&&a.floor===i-1&&b.floor===i&&near(a.x,b.x)&&near(a.y,b.y)&&near(a.w,b.w)&&near(a.d,b.d)){links.get(a.id)?.add(b.id);links.get(b.id)?.add(a.id)}
  }
  if(verandah){
   const seen=new Set([verandah.id]),queue=[verandah.id];
@@ -207,4 +212,23 @@ export async function planGeometryDigest(p:PlanModel):Promise<string>{
   [p.gate.xFt,p.gate.widthFt,p.pedestrianGate.xFt,p.pedestrianGate.widthFt],p.stairs.roomIds,p.parking?.roomId??null,p.balcony?.roomId??null]);
  const bytes=await globalThis.crypto.subtle.digest("SHA-256",new TextEncoder().encode(canonical));
  return Array.from(new Uint8Array(bytes),x=>x.toString(16).padStart(2,"0")).join("");
+}
+
+/** Geometric screening only. A boundary window does not establish a legal
+ * daylight opening; road width, adjacent buildings, ventilation rates and
+ * vehicle swept paths are not supplied by the brief. */
+export function planSiteReview(p:PlanModel){
+ const shape=p.plot.siteShape??{kind:"rectangle"} as const;
+ const byId=new Map(p.rooms.map(r=>[r.id,r]));
+ const exposed=(o:Opening)=>{
+  const r=byId.get(o.roomId);if(!r||o.kind!=="window"||!externalSide(r,p.plot,p.setbacks).includes(o.side))return false;
+  if(o.side==="front")return true;
+  const x=r.x+o.atFt,y=r.y+o.atFt,t=3;
+  const strip:Rect=o.side==="rear"?{x,y:r.y+r.d,w:o.widthFt,d:t}:o.side==="left"?{x:r.x-t,y,w:t,d:o.widthFt}:{x:r.x+r.w,y,w:t,d:o.widthFt};
+  return rectInsideShape(strip,p.plot.widthFt,p.plot.depthFt,shape)&&!p.rooms.some(q=>q.floor===r.floor&&q.id!==r.id&&overlapArea(q,strip)>EPS);
+ };
+ const habitable=p.rooms.filter(r=>["bedroom","living","kitchen","dining","lounge"].includes(r.kind));
+ const ventilationReview=habitable.filter(r=>!p.openings.some(o=>o.roomId===r.id&&exposed(o))).map(r=>r.label+" · level "+(r.floor+1));
+ const bathroomExhaust=p.rooms.filter(r=>r.kind==="bath"&&!p.openings.some(o=>o.roomId===r.id&&exposed(o))).length;
+ return {habitableCount:habitable.length,ventilationReview,bathroomExhaust,parking:p.parking?"Straight bay and gate checked; road width, vehicle turning and door-opening clearance need site review.":"No car bay requested.",ventilationNote:"Road-facing openings or a modeled 3 ft on-site open strip are screened; this does not establish legal daylight, airflow or neighboring building clearance."};
 }

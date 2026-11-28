@@ -30,3 +30,9 @@ This is an implementation checklist, not a certificate of design quality or stat
 ## All-input coverage expansion
 - Wide/high-BHK plans now include a second actual circulation architecture: vertically aligned street-side stair, independent pedestrian entrance and rear bedroom allocation, passed through the same validators and geometry/mesh deduplication. Earlier wide plan identities remain available through the legacy resolver.
 - Added a 72-brief deterministic input matrix across 18 scenarios and all four road directions, including custom dimensions, 1–6 BHK, 1–3 levels, parking on/off, setbacks and L-plot orientations. It records validated counts, programme groups, facade groups and feasible/blocked cases. This is representative coverage, not proof for every continuous dimension or municipal compliance.
+
+## Strict geometry and site screening follow-up
+- Enforce modeled bathroom area (20 sq ft), bathroom/corridor widths (3 ft), finite gate/opening values, strict one-stair-per-level sequence and straight car-bay/gate alignment. Commercial parking, toilet and corridor reserves also checked. These are advisory concept geometry constraints, not finished clear widths or statutory standards.
+- Compact street-service alternative, new pedestrian court architecture and wider street-bedroom allocation; all candidates pass common geometry checks and preserve legacy IDs where previously feasible.
+- Review on-site ventilation exposure and bathroom exhaust explicitly; do not claim compliance or vehicle swept-path without road width, vehicle dimensions, neighboring buildings and survey inputs.
+- Commercial interior lighting and actual-aperture glazing frames improve rendered detail. Photorealistic visual acceptance remains subject to browser screenshot review.

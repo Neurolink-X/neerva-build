@@ -72,6 +72,9 @@ export function validateBuildingConcept(c:BuildingConcept):string[]{
   if(ids.has(z.id))e.push("Duplicate zone ID");ids.add(z.id);
   if(![z.x,z.y,z.w,z.d].every(finite)||z.w<=0||z.d<=0||z.x<-EPS||z.y<-EPS||z.x+z.w>b.widthFt+EPS||z.y+z.d>b.depthFt+EPS||!Number.isInteger(z.floor)||z.floor<0||z.floor>=b.floors)e.push("Zone outside plot: "+z.id);
   if(z.kind!=="open"&&z.kind!=="parking"&&(z.x<b.sideFt-EPS||z.x+z.w>b.widthFt-b.sideFt+EPS||z.y<b.frontFt-EPS||z.y+z.d>b.depthFt-b.rearFt+EPS))e.push("Building zone outside selected margins: "+z.id);
+  if(z.kind==="parking"&&(z.floor!==0||z.w<9-EPS||z.d<18-EPS||z.y>EPS||z.y+z.d>b.frontFt+EPS||z.x<b.sideFt-EPS||z.x+z.w>b.widthFt-b.sideFt+EPS))e.push("Parking bay lacks clear street-side reserve: "+z.id);
+  if(z.kind==="toilet"&&(area(z)<20-EPS||Math.min(z.w,z.d)<3-EPS))e.push("Toilet below advisory size: "+z.id);
+  if(z.kind==="circulation"&&Math.min(z.w,z.d)<4-EPS)e.push("Circulation below advisory width: "+z.id);
   if(z.kind==="primary"&&(z.w<p.minW-EPS||z.d<p.minD-EPS||area(z)<p.minArea-EPS))e.push("Primary zone below concept size: "+z.id);
  }
 

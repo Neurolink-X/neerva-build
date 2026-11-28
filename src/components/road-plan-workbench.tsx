@@ -8,7 +8,7 @@ import {defaultFinishScheme,rememberFinish,type FinishScheme} from "@/modules/st
 import {StudioProjectExchange} from "./studio-project-exchange";
 import {StudioPremiumTools} from "./studio-premium-tools";
 import {generateSpatialPortfolio,generateStairReadyPortfolio} from "@/modules/studio/road-generator";
-import {planMetrics,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
+import {planMetrics,planSiteReview,planGeometryDigest,type PlanBrief,type PlanModel,type RoadSide} from "@/modules/studio/plan-model";
 import {studioDesignFromPlan} from "@/modules/studio/plan-model-adapter";
 import {oppositeRoadSide,roadPoint,roadRect,roadSegment,siteDimensions} from "@/modules/studio/plan-coordinate";
 import {siteOutline} from "@/modules/studio/site-shape";
@@ -54,6 +54,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
  const scheme=useMemo(()=>plan?{...(finishHistory[finishKey]??defaultFinishScheme({kind:"residential",plan})),exterior:plan.facade.main,accent:plan.facade.accent}:null,[plan,finishHistory,finishKey]);
  const design=useMemo(()=>plan?studioDesignFromPlan(plan):null,[plan]);
  const metrics=useMemo(()=>plan?planMetrics(plan):null,[plan]);
+ const siteReview=useMemo(()=>plan?planSiteReview(plan):null,[plan]);
  const hasPlan=!!plan;
  const fewerLevels=brief.bedrooms<brief.floors&&brief.bedrooms>=1&&brief.bedrooms<=3?brief.bedrooms as 1|2|3:null;
  const alternative=useMemo(()=>!hasPlan&&fewerLevels?generateSpatialPortfolio({...brief,floors:fewerLevels},1).plans[0]??null:null,[brief,hasPlan,fewerLevels]);
@@ -214,6 +215,7 @@ export function RoadPlanWorkbench({initialBrief,initialOption=0}:{initialBrief?:
      {scheme&&<PlanFinishStudio key={plan.id+":"+floor} source={{kind:"residential",plan}} floor={floor} scheme={scheme} onChange={next=>{setFinishHistory(h=>rememberFinish(h,finishKey,next));setSaveInfo("")}} showExterior={false}/>}
      <StudioProjectExchange key={plan.id} source={{kind:"residential",plan}} scheme={scheme??undefined}/>
      <section className="nroad-notes"><h2>{str("What still needs a professional?","क्या-क्या जाँचना बाकी है?")}</h2>
+      {siteReview&&<details className="nroad-small"><summary>Site access and ventilation review</summary><p>{siteReview.parking}</p><p>{siteReview.ventilationNote}</p><p>{siteReview.ventilationReview.length} of {siteReview.habitableCount} habitable rooms need further opening review; {siteReview.bathroomExhaust} bathroom(s) need exhaust/shaft review.</p>{siteReview.ventilationReview.length>0&&<ul>{siteReview.ventilationReview.map((x,i)=><li key={i}>{x}</li>)}</ul>}</details>}
       <ul>{plan.notes.map(x=><li key={x}>{x}</li>)}</ul></section>
     </>}
    </div>

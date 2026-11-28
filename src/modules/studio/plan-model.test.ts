@@ -200,3 +200,12 @@ test("ground parking 1 BHK is capped to six useful geometry-distinct choices",()
  assert.equal(new Set(plans.map(planSignature)).size,plans.length);
  for(const p of plans){assert.equal(p.rooms.filter(r=>r.kind==="bedroom").length,1);assert.ok(p.parking);assert.deepEqual(validatePlan(p),[])}
 });
+
+test("rejects malformed minimum bathroom, passage, stair order and car gate even when counts match",()=>{
+ const p=generateSpatialPortfolio(brief({floors:2,bedrooms:3}),1).plans[0];assert.ok(p);
+ const bad=structuredClone(p);bad.rooms.find(r=>r.kind==="bath")!.d=2;bad.rooms.find(r=>r.kind==="corridor")!.w=2;
+ bad.stairs.roomIds.reverse();bad.gate.xFt=bad.plot.widthFt-1;
+ const e=validatePlan(bad);
+ for(const token of ["Bathroom below","Corridor below","incorrect floor sequence","Road parking or straight gate"])assert.ok(e.some(x=>x.includes(token)),e.join(" / "));
+ const repeated=structuredClone(p);repeated.stairs.roomIds[1]=repeated.stairs.roomIds[0];assert.ok(validatePlan(repeated).some(x=>x.includes("incorrect floor sequence")));
+});
