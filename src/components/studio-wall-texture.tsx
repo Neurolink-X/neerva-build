@@ -41,9 +41,9 @@ export function colouredTexture(texture:Texture,base:string,accent:string,maxSid
  ctx.putImageData(img,0,0);return canvas;
 }
 export function WallTextureSwatch({texture,base,accent,intensity}:{texture:Texture;base:string;accent:string;intensity:number}){
- const ref=useRef<HTMLCanvasElement>(null);
- useLayoutEffect(()=>{const ctx=ref.current?.getContext("2d");if(!ctx)return;const c=colouredTexture(texture,base,accent,280);ctx.fillStyle=base;ctx.fillRect(0,0,150,100);const scale=Math.min(150/c.width,100/c.height),w=c.width*scale,h=c.height*scale;ctx.globalAlpha=intensity;ctx.drawImage(c,(150-w)/2,(100-h)/2,w,h);ctx.globalAlpha=1;},[texture,base,accent,intensity]);
- return <canvas ref={ref} width={150} height={100} className="paint-texture-swatch" aria-hidden="true"/>;
+ const ref=useRef<SVGImageElement>(null);
+ useLayoutEffect(()=>{const c=colouredTexture(texture,base,accent,280);ref.current?.setAttribute("href",c.toDataURL("image/png"));},[texture,base,accent]);
+ return <svg viewBox="0 0 150 100" className="paint-texture-swatch" aria-hidden="true"><rect width="150" height="100" fill={base}/><image ref={ref} width="150" height="100" preserveAspectRatio="xMidYMid meet" opacity={intensity}/></svg>;
 }
 type Point={x:number;y:number};
 /** Two clipped affine triangles share the same wall diagonal. This is a
