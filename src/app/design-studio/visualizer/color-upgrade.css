@@ -311,3 +311,6 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
  .visualizer-app .paint-live-tools,.visualizer-app .paint-live-workspace,.visualizer-app .paint-preview-status{overflow-anchor:none}
  .visualizer-app .paint-targets{flex-wrap:wrap;overflow:visible;max-width:100%}
 }
+
+.visualizer-app .paint-design-target-note{min-block-size:3.5em;line-height:1.45;color:#344d40;font-size:13px;overflow-anchor:none}
+.visualizer-app .paint-design-target-note button{min-height:44px;padding:6px 12px;margin-inline-start:6px;border:1px solid #b6c5b7;border-radius:8px;background:#fff;color:#254738}
