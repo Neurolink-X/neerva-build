@@ -5,7 +5,7 @@ import {StudioCheckout} from "@/components/studio-checkout";
 import {StudioPricingCards} from "@/components/studio-pricing-cards";
 import "@/app/studio-pricing/pricing.css";
 export const metadata:Metadata={
- title:"Home Studio & Colour Studio Pricing — Admin-Controlled One-Time Pricing | NEERVA BUILD",
+ title:"Home & Colour Studio Pricing",
  description:"Compare free room-plan and colour previews with optional priced downloadable studio reports. UPI checkout requires account login and verified bank settlement; no automatic renewals.",
  alternates:{canonical:"/studio-pricing"},
  openGraph:{title:"Free Home Design Samples + Admin-Priced Studio Reports",description:"Try plot plans and wall colours free, upgrade only for detailed personal reports.",url:"/studio-pricing"}
