@@ -6,6 +6,9 @@ import {visualCases} from "./photo-upload-regression.mjs";
 
 export async function verifyWallArtwork(page){
  const canvas=page.locator(".nbd-photo .paint-canvas-frame[aria-busy=false] canvas");
+ await page.getByRole("button",{name:"Signature Wall Gallery",exact:true}).click();
+ const gallery=page.getByRole("region",{name:"Signature wall gallery"});await gallery.waitFor({state:"visible"});assert.equal(await gallery.locator(".signature-wall-grid button").count(),8);assert.equal(await gallery.locator(".signature-wall-grid img").count(),8);assert.equal(await gallery.locator("input,canvas,svg").count(),0);for(const img of await gallery.locator(".signature-wall-grid img").all()){await img.scrollIntoViewIfNeeded();await img.evaluate(i=>i.decode());assert.ok(await img.evaluate(i=>i.naturalWidth>0&&getComputedStyle(i).objectFit==="contain"));}assert.equal(await page.getByRole("searchbox",{name:"Find a shade"}).count(),0);await gallery.getByRole("button",{name:/Emerald & champagne/}).click();await gallery.getByRole("region",{name:"Selected wall artwork"}).waitFor({state:"visible"});await gallery.getByRole("region",{name:"Selected wall artwork"}).locator("img").evaluate(i=>i.decode());await gallery.getByRole("button",{name:"Close detail"}).click();await page.getByRole("button",{name:"Paint visualizer",exact:true}).click();
+
     // The new corner sample has two pre-marked walls and preserves furniture.
     await page.getByRole("button",{name:"Sample room",exact:true}).click();
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="corner");
@@ -30,7 +33,15 @@ export async function verifyWallArtwork(page){
     // all visible designs' rendered pixels and representative screenshots.
     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame[aria-busy=false] canvas")?.getAttribute("data-room-sample")==="feature");
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-    const premium=page.getByRole("button",{name:"Image-based premium finishes · 8 designs",exact:true});await premium.click();assert.equal(await page.locator(".wall-pattern-options button").count(),8);await page.waitForFunction(()=>document.querySelectorAll(".wall-pattern-options .paint-texture-swatch").length===8);await page.getByRole("button",{name:"Signature",exact:true}).click();
+    assert.equal(await page.getByRole("button",{name:/Image-based premium finishes/i}).count(),0,"no duplicate image-only collection");
+    for(const [group,name] of [["Signature","Metallic floral frames"],["Nature","Tropical leaf fresco"],["Modern","Sculpted arch and ribbons"],["Geometry","Metallic architectural geometry"]]){
+     await page.getByRole("button",{name:group,exact:true}).click();
+     const card=page.getByRole("button",{name,exact:true});await card.click();
+     await card.locator(".paint-texture-swatch").waitFor({state:"visible"});
+     await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");
+     assert.equal(await page.getByText("How to paint this design",{exact:true}).count(),1);
+    }
+    await page.getByRole("button",{name:"Signature",exact:true}).click();
     await page.getByRole("button",{name:"3D effects",exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll(".wall-pattern-options .paint-texture-swatch").length===8);await page.getByRole("button",{name:"Signature",exact:true}).click();
     const wallEvidence=[],pixelDigests=new Set();
     const fullRoom=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"Wall Detail",exact:true}).click();assert.equal(await canvas.getAttribute("data-interior-view"),"detail");assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),fullRoom);await page.getByRole("button",{name:"Full Room",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),fullRoom);
@@ -66,11 +77,11 @@ export async function verifyWallArtwork(page){
     const mark=async(coords)=>{await canvas.scrollIntoViewIfNeeded();const b=await canvas.boundingBox();for(const [x,y] of coords)await canvas.click({position:{x:x*b.width,y:y*b.height}})};
     await mark([[.05,.08],[.53,.08],[.53,.89],[.05,.89]]);
     await page.getByRole("button",{name:"Paint + design",exact:true}).click();
-    await page.getByRole("button",{name:"Geometry",exact:true}).click();await page.getByRole("button",{name:"Hexagon geometry",exact:true}).click();
+    await page.getByRole("button",{name:"Geometry",exact:true}).click();await page.getByRole("button",{name:"Fine hexagonal linework",exact:true}).click();
     await page.getByRole("button",{name:"+ Add wall",exact:true}).click();await mark([[.59,.08],[.94,.08],[.94,.89],[.59,.89]]);
     assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
     await page.getByRole("button",{name:"Wall 1",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Paint + design",exact:true}).getAttribute("aria-pressed"),"true");
-    assert.equal(await page.getByRole("button",{name:"Hexagon geometry",exact:true}).getAttribute("aria-pressed"),"true");
+    assert.equal(await page.getByRole("button",{name:"Fine hexagonal linework",exact:true}).getAttribute("aria-pressed"),"true");
     const both=await canvas.evaluate(c=>c.toDataURL());await page.getByRole("button",{name:"All walls",exact:true}).click();assert.equal(await canvas.evaluate(c=>c.toDataURL()),both);
     assert.equal(await page.getByRole("button",{name:"Wall Detail",exact:true}).isDisabled(),true);
     await page.getByRole("button",{name:"Wall 2",exact:true}).click();assert.equal(await page.getByRole("button",{name:"Plain paint",exact:true}).getAttribute("aria-pressed"),"true");
@@ -176,7 +187,7 @@ export async function verifyColourStudio(page,base){
  await page.getByRole("button",{name:"Paint + design",exact:true}).click();
  await page.getByRole("button",{name:"Signature",exact:true}).click();await page.getByRole("button",{name:"Luxury orbit rings",exact:true}).click();
  const orbit=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(orbit,plainBeforePattern,"circular mural must alter actual canvas pixels");
- await page.getByRole("button",{name:"Nature",exact:true}).click();await page.getByRole("button",{name:"Floral vine feature wall",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),orbit,"floral artwork differs from the circle mural");
+ await page.getByRole("button",{name:"Nature",exact:true}).click();await page.getByRole("button",{name:"Magnolia garden fresco",exact:true}).click();await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),orbit,"floral artwork differs from the circle mural");
  let visibleDesigns=0;for(const group of ["Signature","Nature","Murals","Classic","Modern","Geometry","Printed","3D effects","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,72,"curated collection must not contain retired filler designs");
  await page.getByRole("button",{name:"3D effects",exact:true}).click();
  await page.getByRole("button",{name:"Sculptural wave relief",exact:true}).click();await canvas.waitFor({state:"visible"});await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");const relief=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(relief,plainBeforePattern);

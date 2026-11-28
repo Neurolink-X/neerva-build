@@ -266,3 +266,26 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 .visualizer-app .paint-shade-search{display:block;width:100%;min-width:0;min-height:44px;box-sizing:border-box;border:1px solid #b8c9bb;border-radius:8px;padding:8px 10px;background:white;color:#263d35;font:inherit}.visualizer-app .paint-custom-shade output{overflow-wrap:anywhere;line-height:1.4}
 
 .visualizer-app .paint-feature-collection{display:grid;gap:4px;margin:8px 0 12px;min-width:0}.visualizer-app .paint-feature-collection button{min-height:44px;width:100%;border:1px solid #9db4a2;border-radius:9px;background:#f1f6ed;color:#264a35;font-weight:750;padding:10px;white-space:normal}.visualizer-app .paint-feature-collection button[aria-pressed=true]{background:#244b37;color:white}.visualizer-app .paint-feature-collection small,.visualizer-app .paint-finish-type{font-size:11px;line-height:1.35;color:#607266}.visualizer-app .paint-texture-pending{display:grid;place-items:center;aspect-ratio:3/2;width:100%;border-radius:5px;color:white;text-shadow:0 1px 3px #111;font-size:11px}.visualizer-app .wall-pattern-options .paint-finish-type{display:block}
+
+/* Design-only gallery. Stable aspect ratios and no external requests until opened. */
+.visualizer-app [hidden]{display:none!important}
+.signature-wall-gallery{max-width:1100px;margin:18px auto 30px;padding:clamp(12px,3vw,28px);color:#203b30}
+.signature-wall-gallery header{margin:0 0 18px}.signature-wall-gallery h2{font-family:Georgia,serif;font-weight:400;font-size:clamp(24px,4vw,36px);margin:0 0 8px}.signature-wall-gallery p{line-height:1.5;margin:4px 0;color:#58675b}
+.signature-wall-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.signature-wall-grid button{background:#fff;border:1px solid #c8d2c5;border-radius:12px;overflow:hidden;padding:0;min-width:0;text-align:left;color:inherit;cursor:pointer}
+.signature-wall-grid button[aria-expanded=true]{outline:2px solid #29563d;outline-offset:2px}
+.signature-wall-art{display:block;aspect-ratio:3/2;overflow:hidden;background:#eef0eb}.signature-wall-art svg{display:block;width:100%;height:100%}
+.signature-wall-card-label{display:grid;gap:5px;padding:12px}.signature-wall-card-label strong{font-size:14px}.signature-wall-card-label small{font-size:12px;line-height:1.4;color:#58675b}
+.signature-wall-detail{border:1px solid #c8d2c5;border-radius:12px;overflow:hidden;margin:0 0 18px}.signature-wall-detail-title{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px}.signature-wall-detail-title h3{margin:0}.signature-wall-detail-title button{min-height:44px;background:#fff;border:1px solid #b6c5b7;border-radius:8px;color:#203b30;padding:8px 12px;cursor:pointer}
+.signature-wall-note{font-size:12px;margin-top:16px!important}.signature-wall-gallery button:focus-visible{outline:3px solid #a46b35;outline-offset:2px}
+@media(max-width:650px){.signature-wall-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.signature-wall-card-label{padding:9px}.signature-wall-card-label small{font-size:11px}}
+@media(max-width:320px){.signature-wall-grid{grid-template-columns:1fr}}
+
+/* Fixed gallery images: never crop off artwork, even in narrow cards. */
+.signature-wall-art{position:relative;display:grid;place-items:center;background:#ecece7;overflow:hidden}
+.signature-wall-art img{display:block;width:100%;height:100%;object-fit:contain}
+.signature-art-gold img{filter:sepia(.82) saturate(1.38) contrast(1.08)}
+.signature-art-warm img{filter:sepia(.20) saturate(.85)}
+.signature-art-unavailable{font-size:13px;color:#58675b;padding:12px;text-align:center}
+.signature-art-description{padding:10px 14px;margin:0!important}
+.signature-wall-detail .signature-wall-art{max-height:650px}

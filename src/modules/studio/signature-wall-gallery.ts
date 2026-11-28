@@ -1,0 +1,117 @@
+/** Fixed authored artwork references. No pattern IDs or editable colour palettes.
+ * Two new AI room-concept crops and six existing high-detail wall images.
+ * Shared files are referenced in place to avoid duplicating storage. */
+export const signatureWallGallery=[
+ {
+  "id": "emerald-geometry",
+  "name": "Emerald & champagne",
+  "style": "Architectural geometry",
+  "room": "Living room",
+  "src": "/images/studio/gallery/emerald-geometry-v1.webp",
+  "width": 420,
+  "height": 297,
+  "bytes": 4672,
+  "sha256": "ac750f58d8638b52ccbdb2a9f8b0bca2e906d730c46b093e3ac2081275d96cb6",
+  "kind": "room concept",
+  "tone": "original",
+  "description": "Oversized intersecting arcs and diagonals with gold-painted lines and deep emerald fields."
+ },
+ {
+  "id": "silk-arch",
+  "name": "Silk arch composition",
+  "style": "Luxury abstract mural",
+  "room": "Living room",
+  "src": "/images/studio/gallery/silk-arch-v1.webp",
+  "width": 420,
+  "height": 313,
+  "bytes": 4938,
+  "sha256": "c871f1cadac5980c35e82bcac51f6b7a92ec309acc507de12133f499340fbfc6",
+  "kind": "room concept",
+  "tone": "original",
+  "description": "A sweeping textured ribbon crosses a monumental painted arch, with metallic highlights."
+ },
+ {
+  "id": "gilded-magnolia",
+  "name": "Gilded magnolia",
+  "style": "Metallic floral relief",
+  "room": "Dining room",
+  "src": "/images/studio/walls/sculptFold.webp",
+  "width": 960,
+  "height": 447,
+  "bytes": 36604,
+  "sha256": "c33b47667817279adc77f3e85dbf1338b04c621f39eb927d244f0910178ee605",
+  "kind": "wall artwork",
+  "tone": "gold",
+  "description": "Oversized magnolia petals, fine botanical details and layered shadows in a fixed warm metallic treatment."
+ },
+ {
+  "id": "porcelain-tide",
+  "name": "Porcelain tide",
+  "style": "Sculptural 3D wall artwork",
+  "room": "Bedroom",
+  "src": "/images/studio/walls/sculptWave.webp",
+  "width": 960,
+  "height": 495,
+  "bytes": 17350,
+  "sha256": "142e4cc919b1d6039786f369bcd96c90960d031b9880fa933b2d4455c24b5814",
+  "kind": "wall artwork",
+  "tone": "original",
+  "description": "Continuous sweeping plaster-like waves with directional light and deep recesses."
+ },
+ {
+  "id": "silver-orbit",
+  "name": "Silver orbit",
+  "style": "Dimensional abstract artwork",
+  "room": "Reception",
+  "src": "/images/studio/walls/sculptRibbon.webp",
+  "width": 960,
+  "height": 465,
+  "bytes": 27324,
+  "sha256": "32583f62e6cf52ea9fb6ebd75bcc1e879972a2a5344112f8c0766f252d7fd2d1",
+  "kind": "wall artwork",
+  "tone": "original",
+  "description": "Layered sculptural ribbons and a luminous circular form create a dramatic continuous composition."
+ },
+ {
+  "id": "moonlit-blossoms",
+  "name": "Moonlit blossoms",
+  "style": "Professional botanical mural",
+  "room": "Bedroom",
+  "src": "/images/studio/walls/blossomBranch.webp",
+  "width": 960,
+  "height": 422,
+  "bytes": 29150,
+  "sha256": "ad0e006086ab2af79c4a6a57d35c3d542d2e8c5e877b3960c7350a86e41a06d6",
+  "kind": "wall artwork",
+  "tone": "warm",
+  "description": "Fine flowering branches against a moonlit background, flowing across the whole wall."
+ },
+ {
+  "id": "lotus-stillness",
+  "name": "Lotus stillness",
+  "style": "Luxury nature mural",
+  "room": "Reading room",
+  "src": "/images/studio/walls/lotusPond.webp",
+  "width": 960,
+  "height": 445,
+  "bytes": 28680,
+  "sha256": "b7c222057c9c1b31dc3e7a9d878d6c9b332c9ad8089a7373d6c2c7790ddfd896",
+  "kind": "wall artwork",
+  "tone": "warm",
+  "description": "Lotus blooms, flowing water and distant mountain layers create an expansive calm mural."
+ },
+ {
+  "id": "river-horizon",
+  "name": "River horizon",
+  "style": "Panoramic landscape artwork",
+  "room": "Living room",
+  "src": "/images/studio/walls/riverSunset.webp",
+  "width": 960,
+  "height": 526,
+  "bytes": 60938,
+  "sha256": "52270dc592c5bf44397edb2c0070c2277ade68e726c14fc093f9a7439580410f",
+  "kind": "wall artwork",
+  "tone": "original",
+  "description": "A textured mountain landscape with a river, trees, birds and a setting sun."
+ }
+] as const satisfies readonly {id:string;name:string;style:string;room:string;src:string;width:number;height:number;bytes:number;sha256:string;kind:"room concept"|"wall artwork";tone:"original"|"gold"|"warm";description:string}[];

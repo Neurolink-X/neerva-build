@@ -1,7 +1,7 @@
 import {area,isOtsRoom,overlapArea,sharedEdge,validatePlan,type PlanModel,type Rect,type Room,type Opening} from "./plan-model.ts";
 import {rectInsideShape} from "./site-shape.ts";
 import {subtractRect,exposedRoofPatches} from "./plan-surfaces.ts";
-import {ventilationReport,ventilationVariant} from "./ventilation.ts";
+import {ventilationReport,ventilationVariant,windowExposure} from "./ventilation.ts";
 import {interiorFitReport,preservesEssentialInterior} from "./furniture.ts";
 const EPS=1e-5;
 const equal=(a:number,b:number)=>Math.abs(a-b)<EPS;
@@ -15,7 +15,7 @@ function trimOpening(o:Opening,old:Room,next:Room):Opening|null{
  if(at<-EPS||at+o.widthFt>len+EPS)return null;
  return {...o,atFt:fixed(Math.max(0,at))};
 }
-function shaftCandidate(p:PlanModel,rect:Rect):PlanModel|null{
+function shaftCandidate(p:PlanModel,rect:Rect,replaceBlockedWindows=false):PlanModel|null{
  const rooms:Room[]=[],replaced=new Map<string,Room>(),removed=new Set<string>();
  for(const r of p.rooms){
   if(overlapArea(r,rect)<EPS){rooms.push(r);continue;}
@@ -35,7 +35,12 @@ function shaftCandidate(p:PlanModel,rect:Rect):PlanModel|null{
  for(const o of p.openings){
   if(removed.has(o.roomId)||o.connectsTo&&removed.has(o.connectsTo))return null;
   const next=replaced.get(o.roomId);
-  if(next){const old=p.rooms.find(r=>r.id===o.roomId)!,trimmed=trimOpening(o,old,next);if(!trimmed)return null;openings.push(trimmed);}
+  if(next){const old=p.rooms.find(r=>r.id===o.roomId)!,trimmed=trimOpening(o,old,next);if(!trimmed){
+   // A blocked boundary window is not usable ventilation. Only on the fallback
+   // search may it be replaced; never remove doors or verified exposed windows.
+   if(replaceBlockedWindows&&o.kind==="window"&&!o.connectsTo&&windowExposure(p,old,o)==="review")continue;
+   return null;
+  }openings.push(trimmed);}
   else openings.push({...o});
  }
  for(let floor=0;floor<p.floors;floor++)rooms.push({...rect,id:"ots-v1-floor-"+floor,label:"Open-to-sky ventilation (roof jaal)",kind:"terrace",floor,minClearWidthFt:3});
@@ -61,11 +66,15 @@ function shaftCandidate(p:PlanModel,rect:Rect):PlanModel|null{
 /** Search real boundary-aligned rectangles. Prefer wet-core adjacency and
  * minimal loss of enclosed space. Never alter input dimensions or required rooms. */
 export function otsVariant(p:PlanModel):PlanModel{
+ const compact=[[3,3],[3,4],[4,3],[4,4]],expanded=[[3,5],[5,3],[4,5],[5,4],[5,5]];
+ return searchOts(p,compact)??searchOts(p,expanded)??searchOts(p,[...compact,...expanded],true)??p;
+}
+function searchOts(p:PlanModel,sizes:number[][],replaceBlockedWindows=false):PlanModel|null{
  if(p.rooms.some(isOtsRoom))return p;
  const shape=p.plot.siteShape??{kind:"rectangle"} as const,sb=p.setbacks;
  const W=p.plot.widthFt-sb.rightFt,D=p.plot.depthFt-sb.rearFt;
  const seen=new Set<string>(),pool:{r:Rect;score:number}[]=[];
- for(const target of p.rooms.filter(wet))for(const [w,d] of [[3,3],[3,4],[4,3],[4,4]]){
+ for(const target of p.rooms.filter(wet))for(const [w,d] of sizes){
   const x=[target.x-w,target.x+target.w,target.x,target.x+target.w-w,target.x+(target.w-w)/2];
   const y=[target.y-d,target.y+target.d,target.y,target.y+target.d-d,target.y+(target.d-d)/2];
   for(const a of x)for(const b of y){
@@ -81,12 +90,12 @@ export function otsVariant(p:PlanModel):PlanModel{
  const before=interiorFitReport(p);
  let best:PlanModel|null=null,bestScore=-Infinity;
  for(const {r,score} of pool.slice(0,96)){
-  const candidate=shaftCandidate(p,r);if(!candidate)continue;
+  const candidate=shaftCandidate(p,r,replaceBlockedWindows);if(!candidate)continue;
   const report=ventilationReport(candidate);
   const rank=report.rows.filter(q=>q.openings.some(o=>o.exposure==="ots")).length*100+report.score*30+score;
   if(rank>bestScore&&preservesEssentialInterior(before,interiorFitReport(candidate))){best=candidate;bestScore=rank;}
  }
- return best??p;
+ return best;
 }
 /** Deterministic roof grille geometry, feet. No solid cover; bar spacing is
  * illustrative, not a fall-protection specification. */

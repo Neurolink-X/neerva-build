@@ -1,7 +1,10 @@
+import {premiumRasterNames,isPremiumRaster,premiumRasterShade,type PremiumRasterPattern} from "./premium-wall-raster.ts";
+import {practicalPaintNames,isPracticalPaintArt,practicalPaintShade} from "./practical-paint-art.ts";
 import type {Pattern} from "./wall-patterns.ts";
 /** Original offline optical material studies. Height-field shading is a
  * two-dimensional preview of relief, not actual sculpted geometry. */
-export const generatedWallPatterns=["sculptFlute","sculptDiamond","sculptReed","sculptStone","sculptPrism","oceanCliffs","desertDunes","citySilhouette"] as const satisfies readonly Pattern[];
+const originalGeneratedWallPatterns=["sculptFlute","sculptDiamond","sculptReed","sculptStone","sculptPrism","oceanCliffs","desertDunes","citySilhouette"] as const satisfies readonly Pattern[];
+export const generatedWallPatterns=[...new Set([...originalGeneratedWallPatterns,...Object.keys(premiumRasterNames) as PremiumRasterPattern[],...Object.keys(practicalPaintNames) as (keyof typeof practicalPaintNames)[]])];
 type GeneratedPattern=typeof generatedWallPatterns[number];
 export function isGeneratedWallPattern(key:Pattern):key is GeneratedPattern{return (generatedWallPatterns as readonly Pattern[]).includes(key);}
 const clamp=(v:number,min=0,max=1)=>Math.min(max,Math.max(min,v));
@@ -46,6 +49,7 @@ export type GeneratedWallRaster={width:number;height:number;values:Uint8Array};
  * remote images, per-frame mesh or runtime graphics dependencies. */
 export function generateWallRaster(key:GeneratedPattern,width=600,heightPx=400):GeneratedWallRaster{
  width=Math.max(16,Math.min(720,Math.floor(width)));heightPx=Math.max(16,Math.min(480,Math.floor(heightPx)));const values=new Uint8Array(width*heightPx);
+ if(isPracticalPaintArt(key)||isPremiumRaster(key)){const shade=isPracticalPaintArt(key)?(x:number,y:number)=>practicalPaintShade(key,x,y):isPremiumRaster(key)?(x:number,y:number)=>premiumRasterShade(key,x,y):()=>.5;for(let y=0,j=0;y<heightPx;y++)for(let x=0;x<width;x++,j++)values[j]=Math.round(shade(x/(width-1),y/(heightPx-1))*255);return {width,height:heightPx,values};}
  const relief=key.startsWith("sculpt"),heights=relief?new Float32Array(width*heightPx):null;
  if(heights)for(let y=0,j=0;y<heightPx;y++)for(let x=0;x<width;x++,j++)heights[j]=height(key,x/(width-1),y/(heightPx-1));
  for(let y=0,j=0;y<heightPx;y++)for(let x=0;x<width;x++,j++){
@@ -55,4 +59,12 @@ export function generateWallRaster(key:GeneratedPattern,width=600,heightPx=400):
   }else shade=landscape(key,u,v);
   values[j]=Math.round(clamp(shade+grain*.017)*255);
  }return {width,height:heightPx,values};
+}
+
+/** Yield between short row batches on the browser main thread. The output is identical
+ * to synchronous generation; callers can keep interactive paint controls responsive. */
+export async function generatePracticalRaster(key:Parameters<typeof practicalPaintShade>[0],width:number,heightPx:number,yieldControl:()=>Promise<void>,now:()=>number=()=>performance.now()):Promise<GeneratedWallRaster>{
+ width=Math.max(16,Math.min(720,Math.floor(width)));heightPx=Math.max(16,Math.min(480,Math.floor(heightPx)));const values=new Uint8Array(width*heightPx);let start=now();
+ for(let y=0,j=0;y<heightPx;y++){for(let x=0;x<width;x++,j++)values[j]=Math.round(practicalPaintShade(key,x/(width-1),y/(heightPx-1))*255);if(y<heightPx-1&&now()-start>=6){await yieldControl();start=now();}}
+ return {width,height:heightPx,values};
 }

@@ -1,4 +1,6 @@
+import {isPremiumRaster,premiumRasterNames} from "./premium-wall-raster.ts";
 import type {Pattern} from "./wall-patterns.ts";
+import {textureFor} from "./wall-textures.ts";
 import type {MaterialDetail} from "./material-detail.ts";
 type Material="pigment"|"wash"|"stencil"|"inlay"|"relief"|"panel";
 type Recipe=readonly [Material,string,string];
@@ -70,7 +72,8 @@ export const detailedWallRecipes={
  contemporaryPanel:["panel","Living room","Keep the central frame aligned with furniture."],
  grandSalon:["panel","Formal living","Use subtle moulding highlights with a calm base tone."]
 } as const satisfies Partial<Record<Pattern,Recipe>>;
-export function detailedWallRecipe(key:Pattern):Recipe|undefined{return (detailedWallRecipes as Partial<Record<Pattern,Recipe>>)[key];}
+const originalImageRecipes:Partial<Record<Pattern,Recipe>>={eclipse:["inlay","Living or bedroom feature","Paint metallic floral highlights and open frames on a dark matte base."],arch:["pigment","TV or headboard wall","Mark a broad arch with tape and paint with two related tones."],botanical:["wash","Living or dining feature","Use muted greens and a specialist hand-painted mural finish."],facets:["inlay","Living or reception wall","Mark long intersecting lines with tape and apply thin metallic accents."]};
+export function detailedWallRecipe(key:Pattern):Recipe|undefined{if(originalImageRecipes[key])return originalImageRecipes[key];if(isPremiumRaster(key))return ["pigment","Living, bedroom or feature wall",premiumRasterNames[key]+": use an uninterrupted wall and verify the paint effect on a sample board; not physical relief."];return (detailedWallRecipes as Partial<Record<Pattern,Recipe>>)[key];}
 export function wallFinishStrength(key:Pattern){const recipe=detailedWallRecipe(key);return recipe?{pigment:.016,wash:.035,stencil:.021,inlay:.013,relief:.028,panel:.022}[recipe[0]]:0;}
 
 /** Different finish families require different texture frequency and depth.
@@ -84,6 +87,7 @@ const materialProfiles:Record<Material,MaterialDetail>={
  panel:{grain:.012,wash:.020,ridge:.012,edge:.11,axis:"vertical"}
 };
 export function wallMaterialDetail(key:Pattern):MaterialDetail|undefined{
+ if(textureFor(key))return;
  const recipe=detailedWallRecipe(key);if(!recipe)return;
  const profile=materialProfiles[recipe[0]];
  if(key==="herringbone"||key==="sculptDiamond"||key==="sculptPrism")return {...profile,axis:"diagonal"};

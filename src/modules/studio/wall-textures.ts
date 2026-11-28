@@ -3,6 +3,8 @@ import {isGeneratedWallPattern} from "./generated-wall-raster.ts";
 import type {FacadeStyles,FacadeTarget} from "./facade-paint.ts";
 export type WallTexture={src:string;width:number;height:number;bytes:number;sha256:string;crop?:readonly [number,number,number,number]};
 export const wallTextures:Partial<Record<Pattern,WallTexture>>={
+ // Original AI-generated wall concept artwork, optimized as local grayscale WebP.
+ botanical:{src:"/images/studio/walls/botanical-art-v1.webp",width:320,height:214,bytes:4766,sha256:"fa7ee2ea241cbcf192cebbf5c80948df1719166e14f1bf2dd0d4c0b0fcdff06f"},
  "sculptWave": {
   "src": "/images/studio/walls/sculptWave.webp",
   "width": 960,
@@ -89,6 +91,16 @@ export function texturePalette(base:string,accent:string){
   // Keep shadows deep and specular highlights bright even on a dark base.
   const dark=Math.max(0,1-v*2),light=Math.max(0,v*2-1);
   return b.map((c,k)=>{const pigment=c*(1-mix)+a[k]*mix;return Math.round(Math.max(0,Math.min(255,pigment*(1-.73*dark)+(255-pigment)*.88*light)));});});
+}
+
+/** For a designed composition, preserve all artwork at any wall ratio. Photo textures retain their crop policy. */
+export function wallTextureFrame(width:number,height:number,aspect:number,preserveComposition=false){return preserveComposition?[0,0,1,1] as const:wallTextureCrop(width,height,aspect);}
+/** Painted lines and flowers should use the chosen accent, not be bleached white.
+ * Map the neutral raster to the two pigments, retaining subtle directional shading. */
+export function paintTexturePalette(base:string,accent:string){
+ const rgb=(s:string)=>/^#[0-9a-f]{6}$/i.test(s)?[1,3,5].map(i=>parseInt(s.slice(i,i+2),16)):[160,160,160];
+ const b=rgb(base),a=rgb(accent);
+ return Array.from({length:256},(_,i)=>{const v=i/255,mix=Math.max(0,Math.min(1,(i-82)/(204-82))),light=Math.max(0,v-.83)*.36,dark=Math.max(0,.32-v)*.3;return b.map((c,k)=>{const p=c*(1-mix)+a[k]*mix;return Math.round(Math.max(0,Math.min(255,p*(1-dark)+(255-p)*light)));});});
 }
 
 /** Only artwork that can actually appear in the current scene may block export.

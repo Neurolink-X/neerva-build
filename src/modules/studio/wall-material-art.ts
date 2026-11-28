@@ -69,7 +69,7 @@ function botanical(mode:number):Motif[]{
  }).flat()];}).flat();
 }
 const newGeometry:Partial<Record<Pattern,()=>Motif[]>>={
- hexGrid:()=>honeycomb(false),facets:()=>honeycomb(true),angularWeave:cubes,herringbone:chevron,
+ hexGrid:cubes,facets:()=>honeycomb(true),angularWeave:()=>cubes().map(m=>({...m,points:m.points.map(([x,y])=>[1-y,x] as P),tone:.38,weight:.85})),herringbone:()=>chevron().filter(m=>!m.filled).map(m=>({...m,weight:1.1})),
  diamonds:lattice,decoFan:fan,jaliMedallion:()=>rosettes(0),heritage:border,
  arch:arches,split:dado,modernRibbons:ribbons,offsetCircles:discs,layeredArches:()=>seq(5,i=>{const width=.86-i*.145,x=(1-width)/2,y=.07+i*.105,bottom=.96;const p:P[]=[[x,bottom],...seq(65,j=>[.5+width/2*Math.cos(Math.PI+j*Math.PI/64),y+width*.68+width*.68*Math.sin(Math.PI+j*Math.PI/64)] as P),[x+width,bottom]];return [fill(p,(i%3-1)*.25,.51+i*.10,"matte"),line(p,.48,.65)];}).flat(),
  decoInlay:()=>inlay(0),moroccanFiligree:()=>rosettes(1),silkBotanical:()=>botanical(0),imperialVine:()=>botanical(1),bamboo:()=>seq(5,i=>{const x=.08+i*.19,lean=(i%2?.055:-.035);const stem=(y:number)=>x+lean*(1-y);return [fill([[stem(0)-.014,0],[stem(0)+.014,0],[stem(1)+.022,1],[stem(1)-.022,1]],-.2,.76,"bevel"),...seq(7,j=>{const y=.06+j*.135,a=stem(y),dir=j%2?1:-1;return [line([[a-.019,y],[a+.019,y]],.57,.65),...seq(3,k=>{const end:P=[a+dir*(.055+k*.022),y-.055-k*.023];return [fill([[a,y],[end[0]-dir*.013,end[1]+.028],end,[a+dir*.019,y-.032]],.13-k*.14,.72,"matte"),line([[a,y],end],.43,.35)];}).flat()];}).flat()];}).flat()
