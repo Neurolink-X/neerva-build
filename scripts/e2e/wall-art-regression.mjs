@@ -13,16 +13,20 @@ export async function verifyWallArtwork(page){
     const wallEvidence=[],pixelDigests=new Set();
     for(const group of ["Signature","Murals","Nature","Classic","Modern","Geometry","Printed","3D effects","Architectural"]){
      await page.getByRole("button",{name:group,exact:true}).click();
-     const cards=page.locator(".wall-pattern-options button");assert.equal(await cards.count(),8);
-     for(let i=0;i<8;i++){
+     const cards=page.locator(".wall-pattern-options button");assert.equal(await cards.count(),4);
+     for(let i=0;i<4;i++){
       const card=cards.nth(i),name=(await card.innerText()).trim(),start=Date.now();
       await card.click();assert.equal(await card.getAttribute("aria-pressed"),"true");
+      await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")!=="loading");
+      if(await card.locator(".paint-texture-swatch").count())assert.equal(await canvas.getAttribute("data-wall-texture"),"ready");
       const pixels=await canvas.evaluate(c=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(c.toDataURL())))));
       const digest=createHash("sha256").update(pixels).digest("hex");
       wallEvidence.push({group,name,digest,automationMs:Date.now()-start});pixelDigests.add(digest);
       if(i===0)await canvas.screenshot({path:path.join("test-results/mobile","wall-art-"+group.toLowerCase().replaceAll(" ","-")+".png"),animations:"disabled"});
      }
     }
+    await page.getByRole("button",{name:"3D effects",exact:true}).click();await page.getByRole("button",{name:"Sculptural wave relief",exact:true}).click();await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");
+    const before=await canvas.evaluate(c=>c.toDataURL());await page.getByLabel("Pattern colour").fill("#305c80");await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,before);const recoloured=await canvas.evaluate(c=>c.toDataURL());await page.getByLabel(/Design intensity/).fill("0.25");await page.waitForFunction(old=>document.querySelector(".paint-canvas-frame canvas")?.toDataURL()!==old,recoloured);
     fs.writeFileSync("test-results/mobile/wall-art-evidence.json",JSON.stringify({scope:"Full sample wall, local Chromium; pixel diversity and screenshots, not photorealism certification or field INP",designCount:wallEvidence.length,uniqueRenders:pixelDigests.size,designs:wallEvidence},null,2));
-    assert.equal(pixelDigests.size,72,"all 72 active wall designs must produce different full-wall pixels");
+    assert.equal(pixelDigests.size,36,"all 36 active wall designs must produce different full-wall pixels");
 }

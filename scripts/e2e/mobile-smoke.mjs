@@ -313,7 +313,7 @@ async function main(){
      await pattern.click();
      assert.equal(await pattern.getAttribute("aria-pressed"),"true","pattern selection remains functional without a sticky cropped preview");
      await pattern.locator("svg polyline").first().waitFor({state:"attached"});assert.ok(await pattern.locator("svg polyline").count()>1,"painting swatch has actual procedural motif geometry");
-     const intensity=page.getByLabel(/Design intensity/);await intensity.fill("0.45");assert.ok(await pattern.locator("svg polyline").evaluateAll(rows=>rows.every(r=>Number(r.getAttribute("opacity"))<=.45)),"painting swatch intensity follows the wall control");await intensity.press("End");assert.equal(await intensity.inputValue(),"1","keyboard reaches maximum intensity");await intensity.press("ArrowLeft");assert.equal(await intensity.inputValue(),"0.95","keyboard follows the declared step");
+     const intensity=page.getByLabel(/Design intensity/);await intensity.fill("0.45");assert.ok(Number(await pattern.locator("svg g").getAttribute("opacity"))<=.45,"painting swatch intensity follows the wall control");await intensity.press("End");assert.equal(await intensity.inputValue(),"1","keyboard reaches maximum intensity");await intensity.press("ArrowLeft");assert.equal(await intensity.inputValue(),"0.95","keyboard follows the declared step");
      await page.getByRole("button",{name:"Geometry",exact:true}).click();const geo=page.getByRole("button",{name:"Chevron herringbone",exact:true});await geo.click();assert.equal(await geo.getAttribute("aria-pressed"),"true");
      const canvas=page.locator(".nbd-photo canvas");await canvas.scrollIntoViewIfNeeded();
      assert.ok(await canvas.evaluate(c=>{const r=c.getBoundingClientRect();return r.height>0&&Math.abs(r.width/r.height-c.width/c.height)<.025}),"full canvas retains original aspect ratio after changing pattern");
@@ -1257,11 +1257,11 @@ async function main(){
  await page.getByRole("button",{name:"Nature",exact:true}).click();await page.getByRole("button",{name:"Floral vine feature wall",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),orbit,"floral artwork differs from the circle mural");
  let visibleDesigns=0;for(const group of ["Signature","Nature","Murals","Classic","Modern","Geometry","Printed","3D effects","Architectural"]){await page.getByRole("button",{name:group,exact:true}).click();visibleDesigns+=await page.locator(".wall-pattern-options button").count();}assert.equal(visibleDesigns,36,"curated collection must not contain retired filler designs");
  await page.getByRole("button",{name:"3D effects",exact:true}).click();
- await page.getByRole("button",{name:"Faceted diamond relief",exact:true}).click();const relief=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(relief,plainBeforePattern);
+ await page.getByRole("button",{name:"Sculptural wave relief",exact:true}).click();await canvas.waitFor({state:"visible"});await page.waitForFunction(()=>document.querySelector(".paint-canvas-frame canvas")?.getAttribute("data-wall-texture")==="ready");const relief=await canvas.evaluate(c=>c.toDataURL());assert.notEqual(relief,plainBeforePattern);
  await page.getByRole("button",{name:"Printed",exact:true}).click();await page.getByRole("button",{name:"Silk botanical inlay",exact:true}).click();assert.notEqual(await canvas.evaluate(c=>c.toDataURL()),relief);
  await page.getByRole("button",{name:"Classic",exact:true}).click();await page.getByRole("button",{name:"Diamond lattice",exact:true}).click();
  await page.getByRole("button",{name:"Keep wall & select another"}).click();
- await mark(.56);await page.getByRole("button",{name:"Double panels",exact:true}).click();
+ await mark(.56);await page.getByRole("button",{name:"Heritage border accent",exact:true}).click();
  const png=()=>canvas.evaluate(c=>c.toDataURL());
  const combo=await png();await page.getByRole("button",{name:"View original"}).click();assert.notEqual(await png(),combo);
  await page.getByRole("button",{name:"Show new colour"}).click();assert.equal(await png(),combo);

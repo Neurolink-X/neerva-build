@@ -254,3 +254,5 @@ html:has(.visualizer-app .paint-live-workspace){overflow-anchor:none}
 .visualizer-app .wall-pattern-options button{scroll-margin-block:16px}
 @media(max-width:850px){.visualizer-app .wall-pattern-options button{scroll-margin-block-start:calc(30svh + 96px)}.visualizer-app .paint-pattern-groups button:focus-visible,.visualizer-app .wall-pattern-options button:focus-visible{outline:2px solid #35674e;outline-offset:2px}}
 @media(max-height:480px) and (max-width:850px){.visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])){position:static;top:auto}.visualizer-app .paint-live-preview[data-can-stick=true]:not(:has(canvas[data-sample=custom])) :is(canvas,.paint-canvas-frame){max-height:none;height:auto}.visualizer-app .wall-pattern-options button{scroll-margin-block-start:16px}}
+
+.visualizer-app .wall-pattern-options .paint-texture-swatch{display:block;width:100%;height:auto;aspect-ratio:3/2;border-radius:5px;object-fit:contain}.visualizer-app .paint-pattern-current{overflow-wrap:anywhere}
