@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {isOtsRoom,overlapArea,validatePlan,type PlanBrief,type PlanModel} from "./plan-model.ts";
-import {generateSpatialPortfolio,generateCoveredUpperPortfolio,portfolioForPlanId,validateRequestedProgramme} from "./road-generator.ts";
+import {generateSpatialPortfolio,generateCoveredUpperPortfolio,generateEnclosedUpperPortfolio,planSignature,portfolioForPlanId,validateRequestedProgramme} from "./road-generator.ts";
 import {otsVariant,otsGrilleBars,otsGrilleLevel,airOptimizedPlan} from "./ots-ventilation.ts";
 import {exposedRoofPatches} from "./plan-surfaces.ts";
 import {windowExposure} from "./ventilation.ts";
@@ -88,5 +88,18 @@ test("18x50 G+1 3BHK includes covered family space with compact terrace and rest
   assert.ok(p.rooms.some(r=>r.kind==="lounge"&&r.id.startsWith("rear-family-")&&r.floor===1));
   assert.ok(p.rooms.filter(r=>r.floor===1&&r.kind==="terrace").every(r=>r.d<=5));
   assert.ok(portfolioForPlanId(b,p.id).plans.some(q=>q.id===p.id));
+ }
+});
+
+test("full-covered upper programmes preserve bedrooms, exact input and restorable distinct geometry",()=>{
+ const b={...brief,widthFt:18,depthFt:50,bedrooms:3};
+ const plans=generateEnclosedUpperPortfolio(b);
+ assert.ok(plans.length>0,"18x50 requires a complete upper-floor alternative");
+ assert.equal(new Set(plans.map(planSignature)).size,plans.length);
+ assert.ok(plans.some(p=>!p.rooms.some(r=>r.floor>0&&r.kind==="terrace"&&!isOtsRoom(r))));
+ for(const p of plans){
+  assert.deepEqual(validateRequestedProgramme(p,b),[],p.id);
+  assert.ok(portfolioForPlanId(b,p.id).plans.some(q=>q.id===p.id));
+  assert.ok(p.rooms.some(r=>r.floor===1&&r.id.startsWith("rear-family-")));
  }
 });
